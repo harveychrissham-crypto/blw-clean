@@ -5,6 +5,7 @@ const toStory = (s) => ({
   tag: s.tag || '',
   title: s.title,
   subtitle: s.subtitle || '',
+  body: s.body || '',
   imageUrl: s.image_url || '',
 });
 
@@ -21,15 +22,15 @@ export const listStories = async (_req, res) => {
 
 // POST /api/outreach-stories — create a new story.
 export const createStory = async (req, res) => {
-  const { tag, title, subtitle, imageUrl } = req.body || {};
+  const { tag, title, subtitle, body, imageUrl } = req.body || {};
   if (!title) {
     return res.status(400).json({ error: 'Title is required.' });
   }
   try {
     const result = await query(
-      `INSERT INTO outreach_stories (tag, title, subtitle, image_url)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [tag || '', title, subtitle || '', imageUrl || '']
+      `INSERT INTO outreach_stories (tag, title, subtitle, body, image_url)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [tag || '', title, subtitle || '', body || '', imageUrl || '']
     );
     return res.status(201).json({ story: toStory(result.rows[0]) });
   } catch (error) {
@@ -41,17 +42,17 @@ export const createStory = async (req, res) => {
 // PUT /api/outreach-stories/:id — update an existing story.
 export const updateStory = async (req, res) => {
   const { id } = req.params;
-  const { tag, title, subtitle, imageUrl } = req.body || {};
+  const { tag, title, subtitle, body, imageUrl } = req.body || {};
   if (!title) {
     return res.status(400).json({ error: 'Title is required.' });
   }
   try {
     const result = await query(
       `UPDATE outreach_stories
-         SET tag = $1, title = $2, subtitle = $3, image_url = $4
-       WHERE id = $5
+         SET tag = $1, title = $2, subtitle = $3, body = $4, image_url = $5
+       WHERE id = $6
        RETURNING *`,
-      [tag || '', title, subtitle || '', imageUrl || '', id]
+      [tag || '', title, subtitle || '', body || '', imageUrl || '', id]
     );
     if (!result.rows.length) return res.status(404).json({ error: 'Story not found.' });
     return res.json({ story: toStory(result.rows[0]) });

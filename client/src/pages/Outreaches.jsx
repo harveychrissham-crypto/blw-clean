@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { FiHeart, FiStar, FiMapPin, FiUsers, FiArrowRight, FiSend, FiCompass } from 'react-icons/fi';
+import { FiHeart, FiStar, FiMapPin, FiUsers, FiArrowRight, FiSend, FiCompass, FiX } from 'react-icons/fi';
 import { fetchOutreachStories } from '../utils/outreachStories';
 
 const card = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' };
@@ -15,13 +15,71 @@ const stats = [
 const FALLBACK_ICONS = [FiCompass, FiSend, FiHeart];
 
 const DEFAULT_STORIES = [
-  { tag: 'Streets of Nairobi', title: 'Streets of Nairobi', subtitle: 'Reaching drivers & commuters with the Rhapsody' },
-  { tag: 'Reachout World', title: 'Reachout World East Africa', subtitle: 'Distributing the Word from window to window' },
-  { tag: 'Traffic Outreach', title: 'Traffic Outreach', subtitle: 'No red light too long for the Gospel' },
+  {
+    tag: 'Streets of Nairobi',
+    title: 'Streets of Nairobi',
+    subtitle: 'Reaching drivers & commuters with the Rhapsody',
+    body: 'Every week, teams take to the busy streets of Nairobi, moving from car window to car window during traffic, sharing copies of Rhapsody of Realities and a word of hope with drivers, conductors, and commuters who would otherwise never set foot in a church. What starts as a brief conversation at a red light has, time and again, turned into a life transformed.',
+  },
+  {
+    tag: 'Reachout World',
+    title: 'Reachout World East Africa',
+    subtitle: 'Distributing the Word from window to window',
+    body: 'As part of the global Reachout World campaign, our East Africa region mobilizes volunteers to distribute copies of Rhapsody of Realities across homes, offices, and public spaces. The goal is simple: make sure no one in our communities goes without access to the Word, regardless of where they are or what they believe today.',
+  },
+  {
+    tag: 'Traffic Outreach',
+    title: 'Traffic Outreach',
+    subtitle: 'No red light too long for the Gospel',
+    body: 'Traffic jams are a daily frustration for most — but for our outreach teams, they are an opportunity. Armed with copies of the Word and warm smiles, volunteers turn standstill traffic into moments of genuine connection, prayer, and salvation, proving that no waiting line is ever wasted when there are souls to reach.',
+  },
 ];
+
+function StoryModal({ story, onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0c18]/95 px-4 py-8" onClick={onClose}>
+      <div
+        className="relative max-h-[85vh] w-full max-w-lg overflow-hidden rounded-[2rem] border border-white/10 bg-[#15131f] shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute right-5 top-5 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white/70 transition hover:bg-black/60"
+        >
+          <FiX />
+        </button>
+
+        <div className="max-h-[85vh] overflow-y-auto">
+          {story.imageUrl ? (
+            <img src={story.imageUrl} alt={story.title} className="h-56 w-full object-cover" />
+          ) : (
+            <div
+              className="flex h-40 items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, rgba(236,47,168,0.18), rgba(138,43,226,0.18), rgba(61,90,254,0.12))' }}
+            >
+              <FiHeart className="h-10 w-10 text-white/30" />
+            </div>
+          )}
+
+          <div className="p-6 sm:p-8">
+            {story.tag && (
+              <p className="mb-2 text-xs font-bold uppercase tracking-widest" style={{ color: '#F2A31C' }}>{story.tag}</p>
+            )}
+            <h2 className="text-2xl font-extrabold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>{story.title}</h2>
+            {story.subtitle && <p className="mt-2 text-sm text-white/50">{story.subtitle}</p>}
+            <p className="mt-5 whitespace-pre-line text-sm leading-relaxed text-white/75">
+              {story.body || "The full story for this update hasn't been added yet — check back soon."}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Outreaches() {
   const [stories, setStories] = useState(DEFAULT_STORIES);
+  const [activeStory, setActiveStory] = useState(null);
 
   useEffect(() => {
     fetchOutreachStories()
@@ -92,7 +150,11 @@ export default function Outreaches() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.08 }}
-                className="overflow-hidden rounded-2xl"
+                onClick={() => setActiveStory(story)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setActiveStory(story)}
+                className="cursor-pointer overflow-hidden rounded-2xl transition hover:-translate-y-0.5"
                 style={card}
               >
                 <div
@@ -113,6 +175,7 @@ export default function Outreaches() {
                 <div className="p-5">
                   <h3 className="text-base font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>{story.title}</h3>
                   <p className="mt-1 text-sm text-white/50">{story.subtitle}</p>
+                  <p className="mt-3 text-xs font-semibold uppercase tracking-widest" style={{ color: '#F2A31C' }}>Read story →</p>
                 </div>
               </motion.div>
             );
@@ -139,6 +202,8 @@ export default function Outreaches() {
           </button>
         </motion.div>
       </div>
+
+      {activeStory && <StoryModal story={activeStory} onClose={() => setActiveStory(null)} />}
     </section>
   );
 }

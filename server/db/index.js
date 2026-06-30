@@ -74,6 +74,12 @@ export const initDb = async () => {
       created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
     );
   `);
+
+  // Full story body — added after initial launch, so existing tables get it via ADD COLUMN.
+  await pool.query(`
+    ALTER TABLE outreach_stories
+      ADD COLUMN IF NOT EXISTS body TEXT NOT NULL DEFAULT '';
+  `);
 };
 
 export default pool;

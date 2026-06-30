@@ -830,7 +830,7 @@ function EventsManagerPanel({ onClose }) {
 }
 
 // ─── Outreach Stories Manager panel ───────────────────────────────────────────
-const EMPTY_STORY_FORM = { tag: '', title: '', subtitle: '', imageUrl: '' };
+const EMPTY_STORY_FORM = { tag: '', title: '', subtitle: '', body: '', imageUrl: '' };
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // 4MB raw upload cap before base64 encoding
 
 function StoryForm({ initial, onCancel, onSave }) {
@@ -892,6 +892,17 @@ function StoryForm({ initial, onCancel, onSave }) {
           <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Subtitle</label>
           <input value={form.subtitle} onChange={set('subtitle')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="A short line about the story" />
         </div>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Full story</label>
+        <textarea
+          value={form.body}
+          onChange={set('body')}
+          rows={5}
+          placeholder="Tell the full story here — this is what people will read when they click into it."
+          className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50"
+        />
       </div>
 
       <div>
