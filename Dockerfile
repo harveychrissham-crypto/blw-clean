@@ -1,0 +1,28 @@
+# Build stage
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+COPY server/package.json server/package-lock.json ./server/
+COPY client/package.json client/package-lock.json ./client/
+
+# Install dependencies for both applications
+RUN npm install --prefix server
+RUN npm install --prefix client
+
+# Copy source files
+COPY server ./server
+COPY client ./client
+
+# Build frontend
+RUN npm run build --prefix client
+
+# Production runtime
+FROM node:20-alpine AS runtime
+WORKDIR /app
+COPY --from=builder /app/server ./server
+COPY --from=builder /app/client/dist ./client/dist
+
+WORKDIR /app/server
+ENV NODE_ENV=production
+EXPOSE 5000
+CMD ["node", "server.js"]
