@@ -52,9 +52,9 @@ function MemberQRCode({ member }) {
           <p className="text-sm text-slate-500">{member.phone}</p>
           <div className="my-2 h-px bg-slate-100" />
           <div className="flex items-center justify-center gap-2 text-xs text-slate-500 flex-wrap">
-            <span>{member.church}</span>
+            <span>{member.chapter}</span>
             <span>·</span>
-            <span>{member.campus}</span>
+            <span>{member.campusZone?.replace(/_/g, ' ')}</span>
           </div>
           {member.country && (
             <p className="text-xs text-slate-400">{member.residence ? `${member.residence}, ` : ''}{member.country}</p>
@@ -68,8 +68,8 @@ function MemberQRCode({ member }) {
           <span className="inline-block rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-semibold text-emerald-700">
             {member.status}
           </span>
-          {member.joinedDate && (
-            <p className="text-xs text-slate-400">Joined: {member.joinedDate}</p>
+          {member.joinDate && (
+            <p className="text-xs text-slate-400">Joined: {member.joinDate}</p>
           )}
         </div>
       </div>
@@ -116,8 +116,18 @@ export default function Checkin() {
         return;
       }
 
+      // The server returns a ranked list of matches under `members` (best match
+      // first) rather than a single `member` — grab the top result.
+      const match = Array.isArray(body.members) ? body.members[0] : null;
+      if (!match) {
+        setMessage('No matching account was found. Please check your phone number or email and try again.');
+        setFound(false);
+        setFoundProfile(null);
+        return;
+      }
+
       setFound(true);
-      setFoundProfile(body.member);
+      setFoundProfile(match);
       setMessage('Profile located. Present this QR badge at the welcome desk for fast check-in.');
     } catch {
       setMessage('Unable to reach the member service. Please try again in a moment.');
