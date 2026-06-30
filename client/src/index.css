@@ -47,3 +47,13 @@ input:focus, select:focus, textarea:focus {
   border-color: #EC2FA8 !important;
 }
 input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3) !important; }
+
+/* The select element itself stays white text on our dark background (above),
+   but the actual dropdown list of options is rendered by the OS/browser using
+   its own native popup — which ignores our dark background and shows a light
+   one. Without this, the white select text becomes invisible against that
+   light popup. Force readable dark text + light background on options only. */
+select option {
+  color: #0d0c18 !important;
+  background: #ffffff !important;
+}
