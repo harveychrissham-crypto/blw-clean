@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiRadio, FiClock, FiPlayCircle, FiCalendar, FiX, FiUsers, FiVideo } from 'react-icons/fi';
+import DailyIframe from '@daily-co/daily-js';
 import { fetchLiveStream, submitLiveViewer } from '../utils/live';
 
 const schedule = [
@@ -107,6 +108,8 @@ export default function Live() {
   const [live, setLive] = useState(null);
   const [status, setStatus] = useState('loading'); // loading | loaded | error
   const [showWelcome, setShowWelcome] = useState(true);
+  const dailyContainerRef = useRef(null);
+  const callFrameRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -126,6 +129,29 @@ export default function Live() {
   const isLiveNow = status === 'loaded' && !!live?.isLive;
   const isStreaming = isLiveNow && !!live?.youtubeId;
   const hasMeetLink = isLiveNow && !!live?.googleMeetUrl;
+  const hasDailyRoom = isLiveNow && !!live?.dailyRoomUrl;
+  // The call embeds inline in dailyContainerRef; the YouTube stream (if also
+  // set) still takes the main video slot when present, so Daily only claims
+  // that slot when there's no YouTube stream to show.
+  const showDailyEmbed = hasDailyRoom && !isStreaming;
+
+  // Create/join the Daily call once the container is in the DOM and a room
+  // is available, and always tear it down on unmount or when the room
+  // changes — daily-js only supports one active call frame at a time.
+  useEffect(() => {
+    if (!showDailyEmbed || !dailyContainerRef.current) return;
+
+    callFrameRef.current = DailyIframe.createFrame(dailyContainerRef.current, {
+      iframeStyle: { width: '100%', height: '100%', border: '0' },
+      showLeaveButton: false,
+    });
+    callFrameRef.current.join({ url: live.dailyRoomUrl });
+
+    return () => {
+      callFrameRef.current?.destroy();
+      callFrameRef.current = null;
+    };
+  }, [showDailyEmbed, live?.dailyRoomUrl]);
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
@@ -144,9 +170,15 @@ export default function Live() {
             </span>
           )}
           <span className="text-sm text-slate-400">
-            {isStreaming && hasMeetLink ? 'YouTube & Google Meet' : hasMeetLink && !isStreaming ? 'Google Meet' : 'Streaming across YouTube'}
+            {isStreaming && showDailyEmbed
+              ? 'YouTube & Live Call'
+              : showDailyEmbed
+                ? 'Live Call'
+                : hasMeetLink && !isStreaming
+                  ? 'Google Meet'
+                  : 'Streaming across YouTube'}
           </span>
-          {hasMeetLink && (
+          {hasMeetLink && !showDailyEmbed && (
             <a
               href={live.googleMeetUrl}
               target="_blank"
@@ -168,6 +200,8 @@ export default function Live() {
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 />
+              ) : showDailyEmbed ? (
+                <div ref={dailyContainerRef} className="h-full w-full" />
               ) : (
                 <div className="flex h-full items-center justify-center p-6 text-center">
                   <div>

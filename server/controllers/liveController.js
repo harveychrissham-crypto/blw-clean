@@ -24,11 +24,20 @@ const extractYouTubeId = (url) => {
 const isLikelyMeetUrl = (url) =>
   typeof url === 'string' && /^https:\/\/meet\.google\.com\/[a-z0-9-]+/i.test(url.trim());
 
+// Sanity check for a Daily.co room URL, e.g.
+// https://blwcentraleastafrica.daily.co/blw-live — this one DOES get
+// embedded inline via daily-js, so it's worth validating the shape before
+// it ever reaches the client.
+const isLikelyDailyUrl = (url) =>
+  typeof url === 'string' &&
+  /^https:\/\/[a-z0-9-]+\.daily\.co\/[a-z0-9-]+/i.test(url.trim());
+
 const toLiveStream = (row) => ({
   title: row.title || '',
   youtubeUrl: row.youtube_url || '',
   youtubeId: extractYouTubeId(row.youtube_url),
   googleMeetUrl: row.google_meet_url || '',
+  dailyRoomUrl: row.daily_room_url || '',
   isLive: row.is_live || false,
   updatedAt: row.updated_at,
 });
@@ -39,7 +48,7 @@ export const getLiveStream = async (_req, res) => {
     const result = await query(`SELECT * FROM live_stream WHERE id = 1`);
     if (!result.rows.length) {
       return res.json({
-        live: { title: '', youtubeUrl: '', youtubeId: null, googleMeetUrl: '', isLive: false, updatedAt: null },
+        live: { title: '', youtubeUrl: '', youtubeId: null, googleMeetUrl: '', dailyRoomUrl: '', isLive: false, updatedAt: null },
       });
     }
     return res.json({ live: toLiveStream(result.rows[0]) });
@@ -51,10 +60,11 @@ export const getLiveStream = async (_req, res) => {
 
 // PUT /api/live — leader tool: set the stream/meet links + title and toggle live on/off.
 export const updateLiveStream = async (req, res) => {
-  const { title, youtubeUrl, googleMeetUrl, isLive } = req.body || {};
+  const { title, youtubeUrl, googleMeetUrl, dailyRoomUrl, isLive } = req.body || {};
 
   const hasYoutube = !!extractYouTubeId(youtubeUrl);
   const hasMeet = !!(googleMeetUrl && googleMeetUrl.trim());
+  const hasDaily = !!(dailyRoomUrl && dailyRoomUrl.trim());
 
   if (youtubeUrl && !hasYoutube) {
     return res.status(400).json({ error: 'That does not look like a valid YouTube URL.' });
@@ -62,17 +72,20 @@ export const updateLiveStream = async (req, res) => {
   if (googleMeetUrl && !isLikelyMeetUrl(googleMeetUrl)) {
     return res.status(400).json({ error: 'That does not look like a valid Google Meet link (should look like https://meet.google.com/xxx-xxxx-xxx).' });
   }
-  if (isLive && !hasYoutube && !hasMeet) {
-    return res.status(400).json({ error: 'Add a YouTube link or a Google Meet link before going live.' });
+  if (dailyRoomUrl && !isLikelyDailyUrl(dailyRoomUrl)) {
+    return res.status(400).json({ error: 'That does not look like a valid Daily room URL (should look like https://yourdomain.daily.co/room-name).' });
+  }
+  if (isLive && !hasYoutube && !hasMeet && !hasDaily) {
+    return res.status(400).json({ error: 'Add a YouTube link, a Daily room, or a Google Meet link before going live.' });
   }
 
   try {
     const result = await query(
       `UPDATE live_stream
-         SET title = $1, youtube_url = $2, google_meet_url = $3, is_live = $4, updated_at = NOW()
+         SET title = $1, youtube_url = $2, google_meet_url = $3, daily_room_url = $4, is_live = $5, updated_at = NOW()
        WHERE id = 1
        RETURNING *`,
-      [title || '', youtubeUrl || '', googleMeetUrl || '', !!isLive]
+      [title || '', youtubeUrl || '', googleMeetUrl || '', dailyRoomUrl || '', !!isLive]
     );
     return res.json({ live: toLiveStream(result.rows[0]) });
   } catch (error) {

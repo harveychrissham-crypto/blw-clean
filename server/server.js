@@ -66,14 +66,20 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
+        // 'blob:' is required for daily-js's bundled worker (used for the
+        // embedded Daily call on /live) — without it the call frame fails
+        // to load with a CSP violation, same class of issue as the sermon
+        // embeds below.
+        scriptSrc: ["'self'", 'blob:'],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", 'data:', 'blob:', 'https://*.supabase.co', 'https://i.ytimg.com'],
-        connectSrc: ["'self'", 'https://*.supabase.co'],
+        connectSrc: ["'self'", 'https://*.supabase.co', 'https://*.daily.co', 'wss://*.daily.co'],
         fontSrc: ["'self'"],
         objectSrc: ["'none'"],
-        // Allows the sermon player to embed YouTube's privacy-enhanced player inline.
-        frameSrc: ["'self'", 'https://www.youtube-nocookie.com'],
+        // Allows the sermon player to embed YouTube's privacy-enhanced player
+        // inline, and the /live page to embed a Daily.co call inline.
+        frameSrc: ["'self'", 'https://www.youtube-nocookie.com', 'https://*.daily.co'],
+        workerSrc: ["'self'", 'blob:'],
         upgradeInsecureRequests: [],
       },
     },

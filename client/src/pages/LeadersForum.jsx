@@ -1548,7 +1548,7 @@ function LiveViewersList() {
 // ─── Live Stream Manager panel ─────────────────────────────────────────────────
 function LiveManagerPanel({ onClose }) {
   const [tab, setTab] = useState('settings'); // 'settings' | 'viewers'
-  const [form, setForm] = useState({ title: '', youtubeUrl: '', googleMeetUrl: '', isLive: false });
+  const [form, setForm] = useState({ title: '', youtubeUrl: '', googleMeetUrl: '', dailyRoomUrl: '', isLive: false });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -1563,6 +1563,7 @@ function LiveManagerPanel({ onClose }) {
           title: live.title || '',
           youtubeUrl: live.youtubeUrl || '',
           googleMeetUrl: live.googleMeetUrl || '',
+          dailyRoomUrl: live.dailyRoomUrl || '',
           isLive: !!live.isLive,
         });
       })
@@ -1673,9 +1674,14 @@ function LiveManagerPanel({ onClose }) {
                     <p className="mt-1 text-[11px] text-white/30">Paste the YouTube Live link — watch, youtu.be, or /live/ links all work. Plays inline on the Live page.</p>
                   </div>
                   <div>
-                    <label className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40"><FiVideo className="h-3 w-3" /> Google Meet link</label>
+                    <label className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40"><FiVideo className="h-3 w-3" /> Live call room (Daily)</label>
+                    <input value={form.dailyRoomUrl} onChange={set('dailyRoomUrl')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="https://blwcentraleastafrica.daily.co/blw-live" />
+                    <p className="mt-1 text-[11px] text-white/30">Plays inline on the Live page, right in the video slot — no new tab needed. Used when there's no YouTube link set.</p>
+                  </div>
+                  <div>
+                    <label className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40"><FiVideo className="h-3 w-3" /> Google Meet link (fallback)</label>
                     <input value={form.googleMeetUrl} onChange={set('googleMeetUrl')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="https://meet.google.com/xxx-xxxx-xxx" />
-                    <p className="mt-1 text-[11px] text-white/30">Optional second way in — shows a "Join via Google Meet" button that opens in a new tab (Meet links can't play inline).</p>
+                    <p className="mt-1 text-[11px] text-white/30">Optional — shows a "Join via Google Meet" button that opens in a new tab. Only used when no Daily room is set (Meet links can't play inline).</p>
                   </div>
 
                   {error && (

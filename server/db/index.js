@@ -132,6 +132,11 @@ export const initDb = async () => {
   await pool.query(`
     ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS google_meet_url TEXT NOT NULL DEFAULT '';
   `);
+  // Replaces the Google Meet link as the "join the call" option — a Daily.co
+  // room URL that embeds inline via daily-js instead of opening a new tab.
+  await pool.query(`
+    ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS daily_room_url TEXT NOT NULL DEFAULT '';
+  `);
   await pool.query(`
     INSERT INTO live_stream (id) VALUES (1)
     ON CONFLICT (id) DO NOTHING;
