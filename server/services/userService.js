@@ -30,7 +30,7 @@ export const createUser = async ({
   const result = await query(
     `INSERT INTO users (full_name, email, password_hash, phone, campus_zone, chapter, country, residence, birthday, invited_by, gender, membership_id, badge, status)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'Verified')
-     RETURNING email, full_name, phone, campus_zone, chapter`,
+     RETURNING email, full_name, phone, campus_zone, chapter, country, residence, birthday, invited_by, gender, membership_id, badge, status`,
     [
       fullName,
       email.toLowerCase(),

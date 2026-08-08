@@ -43,17 +43,18 @@ export default function Dashboard() {
   const email = user?.email || 'hello@yourdomain.com';
   const displayName = name.split(' ')[0];
 
+  const notSet = 'Not set';
   const details = [
-    { label: 'Title', value: user?.title || 'Brother', icon: FiUsers },
+    { label: 'Title', value: user?.title || notSet, icon: FiUsers },
     { label: 'Display name', value: displayName, icon: FiShield },
     { label: 'Email', value: email, icon: FiMail },
-    { label: 'Phone', value: user?.phone || '+254 113 181 731', icon: FiPhone },
+    { label: 'Phone', value: user?.phone || notSet, icon: FiPhone },
     { label: 'Service church', value: user?.church || "Believers' LoveWorld Campus Ministry", icon: FiGlobe },
-    { label: 'Service area', value: user?.campus || 'Mega Church HQ', icon: FiMapPin },
-    { label: 'Gender', value: user?.gender || 'Male', icon: FiStar },
-    { label: 'Employment', value: user?.employment || 'Unemployed', icon: FiCheckCircle },
-    { label: 'Country', value: user?.country || 'Ghana', icon: FiGlobe },
-    { label: 'Marital status', value: user?.status || 'Single', icon: FiHeart },
+    { label: 'Fellowship / PCF', value: user?.chapter || notSet, icon: FiMapPin },
+    { label: 'Campus zone', value: user?.campusZone || notSet, icon: FiMapPin },
+    { label: 'Gender', value: user?.gender || notSet, icon: FiStar },
+    { label: 'Country', value: user?.country || notSet, icon: FiGlobe },
+    { label: 'Marital status', value: user?.status || notSet, icon: FiHeart },
   ];
 
   const handleDelete = async () => {

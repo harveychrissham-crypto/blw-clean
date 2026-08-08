@@ -65,7 +65,7 @@ export default function Auth() {
           return;
         }
 
-        login({ user: body.user, token: body.token });
+        login(body.user);
         setForm({ ...emptyForm, email: form.email });
         setLastMode('login');
         setStatus('submitted');
@@ -107,7 +107,7 @@ export default function Auth() {
         return;
       }
 
-      login({ user: body.user, token: body.token });
+      login(body.user);
       setForm(emptyForm);
       setLastMode('register');
       setStatus('submitted');

@@ -64,7 +64,8 @@ export const login = async (req, res) => {
 
   try {
     const result = await query(
-      `SELECT full_name, email, phone, campus_zone, chapter, password_hash
+      `SELECT full_name, email, phone, campus_zone, chapter, country, residence,
+              birthday, invited_by, gender, membership_id, badge, status, password_hash
        FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1`,
       [email]
     );
@@ -84,6 +85,14 @@ export const login = async (req, res) => {
       phone: user.phone,
       campusZone: user.campus_zone,
       chapter: user.chapter,
+      country: user.country,
+      residence: user.residence,
+      birthday: user.birthday,
+      invitedBy: user.invited_by,
+      gender: user.gender,
+      membershipId: user.membership_id,
+      badge: user.badge,
+      status: user.status,
     };
     const token = createToken(payloadUser);
     setAuthCookie(res, token);
@@ -141,6 +150,14 @@ export const register = async (req, res) => {
       phone: user.phone,
       campusZone: user.campus_zone,
       chapter: user.chapter,
+      country: user.country,
+      residence: user.residence,
+      birthday: user.birthday,
+      invitedBy: user.invited_by,
+      gender: user.gender,
+      membershipId: user.membership_id,
+      badge: user.badge,
+      status: user.status,
     };
     const token = createToken(payloadUser);
     setAuthCookie(res, token);

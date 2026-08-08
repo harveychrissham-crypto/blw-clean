@@ -45,6 +45,14 @@ export const submitRegistration = async (req, res) => {
       phone: user.phone,
       campusZone: user.campus_zone,
       chapter: user.chapter,
+      country: user.country,
+      residence: user.residence,
+      birthday: user.birthday,
+      invitedBy: user.invited_by,
+      gender: user.gender,
+      membershipId: user.membership_id,
+      badge: user.badge,
+      status: user.status,
     };
     const token = createToken(payloadUser);
     res.cookie('blw_auth_token', token, authCookieOptions);
