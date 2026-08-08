@@ -1495,6 +1495,17 @@ function VenuesManagerPanel({ onClose }) {
 }
 
 
+// Formats a watch-time total in seconds as e.g. "1h 12m", "8m 30s", "45s".
+function formatWatchTime(totalSeconds) {
+  const s = Math.max(0, Math.round(totalSeconds || 0));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${sec}s`;
+  return `${sec}s`;
+}
+
 // ─── Live viewers list (who signed in on the public /live popup) ──────────────
 function LiveViewersList() {
   const [viewers, setViewers] = useState([]);
@@ -1524,21 +1535,31 @@ function LiveViewersList() {
 
   return (
     <div className="space-y-2">
-      <p className="text-[11px] text-white/30">{viewers.length} sign-in{viewers.length === 1 ? '' : 's'} recorded — most recent first.</p>
+      <p className="text-[11px] text-white/30">{viewers.length} viewer{viewers.length === 1 ? '' : 's'} recorded — most recently active first. Each browser is only counted once; returning visits add to their visit count and watch time instead of creating a new entry.</p>
       {viewers.map((v) => (
         <div key={v.id} className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.04] px-4 py-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.08] text-white/70">
             <FiUserCheck className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-white">{v.name}</p>
+            <div className="flex flex-wrap items-center gap-x-2">
+              <p className="truncate text-sm font-semibold text-white">{v.name}</p>
+              {v.visitCount > 1 && (
+                <span className="shrink-0 rounded-full bg-[#F2A31C]/15 px-2 py-0.5 text-[10px] font-semibold text-[#F2A31C]">
+                  Returned ×{v.visitCount}
+                </span>
+              )}
+            </div>
             <p className="truncate text-xs text-white/40">
-              {v.invitedBy ? `Invited by ${v.invitedBy}` : 'No invited-by given'}
+              {v.invitedBy ? `Invited by ${v.invitedBy}` : 'No invited-by given'} · {formatWatchTime(v.watchSeconds)} watched
             </p>
           </div>
-          <span className="shrink-0 text-[11px] text-white/30">
-            {v.createdAt ? new Date(v.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}
-          </span>
+          <div className="shrink-0 text-right text-[11px] text-white/30">
+            <p>
+              {v.lastSeenAt ? new Date(v.lastSeenAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}
+            </p>
+            <p className="text-white/20">last seen</p>
+          </div>
         </div>
       ))}
     </div>
