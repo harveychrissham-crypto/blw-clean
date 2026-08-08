@@ -64,10 +64,12 @@ app.use(
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:', 'blob:', 'https://*.supabase.co'],
+        imgSrc: ["'self'", 'data:', 'blob:', 'https://*.supabase.co', 'https://i.ytimg.com'],
         connectSrc: ["'self'", 'https://*.supabase.co'],
         fontSrc: ["'self'"],
         objectSrc: ["'none'"],
+        // Allows the sermon player to embed YouTube's privacy-enhanced player inline.
+        frameSrc: ["'self'", 'https://www.youtube-nocookie.com'],
         upgradeInsecureRequests: [],
       },
     },
