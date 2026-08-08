@@ -127,9 +127,26 @@ export const initDb = async () => {
       CONSTRAINT live_stream_singleton CHECK (id = 1)
     );
   `);
+  // Added alongside the Google Meet option — lets a leader set a Meet link
+  // as a second way to join the live service, next to the YouTube embed.
+  await pool.query(`
+    ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS google_meet_url TEXT NOT NULL DEFAULT '';
+  `);
   await pool.query(`
     INSERT INTO live_stream (id) VALUES (1)
     ON CONFLICT (id) DO NOTHING;
+  `);
+
+  // Lightweight, optional sign-in on the public /live page: visitors can type
+  // their name + who invited them before watching. Not required to view the
+  // stream — this just lets leaders see who tuned in.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS live_viewers (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      invited_by TEXT NOT NULL DEFAULT '',
+      created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    );
   `);
 };
 

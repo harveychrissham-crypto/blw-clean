@@ -25,3 +25,21 @@ export async function updateLiveStream(payload) {
   const body = await handle(res);
   return body.live;
 }
+
+// Optional "who's watching" sign-in from the popup on the public Live page.
+export async function submitLiveViewer(payload) {
+  const res = await fetch('/api/live/viewers', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const body = await handle(res);
+  return body.viewer;
+}
+
+// Leaders Forum: list of everyone who has signed in to watch live.
+export async function fetchLiveViewers() {
+  const res = await fetch('/api/live/viewers');
+  const body = await handle(res);
+  return body.viewers;
+}

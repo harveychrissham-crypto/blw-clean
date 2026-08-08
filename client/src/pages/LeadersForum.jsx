@@ -25,6 +25,9 @@ import {
   FiTrash2,
   FiFilm,
   FiRadio,
+  FiVideo,
+  FiUserCheck,
+  FiPlayCircle,
 } from 'react-icons/fi';
 import { MdQrCodeScanner } from 'react-icons/md';
 import { fetchAllMembers, searchMembers, checkInMember } from '../utils/members';
@@ -37,7 +40,7 @@ import {
 } from '../utils/outreachStories';
 import { fetchSermons, createSermon, updateSermon, deleteSermon, setFeaturedSermon } from '../utils/sermons';
 import { fetchVenues, saveVenue, deleteVenue as deleteVenueApi } from '../utils/venues';
-import { fetchLiveStream, updateLiveStream } from '../utils/live';
+import { fetchLiveStream, updateLiveStream, fetchLiveViewers } from '../utils/live';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const LEADER_CODE = '1120363';
@@ -1492,9 +1495,60 @@ function VenuesManagerPanel({ onClose }) {
 }
 
 
+// ─── Live viewers list (who signed in on the public /live popup) ──────────────
+function LiveViewersList() {
+  const [viewers, setViewers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchLiveViewers()
+      .then((data) => !cancelled && setViewers(data))
+      .catch((err) => !cancelled && setError(err.message || 'Unable to load viewers.'))
+      .finally(() => !cancelled && setLoading(false));
+    return () => { cancelled = true; };
+  }, []);
+
+  if (loading) return <p className="text-sm text-white/40">Loading viewers…</p>;
+  if (error) {
+    return (
+      <div className="flex items-start gap-2 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <FiAlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {error}
+      </div>
+    );
+  }
+  if (!viewers.length) {
+    return <p className="py-4 text-center text-sm text-white/40">No one has signed in yet. Names appear here as people fill in the popup on the public Live page.</p>;
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-[11px] text-white/30">{viewers.length} sign-in{viewers.length === 1 ? '' : 's'} recorded — most recent first.</p>
+      {viewers.map((v) => (
+        <div key={v.id} className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.04] px-4 py-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.08] text-white/70">
+            <FiUserCheck className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-white">{v.name}</p>
+            <p className="truncate text-xs text-white/40">
+              {v.invitedBy ? `Invited by ${v.invitedBy}` : 'No invited-by given'}
+            </p>
+          </div>
+          <span className="shrink-0 text-[11px] text-white/30">
+            {v.createdAt ? new Date(v.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Live Stream Manager panel ─────────────────────────────────────────────────
 function LiveManagerPanel({ onClose }) {
-  const [form, setForm] = useState({ title: '', youtubeUrl: '', isLive: false });
+  const [tab, setTab] = useState('settings'); // 'settings' | 'viewers'
+  const [form, setForm] = useState({ title: '', youtubeUrl: '', googleMeetUrl: '', isLive: false });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -1505,7 +1559,12 @@ function LiveManagerPanel({ onClose }) {
     fetchLiveStream()
       .then((live) => {
         if (cancelled) return;
-        setForm({ title: live.title || '', youtubeUrl: live.youtubeUrl || '', isLive: !!live.isLive });
+        setForm({
+          title: live.title || '',
+          youtubeUrl: live.youtubeUrl || '',
+          googleMeetUrl: live.googleMeetUrl || '',
+          isLive: !!live.isLive,
+        });
       })
       .catch((err) => !cancelled && setError(err.message || 'Unable to load live stream settings.'))
       .finally(() => !cancelled && setLoading(false));
@@ -1559,53 +1618,82 @@ function LiveManagerPanel({ onClose }) {
           </button>
         </div>
 
+        {/* Tabs */}
+        <div className="flex border-b border-white/10 px-6">
+          <button
+            onClick={() => setTab('settings')}
+            className={`px-4 py-3 text-xs font-bold uppercase tracking-[0.2em] transition ${
+              tab === 'settings' ? 'border-b-2 border-[#F2A31C] text-white' : 'text-white/40 hover:text-white/70'
+            }`}
+          >
+            Stream Settings
+          </button>
+          <button
+            onClick={() => setTab('viewers')}
+            className={`px-4 py-3 text-xs font-bold uppercase tracking-[0.2em] transition ${
+              tab === 'viewers' ? 'border-b-2 border-[#F2A31C] text-white' : 'text-white/40 hover:text-white/70'
+            }`}
+          >
+            Viewers
+          </button>
+        </div>
+
         <div className="max-h-[70vh] overflow-y-auto p-6 space-y-4">
-          {loading ? (
-            <p className="text-sm text-white/40">Loading live stream settings…</p>
-          ) : (
-            <>
-              <div className={`flex items-center justify-between rounded-2xl border px-4 py-3 ${form.isLive ? 'border-red-500/40 bg-red-500/[0.07]' : 'border-white/5 bg-white/[0.04]'}`}>
-                <div className="flex items-center gap-3">
-                  <FiRadio className={form.isLive ? 'text-red-400 animate-pulse' : 'text-white/40'} />
+          {tab === 'settings' && (
+            loading ? (
+              <p className="text-sm text-white/40">Loading live stream settings…</p>
+            ) : (
+              <>
+                <div className={`flex items-center justify-between rounded-2xl border px-4 py-3 ${form.isLive ? 'border-red-500/40 bg-red-500/[0.07]' : 'border-white/5 bg-white/[0.04]'}`}>
+                  <div className="flex items-center gap-3">
+                    <FiRadio className={form.isLive ? 'text-red-400 animate-pulse' : 'text-white/40'} />
+                    <div>
+                      <p className="text-sm font-semibold text-white">{form.isLive ? 'Currently live' : 'Currently offline'}</p>
+                      <p className="text-xs text-white/40">Members see the stream on /live only while this is on.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleLive(!form.isLive)}
+                    disabled={saving}
+                    className={`rounded-full px-4 py-2 text-xs font-bold transition disabled:opacity-50 ${form.isLive ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30' : 'bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] text-white hover:opacity-90'}`}
+                  >
+                    {form.isLive ? 'Go Offline' : 'Go Live'}
+                  </button>
+                </div>
+
+                <form onSubmit={submit} className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
                   <div>
-                    <p className="text-sm font-semibold text-white">{form.isLive ? 'Currently live' : 'Currently offline'}</p>
-                    <p className="text-xs text-white/40">Members see the stream on /live only while this is on.</p>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Stream title</label>
+                    <input value={form.title} onChange={set('title')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="e.g. Sunday 3rd Service" />
                   </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => toggleLive(!form.isLive)}
-                  disabled={saving}
-                  className={`rounded-full px-4 py-2 text-xs font-bold transition disabled:opacity-50 ${form.isLive ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30' : 'bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] text-white hover:opacity-90'}`}
-                >
-                  {form.isLive ? 'Go Offline' : 'Go Live'}
-                </button>
-              </div>
-
-              <form onSubmit={submit} className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-                <div>
-                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Stream title</label>
-                  <input value={form.title} onChange={set('title')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="e.g. Sunday 3rd Service" />
-                </div>
-                <div>
-                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">YouTube URL</label>
-                  <input value={form.youtubeUrl} onChange={set('youtubeUrl')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="https://www.youtube.com/watch?v=..." />
-                  <p className="mt-1 text-[11px] text-white/30">Paste the YouTube Live link — watch, youtu.be, or /live/ links all work.</p>
-                </div>
-
-                {error && (
-                  <div className="flex items-start gap-2 rounded-xl bg-red-500/10 px-3 py-2 text-xs text-red-300">
-                    <FiAlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {error}
+                  <div>
+                    <label className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40"><FiPlayCircle className="h-3 w-3" /> YouTube link</label>
+                    <input value={form.youtubeUrl} onChange={set('youtubeUrl')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="https://www.youtube.com/watch?v=..." />
+                    <p className="mt-1 text-[11px] text-white/30">Paste the YouTube Live link — watch, youtu.be, or /live/ links all work. Plays inline on the Live page.</p>
                   </div>
-                )}
-                {saved && <p className="text-xs text-emerald-300">Saved.</p>}
+                  <div>
+                    <label className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40"><FiVideo className="h-3 w-3" /> Google Meet link</label>
+                    <input value={form.googleMeetUrl} onChange={set('googleMeetUrl')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="https://meet.google.com/xxx-xxxx-xxx" />
+                    <p className="mt-1 text-[11px] text-white/30">Optional second way in — shows a "Join via Google Meet" button that opens in a new tab (Meet links can't play inline).</p>
+                  </div>
 
-                <button type="submit" disabled={saving} className="w-full rounded-xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50">
-                  {saving ? 'Saving…' : 'Save Details'}
-                </button>
-              </form>
-            </>
+                  {error && (
+                    <div className="flex items-start gap-2 rounded-xl bg-red-500/10 px-3 py-2 text-xs text-red-300">
+                      <FiAlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {error}
+                    </div>
+                  )}
+                  {saved && <p className="text-xs text-emerald-300">Saved.</p>}
+
+                  <button type="submit" disabled={saving} className="w-full rounded-xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50">
+                    {saving ? 'Saving…' : 'Save Details'}
+                  </button>
+                </form>
+              </>
+            )
           )}
+
+          {tab === 'viewers' && <LiveViewersList />}
         </div>
       </div>
     </div>
