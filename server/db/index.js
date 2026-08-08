@@ -112,6 +112,25 @@ export const initDb = async () => {
       updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
     );
   `);
+
+  // Single-row settings for the public /live page. A leader pastes the
+  // YouTube (or YouTube Live) URL and flips is_live on when the stream
+  // starts; the frontend embeds it via youtube-nocookie.com, same as
+  // the sermons feature.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS live_stream (
+      id INTEGER PRIMARY KEY DEFAULT 1,
+      title TEXT NOT NULL DEFAULT '',
+      youtube_url TEXT NOT NULL DEFAULT '',
+      is_live BOOLEAN NOT NULL DEFAULT FALSE,
+      updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+      CONSTRAINT live_stream_singleton CHECK (id = 1)
+    );
+  `);
+  await pool.query(`
+    INSERT INTO live_stream (id) VALUES (1)
+    ON CONFLICT (id) DO NOTHING;
+  `);
 };
 
 export default pool;

@@ -24,6 +24,7 @@ import {
   FiEdit2,
   FiTrash2,
   FiFilm,
+  FiRadio,
 } from 'react-icons/fi';
 import { MdQrCodeScanner } from 'react-icons/md';
 import { fetchAllMembers, searchMembers, checkInMember } from '../utils/members';
@@ -36,6 +37,7 @@ import {
 } from '../utils/outreachStories';
 import { fetchSermons, createSermon, updateSermon, deleteSermon, setFeaturedSermon } from '../utils/sermons';
 import { fetchVenues, saveVenue, deleteVenue as deleteVenueApi } from '../utils/venues';
+import { fetchLiveStream, updateLiveStream } from '../utils/live';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const LEADER_CODE = '1120363';
@@ -1490,6 +1492,127 @@ function VenuesManagerPanel({ onClose }) {
 }
 
 
+// ─── Live Stream Manager panel ─────────────────────────────────────────────────
+function LiveManagerPanel({ onClose }) {
+  const [form, setForm] = useState({ title: '', youtubeUrl: '', isLive: false });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchLiveStream()
+      .then((live) => {
+        if (cancelled) return;
+        setForm({ title: live.title || '', youtubeUrl: live.youtubeUrl || '', isLive: !!live.isLive });
+      })
+      .catch((err) => !cancelled && setError(err.message || 'Unable to load live stream settings.'))
+      .finally(() => !cancelled && setLoading(false));
+    return () => { cancelled = true; };
+  }, []);
+
+  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError('');
+    setSaved(false);
+    try {
+      await updateLiveStream(form);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      setError(err.message || 'Unable to save live stream settings.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleLive = async (nextIsLive) => {
+    setForm((f) => ({ ...f, isLive: nextIsLive }));
+    setSaving(true);
+    setError('');
+    try {
+      await updateLiveStream({ ...form, isLive: nextIsLive });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      setError(err.message || 'Unable to update live status.');
+      setForm((f) => ({ ...f, isLive: !nextIsLive }));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0c18]/95 px-4 py-8">
+      <div className="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.04] shadow-2xl">
+        <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#F2A31C]">Leaders tool</p>
+            <h2 className="mt-1 text-xl font-bold text-white">Manage Live Stream</h2>
+          </div>
+          <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10">
+            <FiX />
+          </button>
+        </div>
+
+        <div className="max-h-[70vh] overflow-y-auto p-6 space-y-4">
+          {loading ? (
+            <p className="text-sm text-white/40">Loading live stream settings…</p>
+          ) : (
+            <>
+              <div className={`flex items-center justify-between rounded-2xl border px-4 py-3 ${form.isLive ? 'border-red-500/40 bg-red-500/[0.07]' : 'border-white/5 bg-white/[0.04]'}`}>
+                <div className="flex items-center gap-3">
+                  <FiRadio className={form.isLive ? 'text-red-400 animate-pulse' : 'text-white/40'} />
+                  <div>
+                    <p className="text-sm font-semibold text-white">{form.isLive ? 'Currently live' : 'Currently offline'}</p>
+                    <p className="text-xs text-white/40">Members see the stream on /live only while this is on.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleLive(!form.isLive)}
+                  disabled={saving}
+                  className={`rounded-full px-4 py-2 text-xs font-bold transition disabled:opacity-50 ${form.isLive ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30' : 'bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] text-white hover:opacity-90'}`}
+                >
+                  {form.isLive ? 'Go Offline' : 'Go Live'}
+                </button>
+              </div>
+
+              <form onSubmit={submit} className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+                <div>
+                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Stream title</label>
+                  <input value={form.title} onChange={set('title')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="e.g. Sunday 3rd Service" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">YouTube URL</label>
+                  <input value={form.youtubeUrl} onChange={set('youtubeUrl')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="https://www.youtube.com/watch?v=..." />
+                  <p className="mt-1 text-[11px] text-white/30">Paste the YouTube Live link — watch, youtu.be, or /live/ links all work.</p>
+                </div>
+
+                {error && (
+                  <div className="flex items-start gap-2 rounded-xl bg-red-500/10 px-3 py-2 text-xs text-red-300">
+                    <FiAlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {error}
+                  </div>
+                )}
+                {saved && <p className="text-xs text-emerald-300">Saved.</p>}
+
+                <button type="submit" disabled={saving} className="w-full rounded-xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50">
+                  {saving ? 'Saving…' : 'Save Details'}
+                </button>
+              </form>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 function MembersList({ members, checkedInIds, onSelectMember }) {
   const [query, setQuery] = useState('');
 
@@ -1573,6 +1696,7 @@ export default function LeadersForum() {
   const [storiesManagerOpen, setStoriesManagerOpen] = useState(false);
   const [sermonsManagerOpen, setSermonsManagerOpen] = useState(false);
   const [venuesManagerOpen, setVenuesManagerOpen] = useState(false);
+  const [liveManagerOpen, setLiveManagerOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -1754,6 +1878,26 @@ export default function LeadersForum() {
             </div>
           </div>
         </div>
+
+        {/* Manage Live Stream card */}
+        <div
+          onClick={() => setLiveManagerOpen(true)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setLiveManagerOpen(true)}
+          className="group cursor-pointer overflow-hidden rounded-[2rem] border border-white/[0.07] bg-white/[0.04] p-6 transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-red-400">Content</p>
+              <h3 className="mt-2 text-xl font-bold text-white">Manage Live Stream ▸</h3>
+              <p className="mt-1 text-sm text-white/50">Set the stream link and go live/offline for the public Live page.</p>
+            </div>
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/[0.08] text-white group-hover:bg-white/[0.12] transition">
+              <FiRadio className="h-7 w-7" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Members list */}
@@ -1810,6 +1954,11 @@ export default function LeadersForum() {
       {/* Service venues manager modal */}
       {venuesManagerOpen && (
         <VenuesManagerPanel onClose={() => setVenuesManagerOpen(false)} />
+      )}
+
+      {/* Live stream manager modal */}
+      {liveManagerOpen && (
+        <LiveManagerPanel onClose={() => setLiveManagerOpen(false)} />
       )}
     </section>
   );

@@ -5,7 +5,7 @@ const content = [
   { title: 'Home', path: '/', description: 'Welcome to Believers\' LoveWorld Campus Ministry East and Central Africa Region and our vision for fellowship.' },
   { title: 'Outreaches', path: '/outreaches', description: 'See upcoming opportunities to serve and participate.' },
   { title: 'Events', path: '/events', description: 'Explore the calendar of services, outreaches, and ministry events.' },
-  { title: 'About', path: '/about', description: 'Learn about our mission, values, and leadership.' },
+  { title: 'Live', path: '/live', description: 'Watch the current live service transmission, or see the upcoming stream schedule.' },
   { title: 'Check-In', path: '/checkin', description: 'Find your member profile and QR badge for quick attendance check-in.' },
   { title: 'Give', path: '/give', description: 'Support the ministry with secure giving options.' },
   { title: 'Salvation', path: '/salvation', description: 'Discover the gospel and connect with support.' },

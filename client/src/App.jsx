@@ -5,7 +5,6 @@ import Layout from './layouts/Layout';
 import Home from './pages/Home';
 import Outreaches from './pages/Outreaches';
 import Events from './pages/Events';
-import About from './pages/About';
 import Checkin from './pages/Checkin';
 import Give from './pages/Give';
 import Salvation from './pages/Salvation';
@@ -38,7 +37,6 @@ const AnimatedRoutes = () => {
           <Route path="/events" element={<Layout><Events /></Layout>} />
           <Route path="/live" element={<Layout><Live /></Layout>} />
           <Route path="/rhapsody" element={<Layout><Rhapsody /></Layout>} />
-          <Route path="/about" element={<Layout><About /></Layout>} />
           <Route path="/checkin" element={<Layout><Checkin /></Layout>} />
           <Route path="/give" element={<Layout><Give /></Layout>} />
           <Route path="/salvation" element={<Layout><Salvation /></Layout>} />
