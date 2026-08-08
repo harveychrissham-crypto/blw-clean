@@ -198,6 +198,7 @@ export default function Live() {
                   src={`https://www.youtube-nocookie.com/embed/${live.youtubeId}?autoplay=0`}
                   title={live.title || 'Live service'}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  referrerPolicy="strict-origin-when-cross-origin"
                   allowFullScreen
                 />
               ) : showDailyEmbed ? (
