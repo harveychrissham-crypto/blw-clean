@@ -84,6 +84,13 @@ app.use(
       },
     },
     crossOriginEmbedderPolicy: false, // relax only if you embed iframes
+    // Helmet's default is 'no-referrer', which YouTube's embedded player
+    // rejects with "Error 153: Video player configuration error" (it now
+    // requires a referrer to validate embed requests). Each YouTube iframe
+    // also sets referrerPolicy="strict-origin-when-cross-origin" directly
+    // as a second line of defense, but setting it here too means any new
+    // embed added later doesn't have to remember to do that itself.
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
     hsts: {
       maxAge: 31536000,
       includeSubDomains: true,
