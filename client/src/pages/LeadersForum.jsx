@@ -35,6 +35,7 @@ import {
   deleteOutreachStory,
 } from '../utils/outreachStories';
 import { fetchSermons, createSermon, updateSermon, deleteSermon, setFeaturedSermon } from '../utils/sermons';
+import { fetchVenues, saveVenue, deleteVenue as deleteVenueApi } from '../utils/venues';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const LEADER_CODE = '1120363';
@@ -1295,7 +1296,200 @@ function SermonsManagerPanel({ onClose }) {
   );
 }
 
-// ─── Members List section ─────────────────────────────────────────────────────
+// ─── Service Venues Manager panel ──────────────────────────────────────────────
+const CHAPTER_OPTIONS = ['UON CHAPTER', 'TUK CHAPTER'];
+const EMPTY_VENUE_FORM = { chapter: CHAPTER_OPTIONS[0], venue: '', serviceTime: '' };
+
+function VenueForm({ initial, lockChapter, onCancel, onSave }) {
+  const [form, setForm] = useState(initial || EMPTY_VENUE_FORM);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!form.chapter.trim() || !form.venue.trim()) {
+      setError('Chapter and venue are required.');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      await onSave(form);
+    } catch (err) {
+      setError(err.message || 'Unable to save venue.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={submit} className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+      <div>
+        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Chapter</label>
+        {lockChapter ? (
+          <input value={form.chapter} disabled className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/60" />
+        ) : (
+          <select value={form.chapter} onChange={set('chapter')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50">
+            {CHAPTER_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        )}
+      </div>
+      <div>
+        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Service time</label>
+        <input value={form.serviceTime} onChange={set('serviceTime')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="e.g. 3rd Service (11 AM – 1 PM)" />
+      </div>
+      <div>
+        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Venue / building</label>
+        <input value={form.venue} onChange={set('venue')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="e.g. CCU Building, Chiromo Campus" />
+      </div>
+
+      {error && (
+        <div className="flex items-start gap-2 rounded-xl bg-red-500/10 px-3 py-2 text-xs text-red-300">
+          <FiAlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {error}
+        </div>
+      )}
+
+      <div className="flex gap-3 pt-1">
+        <button type="submit" disabled={saving} className="flex-1 rounded-xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50">
+          {saving ? 'Saving…' : 'Save Venue'}
+        </button>
+        <button type="button" onClick={onCancel} className="flex-1 rounded-xl border border-white/10 bg-white/[0.05] py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function VenuesManagerPanel({ onClose }) {
+  const [venues, setVenues] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [mode, setMode] = useState('list'); // 'list' | 'create' | 'edit'
+  const [editingVenue, setEditingVenue] = useState(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      setVenues(await fetchVenues());
+    } catch (err) {
+      setError(err.message || 'Unable to load service venues.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleCreate = async (form) => {
+    await saveVenue(form.chapter, { venue: form.venue, serviceTime: form.serviceTime });
+    setMode('list');
+    load();
+  };
+
+  const handleUpdate = async (form) => {
+    await saveVenue(editingVenue.chapter, { venue: form.venue, serviceTime: form.serviceTime });
+    setMode('list');
+    setEditingVenue(null);
+    load();
+  };
+
+  const handleDelete = async (v) => {
+    if (!window.confirm(`Remove the venue set for ${v.chapter}?`)) return;
+    try {
+      await deleteVenueApi(v.chapter);
+      load();
+    } catch (err) {
+      setError(err.message || 'Unable to delete venue.');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0c18]/95 px-4 py-8">
+      <div className="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.04] shadow-2xl">
+        <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#F2A31C]">Leaders tool</p>
+            <h2 className="mt-1 text-xl font-bold text-white">Manage Service Venues</h2>
+          </div>
+          <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10">
+            <FiX />
+          </button>
+        </div>
+
+        <div className="max-h-[70vh] overflow-y-auto p-6 space-y-4">
+          {mode === 'create' && (
+            <VenueForm onCancel={() => setMode('list')} onSave={handleCreate} />
+          )}
+
+          {mode === 'edit' && editingVenue && (
+            <VenueForm
+              initial={editingVenue}
+              lockChapter
+              onCancel={() => { setMode('list'); setEditingVenue(null); }}
+              onSave={handleUpdate}
+            />
+          )}
+
+          {mode === 'list' && (
+            <>
+              <button
+                onClick={() => setMode('create')}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 text-sm font-bold text-white transition hover:opacity-90"
+              >
+                <FiPlus /> Set a Chapter's Venue
+              </button>
+
+              <p className="text-center text-[11px] text-white/30">Each chapter's venue and service time shows on that chapter's members' dashboards.</p>
+
+              {error && (
+                <div className="flex items-start gap-2 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                  <FiAlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {error}
+                </div>
+              )}
+
+              {loading && <p className="text-sm text-white/40">Loading venues…</p>}
+              {!loading && venues.length === 0 && !error && (
+                <p className="py-4 text-center text-sm text-white/40">No venues set yet. Add the first one above.</p>
+              )}
+
+              <div className="space-y-2">
+                {venues.map((v) => (
+                  <div key={v.chapter} className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.04] px-4 py-3">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/[0.07]">
+                      <FiMapPin className="h-5 w-5 text-white/40" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-white">{v.chapter}</p>
+                      <p className="truncate text-xs text-white/40">{v.venue}{v.serviceTime ? ` · ${v.serviceTime}` : ''}</p>
+                    </div>
+                    <button
+                      onClick={() => { setEditingVenue(v); setMode('edit'); }}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 text-white/60 transition hover:bg-white/10 hover:text-white"
+                    >
+                      <FiEdit2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(v)}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-500/20 text-red-400 transition hover:bg-red-500/10"
+                    >
+                      <FiTrash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 function MembersList({ members, checkedInIds, onSelectMember }) {
   const [query, setQuery] = useState('');
 
@@ -1378,6 +1572,7 @@ export default function LeadersForum() {
   const [eventsManagerOpen, setEventsManagerOpen] = useState(false);
   const [storiesManagerOpen, setStoriesManagerOpen] = useState(false);
   const [sermonsManagerOpen, setSermonsManagerOpen] = useState(false);
+  const [venuesManagerOpen, setVenuesManagerOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -1539,6 +1734,26 @@ export default function LeadersForum() {
             </div>
           </div>
         </div>
+
+        {/* Manage Service Venues card */}
+        <div
+          onClick={() => setVenuesManagerOpen(true)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setVenuesManagerOpen(true)}
+          className="group cursor-pointer overflow-hidden rounded-[2rem] border border-white/[0.07] bg-white/[0.04] p-6 transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#F2A31C]">Content</p>
+              <h3 className="mt-2 text-xl font-bold text-white">Manage Service Venues ▸</h3>
+              <p className="mt-1 text-sm text-white/50">Set each chapter's Sunday check-in venue and time.</p>
+            </div>
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/[0.08] text-white group-hover:bg-white/[0.12] transition">
+              <FiMapPin className="h-7 w-7" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Members list */}
@@ -1590,6 +1805,11 @@ export default function LeadersForum() {
       {/* Sermons manager modal */}
       {sermonsManagerOpen && (
         <SermonsManagerPanel onClose={() => setSermonsManagerOpen(false)} />
+      )}
+
+      {/* Service venues manager modal */}
+      {venuesManagerOpen && (
+        <VenuesManagerPanel onClose={() => setVenuesManagerOpen(false)} />
       )}
     </section>
   );

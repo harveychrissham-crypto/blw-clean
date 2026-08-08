@@ -98,6 +98,20 @@ export const initDb = async () => {
     ALTER TABLE sermons
       ADD COLUMN IF NOT EXISTS is_featured BOOLEAN NOT NULL DEFAULT FALSE;
   `);
+
+  // Admin-managed service venue/time per chapter, shown on the member
+  // dashboard's Sunday self check-in card. Replaces the old hardcoded
+  // "Believers' LoveWorld Campus Ministry (LAA & Avenor)" text, which
+  // was the same for every member regardless of their chapter.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS chapter_venues (
+      id SERIAL PRIMARY KEY,
+      chapter TEXT NOT NULL UNIQUE,
+      venue TEXT NOT NULL,
+      service_time TEXT NOT NULL DEFAULT '',
+      updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    );
+  `);
 };
 
 export default pool;

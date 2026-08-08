@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { fetchVenueByChapter } from '../utils/venues';
 import {
   FiEdit2,
   FiLogOut,
@@ -21,6 +22,28 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const { user, logout, login } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [venue, setVenue] = useState(null);
+  const [venueStatus, setVenueStatus] = useState('idle'); // idle | loading | loaded | none | error
+
+  useEffect(() => {
+    if (!user?.chapter) {
+      setVenueStatus('none');
+      return;
+    }
+    let cancelled = false;
+    setVenueStatus('loading');
+    fetchVenueByChapter(user.chapter)
+      .then((result) => {
+        if (cancelled) return;
+        setVenue(result);
+        setVenueStatus(result ? 'loaded' : 'none');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setVenueStatus('error');
+      });
+    return () => { cancelled = true; };
+  }, [user?.chapter]);
   const [editForm, setEditForm] = useState({
     title: '',
     fullName: '',
@@ -217,8 +240,15 @@ export default function Dashboard() {
                 </div>
                 <div className="flex-1">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-[#F7C948]">Sunday self check-in</p>
-                  <h3 className="mt-1 text-xl font-semibold text-white">3rd Service (11 AM–1 PM)</h3>
-                  <p className="mt-1 text-[11px] text-slate-300">Believers' LoveWorld Campus Ministry (LAA & Avenor)</p>
+                  <h3 className="mt-1 text-xl font-semibold text-white">
+                    {venueStatus === 'loaded' && venue?.serviceTime ? venue.serviceTime : 'Service time to be announced'}
+                  </h3>
+                  <p className="mt-1 text-[11px] text-slate-300">
+                    {venueStatus === 'loading' && 'Loading your chapter\'s venue…'}
+                    {venueStatus === 'loaded' && venue?.venue}
+                    {venueStatus === 'none' && (user?.chapter ? `No venue set yet for ${user.chapter}. Check with your leaders.` : 'Add your chapter in Edit Profile to see your service venue.')}
+                    {venueStatus === 'error' && 'Unable to load your service venue right now.'}
+                  </p>
                   <div className="mt-3 rounded-2xl border border-white/10 p-4 text-sm text-slate-400">The 3rd service hasn't been opened yet by the team. Please try again in a moment.</div>
                   <div className="mt-4">
                     <button className="inline-flex items-center gap-2 rounded-full border border-pink-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-pink-600/10">
