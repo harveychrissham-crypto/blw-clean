@@ -142,9 +142,12 @@ export const initDb = async () => {
     ON CONFLICT (id) DO NOTHING;
   `);
 
-  // Lightweight, optional sign-in on the public /live page: visitors can type
-  // their name + who invited them before watching. Not required to view the
-  // stream — this just lets leaders see who tuned in.
+  // Lightweight, mandatory sign-in on the public /live page: visitors type
+  // their name + who invited them before watching. `client_id` is a random
+  // id the frontend generates once and stores in localStorage, so repeat
+  // visits from the same browser update the existing row (via upsert in the
+  // controller) instead of creating a new one — visit_count and
+  // watch_seconds accumulate across visits/returns instead of duplicating.
   await pool.query(`
     CREATE TABLE IF NOT EXISTS live_viewers (
       id SERIAL PRIMARY KEY,
@@ -152,6 +155,35 @@ export const initDb = async () => {
       invited_by TEXT NOT NULL DEFAULT '',
       created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
     );
+  `);
+  await pool.query(`
+    ALTER TABLE live_viewers ADD COLUMN IF NOT EXISTS client_id TEXT;
+  `);
+  await pool.query(`
+    ALTER TABLE live_viewers ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW();
+  `);
+  await pool.query(`
+    ALTER TABLE live_viewers ADD COLUMN IF NOT EXISTS visit_count INTEGER NOT NULL DEFAULT 1;
+  `);
+  await pool.query(`
+    ALTER TABLE live_viewers ADD COLUMN IF NOT EXISTS watch_seconds INTEGER NOT NULL DEFAULT 0;
+  `);
+  // Plain (non-partial) unique index — Postgres already treats NULLs as
+  // distinct from one another in a unique index, so older rows recorded
+  // before this feature (client_id IS NULL) don't conflict with each other
+  // or need a WHERE clause here. That matters because ON CONFLICT (client_id)
+  // in the controller can only auto-infer a *non-partial* unique index; a
+  // partial one (e.g. "WHERE client_id IS NOT NULL") would make every
+  // insert fail with "no unique or exclusion constraint matching the
+  // ON CONFLICT specification" — which is exactly what was happening here.
+  // The DROP first is needed because an earlier version of this migration
+  // already created the (broken, partial) index under this same name on
+  // any environment that had already booted with it — "IF NOT EXISTS" on
+  // CREATE would otherwise silently skip fixing it.
+  await pool.query(`DROP INDEX IF EXISTS live_viewers_client_id_idx;`);
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS live_viewers_client_id_idx
+      ON live_viewers (client_id);
   `);
 };
 
