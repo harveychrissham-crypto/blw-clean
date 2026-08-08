@@ -18,6 +18,7 @@ const [
   { default: eventRoutes },
   { default: outreachStoryRoutes },
   { default: uploadRoutes },
+  { default: sermonRoutes },
   { initDb },
 ] = await Promise.all([
   import('./routes/authRoutes.js'),
@@ -27,6 +28,7 @@ const [
   import('./routes/eventRoutes.js'),
   import('./routes/outreachStoryRoutes.js'),
   import('./routes/uploadRoutes.js'),
+  import('./routes/sermonRoutes.js'),
   import('./db/index.js'),
 ]);
 
@@ -93,6 +95,7 @@ app.use('/api/members', memberRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/outreach-stories', outreachStoryRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/sermons', sermonRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', message: 'BLW Campus Ministry API is running' });

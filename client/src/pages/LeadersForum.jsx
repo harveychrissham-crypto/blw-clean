@@ -23,6 +23,7 @@ import {
   FiPlus,
   FiEdit2,
   FiTrash2,
+  FiFilm,
 } from 'react-icons/fi';
 import { MdQrCodeScanner } from 'react-icons/md';
 import { fetchAllMembers, searchMembers, checkInMember } from '../utils/members';
@@ -33,6 +34,7 @@ import {
   updateOutreachStory,
   deleteOutreachStory,
 } from '../utils/outreachStories';
+import { fetchSermons, createSermon, updateSermon, deleteSermon, setFeaturedSermon } from '../utils/sermons';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const LEADER_CODE = '1120363';
@@ -1077,6 +1079,222 @@ function StoriesManagerPanel({ onClose }) {
   );
 }
 
+// ─── Sermons Manager panel ─────────────────────────────────────────────────────
+const EMPTY_SERMON_FORM = { title: '', speaker: '', description: '', youtubeUrl: '' };
+
+function SermonForm({ initial, onCancel, onSave }) {
+  const [form, setForm] = useState(initial || EMPTY_SERMON_FORM);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!form.title.trim() || !form.youtubeUrl.trim()) {
+      setError('Title and YouTube URL are required.');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      await onSave(form);
+    } catch (err) {
+      setError(err.message || 'Unable to save sermon.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={submit} className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+      <div>
+        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Title</label>
+        <input value={form.title} onChange={set('title')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="e.g. Walking in Victory" />
+      </div>
+      <div>
+        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Speaker</label>
+        <input value={form.speaker} onChange={set('speaker')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="e.g. Pastor John" />
+      </div>
+      <div>
+        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">YouTube URL</label>
+        <input value={form.youtubeUrl} onChange={set('youtubeUrl')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="https://www.youtube.com/watch?v=..." />
+        <p className="mt-1 text-[11px] text-white/30">Paste any YouTube link — watch, youtu.be, or shorts links all work.</p>
+      </div>
+      <div>
+        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Description</label>
+        <textarea value={form.description} onChange={set('description')} rows={2} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" />
+      </div>
+
+      {error && (
+        <div className="flex items-start gap-2 rounded-xl bg-red-500/10 px-3 py-2 text-xs text-red-300">
+          <FiAlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {error}
+        </div>
+      )}
+
+      <div className="flex gap-3 pt-1">
+        <button type="submit" disabled={saving} className="flex-1 rounded-xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50">
+          {saving ? 'Saving…' : 'Save Sermon'}
+        </button>
+        <button type="button" onClick={onCancel} className="flex-1 rounded-xl border border-white/10 bg-white/[0.05] py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function SermonsManagerPanel({ onClose }) {
+  const [sermons, setSermons] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [mode, setMode] = useState('list'); // 'list' | 'create' | 'edit'
+  const [editingSermon, setEditingSermon] = useState(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      setSermons(await fetchSermons());
+    } catch (err) {
+      setError(err.message || 'Unable to load sermons.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleCreate = async (form) => {
+    await createSermon(form);
+    setMode('list');
+    load();
+  };
+
+  const handleUpdate = async (form) => {
+    await updateSermon(editingSermon.id, form);
+    setMode('list');
+    setEditingSermon(null);
+    load();
+  };
+
+  const handleDelete = async (sermon) => {
+    if (!window.confirm(`Delete "${sermon.title}"? This cannot be undone.`)) return;
+    try {
+      await deleteSermon(sermon.id);
+      load();
+    } catch (err) {
+      setError(err.message || 'Unable to delete sermon.');
+    }
+  };
+
+  const handleSetFeatured = async (sermon) => {
+    try {
+      await setFeaturedSermon(sermon.id);
+      load();
+    } catch (err) {
+      setError(err.message || 'Unable to set featured sermon.');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0c18]/95 px-4 py-8">
+      <div className="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.04] shadow-2xl">
+        <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#F2A31C]">Leaders tool</p>
+            <h2 className="mt-1 text-xl font-bold text-white">Manage Sermons</h2>
+          </div>
+          <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10">
+            <FiX />
+          </button>
+        </div>
+
+        <div className="max-h-[70vh] overflow-y-auto p-6 space-y-4">
+          {mode === 'create' && (
+            <SermonForm onCancel={() => setMode('list')} onSave={handleCreate} />
+          )}
+
+          {mode === 'edit' && editingSermon && (
+            <SermonForm
+              initial={editingSermon}
+              onCancel={() => { setMode('list'); setEditingSermon(null); }}
+              onSave={handleUpdate}
+            />
+          )}
+
+          {mode === 'list' && (
+            <>
+              <button
+                onClick={() => setMode('create')}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 text-sm font-bold text-white transition hover:opacity-90"
+              >
+                <FiPlus /> Add New Sermon
+              </button>
+
+              <p className="text-center text-[11px] text-white/30">Tap the star to choose which sermon plays as the main video on the public Sermons page.</p>
+
+              {error && (
+                <div className="flex items-start gap-2 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                  <FiAlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {error}
+                </div>
+              )}
+
+              {loading && <p className="text-sm text-white/40">Loading sermons…</p>}
+              {!loading && sermons.length === 0 && !error && (
+                <p className="py-4 text-center text-sm text-white/40">No sermons yet. Add the first one above.</p>
+              )}
+
+              <div className="space-y-2">
+                {sermons.map((sermon) => (
+                  <div key={sermon.id} className={`flex items-center gap-3 rounded-2xl border px-4 py-3 ${sermon.isFeatured ? 'border-[#F2A31C]/40 bg-[#F2A31C]/[0.07]' : 'border-white/5 bg-white/[0.04]'}`}>
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/[0.07]">
+                      {sermon.youtubeId ? (
+                        <img src={`https://i.ytimg.com/vi/${sermon.youtubeId}/default.jpg`} alt={sermon.title} className="h-full w-full object-cover" />
+                      ) : (
+                        <FiFilm className="h-5 w-5 text-white/30" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-sm font-semibold text-white">{sermon.title}</p>
+                        {sermon.isFeatured && (
+                          <span className="shrink-0 rounded-full bg-[#F2A31C]/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#F2A31C]">Main</span>
+                        )}
+                      </div>
+                      <p className="truncate text-xs text-white/40">{sermon.speaker}</p>
+                    </div>
+                    <button
+                      onClick={() => handleSetFeatured(sermon)}
+                      disabled={sermon.isFeatured}
+                      title={sermon.isFeatured ? 'Currently the main video' : 'Set as main video'}
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition ${sermon.isFeatured ? 'border-[#F2A31C]/40 text-[#F2A31C]' : 'border-white/10 text-white/60 hover:bg-white/10 hover:text-white'}`}
+                    >
+                      <FiStar className="h-3.5 w-3.5" fill={sermon.isFeatured ? 'currentColor' : 'none'} />
+                    </button>
+                    <button
+                      onClick={() => { setEditingSermon(sermon); setMode('edit'); }}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 text-white/60 transition hover:bg-white/10 hover:text-white"
+                    >
+                      <FiEdit2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(sermon)}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-500/20 text-red-400 transition hover:bg-red-500/10"
+                    >
+                      <FiTrash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Members List section ─────────────────────────────────────────────────────
 function MembersList({ members, checkedInIds, onSelectMember }) {
   const [query, setQuery] = useState('');
@@ -1159,6 +1377,7 @@ export default function LeadersForum() {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [eventsManagerOpen, setEventsManagerOpen] = useState(false);
   const [storiesManagerOpen, setStoriesManagerOpen] = useState(false);
+  const [sermonsManagerOpen, setSermonsManagerOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -1240,7 +1459,7 @@ export default function LeadersForum() {
       </div>
 
       {/* Tools row */}
-      <div className="mb-6 grid gap-3 sm:grid-cols-3">
+      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {/* QR Scanner card */}
         <div
           onClick={() => setScannerOpen(true)}
@@ -1300,6 +1519,26 @@ export default function LeadersForum() {
             </div>
           </div>
         </div>
+
+        {/* Manage Sermons card */}
+        <div
+          onClick={() => setSermonsManagerOpen(true)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSermonsManagerOpen(true)}
+          className="group cursor-pointer overflow-hidden rounded-[2rem] border border-white/[0.07] bg-white/[0.04] p-6 transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#3D5AFE]">Content</p>
+              <h3 className="mt-2 text-xl font-bold text-white">Manage Sermons ▸</h3>
+              <p className="mt-1 text-sm text-white/50">Add YouTube sermon links shown on the public Sermons page.</p>
+            </div>
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/[0.08] text-white group-hover:bg-white/[0.12] transition">
+              <FiFilm className="h-7 w-7" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Members list */}
@@ -1346,6 +1585,11 @@ export default function LeadersForum() {
       {/* Outreach stories manager modal */}
       {storiesManagerOpen && (
         <StoriesManagerPanel onClose={() => setStoriesManagerOpen(false)} />
+      )}
+
+      {/* Sermons manager modal */}
+      {sermonsManagerOpen && (
+        <SermonsManagerPanel onClose={() => setSermonsManagerOpen(false)} />
       )}
     </section>
   );

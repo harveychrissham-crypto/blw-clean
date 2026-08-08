@@ -80,6 +80,24 @@ export const initDb = async () => {
     ALTER TABLE outreach_stories
       ADD COLUMN IF NOT EXISTS body TEXT NOT NULL DEFAULT '';
   `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS sermons (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      speaker TEXT NOT NULL DEFAULT '',
+      description TEXT NOT NULL DEFAULT '',
+      youtube_url TEXT NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  // Lets an admin pick which sermon plays as the main/featured video,
+  // instead of it always being whichever was added most recently.
+  await pool.query(`
+    ALTER TABLE sermons
+      ADD COLUMN IF NOT EXISTS is_featured BOOLEAN NOT NULL DEFAULT FALSE;
+  `);
 };
 
 export default pool;
