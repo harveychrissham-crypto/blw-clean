@@ -168,6 +168,7 @@ export const initDb = async () => {
   await pool.query(`
     ALTER TABLE live_viewers ADD COLUMN IF NOT EXISTS watch_seconds INTEGER NOT NULL DEFAULT 0;
   `);
+<<<<<<< HEAD
   // Plain (non-partial) unique index — Postgres already treats NULLs as
   // distinct from one another in a unique index, so older rows recorded
   // before this feature (client_id IS NULL) don't conflict with each other
@@ -184,6 +185,13 @@ export const initDb = async () => {
   await pool.query(`
     CREATE UNIQUE INDEX IF NOT EXISTS live_viewers_client_id_idx
       ON live_viewers (client_id);
+=======
+  // Partial unique index (not all-column unique) since older rows recorded
+  // before this feature won't have a client_id yet.
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS live_viewers_client_id_idx
+      ON live_viewers (client_id) WHERE client_id IS NOT NULL;
+>>>>>>> 41cb09bf0b7978909c4900e3d86bf803ee3da54b
   `);
 };
 
