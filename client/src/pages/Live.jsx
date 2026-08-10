@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiRadio, FiClock, FiPlayCircle, FiCalendar, FiX, FiUsers, FiVideo } from 'react-icons/fi';
+import { FiRadio, FiClock, FiPlayCircle, FiCalendar, FiUsers, FiVideo } from 'react-icons/fi';
 import DailyIframe from '@daily-co/daily-js';
-import { fetchLiveStream, submitLiveViewer } from '../utils/live';
+import { fetchLiveStream, submitLiveViewer, sendLiveHeartbeat, sendLiveHeartbeatBeacon } from '../utils/live';
 
 const schedule = [
   { day: 'Sunday', time: '10:00 AM', title: 'Main Worship Service' },
@@ -10,9 +10,12 @@ const schedule = [
   { day: 'Friday', time: '6:00 PM', title: 'Campus Connect Live' },
 ];
 
-// Small, dismissible "who's watching" card — shown every time someone opens
-// this page. It never blocks the stream: closing it (or just ignoring it)
-// gives full access, filling it in is a bonus for the leaders' records.
+// Mandatory "who's watching" gate — shown every time someone opens this
+// page, before any stream content is visible. There is no skip/close
+// option; a viewer must submit their name (invitedBy stays optional) to
+// reveal the page underneath. On a failed submit we show the error and let
+// them retry rather than letting them through, since the whole point is
+// that this step isn't optional.
 function WelcomePopup({ onDone }) {
   const [name, setName] = useState('');
   const [invitedBy, setInvitedBy] = useState('');
@@ -22,7 +25,7 @@ function WelcomePopup({ onDone }) {
   const submit = async (e) => {
     e.preventDefault();
     if (!name.trim()) {
-      setError('Please enter your name, or just skip this.');
+      setError('Please enter your name to continue.');
       return;
     }
     setSubmitting(true);
@@ -31,75 +34,69 @@ function WelcomePopup({ onDone }) {
       await submitLiveViewer({ name: name.trim(), invitedBy: invitedBy.trim() });
       onDone();
     } catch (err) {
-      // Don't trap the viewer behind a failed request — let them through.
-      setError(err.message || 'Could not save that, but you can keep watching.');
+      setError(err.message || 'Could not save that — please try again.');
       setSubmitting(false);
     }
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 24, scale: 0.96 }}
-      transition={{ duration: 0.35 }}
-      className="fixed bottom-4 right-4 left-4 z-40 sm:left-auto sm:w-full sm:max-w-sm"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      // z-40, one below the sticky nav header's z-50 (see Layout.jsx) — the
+      // gate still blocks/dims the page content below it, but the header
+      // itself stays clickable so people can navigate to Sermons, Outreach,
+      // etc. straight from here without having to fill this in first.
+      className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 p-4 backdrop-blur-md"
     >
-      <form
-        onSubmit={submit}
-        className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#14121f]/95 p-5 shadow-2xl backdrop-blur"
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 24, scale: 0.96 }}
+        transition={{ duration: 0.35 }}
+        className="w-full max-w-xs"
       >
-        <button
-          type="button"
-          onClick={onDone}
-          aria-label="Close"
-          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/60 transition hover:bg-white/10 hover:text-white"
+        <form
+          onSubmit={submit}
+          className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#14121f]/95 p-5 shadow-2xl"
         >
-          <FiX className="h-4 w-4" />
-        </button>
+          <div className="flex items-center gap-2">
+            <FiUsers className="text-[#F2A31C]" />
+            <p className="text-sm font-bold text-white">Watching with us?</p>
+          </div>
+          <p className="mt-1 text-xs text-white/50">
+            Let us know who's tuned in before you continue.
+          </p>
 
-        <div className="flex items-center gap-2 pr-8">
-          <FiUsers className="text-[#F2A31C]" />
-          <p className="text-sm font-bold text-white">Watching with us?</p>
-        </div>
-        <p className="mt-1 text-xs text-white/50">
-          Let us know who's tuned in — totally optional, you can watch either way.
-        </p>
+          <div className="mt-4 space-y-2">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Your name"
+              autoFocus
+              className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-[#F2A31C]/50"
+            />
+            <input
+              value={invitedBy}
+              onChange={(e) => setInvitedBy(e.target.value)}
+              placeholder="Invited by (optional)"
+              className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-[#F2A31C]/50"
+            />
+          </div>
 
-        <div className="mt-4 space-y-2">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Your name"
-            className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-[#F2A31C]/50"
-          />
-          <input
-            value={invitedBy}
-            onChange={(e) => setInvitedBy(e.target.value)}
-            placeholder="Invited by (optional)"
-            className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-[#F2A31C]/50"
-          />
-        </div>
+          {error && <p className="mt-2 text-xs text-red-300">{error}</p>}
 
-        {error && <p className="mt-2 text-xs text-red-300">{error}</p>}
-
-        <div className="mt-4 flex items-center gap-2">
           <button
             type="submit"
             disabled={submitting}
-            className="flex-1 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2 text-xs font-bold text-white transition hover:opacity-90 disabled:opacity-50"
+            className="mt-4 w-full rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2 text-xs font-bold text-white transition hover:opacity-90 disabled:opacity-50"
           >
             {submitting ? 'Saving…' : 'Continue'}
           </button>
-          <button
-            type="button"
-            onClick={onDone}
-            className="rounded-full border border-white/10 px-4 py-2 text-xs font-semibold text-white/60 transition hover:bg-white/[0.05] hover:text-white"
-          >
-            Skip
-          </button>
-        </div>
-      </form>
+        </form>
+      </motion.div>
     </motion.div>
   );
 }
@@ -134,6 +131,47 @@ export default function Live() {
   // set) still takes the main video slot when present, so Daily only claims
   // that slot when there's no YouTube stream to show.
   const showDailyEmbed = hasDailyRoom && !isStreaming;
+
+  // Watch-time tracking: once someone has signed in (past the mandatory
+  // gate), count a second every second the tab is actually visible/focused
+  // — not while it's in a background tab — and flush the accumulated total
+  // to the server every 20s, plus once more on unmount/tab-close via
+  // sendBeacon (a plain fetch can get killed mid-flight on unload).
+  const pendingSecondsRef = useRef(0);
+  useEffect(() => {
+    if (showWelcome) return; // haven't signed in yet — nothing to track
+
+    const tick = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        pendingSecondsRef.current += 1;
+      }
+    }, 1000);
+
+    const flush = setInterval(() => {
+      if (pendingSecondsRef.current > 0) {
+        sendLiveHeartbeat(pendingSecondsRef.current);
+        pendingSecondsRef.current = 0;
+      }
+    }, 20000);
+
+    const flushOnHide = () => {
+      if (document.visibilityState === 'hidden' && pendingSecondsRef.current > 0) {
+        sendLiveHeartbeatBeacon(pendingSecondsRef.current);
+        pendingSecondsRef.current = 0;
+      }
+    };
+    document.addEventListener('visibilitychange', flushOnHide);
+
+    return () => {
+      clearInterval(tick);
+      clearInterval(flush);
+      document.removeEventListener('visibilitychange', flushOnHide);
+      if (pendingSecondsRef.current > 0) {
+        sendLiveHeartbeatBeacon(pendingSecondsRef.current);
+        pendingSecondsRef.current = 0;
+      }
+    };
+  }, [showWelcome]);
 
   // Create/join the Daily call once the container is in the DOM and a room
   // is available, and always tear it down on unmount or when the room
@@ -198,6 +236,7 @@ export default function Live() {
                   src={`https://www.youtube-nocookie.com/embed/${live.youtubeId}?autoplay=0`}
                   title={live.title || 'Live service'}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  referrerPolicy="strict-origin-when-cross-origin"
                   allowFullScreen
                 />
               ) : showDailyEmbed ? (

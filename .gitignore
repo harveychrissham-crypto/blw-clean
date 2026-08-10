@@ -24,3 +24,16 @@ npm-debug.log*
 .vscode/
 *.venv/
 .venv/
+
+# Capacitor native projects — ios/ and android/ folders themselves ARE
+# committed (they're real source-controlled Xcode/Android Studio projects,
+# created by `npm run cap:add:ios` / `cap:add:android`), only their build
+# artifacts are ignored here.
+client/ios/App/Pods/
+client/ios/App/build/
+client/ios/App/DerivedData/
+client/android/.gradle/
+client/android/build/
+client/android/app/build/
+client/android/.idea/
+client/android/local.properties

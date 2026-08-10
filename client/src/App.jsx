@@ -1,7 +1,9 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+
 import Layout from './layouts/Layout';
+
 import Home from './pages/Home';
 import Outreaches from './pages/Outreaches';
 import Events from './pages/Events';
@@ -10,13 +12,17 @@ import Give from './pages/Give';
 import Salvation from './pages/Salvation';
 import Connect from './pages/Connect';
 import Live from './pages/Live';
-import Rhapsody from './pages/Rhapsody';
+import Sermons from './pages/Sermons';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import RecordSouls from './pages/RecordSouls';
 import AdminDashboard from './pages/AdminDashboard';
 import LeadersForum from './pages/LeadersForum';
+
 import { useAuth } from './context/AuthContext';
+import OfflineBanner from './components/OfflineBanner';
+
+import { syncOfflineContent } from './offlineSync';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -32,27 +38,147 @@ const AnimatedRoutes = () => {
         transition={{ duration: 0.3 }}
       >
         <Routes location={location}>
-          <Route path="/" element={<Layout><Home /></Layout>} />
-          <Route path="/outreaches" element={<Layout><Outreaches /></Layout>} />
-          <Route path="/events" element={<Layout><Events /></Layout>} />
-          <Route path="/live" element={<Layout><Live /></Layout>} />
-          <Route path="/rhapsody" element={<Layout><Rhapsody /></Layout>} />
-          <Route path="/checkin" element={<Layout><Checkin /></Layout>} />
-          <Route path="/give" element={<Layout><Give /></Layout>} />
-          <Route path="/salvation" element={<Layout><Salvation /></Layout>} />
-          <Route path="/connect" element={<Layout><Connect /></Layout>} />
-          <Route path="/auth" element={<Layout><Auth /></Layout>} />
-          {/* Auth-guarded routes: render Auth page when user is not signed in */}
+
+          {/* HOME */}
+          <Route
+            path="/"
+            element={
+              <Layout>
+                <Home />
+              </Layout>
+            }
+          />
+
+          {/* OUTREACHES */}
+          <Route
+            path="/outreaches"
+            element={
+              <Layout>
+                <Outreaches />
+              </Layout>
+            }
+          />
+
+          {/* EVENTS */}
+          <Route
+            path="/events"
+            element={
+              <Layout>
+                <Events />
+              </Layout>
+            }
+          />
+
+          {/* LIVE */}
+          <Route
+            path="/live"
+            element={
+              <Layout>
+                <Live />
+              </Layout>
+            }
+          />
+
+          {/* SERMONS */}
+          <Route
+            path="/sermons"
+            element={
+              <Layout>
+                <Sermons />
+              </Layout>
+            }
+          />
+
+          {/* CHECK-IN */}
+          <Route
+            path="/checkin"
+            element={
+              <Layout>
+                <Checkin />
+              </Layout>
+            }
+          />
+
+          {/* GIVE */}
+          <Route
+            path="/give"
+            element={
+              <Layout>
+                <Give />
+              </Layout>
+            }
+          />
+
+          {/* SALVATION */}
+          <Route
+            path="/salvation"
+            element={
+              <Layout>
+                <Salvation />
+              </Layout>
+            }
+          />
+
+          {/* CONNECT */}
+          <Route
+            path="/connect"
+            element={
+              <Layout>
+                <Connect />
+              </Layout>
+            }
+          />
+
+          {/* AUTH */}
+          <Route
+            path="/auth"
+            element={
+              <Layout>
+                <Auth />
+              </Layout>
+            }
+          />
+
+          {/* DASHBOARD */}
           <Route
             path="/dashboard"
-            element={<Layout>{user ? <Dashboard /> : <Auth />}</Layout>}
+            element={
+              <Layout>
+                {user ? <Dashboard /> : <Auth />}
+              </Layout>
+            }
           />
+
+          {/* RECORD SOULS */}
           <Route
             path="/record-souls"
-            element={<Layout>{user ? <RecordSouls /> : <Auth />}</Layout>}
+            element={
+              <Layout>
+                {user ? <RecordSouls /> : <Auth />}
+              </Layout>
+            }
           />
-          <Route path="/admin" element={<Layout><AdminDashboard /></Layout>} />
-          <Route path="/leaders-forum" element={<Layout><LeadersForum /></Layout>} />
+
+          {/* ADMIN */}
+          <Route
+            path="/admin"
+            element={
+              <Layout>
+                <AdminDashboard />
+              </Layout>
+            }
+          />
+
+          {/* LEADERS FORUM */}
+          <Route
+            path="/leaders-forum"
+            element={
+              <Layout>
+                <LeadersForum />
+              </Layout>
+            }
+          />
+
         </Routes>
       </motion.div>
     </AnimatePresence>
@@ -60,7 +186,29 @@ const AnimatedRoutes = () => {
 };
 
 function App() {
-  return <AnimatedRoutes />;
+  useEffect(() => {
+    // Sync public content when the app starts.
+    syncOfflineContent();
+
+    // Sync again whenever the device comes back online.
+    const handleOnline = () => {
+      console.log('Internet connection restored.');
+      syncOfflineContent();
+    };
+
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+    };
+  }, []);
+
+  return (
+    <>
+      <OfflineBanner />
+      <AnimatedRoutes />
+    </>
+  );
 }
 
 export default App;

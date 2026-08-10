@@ -98,24 +98,49 @@ const toViewer = (row) => ({
   id: row.id,
   name: row.name,
   invitedBy: row.invited_by || '',
-  createdAt: row.created_at,
+  createdAt: row.created_at,       // first time this person ever signed in
+  lastSeenAt: row.last_seen_at,    // most recent visit
+  visitCount: row.visit_count || 1,
+  watchSeconds: row.watch_seconds || 0,
 });
 
-// POST /api/live/viewers — public: optional "who's watching" sign-in from the
-// Live page popup. Never blocks access to the stream — this just logs it.
+// POST /api/live/viewers — public: sign-in from the mandatory Live page
+// gate. Keyed on clientId (a random id the browser generates once and
+// stores in localStorage), so the same browser returning later updates
+// its existing row — bumping visit_count and last_seen_at — instead of
+// creating a duplicate. If a name changes on a return visit we keep the
+// latest name; invitedBy only overwrites when a new value is actually given.
 export const recordLiveViewer = async (req, res) => {
   const name = typeof req.body?.name === 'string' ? req.body.name.trim().slice(0, 120) : '';
   const invitedBy = typeof req.body?.invitedBy === 'string' ? req.body.invitedBy.trim().slice(0, 120) : '';
+  const clientId = typeof req.body?.clientId === 'string' ? req.body.clientId.trim().slice(0, 64) : '';
 
   if (!name) {
     return res.status(400).json({ error: 'Name is required.' });
   }
 
   try {
-    const result = await query(
-      `INSERT INTO live_viewers (name, invited_by) VALUES ($1, $2) RETURNING *`,
-      [name, invitedBy]
-    );
+    let result;
+    if (clientId) {
+      result = await query(
+        `INSERT INTO live_viewers (name, invited_by, client_id, last_seen_at, visit_count)
+         VALUES ($1, $2, $3, NOW(), 1)
+         ON CONFLICT (client_id) DO UPDATE
+           SET name = EXCLUDED.name,
+               invited_by = CASE WHEN EXCLUDED.invited_by <> '' THEN EXCLUDED.invited_by ELSE live_viewers.invited_by END,
+               last_seen_at = NOW(),
+               visit_count = live_viewers.visit_count + 1
+         RETURNING *`,
+        [name, invitedBy, clientId]
+      );
+    } else {
+      // No clientId (e.g. an older client build) — fall back to the old
+      // always-insert behavior rather than guessing an identity.
+      result = await query(
+        `INSERT INTO live_viewers (name, invited_by) VALUES ($1, $2) RETURNING *`,
+        [name, invitedBy]
+      );
+    }
     return res.status(201).json({ viewer: toViewer(result.rows[0]) });
   } catch (error) {
     console.error('[live] record viewer error', error);
@@ -123,11 +148,48 @@ export const recordLiveViewer = async (req, res) => {
   }
 };
 
-// GET /api/live/viewers — leader tool: see who has signed in to watch live.
+// PATCH /api/live/viewers/heartbeat — public: called periodically (and once
+// more on page unload via sendBeacon) by the Live page while someone is
+// actively watching, to add to their running watch-time total. `seconds` is
+// the delta since the last heartbeat, not a running total, so it's safe to
+// just add it — this way a dropped/late request never overwrites progress.
+export const recordViewerHeartbeat = async (req, res) => {
+  const clientId = typeof req.body?.clientId === 'string' ? req.body.clientId.trim().slice(0, 64) : '';
+  const seconds = Number(req.body?.seconds);
+
+  if (!clientId || !Number.isFinite(seconds) || seconds <= 0) {
+    return res.status(400).json({ error: 'Invalid heartbeat.' });
+  }
+  // Clamp: no single heartbeat should be able to claim more than 5 minutes,
+  // guards against a stray/replayed request inflating the total.
+  const delta = Math.min(seconds, 300);
+
+  try {
+    const result = await query(
+      `UPDATE live_viewers
+         SET watch_seconds = watch_seconds + $1, last_seen_at = NOW()
+       WHERE client_id = $2
+       RETURNING *`,
+      [Math.round(delta), clientId]
+    );
+    if (!result.rows.length) {
+      // Viewer hasn't signed in yet (or is on an older client) — nothing to
+      // attach the time to, just no-op rather than erroring the page.
+      return res.status(204).end();
+    }
+    return res.json({ viewer: toViewer(result.rows[0]) });
+  } catch (error) {
+    console.error('[live] heartbeat error', error);
+    return res.status(500).json({ error: 'Unable to record watch time right now.' });
+  }
+};
+
+// GET /api/live/viewers — leader tool: see who has signed in to watch live,
+// most recently active first.
 export const listLiveViewers = async (_req, res) => {
   try {
     const result = await query(
-      `SELECT * FROM live_viewers ORDER BY created_at DESC LIMIT 500`
+      `SELECT * FROM live_viewers ORDER BY last_seen_at DESC LIMIT 500`
     );
     return res.json({ viewers: result.rows.map(toViewer) });
   } catch (error) {
