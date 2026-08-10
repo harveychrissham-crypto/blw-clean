@@ -22,8 +22,7 @@ import LeadersForum from './pages/LeadersForum';
 import { useAuth } from './context/AuthContext';
 import OfflineBanner from './components/OfflineBanner';
 
-
-function AnimatedRoutes() {
+const AnimatedRoutes = () => {
   const location = useLocation();
   const { user } = useAuth();
 
@@ -38,7 +37,7 @@ function AnimatedRoutes() {
       >
         <Routes location={location}>
 
-          {/* HOME */}
+          {/* Home */}
           <Route
             path="/"
             element={
@@ -48,7 +47,7 @@ function AnimatedRoutes() {
             }
           />
 
-          {/* OUTREACHES */}
+          {/* Outreaches */}
           <Route
             path="/outreaches"
             element={
@@ -58,7 +57,7 @@ function AnimatedRoutes() {
             }
           />
 
-          {/* EVENTS */}
+          {/* Events */}
           <Route
             path="/events"
             element={
@@ -68,7 +67,7 @@ function AnimatedRoutes() {
             }
           />
 
-          {/* LIVE */}
+          {/* Live */}
           <Route
             path="/live"
             element={
@@ -78,7 +77,7 @@ function AnimatedRoutes() {
             }
           />
 
-          {/* SERMONS */}
+          {/* Sermons */}
           <Route
             path="/sermons"
             element={
@@ -88,7 +87,7 @@ function AnimatedRoutes() {
             }
           />
 
-          {/* CHECK-IN */}
+          {/* Check-in */}
           <Route
             path="/checkin"
             element={
@@ -98,7 +97,7 @@ function AnimatedRoutes() {
             }
           />
 
-          {/* GIVE */}
+          {/* Give */}
           <Route
             path="/give"
             element={
@@ -108,7 +107,7 @@ function AnimatedRoutes() {
             }
           />
 
-          {/* SALVATION */}
+          {/* Salvation */}
           <Route
             path="/salvation"
             element={
@@ -118,7 +117,7 @@ function AnimatedRoutes() {
             }
           />
 
-          {/* CONNECT */}
+          {/* Connect */}
           <Route
             path="/connect"
             element={
@@ -128,7 +127,7 @@ function AnimatedRoutes() {
             }
           />
 
-          {/* AUTH */}
+          {/* Authentication */}
           <Route
             path="/auth"
             element={
@@ -138,7 +137,7 @@ function AnimatedRoutes() {
             }
           />
 
-          {/* DASHBOARD */}
+          {/* User Dashboard */}
           <Route
             path="/dashboard"
             element={
@@ -148,7 +147,7 @@ function AnimatedRoutes() {
             }
           />
 
-          {/* RECORD SOULS */}
+          {/* Record Souls */}
           <Route
             path="/record-souls"
             element={
@@ -158,7 +157,7 @@ function AnimatedRoutes() {
             }
           />
 
-          {/* ADMIN */}
+          {/* Admin */}
           <Route
             path="/admin"
             element={
@@ -168,7 +167,7 @@ function AnimatedRoutes() {
             }
           />
 
-          {/* LEADERS FORUM */}
+          {/* Leaders Forum */}
           <Route
             path="/leaders-forum"
             element={
@@ -178,7 +177,7 @@ function AnimatedRoutes() {
             }
           />
 
-          {/* UNKNOWN PAGE */}
+          {/* Unknown routes return home */}
           <Route
             path="*"
             element={
@@ -192,8 +191,7 @@ function AnimatedRoutes() {
       </motion.div>
     </AnimatePresence>
   );
-}
-
+};
 
 function App() {
   return (
@@ -203,6 +201,5 @@ function App() {
     </>
   );
 }
-
 
 export default App;
