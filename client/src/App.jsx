@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
 
@@ -21,8 +21,8 @@ import LeadersForum from './pages/LeadersForum';
 
 import { useAuth } from './context/AuthContext';
 import OfflineBanner from './components/OfflineBanner';
-
 import { syncOfflineContent } from './offlineSync';
+
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -37,9 +37,12 @@ const AnimatedRoutes = () => {
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3 }}
       >
+
         <Routes location={location}>
 
-          {/* HOME */}
+          {/* =========================
+              HOME
+          ========================== */}
           <Route
             path="/"
             element={
@@ -49,7 +52,10 @@ const AnimatedRoutes = () => {
             }
           />
 
-          {/* OUTREACHES */}
+
+          {/* =========================
+              OUTREACHES
+          ========================== */}
           <Route
             path="/outreaches"
             element={
@@ -59,7 +65,10 @@ const AnimatedRoutes = () => {
             }
           />
 
-          {/* EVENTS */}
+
+          {/* =========================
+              EVENTS
+          ========================== */}
           <Route
             path="/events"
             element={
@@ -69,7 +78,10 @@ const AnimatedRoutes = () => {
             }
           />
 
-          {/* LIVE */}
+
+          {/* =========================
+              LIVE
+          ========================== */}
           <Route
             path="/live"
             element={
@@ -79,7 +91,10 @@ const AnimatedRoutes = () => {
             }
           />
 
-          {/* SERMONS */}
+
+          {/* =========================
+              SERMONS
+          ========================== */}
           <Route
             path="/sermons"
             element={
@@ -89,7 +104,25 @@ const AnimatedRoutes = () => {
             }
           />
 
-          {/* CHECK-IN */}
+
+          {/* =========================
+              OLD RHAPSODY URL
+              Redirects to Sermons
+          ========================== */}
+          <Route
+            path="/rhapsody"
+            element={
+              <Navigate
+                to="/sermons"
+                replace
+              />
+            }
+          />
+
+
+          {/* =========================
+              CHECK-IN
+          ========================== */}
           <Route
             path="/checkin"
             element={
@@ -99,7 +132,10 @@ const AnimatedRoutes = () => {
             }
           />
 
-          {/* GIVE */}
+
+          {/* =========================
+              GIVE
+          ========================== */}
           <Route
             path="/give"
             element={
@@ -109,7 +145,10 @@ const AnimatedRoutes = () => {
             }
           />
 
-          {/* SALVATION */}
+
+          {/* =========================
+              SALVATION
+          ========================== */}
           <Route
             path="/salvation"
             element={
@@ -119,7 +158,10 @@ const AnimatedRoutes = () => {
             }
           />
 
-          {/* CONNECT */}
+
+          {/* =========================
+              CONNECT
+          ========================== */}
           <Route
             path="/connect"
             element={
@@ -129,7 +171,10 @@ const AnimatedRoutes = () => {
             }
           />
 
-          {/* AUTH */}
+
+          {/* =========================
+              AUTH
+          ========================== */}
           <Route
             path="/auth"
             element={
@@ -139,7 +184,10 @@ const AnimatedRoutes = () => {
             }
           />
 
-          {/* DASHBOARD */}
+
+          {/* =========================
+              USER DASHBOARD
+          ========================== */}
           <Route
             path="/dashboard"
             element={
@@ -149,7 +197,10 @@ const AnimatedRoutes = () => {
             }
           />
 
-          {/* RECORD SOULS */}
+
+          {/* =========================
+              RECORD SOULS
+          ========================== */}
           <Route
             path="/record-souls"
             element={
@@ -159,7 +210,10 @@ const AnimatedRoutes = () => {
             }
           />
 
-          {/* ADMIN */}
+
+          {/* =========================
+              ADMIN DASHBOARD
+          ========================== */}
           <Route
             path="/admin"
             element={
@@ -169,7 +223,10 @@ const AnimatedRoutes = () => {
             }
           />
 
-          {/* LEADERS FORUM */}
+
+          {/* =========================
+              LEADERS FORUM
+          ========================== */}
           <Route
             path="/leaders-forum"
             element={
@@ -179,36 +236,76 @@ const AnimatedRoutes = () => {
             }
           />
 
+
+          {/* =========================
+              FALLBACK
+          ========================== */}
+          <Route
+            path="*"
+            element={
+              <Navigate
+                to="/"
+                replace
+              />
+            }
+          />
+
         </Routes>
+
       </motion.div>
     </AnimatePresence>
   );
 };
 
+
 function App() {
+
   useEffect(() => {
-    // Sync public content when the app starts.
+
+    // Sync cached public content
+    // whenever the application starts.
     syncOfflineContent();
 
-    // Sync again whenever the device comes back online.
+
+    // Sync again whenever
+    // internet connection returns.
     const handleOnline = () => {
-      console.log('Internet connection restored.');
+
+      console.log(
+        'Internet connection restored. Syncing offline content...'
+      );
+
       syncOfflineContent();
+
     };
 
-    window.addEventListener('online', handleOnline);
+
+    window.addEventListener(
+      'online',
+      handleOnline
+    );
+
 
     return () => {
-      window.removeEventListener('online', handleOnline);
+
+      window.removeEventListener(
+        'online',
+        handleOnline
+      );
+
     };
+
   }, []);
+
 
   return (
     <>
       <OfflineBanner />
+
       <AnimatedRoutes />
     </>
   );
 }
+
 
 export default App;
