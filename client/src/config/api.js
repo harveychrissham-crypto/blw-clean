@@ -8,7 +8,7 @@ import { getToken } from '../utils/authToken';
  * since there is no same-origin server to call a relative "/api/..." path
  * against once the UI is running from the local bundle.
  */
-export const API_BASE_URL = 'https://blweastandcentralafrica.onrender.com';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 export function apiUrl(path) {
   if (/^https?:\/\//i.test(path)) return path;

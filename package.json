@@ -1,11 +1,16 @@
 {
-  "name": "blw-campus-ministry-server",
+  "name": "blw-kenya-zone-cloudflare",
+  "private": true,
   "version": "1.0.0",
   "type": "module",
-  "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "build": "cd ../client && npm install && npm run build"
+    "build": "npm --prefix client install && npm --prefix client run build",
+    "dev": "wrangler dev",
+    "deploy": "npm run build && wrangler deploy",
+    "cf:typegen": "wrangler types"
+  },
+  "devDependencies": {
+    "wrangler": "^4.44.0"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

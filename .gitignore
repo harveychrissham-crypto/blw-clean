@@ -43,3 +43,7 @@ client/android/keystore.properties
 client/android/app/release-keystore.jks
 client/android/app/*.jks
 client/android/app/*.keystore
+
+# Cloudflare local secrets
+.dev.vars
+.wrangler/
