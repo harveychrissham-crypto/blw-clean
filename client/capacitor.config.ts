@@ -5,11 +5,10 @@ const config: CapacitorConfig = {
   appName: 'BLW Campus Ministry',
   webDir: 'dist',
 
-  server: {
-    url: 'https://blweastandcentralafrica.onrender.com',
-    cleartext: false,
-  },
-
+  // No `server.url` here on purpose: the UI ships inside the app bundle so
+  // it opens instantly offline. All API calls go through src/config/api.js
+  // (apiFetch), which targets the live backend explicitly regardless of
+  // where the UI itself is running from.
   ios: {
     contentInset: 'automatic',
   },

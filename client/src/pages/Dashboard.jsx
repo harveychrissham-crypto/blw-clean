@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { fetchVenueByChapter } from '../utils/venues';
+import { apiFetch } from '../config/api';
 import {
   FiEdit2,
   FiLogOut,
@@ -86,9 +87,8 @@ export default function Dashboard() {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/account/delete', {
+      const response = await apiFetch('/api/auth/account/delete', {
         method: 'POST',
-        credentials: 'include',
       });
 
       const body = await response.json().catch(() => ({}));

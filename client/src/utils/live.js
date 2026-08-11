@@ -1,3 +1,4 @@
+import { apiFetch, apiUrl } from '../config/api';
 // Helpers for talking to /api/live — the single admin-managed live stream
 // setting shown on the public Live page.
 
@@ -32,13 +33,13 @@ async function handle(res) {
 }
 
 export async function fetchLiveStream() {
-  const res = await fetch('/api/live');
+  const res = await apiFetch('/api/live');
   const body = await handle(res);
   return body.live;
 }
 
 export async function updateLiveStream(payload) {
-  const res = await fetch('/api/live', {
+  const res = await apiFetch('/api/live', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -51,7 +52,7 @@ export async function updateLiveStream(payload) {
 // Always includes this browser's clientId so repeat visits update the same
 // viewer row instead of creating a new one.
 export async function submitLiveViewer(payload) {
-  const res = await fetch('/api/live/viewers', {
+  const res = await apiFetch('/api/live/viewers', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...payload, clientId: getLiveClientId() }),
@@ -67,7 +68,7 @@ export async function submitLiveViewer(payload) {
 export async function sendLiveHeartbeat(seconds) {
   if (!seconds || seconds <= 0) return;
   try {
-    await fetch('/api/live/viewers/heartbeat', {
+    await apiFetch('/api/live/viewers/heartbeat', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ clientId: getLiveClientId(), seconds }),
@@ -85,7 +86,7 @@ export function sendLiveHeartbeatBeacon(seconds) {
   try {
     const payload = JSON.stringify({ clientId: getLiveClientId(), seconds });
     navigator.sendBeacon?.(
-      '/api/live/viewers/heartbeat',
+      apiUrl('/api/live/viewers/heartbeat'),
       new Blob([payload], { type: 'application/json' })
     );
   } catch {
@@ -95,7 +96,7 @@ export function sendLiveHeartbeatBeacon(seconds) {
 
 // Leaders Forum: list of everyone who has signed in to watch live.
 export async function fetchLiveViewers() {
-  const res = await fetch('/api/live/viewers');
+  const res = await apiFetch('/api/live/viewers');
   const body = await handle(res);
   return body.viewers;
 }

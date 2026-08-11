@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { FiSearch, FiPhone, FiMail, FiDownload } from 'react-icons/fi';
 import { MdQrCodeScanner } from 'react-icons/md';
 import QRCode from 'qrcode';
+import { apiFetch } from '../config/api';
 
 const MEMBER_SEARCH_URL = '/api/members/search';
 
@@ -106,7 +107,7 @@ export default function Checkin() {
     setMessage('Searching for your member profile...');
 
     try {
-      const response = await fetch(`${MEMBER_SEARCH_URL}?q=${encodeURIComponent(trimmed)}`);
+      const response = await apiFetch(`${MEMBER_SEARCH_URL}?q=${encodeURIComponent(trimmed)}`);
       const body = await response.json().catch(() => ({}));
 
       if (!response.ok) {

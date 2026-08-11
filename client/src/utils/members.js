@@ -1,3 +1,4 @@
+import { apiFetch } from '../config/api';
 // Helpers for talking to the real /api/members endpoints (Postgres/Supabase-backed).
 // Replaces the old hardcoded MOCK_MEMBERS array in LeadersForum.jsx.
 
@@ -11,20 +12,20 @@ async function handle(res) {
 }
 
 export async function fetchAllMembers() {
-  const res = await fetch('/api/members');
+  const res = await apiFetch('/api/members');
   const body = await handle(res);
   return body.members || [];
 }
 
 export async function searchMembers(q) {
-  const res = await fetch(`/api/members/search?q=${encodeURIComponent(q)}`);
+  const res = await apiFetch(`/api/members/search?q=${encodeURIComponent(q)}`);
   if (res.status === 404) return []; // no matches — not an error state
   const body = await handle(res);
   return body.members || [];
 }
 
 export async function checkInMember(membershipId) {
-  const res = await fetch(`/api/members/${encodeURIComponent(membershipId)}/checkin`, {
+  const res = await apiFetch(`/api/members/${encodeURIComponent(membershipId)}/checkin`, {
     method: 'POST',
   });
   const body = await handle(res);

@@ -1,4 +1,5 @@
 import { Preferences } from '@capacitor/preferences';
+import { apiFetch } from '../config/api';
 
 const SERMONS_CACHE_KEY = 'offline_sermons';
 
@@ -34,7 +35,7 @@ async function handle(res) {
  */
 export async function fetchSermons() {
   try {
-    const res = await fetch('/api/sermons', {
+    const res = await apiFetch('/api/sermons', {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -87,7 +88,7 @@ export async function fetchSermons() {
  * Create a sermon.
  */
 export async function createSermon(payload) {
-  const res = await fetch('/api/sermons', {
+  const res = await apiFetch('/api/sermons', {
     method: 'POST',
     credentials: 'include',
     headers: {
@@ -106,7 +107,7 @@ export async function createSermon(payload) {
  * Update a sermon.
  */
 export async function updateSermon(id, payload) {
-  const res = await fetch(`/api/sermons/${id}`, {
+  const res = await apiFetch(`/api/sermons/${id}`, {
     method: 'PUT',
     credentials: 'include',
     headers: {
@@ -125,7 +126,7 @@ export async function updateSermon(id, payload) {
  * Delete a sermon.
  */
 export async function deleteSermon(id) {
-  const res = await fetch(`/api/sermons/${id}`, {
+  const res = await apiFetch(`/api/sermons/${id}`, {
     method: 'DELETE',
     credentials: 'include',
     headers: {
@@ -140,7 +141,7 @@ export async function deleteSermon(id) {
  * Set a sermon as featured.
  */
 export async function setFeaturedSermon(id) {
-  const res = await fetch(`/api/sermons/${id}/feature`, {
+  const res = await apiFetch(`/api/sermons/${id}/feature`, {
     method: 'PUT',
     credentials: 'include',
     headers: {

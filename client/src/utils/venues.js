@@ -1,3 +1,4 @@
+import { apiFetch } from '../config/api';
 import { Preferences } from '@capacitor/preferences';
 
 const VENUES_CACHE_KEY = 'offline_venues';
@@ -22,7 +23,7 @@ async function handle(res) {
 
 export async function fetchVenues() {
   try {
-    const res = await fetch('/api/venues');
+    const res = await apiFetch('/api/venues');
     const body = await handle(res);
 
     const venues = body.venues || [];
@@ -60,7 +61,7 @@ export async function fetchVenues() {
 
 export async function fetchVenueByChapter(chapter) {
   try {
-    const res = await fetch(
+    const res = await apiFetch(
       `/api/venues/${encodeURIComponent(chapter)}`
     );
 
@@ -127,7 +128,7 @@ export async function fetchVenueByChapter(chapter) {
 }
 
 export async function saveVenue(chapter, payload) {
-  const res = await fetch(
+  const res = await apiFetch(
     `/api/venues/${encodeURIComponent(chapter)}`,
     {
       method: 'PUT',
@@ -144,7 +145,7 @@ export async function saveVenue(chapter, payload) {
 }
 
 export async function deleteVenue(chapter) {
-  const res = await fetch(
+  const res = await apiFetch(
     `/api/venues/${encodeURIComponent(chapter)}`,
     {
       method: 'DELETE',

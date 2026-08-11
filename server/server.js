@@ -43,17 +43,44 @@ const clientDist = path.join(__dirname, '..', 'client', 'dist');
 // ── CORS ─────────────────────────────────────────────────────────────────────
 // In production, lock to your actual domain via ALLOWED_ORIGIN env var.
 // In dev, allow localhost:5173 (Vite default).
-const allowedOrigin =
-  process.env.ALLOWED_ORIGIN ||
-  (process.env.NODE_ENV === 'production' ? null : 'http://localhost:5173');
+//
+// ALLOWED_ORIGIN can be a single origin or a comma-separated list, e.g.
+//   ALLOWED_ORIGIN=https://blweastandcentralafrica.onrender.com
+//
+// The Capacitor native app's own origins are always allowed on top of that,
+// since v6+ the app ships with no `server.url` — its UI is bundled locally
+// and loaded from https://localhost (Android) / capacitor://localhost (iOS),
+// which is a different origin than the API and must be explicitly allowed.
+// The app authenticates with a Bearer token (not cookies), so this does not
+// widen access to cookie-based sessions.
+const CAPACITOR_ORIGINS = [
+  'https://localhost',
+  'capacitor://localhost',
+  'http://localhost',
+];
 
-if (process.env.NODE_ENV === 'production' && !allowedOrigin) {
+const configuredOrigins = (
+  process.env.ALLOWED_ORIGIN ||
+  (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5173')
+)
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+if (process.env.NODE_ENV === 'production' && configuredOrigins.length === 0) {
   throw new Error('ALLOWED_ORIGIN must be set in production (e.g. https://yourdomain.com)');
 }
 
+const allowedOrigins = [...configuredOrigins, ...CAPACITOR_ORIGINS];
+
 app.use(
   cors({
-    origin: allowedOrigin,
+    origin(origin, callback) {
+      // No Origin header (native HTTP clients, curl, server-to-server) — allow.
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

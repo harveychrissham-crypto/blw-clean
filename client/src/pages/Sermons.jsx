@@ -1,18 +1,41 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { FiAlertCircle, FiFilm } from 'react-icons/fi';
+import { FiAlertCircle, FiFilm, FiWifiOff } from 'react-icons/fi';
 import { fetchSermons } from '../utils/sermons';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 /**
- * Sermon video player
+ * Sermon video player.
+ *
+ * Sermon metadata (title, speaker, description) is cached and available
+ * offline, but the video itself is a live YouTube embed — that always
+ * needs a connection, caching a youtubeId doesn't make the video offline.
+ * When there's no connection we show a clear placeholder instead of a
+ * blank/broken iframe.
  */
 function SermonPlayer({ sermon }) {
+  const isOnline = useOnlineStatus();
+
   if (!sermon?.youtubeId) {
     return (
       <div className="flex aspect-video w-full items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-sm text-white/40">
         <div className="text-center">
           <FiFilm className="mx-auto mb-2 h-8 w-8" />
           <p>Video unavailable</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isOnline) {
+    return (
+      <div className="flex aspect-video w-full items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-sm text-white/40">
+        <div className="text-center">
+          <FiWifiOff className="mx-auto mb-2 h-8 w-8" />
+          <p>Video needs an internet connection</p>
+          <p className="mt-1 text-xs text-white/30">
+            Details are saved, but playback requires you to be online.
+          </p>
         </div>
       </div>
     );
@@ -36,7 +59,47 @@ function SermonPlayer({ sermon }) {
   );
 }
 
+/**
+ * Compact row used for the "More Sermons" list while offline — avoids
+ * repeating an identical "needs internet" video box for every entry.
+ */
+function OfflineSermonRow({ sermon, index }) {
+  return (
+    <div className="flex gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/30">
+        <FiFilm className="h-5 w-5" />
+      </div>
+
+      <div className="min-w-0">
+        <p className="text-xs font-bold uppercase tracking-widest text-white/30">
+          Sermon {index + 2}
+        </p>
+
+        <h4 className="mt-1 text-base font-bold text-white">
+          {sermon.title}
+        </h4>
+
+        {sermon.speaker && (
+          <p
+            className="mt-1 text-sm font-semibold"
+            style={{ color: '#F2A31C' }}
+          >
+            {sermon.speaker}
+          </p>
+        )}
+
+        {sermon.description && (
+          <p className="mt-2 text-sm leading-relaxed text-white/50">
+            {sermon.description}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Sermons() {
+  const isOnline = useOnlineStatus();
   const [sermons, setSermons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -198,54 +261,62 @@ export default function Sermons() {
 
           <div className="space-y-10">
 
-            {olderSermons.map((sermon, index) => (
-              <motion.div
-                key={sermon.id}
-                initial={{
-                  opacity: 0,
-                  y: 15,
-                }}
-                whileInView={{
-                  opacity: 1,
-                  y: 0,
-                }}
-                viewport={{
-                  once: true,
-                }}
-              >
+            {olderSermons.map((sermon, index) =>
+              isOnline ? (
+                <motion.div
+                  key={sermon.id}
+                  initial={{
+                    opacity: 0,
+                    y: 15,
+                  }}
+                  whileInView={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  viewport={{
+                    once: true,
+                  }}
+                >
 
-                <SermonPlayer sermon={sermon} />
+                  <SermonPlayer sermon={sermon} />
 
-                <div className="mt-4">
+                  <div className="mt-4">
 
-                  <p className="text-xs font-bold uppercase tracking-widest text-white/30">
-                    Sermon {index + 2}
-                  </p>
-
-                  <h4 className="mt-1 text-lg font-bold text-white">
-                    {sermon.title}
-                  </h4>
-
-                  {sermon.speaker && (
-                    <p
-                      className="mt-1 text-sm font-semibold"
-                      style={{
-                        color: '#F2A31C',
-                      }}
-                    >
-                      {sermon.speaker}
+                    <p className="text-xs font-bold uppercase tracking-widest text-white/30">
+                      Sermon {index + 2}
                     </p>
-                  )}
 
-                  {sermon.description && (
-                    <p className="mt-2 text-sm leading-relaxed text-white/50">
-                      {sermon.description}
-                    </p>
-                  )}
-                </div>
+                    <h4 className="mt-1 text-lg font-bold text-white">
+                      {sermon.title}
+                    </h4>
 
-              </motion.div>
-            ))}
+                    {sermon.speaker && (
+                      <p
+                        className="mt-1 text-sm font-semibold"
+                        style={{
+                          color: '#F2A31C',
+                        }}
+                      >
+                        {sermon.speaker}
+                      </p>
+                    )}
+
+                    {sermon.description && (
+                      <p className="mt-2 text-sm leading-relaxed text-white/50">
+                        {sermon.description}
+                      </p>
+                    )}
+                  </div>
+
+                </motion.div>
+              ) : (
+                <OfflineSermonRow
+                  key={sermon.id}
+                  sermon={sermon}
+                  index={index}
+                />
+              )
+            )}
 
           </div>
         </div>

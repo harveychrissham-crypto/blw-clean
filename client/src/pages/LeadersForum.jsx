@@ -41,6 +41,7 @@ import {
 import { fetchSermons, createSermon, updateSermon, deleteSermon, setFeaturedSermon } from '../utils/sermons';
 import { fetchVenues, saveVenue, deleteVenue as deleteVenueApi } from '../utils/venues';
 import { fetchLiveStream, updateLiveStream, fetchLiveViewers } from '../utils/live';
+import { apiFetch } from '../config/api';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const LEADER_CODE = '1120363';
@@ -859,7 +860,7 @@ function StoryForm({ initial, onCancel, onSave }) {
     try {
       const body = new FormData();
       body.append('photo', file);
-      const res = await fetch('/api/uploads', { method: 'POST', body });
+      const res = await apiFetch('/api/uploads', { method: 'POST', body });
       let payload = null;
       try { payload = await res.json(); } catch { /* no body */ }
       if (!res.ok) throw new Error(payload?.error || `Upload failed (${res.status})`);

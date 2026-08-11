@@ -1,3 +1,4 @@
+import { apiFetch } from '../config/api';
 import { Preferences } from '@capacitor/preferences';
 
 const EVENTS_CACHE_KEY = 'offline_events';
@@ -22,7 +23,7 @@ async function handle(res) {
 
 export async function fetchEvents() {
   try {
-    const res = await fetch('/api/events');
+    const res = await apiFetch('/api/events');
     const body = await handle(res);
 
     const events = body.events || [];
@@ -60,7 +61,7 @@ export async function fetchEvents() {
 }
 
 export async function createEvent(payload) {
-  const res = await fetch('/api/events', {
+  const res = await apiFetch('/api/events', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -74,7 +75,7 @@ export async function createEvent(payload) {
 }
 
 export async function updateEvent(id, payload) {
-  const res = await fetch(`/api/events/${id}`, {
+  const res = await apiFetch(`/api/events/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -88,7 +89,7 @@ export async function updateEvent(id, payload) {
 }
 
 export async function deleteEvent(id) {
-  const res = await fetch(`/api/events/${id}`, {
+  const res = await apiFetch(`/api/events/${id}`, {
     method: 'DELETE',
   });
 

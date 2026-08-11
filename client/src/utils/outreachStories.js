@@ -1,3 +1,4 @@
+import { apiFetch } from '../config/api';
 import { Preferences } from '@capacitor/preferences';
 
 const OUTREACH_CACHE_KEY = 'offline_outreach_stories';
@@ -22,7 +23,7 @@ async function handle(res) {
 
 export async function fetchOutreachStories() {
   try {
-    const res = await fetch('/api/outreach-stories');
+    const res = await apiFetch('/api/outreach-stories');
     const body = await handle(res);
 
     const stories = body.stories || [];
@@ -59,7 +60,7 @@ export async function fetchOutreachStories() {
 }
 
 export async function createOutreachStory(payload) {
-  const res = await fetch('/api/outreach-stories', {
+  const res = await apiFetch('/api/outreach-stories', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -73,7 +74,7 @@ export async function createOutreachStory(payload) {
 }
 
 export async function updateOutreachStory(id, payload) {
-  const res = await fetch(`/api/outreach-stories/${id}`, {
+  const res = await apiFetch(`/api/outreach-stories/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -87,7 +88,7 @@ export async function updateOutreachStory(id, payload) {
 }
 
 export async function deleteOutreachStory(id) {
-  const res = await fetch(`/api/outreach-stories/${id}`, {
+  const res = await apiFetch(`/api/outreach-stories/${id}`, {
     method: 'DELETE',
   });
 

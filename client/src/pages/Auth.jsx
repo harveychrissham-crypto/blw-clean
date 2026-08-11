@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiLogIn, FiUserPlus } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../config/api';
 
 const AUTH_LOGIN_URL = '/api/auth/login';
 const AUTH_REGISTER_URL = '/api/auth/register';
@@ -46,9 +47,8 @@ export default function Auth() {
       }
 
       try {
-        const response = await fetch(AUTH_LOGIN_URL, {
+        const response = await apiFetch(AUTH_LOGIN_URL, {
           method: 'POST',
-          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
           },
@@ -65,7 +65,7 @@ export default function Auth() {
           return;
         }
 
-        login(body.user);
+        await login(body.user, body.token);
         setForm({ ...emptyForm, email: form.email });
         setLastMode('login');
         setStatus('submitted');
@@ -79,9 +79,8 @@ export default function Auth() {
     }
 
     try {
-      const response = await fetch(AUTH_REGISTER_URL, {
+      const response = await apiFetch(AUTH_REGISTER_URL, {
         method: 'POST',
-        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -107,7 +106,7 @@ export default function Auth() {
         return;
       }
 
-      login(body.user);
+      await login(body.user, body.token);
       setForm(emptyForm);
       setLastMode('register');
       setStatus('submitted');
