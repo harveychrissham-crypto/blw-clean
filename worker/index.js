@@ -28,12 +28,13 @@ async function getExpressHandler(workerEnv) {
       }
 
       const { createApp } = await import('../server/server.js');
-      const { initDb } = await import('../server/db/index.js');
 
-      // Ensure the production database has the application's required tables
-      // and columns before serving the first API request after a deployment.
-      await initDb();
-
+      // Do not run database schema initialization during Worker startup.
+      // initDb() performs many sequential DDL queries and can make the first
+      // API request time out, which previously surfaced to users as:
+      // "API service is temporarily unavailable."
+      // The production database is already provisioned and migrations should
+      // be run separately rather than blocking every new Worker isolate.
       const app = createApp({ serveStatic: false });
       app.listen(3000);
       return httpServerHandler({ port: 3000 });
