@@ -65,7 +65,12 @@ export default function Home() {
               <Link to="/checkin" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10">
                 Check In <MdQrCodeScanner className="h-4 w-4" />
               </Link>
-              <a href={ANDROID_APK_URL} download className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10">
+              <a
+                href={ANDROID_APK_URL}
+                download
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10"
+                aria-label="Download the latest Android app"
+              >
                 Download App <FiDownload className="h-4 w-4" />
               </a>
             </div>
