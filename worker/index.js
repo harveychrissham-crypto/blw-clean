@@ -35,11 +35,132 @@ async function ensureUsersTable(client) {
   )`);
 }
 
+async function ensureSermonsTable(client) {
+  await client.query(`CREATE TABLE IF NOT EXISTS sermons (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    speaker TEXT NOT NULL DEFAULT '',
+    description TEXT NOT NULL DEFAULT '',
+    youtube_url TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+  )`);
+  await client.query(`ALTER TABLE sermons ADD COLUMN IF NOT EXISTS is_featured BOOLEAN NOT NULL DEFAULT FALSE`);
+}
+
+const extractYouTubeId = (value) => {
+  if (typeof value !== 'string') return null;
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=)([\w-]{11})/,
+    /(?:youtu\.be\/)([\w-]{11})/,
+    /(?:youtube\.com\/embed\/)([\w-]{11})/,
+    /(?:youtube\.com\/shorts\/)([\w-]{11})/,
+  ];
+  for (const pattern of patterns) {
+    const match = value.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+};
+
+const toSermon = (s) => ({
+  id: s.id,
+  title: s.title,
+  speaker: s.speaker || '',
+  description: s.description || '',
+  youtubeUrl: s.youtube_url,
+  youtubeId: extractYouTubeId(s.youtube_url),
+  isFeatured: s.is_featured || false,
+  createdAt: s.created_at,
+});
+
+async function handleSermonApi(request, workerEnv, url) {
+  if (!url.pathname === '/api/sermons') return null;
+  if (!url.pathname.startsWith('/api/sermons')) return null;
+  const corsHeaders = authCorsHeaders(url.origin);
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders });
+
+  const match = url.pathname.match(/^\/api\/sermons(?:\/(\d+)(\/feature)?)?$/);
+  if (!match) return null;
+  const id = match[1] ? Number(match[1]) : null;
+  const featurePath = Boolean(match[2]);
+
+  try {
+    const result = await withDb(workerEnv, async (client) => {
+      await ensureSermonsTable(client);
+
+      if (request.method === 'GET' && id === null) {
+        const rows = await client.query('SELECT * FROM sermons ORDER BY created_at DESC, id DESC');
+        return { status: 200, body: { sermons: rows.rows.map(toSermon) } };
+      }
+
+      if (request.method === 'POST' && id === null) {
+        const body = await request.json().catch(() => null);
+        if (!body) return { status: 400, body: { error: 'Invalid JSON request body.' } };
+        const title = sanitizeString(body.title);
+        const speaker = sanitizeString(body.speaker);
+        const description = sanitizeString(body.description);
+        const youtubeUrl = sanitizeString(body.youtubeUrl);
+        if (!title || !youtubeUrl) return { status: 400, body: { error: 'Title and YouTube URL are required.' } };
+        if (!extractYouTubeId(youtubeUrl)) return { status: 400, body: { error: 'That does not look like a valid YouTube URL.' } };
+        const inserted = await client.query(
+          `INSERT INTO sermons (title, speaker, description, youtube_url)
+           VALUES ($1, $2, $3, $4) RETURNING *`,
+          [title, speaker, description, youtubeUrl]
+        );
+        return { status: 201, body: { sermon: toSermon(inserted.rows[0]) } };
+      }
+
+      if (request.method === 'PUT' && id !== null && featurePath) {
+        await client.query('UPDATE sermons SET is_featured = FALSE WHERE is_featured = TRUE');
+        const updated = await client.query('UPDATE sermons SET is_featured = TRUE WHERE id = $1 RETURNING *', [id]);
+        if (!updated.rows.length) return { status: 404, body: { error: 'Sermon not found.' } };
+        return { status: 200, body: { sermon: toSermon(updated.rows[0]) } };
+      }
+
+      if (request.method === 'PUT' && id !== null && !featurePath) {
+        const body = await request.json().catch(() => null);
+        if (!body) return { status: 400, body: { error: 'Invalid JSON request body.' } };
+        const title = sanitizeString(body.title);
+        const speaker = sanitizeString(body.speaker);
+        const description = sanitizeString(body.description);
+        const youtubeUrl = sanitizeString(body.youtubeUrl);
+        if (!title || !youtubeUrl) return { status: 400, body: { error: 'Title and YouTube URL are required.' } };
+        if (!extractYouTubeId(youtubeUrl)) return { status: 400, body: { error: 'That does not look like a valid YouTube URL.' } };
+        const updated = await client.query(
+          `UPDATE sermons SET title = $1, speaker = $2, description = $3, youtube_url = $4
+           WHERE id = $5 RETURNING *`,
+          [title, speaker, description, youtubeUrl, id]
+        );
+        if (!updated.rows.length) return { status: 404, body: { error: 'Sermon not found.' } };
+        return { status: 200, body: { sermon: toSermon(updated.rows[0]) } };
+      }
+
+      if (request.method === 'DELETE' && id !== null) {
+        const deleted = await client.query('DELETE FROM sermons WHERE id = $1 RETURNING id', [id]);
+        if (!deleted.rows.length) return { status: 404, body: { error: 'Sermon not found.' } };
+        return { status: 200, body: { deleted: true } };
+      }
+
+      return { status: 405, body: { error: 'Method not allowed.' } };
+    });
+
+    return json(result.body, result.status, corsHeaders);
+  } catch (error) {
+    console.error('[worker] direct sermon API failed', {
+      message: error?.message,
+      code: error?.code,
+      path: url.pathname,
+      method: request.method,
+    });
+    return json({ error: 'Unable to access the sermons database right now.' }, 503, corsHeaders);
+  }
+}
+
 function authCorsHeaders(origin) {
   return {
     'access-control-allow-origin': origin,
     'access-control-allow-credentials': 'true',
-    'access-control-allow-methods': 'GET,POST,DELETE,OPTIONS',
+    'access-control-allow-methods': 'GET,POST,DELETE,PUT,OPTIONS',
     'access-control-allow-headers': 'Content-Type, Authorization',
     vary: 'Origin',
   };
@@ -176,8 +297,6 @@ async function getExpressHandler(workerEnv) {
       app.listen(3000);
       return httpServerHandler({ port: 3000 });
     })().catch((error) => {
-      // Do not permanently cache a failed initialization. A transient Hyperdrive,
-      // database, or module-loading failure must be retried on the next request.
       expressHandlerPromise = undefined;
       throw error;
     });
@@ -192,8 +311,10 @@ export default {
     try {
       const directAuthResponse = await handleAuthApi(request, workerEnv, url);
       if (directAuthResponse) return directAuthResponse;
+      const directSermonResponse = await handleSermonApi(request, workerEnv, url);
+      if (directSermonResponse) return directSermonResponse;
     } catch (error) {
-      console.error('[worker] direct auth handler failed', error);
+      console.error('[worker] direct API handler failed', error);
       return json({ error: 'API service is temporarily unavailable.' }, 503, authCorsHeaders(url.origin));
     }
     process.env.ALLOWED_ORIGIN = workerEnv.ALLOWED_ORIGIN || url.origin;
