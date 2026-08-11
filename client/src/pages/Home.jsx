@@ -1,7 +1,14 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiHeart, FiUsers, FiBookOpen, FiGlobe, FiArrowRight, FiPlay } from 'react-icons/fi';
+import { FiHeart, FiUsers, FiBookOpen, FiGlobe, FiArrowRight, FiPlay, FiDownload } from 'react-icons/fi';
 import { MdQrCodeScanner } from 'react-icons/md';
+
+// Update the owner/repo below to match your actual GitHub repository once
+// it's pushed there. This URL is stable — the "latest-android" release
+// tag is overwritten by .github/workflows/android-release.yml on every
+// build, so this link always serves the newest signed APK.
+const ANDROID_APK_URL =
+  'https://github.com/harveychrissham-crypto/blw-clean/releases/download/latest-android/blw-campus-ministry.apk';
 
 const stats = [
   { value: '25+', label: 'Countries' },
@@ -82,6 +89,13 @@ export default function Home() {
               >
                 Check In <MdQrCodeScanner className="h-4 w-4" />
               </Link>
+              <a
+                href={ANDROID_APK_URL}
+                download
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10"
+              >
+                Download App <FiDownload className="h-4 w-4" />
+              </a>
             </div>
           </motion.div>
         </div>

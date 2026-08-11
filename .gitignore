@@ -37,3 +37,9 @@ client/android/build/
 client/android/app/build/
 client/android/.idea/
 client/android/local.properties
+
+# Android release signing — never commit these
+client/android/keystore.properties
+client/android/app/release-keystore.jks
+client/android/app/*.jks
+client/android/app/*.keystore

@@ -1,5 +1,17 @@
 apply plugin: 'com.android.application'
 
+// ── Release signing ──────────────────────────────────────────────────────
+// Reads client/android/keystore.properties, which is never committed (see
+// root .gitignore). Locally this file simply won't exist, so debug/local
+// release builds stay unsigned — only CI (or a dev who creates this file)
+// produces a signed, installable release APK.
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+def keystoreProperties = new Properties()
+def hasKeystoreProps = keystorePropertiesFile.exists()
+if (hasKeystoreProps) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace "com.blwcampusministry.app"
     compileSdk rootProject.ext.compileSdkVersion
@@ -7,8 +19,11 @@ android {
         applicationId "com.blwcampusministry.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // Overridable from the command line so CI can pass a unique,
+        // always-increasing versionCode per build, e.g.:
+        //   ./gradlew assembleRelease -PappVersionCode=42 -PappVersionName=1.0.42
+        versionCode = (project.hasProperty('appVersionCode') ? project.appVersionCode.toInteger() : 1)
+        versionName = (project.hasProperty('appVersionName') ? project.appVersionName : "1.0")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,10 +31,23 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (hasKeystoreProps) {
+                storeFile rootProject.file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (hasKeystoreProps) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }
