@@ -175,7 +175,12 @@ async function getExpressHandler(workerEnv) {
       const app = createApp({ serveStatic: false });
       app.listen(3000);
       return httpServerHandler({ port: 3000 });
-    })();
+    })().catch((error) => {
+      // Do not permanently cache a failed initialization. A transient Hyperdrive,
+      // database, or module-loading failure must be retried on the next request.
+      expressHandlerPromise = undefined;
+      throw error;
+    });
   }
   return expressHandlerPromise;
 }
