@@ -75,7 +75,7 @@ export default function Layout({ children }) {
                   fontSize: '0.95rem',
                 }}
               >
-                Believers' LoveWorld CM
+                Believers' LoveWorld CM Kenya Zone
               </span>
 
               <span
@@ -92,7 +92,7 @@ export default function Layout({ children }) {
                   color: 'transparent',
                 }}
               >
-                East &amp; Central Africa
+                Kenya Zone
               </span>
             </span>
           </Link>
@@ -282,13 +282,13 @@ export default function Layout({ children }) {
                   fontFamily: 'Montserrat, sans-serif',
                 }}
               >
-                Believers' LoveWorld CM
+                Believers' LoveWorld CM Kenya Zone
               </span>
             </div>
 
             <p className="text-xs text-white/40 leading-relaxed">
               Fellowship Without Borders for students and young
-              professionals across East &amp; Central Africa.
+              professionals across Kenya Zone.
             </p>
           </div>
 
@@ -372,7 +372,7 @@ export default function Layout({ children }) {
         </div>
 
         <div className="border-t border-white/[0.05] py-4 text-center text-xs text-white/25">
-          © {new Date().getFullYear()} Believers' LoveWorld Campus Ministry · East &amp; Central Africa
+          © {new Date().getFullYear()} Believers' LoveWorld CM Kenya Zone · Kenya Zone
         </div>
       </footer>
 

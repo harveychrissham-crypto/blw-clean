@@ -1,4 +1,4 @@
-# BLW Campus Ministry East & Central Africa
+# BLW Campus Ministry Kenya Zone
 
 A premium, production-oriented ministry platform built with React, Vite, Tailwind, Framer Motion, and a Node/Express backend foundation.
 

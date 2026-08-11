@@ -66,7 +66,7 @@ export default function Home() {
             </h1>
 
             <p className="mt-5 max-w-2xl text-base text-white/60 sm:text-lg">
-              Believers' LoveWorld Campus Ministry East and Central Africa Region — advancing the Gospel of Jesus Christ, equipping leaders, and serving the vision of Pastor Chris Oyakhilome.
+              Believers' LoveWorld CM Kenya Zone — advancing the Gospel of Jesus Christ, equipping leaders, and serving the vision of Pastor Chris Oyakhilome.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">

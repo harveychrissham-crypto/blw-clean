@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { FiCpu, FiSend, FiX } from 'react-icons/fi';
 
 const suggestions = [
-  'What is Believers\' LoveWorld Campus Ministry East and Central Africa Region?',
+  'What is Believers\' LoveWorld Campus Ministry Kenya Zone Region?',
   'Can you suggest a Bible verse for today?',
   'How can I register for outreach?',
   'How can I contact a counselor?'
@@ -35,7 +35,7 @@ export default function AIChatWidget() {
           <div className="mt-4 rounded-2xl border border-white/10 bg-[#121321]/60 p-3 text-sm text-slate-300">
             <p className="font-semibold text-white">Suggested response</p>
             <p className="mt-2 text-slate-400">
-              {selected === suggestions[0] && 'Believers\' LoveWorld Campus Ministry East and Central Africa Region is a Christ-centered movement focused on discipleship, worship, outreach, leadership, and fellowship across East & Central Africa.'}
+              {selected === suggestions[0] && 'Believers\' LoveWorld Campus Ministry Kenya Zone Region is a Christ-centered movement focused on discipleship, worship, outreach, leadership, and fellowship across Kenya Zone.'}
               {selected === suggestions[1] && 'A beautiful verse for today is Psalm 46:1: “God is our refuge and strength, an ever-present help in trouble.”'}
               {selected === suggestions[2] && 'You can register for upcoming outreaches through the Outreaches page or by contacting the ministry team directly.'}
               {selected === suggestions[3] && 'You can connect with a counselor through the Salvation or Connect pages for support and prayer.'}

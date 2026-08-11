@@ -101,7 +101,7 @@ export const initDb = async () => {
 
   // Admin-managed service venue/time per chapter, shown on the member
   // dashboard's Sunday self check-in card. Replaces the old hardcoded
-  // "Believers' LoveWorld Campus Ministry (LAA & Avenor)" text, which
+  // "Believers' LoveWorld CM Kenya Zone (LAA & Avenor)" text, which
   // was the same for every member regardless of their chapter.
   await pool.query(`
     CREATE TABLE IF NOT EXISTS chapter_venues (

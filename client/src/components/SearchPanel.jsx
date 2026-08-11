@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { FiSearch, FiX } from 'react-icons/fi';
 
 const content = [
-  { title: 'Home', path: '/', description: 'Welcome to Believers\' LoveWorld Campus Ministry East and Central Africa Region and our vision for fellowship.' },
+  { title: 'Home', path: '/', description: 'Welcome to Believers\' LoveWorld Campus Ministry Kenya Zone Region and our vision for fellowship.' },
   { title: 'Outreaches', path: '/outreaches', description: 'See upcoming opportunities to serve and participate.' },
   { title: 'Events', path: '/events', description: 'Explore the calendar of services, outreaches, and ministry events.' },
   { title: 'Live', path: '/live', description: 'Watch the current live service transmission, or see the upcoming stream schedule.' },

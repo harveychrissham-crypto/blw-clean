@@ -73,7 +73,7 @@ export default function Dashboard() {
     { label: 'Display name', value: displayName, icon: FiShield },
     { label: 'Email', value: email, icon: FiMail },
     { label: 'Phone', value: user?.phone || notSet, icon: FiPhone },
-    { label: 'Service church', value: user?.church || "Believers' LoveWorld Campus Ministry", icon: FiGlobe },
+    { label: 'Service church', value: user?.church || "Believers' LoveWorld CM Kenya Zone", icon: FiGlobe },
     { label: 'Fellowship / PCF', value: user?.chapter || notSet, icon: FiMapPin },
     { label: 'Campus zone', value: user?.campusZone || notSet, icon: FiMapPin },
     { label: 'Gender', value: user?.gender || notSet, icon: FiStar },
@@ -119,7 +119,7 @@ export default function Dashboard() {
       birthday: user?.birthday || '',
       gender: user?.gender || 'Male',
       status: user?.status || 'Single',
-      church: user?.church || "Believers' LoveWorld Campus Ministry",
+      church: user?.church || "Believers' LoveWorld CM Kenya Zone",
       chapter: user?.chapter || '',
       campusZone: user?.campusZone || '',
       residence: user?.residence || '',
@@ -430,7 +430,7 @@ export default function Dashboard() {
                   <input
                     value={editForm.church}
                     onChange={handleEditChange('church')}
-                    placeholder="Believers' LoveWorld Campus Ministry"
+                    placeholder="Believers' LoveWorld CM Kenya Zone"
                     className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
                   />
                 </label>
