@@ -1,80 +1,107 @@
 import { createContext, useContext, useMemo, useState, useEffect, useCallback } from 'react';
-import { apiFetch } from '../config/api';
-import { setToken, clearToken, getToken } from '../utils/authToken';
+import { supabase } from '../lib/supabaseClient';
 
 const AuthContext = createContext(null);
 
-/**
- * Session strategy:
- *  - A JWT is the source of truth for authentication, stored via
- *    Capacitor Preferences (utils/authToken.js) and sent as
- *    "Authorization: Bearer <token>" on every request (see apiFetch).
- *    Cross-origin cookies are NOT used for the native app: the UI is
- *    bundled locally while the API lives on a different origin, and the
- *    backend's cookie is sameSite=strict in production, which browsers/
- *    WebViews refuse to send cross-origin. Bearer tokens sidestep that.
- *  - We keep a lightweight { user } object in React state so the UI knows
- *    who is logged in.
- *  - On every mount (including app restart) we call /api/auth/me using
- *    whichever token is stored. If there's no token, or it's invalid or
- *    expired, we treat the session as gone.
- *  - /api/auth/me also issues a fresh token, so active users never get
- *    logged out due to token expiry.
- */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // true until first /me check
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const restoreSession = useCallback(async () => {
-    try {
-      const existingToken = await getToken();
-      if (!existingToken) {
-        setUser(null);
-        return;
-      }
+  const loadProfile = useCallback(async (authUser) => {
+    if (!authUser) return null;
 
-      const res = await apiFetch('/api/auth/me', { method: 'GET' });
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', authUser.email || '')
+      .maybeSingle();
 
-      if (!res.ok) {
-        await clearToken();
-        setUser(null);
-        return;
-      }
-
-      const body = await res.json();
-      if (body.token) await setToken(body.token);
-      setUser(body.user || null);
-    } catch {
-      setUser(null);
-    } finally {
-      setLoading(false);
+    if (error) {
+      console.warn('Unable to load BLW member profile:', error.message);
+      return {
+        id: authUser.id,
+        email: authUser.email,
+        full_name: authUser.user_metadata?.full_name || '',
+      };
     }
+
+    return data || {
+      id: authUser.id,
+      email: authUser.email,
+      full_name: authUser.user_metadata?.full_name || '',
+    };
   }, []);
 
-  // Run once on mount — restores session after app restart / page refresh
   useEffect(() => {
-    restoreSession();
-  }, [restoreSession]);
+    let mounted = true;
 
-  const login = useCallback(async (userData, token) => {
-    // userData/token come straight from the login/register API response
-    if (token) await setToken(token);
-    setUser(userData);
-  }, []);
+    const initialise = async () => {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!mounted) return;
+      setSession(currentSession);
+      setUser(await loadProfile(currentSession?.user || null));
+      setLoading(false);
+    };
+
+    initialise();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+      if (!mounted) return;
+      setSession(nextSession);
+      setUser(await loadProfile(nextSession?.user || null));
+      setLoading(false);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [loadProfile]);
+
+  const login = useCallback(async (email, password) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    const profile = await loadProfile(data.user);
+    setSession(data.session);
+    setUser(profile);
+    return profile;
+  }, [loadProfile]);
+
+  const register = useCallback(async (form) => {
+    const { data, error } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.password,
+      options: {
+        data: {
+          full_name: form.fullName,
+          phone: form.phone,
+        },
+      },
+    });
+
+    if (error) throw error;
+
+    if (data.user && data.session) {
+      setSession(data.session);
+      const profile = await loadProfile(data.user);
+      setUser(profile);
+      return { profile, requiresEmailConfirmation: false };
+    }
+
+    return { profile: null, requiresEmailConfirmation: true };
+  }, [loadProfile]);
 
   const logout = useCallback(async () => {
-    try {
-      await apiFetch('/api/auth/logout', { method: 'POST' });
-    } catch (err) {
-      console.error('Logout request failed', err);
-    }
-    await clearToken();
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    setSession(null);
     setUser(null);
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, login, logout }),
-    [user, loading, login, logout]
+    () => ({ user, session, loading, login, register, logout }),
+    [user, session, loading, login, register, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
