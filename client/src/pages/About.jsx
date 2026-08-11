@@ -11,7 +11,7 @@ export default function About() {
           A Christ-centered ministry rooted in the Word and shaped by purpose.
         </h2>
         <p className="mt-4 text-sm text-white/55 leading-relaxed">
-          Believers' LoveWorld CM Kenya Zone is committed to prayer, the teaching of the Word, soul-winning, leadership development, and global evangelism under Pastor Chris Oyakhilome.
+          Believers' LoveWorld Campus Ministry Kenya Zone is committed to advancing the Gospel of Jesus Christ, equipping leaders, serving the vision of Pastor Chris Oyakhilome, prayer, the teaching of the Word, soul-winning, leadership development, and global evangelism.
         </p>
       </motion.div>
     </section>
