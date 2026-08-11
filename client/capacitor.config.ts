@@ -5,6 +5,11 @@ const config: CapacitorConfig = {
   appName: 'BLW Campus Ministry',
   webDir: 'dist',
 
+  server: {
+    url: 'https://blweastandcentralafrica.onrender.com',
+    cleartext: false,
+  },
+
   ios: {
     contentInset: 'automatic',
   },

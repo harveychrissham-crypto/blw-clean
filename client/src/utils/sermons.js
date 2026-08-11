@@ -1,6 +1,3 @@
-// Helpers for talking to the /api/sermons endpoints
-// (Postgres/Supabase-backed).
-
 import { Preferences } from '@capacitor/preferences';
 
 const SERMONS_CACHE_KEY = 'offline_sermons';
@@ -11,7 +8,7 @@ async function handle(res) {
   try {
     body = await res.json();
   } catch {
-    // Response has no JSON body.
+    // No JSON response.
   }
 
   if (!res.ok) {
@@ -24,20 +21,32 @@ async function handle(res) {
 }
 
 /**
- * Fetch sermons.
+ * Fetch sermons from the API.
  *
- * Online:
- *   API → save latest sermons locally → return sermons
+ * The API currently returns:
  *
- * Offline/API unavailable:
- *   Local cache → return previously saved sermons
+ * {
+ *   sermons: [...]
+ * }
+ *
+ * The latest successful response is cached locally
+ * so sermons can still be displayed offline.
  */
 export async function fetchSermons() {
   try {
-    const res = await fetch('/api/sermons');
+    const res = await fetch('/api/sermons', {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
     const body = await handle(res);
 
-    const sermons = body.sermons || [];
+    const sermons = Array.isArray(body?.sermons)
+      ? body.sermons
+      : [];
 
     await Preferences.set({
       key: SERMONS_CACHE_KEY,
@@ -57,7 +66,11 @@ export async function fetchSermons() {
       });
 
       if (value) {
-        return JSON.parse(value);
+        const cached = JSON.parse(value);
+
+        if (Array.isArray(cached)) {
+          return cached;
+        }
       }
     } catch (cacheError) {
       console.error(
@@ -72,13 +85,14 @@ export async function fetchSermons() {
 
 /**
  * Create a sermon.
- * Requires an internet connection.
  */
 export async function createSermon(payload) {
   const res = await fetch('/api/sermons', {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      Accept: 'application/json',
     },
     body: JSON.stringify(payload),
   });
@@ -90,13 +104,14 @@ export async function createSermon(payload) {
 
 /**
  * Update a sermon.
- * Requires an internet connection.
  */
 export async function updateSermon(id, payload) {
   const res = await fetch(`/api/sermons/${id}`, {
     method: 'PUT',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      Accept: 'application/json',
     },
     body: JSON.stringify(payload),
   });
@@ -108,11 +123,14 @@ export async function updateSermon(id, payload) {
 
 /**
  * Delete a sermon.
- * Requires an internet connection.
  */
 export async function deleteSermon(id) {
   const res = await fetch(`/api/sermons/${id}`, {
     method: 'DELETE',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+    },
   });
 
   return handle(res);
@@ -120,11 +138,14 @@ export async function deleteSermon(id) {
 
 /**
  * Set a sermon as featured.
- * Requires an internet connection.
  */
 export async function setFeaturedSermon(id) {
   const res = await fetch(`/api/sermons/${id}/feature`, {
     method: 'PUT',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+    },
   });
 
   const body = await handle(res);
