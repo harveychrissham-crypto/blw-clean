@@ -74,7 +74,6 @@ const toSermon = (s) => ({
 });
 
 async function handleSermonApi(request, workerEnv, url) {
-  if (!url.pathname === '/api/sermons') return null;
   if (!url.pathname.startsWith('/api/sermons')) return null;
   const corsHeaders = authCorsHeaders(url.origin);
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders });
@@ -86,8 +85,9 @@ async function handleSermonApi(request, workerEnv, url) {
 
   try {
     const result = await withDb(workerEnv, async (client) => {
-      await ensureSermonsTable(client);
-
+      // The sermons table is managed by the database migration, not by live API requests.
+      // Running CREATE/ALTER TABLE on every request can fail under restricted DB roles and
+      // turns a normal GET into a 503. The table and is_featured column already exist.
       if (request.method === 'GET' && id === null) {
         const rows = await client.query('SELECT * FROM sermons ORDER BY created_at DESC, id DESC');
         return { status: 200, body: { sermons: rows.rows.map(toSermon) } };
