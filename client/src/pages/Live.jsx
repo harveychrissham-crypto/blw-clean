@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiRadio, FiClock, FiPlayCircle, FiCalendar, FiUsers, FiVideo } from 'react-icons/fi';
+import { FiRadio, FiClock, FiPlayCircle, FiCalendar, FiUsers, FiVideo, FiLogIn } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 import DailyIframe from '@daily-co/daily-js';
 import { fetchLiveStream, submitLiveViewer, sendLiveHeartbeat, sendLiveHeartbeatBeacon } from '../utils/live';
 
@@ -10,13 +11,8 @@ const schedule = [
   { day: 'Friday', time: '6:00 PM', title: 'Campus Connect Live' },
 ];
 
-// Mandatory "who's watching" gate — shown every time someone opens this
-// page, before any stream content is visible. There is no skip/close
-// option; a viewer must submit their name (invitedBy stays optional) to
-// reveal the page underneath. On a failed submit we show the error and let
-// them retry rather than letting them through, since the whole point is
-// that this step isn't optional.
 function WelcomePopup({ onDone }) {
+  const navigate = useNavigate();
   const [name, setName] = useState('');
   const [invitedBy, setInvitedBy] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -28,14 +24,20 @@ function WelcomePopup({ onDone }) {
       setError('Please enter your name to continue.');
       return;
     }
+
     setSubmitting(true);
     setError('');
+
     try {
+      // Viewer registration is best-effort. The Live page must never be
+      // blocked just because the analytics/API service is temporarily down.
       await submitLiveViewer({ name: name.trim(), invitedBy: invitedBy.trim() });
-      onDone();
-    } catch (err) {
-      setError(err.message || 'Could not save that — please try again.');
+    } catch {
+      // Continue locally. This allows YouTube/Daily/Meet to remain usable
+      // during a temporary API outage.
+    } finally {
       setSubmitting(false);
+      onDone();
     }
   };
 
@@ -45,10 +47,6 @@ function WelcomePopup({ onDone }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      // z-40, one below the sticky nav header's z-50 (see Layout.jsx) — the
-      // gate still blocks/dims the page content below it, but the header
-      // itself stays clickable so people can navigate to Sermons, Outreach,
-      // etc. straight from here without having to fill this in first.
       className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 p-4 backdrop-blur-md"
     >
       <motion.div
@@ -93,8 +91,20 @@ function WelcomePopup({ onDone }) {
             disabled={submitting}
             className="mt-4 w-full rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2 text-xs font-bold text-white transition hover:opacity-90 disabled:opacity-50"
           >
-            {submitting ? 'Saving…' : 'Continue'}
+            {submitting ? 'Continuing…' : 'Continue to Live'}
           </button>
+
+          <button
+            type="button"
+            onClick={() => navigate('/auth')}
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] py-2 text-xs font-semibold text-white/80 transition hover:bg-white/[0.08]"
+          >
+            <FiLogIn /> Sign in / Create account
+          </button>
+
+          <p className="mt-2 text-center text-[10px] text-white/30">
+            You can watch the live service without an account.
+          </p>
         </form>
       </motion.div>
     </motion.div>
@@ -103,7 +113,7 @@ function WelcomePopup({ onDone }) {
 
 export default function Live() {
   const [live, setLive] = useState(null);
-  const [status, setStatus] = useState('loading'); // loading | loaded | error
+  const [status, setStatus] = useState('loading');
   const [showWelcome, setShowWelcome] = useState(true);
   const dailyContainerRef = useRef(null);
   const callFrameRef = useRef(null);
@@ -127,24 +137,14 @@ export default function Live() {
   const isStreaming = isLiveNow && !!live?.youtubeId;
   const hasMeetLink = isLiveNow && !!live?.googleMeetUrl;
   const hasDailyRoom = isLiveNow && !!live?.dailyRoomUrl;
-  // The call embeds inline in dailyContainerRef; the YouTube stream (if also
-  // set) still takes the main video slot when present, so Daily only claims
-  // that slot when there's no YouTube stream to show.
   const showDailyEmbed = hasDailyRoom && !isStreaming;
 
-  // Watch-time tracking: once someone has signed in (past the mandatory
-  // gate), count a second every second the tab is actually visible/focused
-  // — not while it's in a background tab — and flush the accumulated total
-  // to the server every 20s, plus once more on unmount/tab-close via
-  // sendBeacon (a plain fetch can get killed mid-flight on unload).
   const pendingSecondsRef = useRef(0);
   useEffect(() => {
-    if (showWelcome) return; // haven't signed in yet — nothing to track
+    if (showWelcome) return;
 
     const tick = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        pendingSecondsRef.current += 1;
-      }
+      if (document.visibilityState === 'visible') pendingSecondsRef.current += 1;
     }, 1000);
 
     const flush = setInterval(() => {
@@ -173,9 +173,6 @@ export default function Live() {
     };
   }, [showWelcome]);
 
-  // Create/join the Daily call once the container is in the DOM and a room
-  // is available, and always tear it down on unmount or when the room
-  // changes — daily-js only supports one active call frame at a time.
   useEffect(() => {
     if (!showDailyEmbed || !dailyContainerRef.current) return;
 
@@ -183,7 +180,7 @@ export default function Live() {
       iframeStyle: { width: '100%', height: '100%', border: '0' },
       showLeaveButton: false,
     });
-    callFrameRef.current.join({ url: live.dailyRoomUrl });
+    callFrameRef.current.join({ url: live.dailyRoomUrl }).catch(() => {});
 
     return () => {
       callFrameRef.current?.destroy();
@@ -208,13 +205,7 @@ export default function Live() {
             </span>
           )}
           <span className="text-sm text-slate-400">
-            {isStreaming && showDailyEmbed
-              ? 'YouTube & Live Call'
-              : showDailyEmbed
-                ? 'Live Call'
-                : hasMeetLink && !isStreaming
-                  ? 'Google Meet'
-                  : 'Streaming across YouTube'}
+            {isStreaming && showDailyEmbed ? 'YouTube & Live Call' : showDailyEmbed ? 'Live Call' : hasMeetLink && !isStreaming ? 'Google Meet' : 'Streaming across YouTube'}
           </span>
           {hasMeetLink && !showDailyEmbed && (
             <a
@@ -246,32 +237,35 @@ export default function Live() {
                   <div>
                     <FiPlayCircle className="mx-auto text-5xl text-[#D8B2FF]" />
                     {status === 'loading' && <p className="mt-3 text-lg font-semibold">Checking stream status…</p>}
-                    {status === 'error' && <p className="mt-3 text-lg font-semibold">Unable to check live status right now.</p>}
+                    {status === 'error' && (
+                      <>
+                        <p className="mt-3 text-lg font-semibold">Live service is temporarily unavailable.</p>
+                        <p className="mt-2 text-sm text-slate-400">The page is still available. Please try again shortly.</p>
+                      </>
+                    )}
                     {status === 'loaded' && isLiveNow && hasMeetLink && (
                       <>
                         <p className="mt-3 text-lg font-semibold">We're live on Google Meet</p>
-                        <p className="mt-2 text-sm text-slate-400">This service is streaming via Google Meet today — tap "Join via Google Meet" above to jump in.</p>
+                        <p className="mt-2 text-sm text-slate-400">Tap "Join via Google Meet" above to join the service.</p>
                       </>
                     )}
                     {status === 'loaded' && isLiveNow && !hasMeetLink && !isStreaming && (
                       <>
                         <p className="mt-3 text-lg font-semibold">We're live</p>
-                        <p className="mt-2 text-sm text-slate-400">Check back in a moment — the stream link is being set up.</p>
+                        <p className="mt-2 text-sm text-slate-400">The stream link is being set up.</p>
                       </>
                     )}
                     {status === 'loaded' && !isLiveNow && (
                       <>
                         <p className="mt-3 text-lg font-semibold">We're not live right now</p>
-                        <p className="mt-2 text-sm text-slate-400">Check the schedule alongside — the stream starts automatically here when the team goes live.</p>
+                        <p className="mt-2 text-sm text-slate-400">Check the schedule for the next broadcast.</p>
                       </>
                     )}
                   </div>
                 </div>
               )}
             </div>
-            {isStreaming && live?.title && (
-              <p className="mt-4 text-lg font-semibold text-white">{live.title}</p>
-            )}
+            {isStreaming && live?.title && <p className="mt-4 text-lg font-semibold text-white">{live.title}</p>}
           </div>
           <div className="space-y-6">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
