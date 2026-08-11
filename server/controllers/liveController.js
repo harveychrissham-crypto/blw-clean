@@ -1,7 +1,5 @@
 import { query } from '../db/index.js';
 
-// Pulls the 11-char video ID out of any common YouTube URL shape:
-// watch?v=, youtu.be/, /embed/, /shorts/, /live/. Returns null if it doesn't match.
 const extractYouTubeId = (url) => {
   if (typeof url !== 'string') return null;
   const patterns = [
@@ -18,19 +16,29 @@ const extractYouTubeId = (url) => {
   return null;
 };
 
-// Loose sanity check for a Google Meet link — doesn't need to be as strict
-// as the YouTube ID extraction since we only ever open it in a new tab,
-// never embed it.
 const isLikelyMeetUrl = (url) =>
   typeof url === 'string' && /^https:\/\/meet\.google\.com\/[a-z0-9-]+/i.test(url.trim());
 
-// Sanity check for a Daily.co room URL, e.g.
-// https://blwcentraleastafrica.daily.co/blw-live — this one DOES get
-// embedded inline via daily-js, so it's worth validating the shape before
-// it ever reaches the client.
 const isLikelyDailyUrl = (url) =>
-  typeof url === 'string' &&
-  /^https:\/\/[a-z0-9-]+\.daily\.co\/[a-z0-9-]+/i.test(url.trim());
+  typeof url === 'string' && /^https:\/\/[a-z0-9-]+\.daily\.co\/[a-z0-9-]+/i.test(url.trim());
+
+const ensureLiveViewersTable = async () => {
+  await query(`CREATE TABLE IF NOT EXISTS live_viewers (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    invited_by TEXT NOT NULL DEFAULT '',
+    client_id TEXT UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    last_seen_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    visit_count INTEGER NOT NULL DEFAULT 1,
+    watch_seconds INTEGER NOT NULL DEFAULT 0
+  )`);
+  await query(`ALTER TABLE live_viewers ADD COLUMN IF NOT EXISTS client_id TEXT`);
+  await query(`ALTER TABLE live_viewers ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()`);
+  await query(`ALTER TABLE live_viewers ADD COLUMN IF NOT EXISTS visit_count INTEGER NOT NULL DEFAULT 1`);
+  await query(`ALTER TABLE live_viewers ADD COLUMN IF NOT EXISTS watch_seconds INTEGER NOT NULL DEFAULT 0`);
+  await query(`CREATE UNIQUE INDEX IF NOT EXISTS live_viewers_client_id_unique ON live_viewers (client_id) WHERE client_id IS NOT NULL`);
+};
 
 const toLiveStream = (row) => ({
   title: row.title || '',
@@ -42,7 +50,6 @@ const toLiveStream = (row) => ({
   updatedAt: row.updated_at,
 });
 
-// GET /api/live — public: current live stream settings.
 export const getLiveStream = async (_req, res) => {
   try {
     const result = await query(`SELECT * FROM live_stream WHERE id = 1`);
@@ -58,33 +65,20 @@ export const getLiveStream = async (_req, res) => {
   }
 };
 
-// PUT /api/live — leader tool: set the stream/meet links + title and toggle live on/off.
 export const updateLiveStream = async (req, res) => {
   const { title, youtubeUrl, googleMeetUrl, dailyRoomUrl, isLive } = req.body || {};
-
   const hasYoutube = !!extractYouTubeId(youtubeUrl);
   const hasMeet = !!(googleMeetUrl && googleMeetUrl.trim());
   const hasDaily = !!(dailyRoomUrl && dailyRoomUrl.trim());
 
-  if (youtubeUrl && !hasYoutube) {
-    return res.status(400).json({ error: 'That does not look like a valid YouTube URL.' });
-  }
-  if (googleMeetUrl && !isLikelyMeetUrl(googleMeetUrl)) {
-    return res.status(400).json({ error: 'That does not look like a valid Google Meet link (should look like https://meet.google.com/xxx-xxxx-xxx).' });
-  }
-  if (dailyRoomUrl && !isLikelyDailyUrl(dailyRoomUrl)) {
-    return res.status(400).json({ error: 'That does not look like a valid Daily room URL (should look like https://yourdomain.daily.co/room-name).' });
-  }
-  if (isLive && !hasYoutube && !hasMeet && !hasDaily) {
-    return res.status(400).json({ error: 'Add a YouTube link, a Daily room, or a Google Meet link before going live.' });
-  }
+  if (youtubeUrl && !hasYoutube) return res.status(400).json({ error: 'That does not look like a valid YouTube URL.' });
+  if (googleMeetUrl && !isLikelyMeetUrl(googleMeetUrl)) return res.status(400).json({ error: 'That does not look like a valid Google Meet link (should look like https://meet.google.com/xxx-xxxx-xxx).' });
+  if (dailyRoomUrl && !isLikelyDailyUrl(dailyRoomUrl)) return res.status(400).json({ error: 'That does not look like a valid Daily room URL (should look like https://yourdomain.daily.co/room-name).' });
+  if (isLive && !hasYoutube && !hasMeet && !hasDaily) return res.status(400).json({ error: 'Add a YouTube link, a Daily room, or a Google Meet link before going live.' });
 
   try {
     const result = await query(
-      `UPDATE live_stream
-         SET title = $1, youtube_url = $2, google_meet_url = $3, daily_room_url = $4, is_live = $5, updated_at = NOW()
-       WHERE id = 1
-       RETURNING *`,
+      `UPDATE live_stream SET title = $1, youtube_url = $2, google_meet_url = $3, daily_room_url = $4, is_live = $5, updated_at = NOW() WHERE id = 1 RETURNING *`,
       [title || '', youtubeUrl || '', googleMeetUrl || '', dailyRoomUrl || '', !!isLive]
     );
     return res.json({ live: toLiveStream(result.rows[0]) });
@@ -98,28 +92,20 @@ const toViewer = (row) => ({
   id: row.id,
   name: row.name,
   invitedBy: row.invited_by || '',
-  createdAt: row.created_at,       // first time this person ever signed in
-  lastSeenAt: row.last_seen_at,    // most recent visit
+  createdAt: row.created_at,
+  lastSeenAt: row.last_seen_at,
   visitCount: row.visit_count || 1,
   watchSeconds: row.watch_seconds || 0,
 });
 
-// POST /api/live/viewers — public: sign-in from the mandatory Live page
-// gate. Keyed on clientId (a random id the browser generates once and
-// stores in localStorage), so the same browser returning later updates
-// its existing row — bumping visit_count and last_seen_at — instead of
-// creating a duplicate. If a name changes on a return visit we keep the
-// latest name; invitedBy only overwrites when a new value is actually given.
 export const recordLiveViewer = async (req, res) => {
   const name = typeof req.body?.name === 'string' ? req.body.name.trim().slice(0, 120) : '';
   const invitedBy = typeof req.body?.invitedBy === 'string' ? req.body.invitedBy.trim().slice(0, 120) : '';
   const clientId = typeof req.body?.clientId === 'string' ? req.body.clientId.trim().slice(0, 64) : '';
-
-  if (!name) {
-    return res.status(400).json({ error: 'Name is required.' });
-  }
+  if (!name) return res.status(400).json({ error: 'Name is required.' });
 
   try {
+    await ensureLiveViewersTable();
     let result;
     if (clientId) {
       result = await query(
@@ -134,12 +120,7 @@ export const recordLiveViewer = async (req, res) => {
         [name, invitedBy, clientId]
       );
     } else {
-      // No clientId (e.g. an older client build) — fall back to the old
-      // always-insert behavior rather than guessing an identity.
-      result = await query(
-        `INSERT INTO live_viewers (name, invited_by) VALUES ($1, $2) RETURNING *`,
-        [name, invitedBy]
-      );
+      result = await query(`INSERT INTO live_viewers (name, invited_by) VALUES ($1, $2) RETURNING *`, [name, invitedBy]);
     }
     return res.status(201).json({ viewer: toViewer(result.rows[0]) });
   } catch (error) {
@@ -148,35 +129,19 @@ export const recordLiveViewer = async (req, res) => {
   }
 };
 
-// PATCH /api/live/viewers/heartbeat — public: called periodically (and once
-// more on page unload via sendBeacon) by the Live page while someone is
-// actively watching, to add to their running watch-time total. `seconds` is
-// the delta since the last heartbeat, not a running total, so it's safe to
-// just add it — this way a dropped/late request never overwrites progress.
 export const recordViewerHeartbeat = async (req, res) => {
   const clientId = typeof req.body?.clientId === 'string' ? req.body.clientId.trim().slice(0, 64) : '';
   const seconds = Number(req.body?.seconds);
-
-  if (!clientId || !Number.isFinite(seconds) || seconds <= 0) {
-    return res.status(400).json({ error: 'Invalid heartbeat.' });
-  }
-  // Clamp: no single heartbeat should be able to claim more than 5 minutes,
-  // guards against a stray/replayed request inflating the total.
+  if (!clientId || !Number.isFinite(seconds) || seconds <= 0) return res.status(400).json({ error: 'Invalid heartbeat.' });
   const delta = Math.min(seconds, 300);
 
   try {
+    await ensureLiveViewersTable();
     const result = await query(
-      `UPDATE live_viewers
-         SET watch_seconds = watch_seconds + $1, last_seen_at = NOW()
-       WHERE client_id = $2
-       RETURNING *`,
+      `UPDATE live_viewers SET watch_seconds = watch_seconds + $1, last_seen_at = NOW() WHERE client_id = $2 RETURNING *`,
       [Math.round(delta), clientId]
     );
-    if (!result.rows.length) {
-      // Viewer hasn't signed in yet (or is on an older client) — nothing to
-      // attach the time to, just no-op rather than erroring the page.
-      return res.status(204).end();
-    }
+    if (!result.rows.length) return res.status(204).end();
     return res.json({ viewer: toViewer(result.rows[0]) });
   } catch (error) {
     console.error('[live] heartbeat error', error);
@@ -184,13 +149,10 @@ export const recordViewerHeartbeat = async (req, res) => {
   }
 };
 
-// GET /api/live/viewers — leader tool: see who has signed in to watch live,
-// most recently active first.
 export const listLiveViewers = async (_req, res) => {
   try {
-    const result = await query(
-      `SELECT * FROM live_viewers ORDER BY last_seen_at DESC LIMIT 500`
-    );
+    await ensureLiveViewersTable();
+    const result = await query(`SELECT * FROM live_viewers ORDER BY last_seen_at DESC LIMIT 500`);
     return res.json({ viewers: result.rows.map(toViewer) });
   } catch (error) {
     console.error('[live] list viewers error', error);
