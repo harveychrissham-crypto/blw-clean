@@ -49,7 +49,7 @@ async function ensureLiveTables(client) {
 
 const youtubeId = (value) => {
   if (typeof value !== 'string') return null;
-  const m = value.match(/(?:youtube\\.com\\/(?:watch\\?v=|embed\\/|shorts\\/|live\\/)|youtu\\.be\\/)([\\w-]{11})/);
+  const m = value.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/);
   return m ? m[1] : null;
 };
 
