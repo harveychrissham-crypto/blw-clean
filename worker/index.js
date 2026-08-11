@@ -164,9 +164,6 @@ async function getExpressHandler(workerEnv) {
     expressHandlerPromise = (async () => {
       process.env.CLOUDFLARE_WORKERS = 'true';
       const databaseUrl = workerEnv.HYPERDRIVE?.connectionString || workerEnv.DATABASE_URL || '';
-      // JWT_SECRET is only required by authentication endpoints. The rest of
-      // the API (including sermons, events, outreaches, venues and live data)
-      // can use the database connection without a separate JWT secret.
       const jwtSecret = workerEnv.JWT_SECRET || databaseUrl || '';
       process.env.DATABASE_URL = databaseUrl;
       process.env.JWT_SECRET = jwtSecret;
@@ -175,6 +172,7 @@ async function getExpressHandler(workerEnv) {
       process.env.SUPABASE_STORAGE_BUCKET = workerEnv.SUPABASE_STORAGE_BUCKET || 'outreach-photos';
       if (!databaseUrl) throw new Error('HYPERDRIVE/DATABASE_URL is required for the API.');
       const { createApp } = await import('../server/server.js');
+      const app = createApp({ serveStatic: false });
       app.listen(3000);
       return httpServerHandler({ port: 3000 });
     })();
