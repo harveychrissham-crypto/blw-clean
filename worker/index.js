@@ -5,12 +5,12 @@ let expressHandlerPromise;
 async function getExpressHandler(workerEnv) {
   if (!expressHandlerPromise) {
     expressHandlerPromise = (async () => {
-      // Populate the Node compatibility layer before importing the Express app.
+      // Configure the Node compatibility layer before importing the Express
+      // application. The database module reads these values during import.
       process.env.CLOUDFLARE_WORKERS = 'true';
-      process.env.NODE_ENV = 'production';
 
       const databaseUrl = workerEnv.HYPERDRIVE?.connectionString || workerEnv.DATABASE_URL || '';
-      const jwtSecret = workerEnv.JWT_SECRET || workerEnv.DATABASE_URL || databaseUrl || '';
+      const jwtSecret = workerEnv.JWT_SECRET || databaseUrl || '';
 
       process.env.DATABASE_URL = databaseUrl;
       process.env.JWT_SECRET = jwtSecret;
@@ -19,16 +19,22 @@ async function getExpressHandler(workerEnv) {
       process.env.SUPABASE_STORAGE_BUCKET = workerEnv.SUPABASE_STORAGE_BUCKET || 'outreach-photos';
       process.env.ALLOWED_ORIGIN = workerEnv.ALLOWED_ORIGIN || '';
 
-      if (!process.env.DATABASE_URL) {
+      if (!databaseUrl) {
         throw new Error('HYPERDRIVE/DATABASE_URL is required for the API.');
       }
-      if (!process.env.JWT_SECRET) {
+
+      if (!jwtSecret) {
         throw new Error('JWT_SECRET is required for authentication.');
       }
 
       const { createApp } = await import('../server/server.js');
-      const app = createApp({ serveStatic: false });
+      const { initDb } = await import('../server/db/index.js');
 
+      // Ensure the production database has the application's required tables
+      // and columns before serving the first API request after a deployment.
+      await initDb();
+
+      const app = createApp({ serveStatic: false });
       app.listen(3000);
       return httpServerHandler({ port: 3000 });
     })();
