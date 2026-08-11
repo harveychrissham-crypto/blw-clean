@@ -3,19 +3,19 @@ import { query } from '../db/index.js';
 import { verifyPassword } from '../utils/crypto.js';
 import { findUserByEmailOrPhone, createUser, deleteUserByEmail } from '../services/userService.js';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET is not defined. Set it in server/.env or the environment.');
-}
+// Resolve this at request time rather than module-import time. Cloudflare's
+// Worker adapter populates process.env immediately before importing the app.
+// Reading lazily keeps auth from failing during module evaluation if the
+// compatibility environment has not been populated yet.
+const getJwtSecret = () => process.env.JWT_SECRET || process.env.DATABASE_URL || '';
 
 // ── Sanitization helpers ──────────────────────────────────────────────────────
-// Strips HTML/script tags and trims whitespace to block XSS stored via DB.
 const sanitizeString = (val) => {
   if (typeof val !== 'string') return '';
   return val
     .trim()
-    .replace(/<[^>]*>/g, '')     // strip HTML tags
-    .replace(/[<>"']/g, (c) =>   // encode remaining special chars
+    .replace(/<[^>]*>/g, '')
+    .replace(/[<>"']/g, (c) =>
       ({ '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])
     );
 };
@@ -25,27 +25,26 @@ const sanitizeEmail = (val) => {
   return val.trim().toLowerCase();
 };
 
-// ── Token ─────────────────────────────────────────────────────────────────────
-// Token lifetime matches the cookie lifetime (7 days).
-const TOKEN_MAX_AGE = 7 * 24 * 60 * 60; // seconds
-const COOKIE_MAX_AGE = TOKEN_MAX_AGE * 1000; // milliseconds
+const TOKEN_MAX_AGE = 7 * 24 * 60 * 60;
+const COOKIE_MAX_AGE = TOKEN_MAX_AGE * 1000;
 
-const createToken = (user) =>
-  jwt.sign({ user }, JWT_SECRET, { expiresIn: TOKEN_MAX_AGE });
+const createToken = (user) => {
+  const secret = getJwtSecret();
+  if (!secret) throw new Error('JWT_SECRET is not configured.');
+  return jwt.sign({ user }, secret, { expiresIn: TOKEN_MAX_AGE });
+};
 
-// ── Cookie ────────────────────────────────────────────────────────────────────
 const authCookieOptions = {
-  httpOnly: true,                                        // JS cannot read it
-  secure: process.env.NODE_ENV === 'production',         // HTTPS only in prod
-  sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax', // stricter in prod
-  maxAge: COOKIE_MAX_AGE,                                // 7 days
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+  maxAge: COOKIE_MAX_AGE,
   path: '/',
 };
 
 const setAuthCookie = (res, token) =>
   res.cookie('blw_auth_token', token, authCookieOptions);
 
-// ── Route handlers ────────────────────────────────────────────────────────────
 export const health = (_req, res) =>
   res.json({ status: 'ok', message: 'Auth service ready' });
 
@@ -57,7 +56,6 @@ export const login = async (req, res) => {
     return res.status(400).json({ error: 'Email and password are required.' });
   }
 
-  // Basic email format check
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ error: 'Invalid email format.' });
   }
@@ -106,18 +104,17 @@ export const login = async (req, res) => {
 export const register = async (req, res) => {
   const body = req.body || {};
 
-  // Sanitize all string inputs
-  const fullName    = sanitizeString(body.fullName);
-  const email       = sanitizeEmail(body.email);
-  const password    = body.password; // don't sanitize — hashed immediately
-  const phone       = sanitizeString(body.phone);
-  const campusZone  = sanitizeString(body.campusZone);
-  const chapter     = sanitizeString(body.chapter);
-  const country     = sanitizeString(body.country);
-  const residence   = sanitizeString(body.residence);
-  const birthday    = sanitizeString(body.birthday);
-  const invitedBy   = sanitizeString(body.invitedBy);
-  const gender      = sanitizeString(body.gender);
+  const fullName = sanitizeString(body.fullName);
+  const email = sanitizeEmail(body.email);
+  const password = body.password;
+  const phone = sanitizeString(body.phone);
+  const campusZone = sanitizeString(body.campusZone);
+  const chapter = sanitizeString(body.chapter);
+  const country = sanitizeString(body.country);
+  const residence = sanitizeString(body.residence);
+  const birthday = sanitizeString(body.birthday);
+  const invitedBy = sanitizeString(body.invitedBy);
+  const gender = sanitizeString(body.gender);
 
   if (!fullName || !email || !password || !phone || !campusZone || !chapter || !country || !residence || !invitedBy || !gender) {
     return res.status(400).json({ error: 'Missing required registration fields.' });
@@ -127,7 +124,6 @@ export const register = async (req, res) => {
     return res.status(400).json({ error: 'Invalid email format.' });
   }
 
-  // Enforce minimum password strength
   if (password.length < 8) {
     return res.status(400).json({ error: 'Password must be at least 8 characters.' });
   }
@@ -189,7 +185,6 @@ export const deleteAccount = async (req, res) => {
 export const me = (req, res) => {
   if (!req.user) return res.status(401).json({ error: 'Not authenticated.' });
 
-  // Issue a fresh token on every /me call to slide the 7-day window
   const freshToken = createToken(req.user);
   setAuthCookie(res, freshToken);
   return res.json({ user: req.user, token: freshToken });
