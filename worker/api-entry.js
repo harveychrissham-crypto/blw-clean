@@ -1,4 +1,5 @@
 import legacyWorker from './index.js';
+import { handleSermons } from './sermon-api.js';
 
 const json = (body, status = 200, headers = {}) => new Response(
   JSON.stringify(body),
@@ -81,4 +82,5 @@ async function handleLive(request, env, url) {
     if(url.pathname==='/api/live/viewers/heartbeat'&&request.method==='PATCH'){const body=await request.json().catch(()=>null);const clientId=typeof body?.clientId==='string'?body.clientId.trim().slice(0,64):'';const seconds=Number(body?.seconds);if(!clientId||!Number.isFinite(seconds)||seconds<=0)return{status:400,body:{error:'Invalid heartbeat.'}};const r=await client.query('UPDATE live_viewers SET watch_seconds=watch_seconds+$1,last_seen_at=NOW() WHERE client_id=$2 RETURNING *',[Math.min(Math.round(seconds),300),clientId]);if(!r.rows.length)return{status:204,body:null};const v=r.rows[0];return{status:200,body:{viewer:{id:v.id,name:v.name,invitedBy:v.invited_by||'',createdAt:v.created_at,lastSeenAt:v.last_seen_at,visitCount:v.visit_count||1,watchSeconds:v.watch_seconds||0}}};}
     return{status:405,body:{error:'Method not allowed.'}}; }); return json(result.body,result.status,headers); } catch(error){console.error('[worker] live API failed',error);return json({error:'Unable to access the live service right now.'},503,headers);}
 }
-export default { async fetch(request,env,ctx){const url=new URL(request.url);const members=await handleMembers(request,env,url);if(members)return members;const live=await handleLive(request,env,url);if(live)return live;if(url.pathname==='/api/health'&&request.method==='GET')return json({status:'ok',message:'BLW Campus Ministry API is running'},200,cors(url.origin));return legacyWorker.fetch(request,env,ctx);} };
+
+export default { async fetch(request,env,ctx){const url=new URL(request.url);const members=await handleMembers(request,env,url);if(members)return members;const sermons=await handleSermons(request,env,url);if(sermons)return sermons;const live=await handleLive(request,env,url);if(live)return live;if(url.pathname==='/api/health'&&request.method==='GET')return json({status:'ok',message:'BLW Campus Ministry API is running'},200,cors(url.origin));return legacyWorker.fetch(request,env,ctx);} };
