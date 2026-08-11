@@ -57,7 +57,6 @@ export default function Layout({ children }) {
         }}
       >
         <div className="flex items-center gap-3 px-4 py-2.5 sm:px-5">
-
           {/* Logo */}
           <Link to="/" className="flex shrink-0 items-center gap-3">
             <img
@@ -68,14 +67,15 @@ export default function Layout({ children }) {
 
             <span className="hidden sm:block">
               <span
-                className="header-brand block text-white leading-tight whitespace-nowrap"
+                className="header-brand block leading-tight whitespace-nowrap"
                 style={{
                   fontFamily: 'Montserrat, sans-serif',
                   fontWeight: 800,
                   fontSize: '0.95rem',
+                  color: '#FFFFFF',
                 }}
               >
-                Believers' LoveWorld CM Kenya Zone
+                Believers' LoveWorld CM
               </span>
 
               <span
@@ -86,10 +86,7 @@ export default function Layout({ children }) {
                   fontSize: '0.6rem',
                   textTransform: 'uppercase',
                   letterSpacing: '6px',
-                  background:
-                    'linear-gradient(90deg,#F2A31C,#F6C94E)',
-                  WebkitBackgroundClip: 'text',
-                  color: 'transparent',
+                  color: '#F2A31C',
                 }}
               >
                 Kenya Zone
@@ -100,10 +97,7 @@ export default function Layout({ children }) {
           {/* Navigation */}
           <nav
             className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto"
-            style={{
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-            }}
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -130,7 +124,6 @@ export default function Layout({ children }) {
 
           {/* Right actions */}
           <div className="flex shrink-0 items-center gap-2">
-
             <button
               onClick={() => setSearchOpen(true)}
               className="rounded-lg p-2 text-white/50 transition hover:text-white hover:bg-white/5"
@@ -143,10 +136,7 @@ export default function Layout({ children }) {
               <Link
                 to="/dashboard"
                 className="hidden sm:inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-                style={{
-                  background:
-                    'linear-gradient(135deg,#EC2FA8,#8A2BE2)',
-                }}
+                style={{ background: 'linear-gradient(135deg,#EC2FA8,#8A2BE2)' }}
               >
                 <FiUser className="h-3.5 w-3.5" />
                 My Account
@@ -155,10 +145,7 @@ export default function Layout({ children }) {
               <Link
                 to="/auth"
                 className="hidden sm:inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-                style={{
-                  background:
-                    'linear-gradient(135deg,#EC2FA8,#8A2BE2)',
-                }}
+                style={{ background: 'linear-gradient(135deg,#EC2FA8,#8A2BE2)' }}
               >
                 <FiLogIn className="h-3.5 w-3.5" />
                 Sign In
@@ -170,11 +157,7 @@ export default function Layout({ children }) {
               onClick={() => setMenuOpen((s) => !s)}
               aria-label="Menu"
             >
-              {menuOpen ? (
-                <FiX size={18} />
-              ) : (
-                <FiMenu size={18} />
-              )}
+              {menuOpen ? <FiX size={18} /> : <FiMenu size={18} />}
             </button>
           </div>
         </div>
@@ -183,12 +166,9 @@ export default function Layout({ children }) {
         {menuOpen && (
           <div
             className="border-t border-white/[0.07] px-4 py-4 sm:hidden"
-            style={{
-              background: 'rgba(13,12,24,0.97)',
-            }}
+            style={{ background: 'rgba(13,12,24,0.97)' }}
           >
             <div className="flex flex-col gap-1">
-
               {navItems.map((item) => {
                 const Icon = item.icon;
 
@@ -213,15 +193,11 @@ export default function Layout({ children }) {
               })}
 
               <div className="mt-3 pt-3 border-t border-white/[0.07]">
-
                 {user ? (
                   <Link
                     to="/dashboard"
                     className="flex items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold text-white"
-                    style={{
-                      background:
-                        'linear-gradient(135deg,#EC2FA8,#8A2BE2)',
-                    }}
+                    style={{ background: 'linear-gradient(135deg,#EC2FA8,#8A2BE2)' }}
                     onClick={() => setMenuOpen(false)}
                   >
                     <FiUser className="h-4 w-4" />
@@ -231,43 +207,30 @@ export default function Layout({ children }) {
                   <Link
                     to="/auth"
                     className="flex items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold text-white"
-                    style={{
-                      background:
-                        'linear-gradient(135deg,#EC2FA8,#8A2BE2)',
-                    }}
+                    style={{ background: 'linear-gradient(135deg,#EC2FA8,#8A2BE2)' }}
                     onClick={() => setMenuOpen(false)}
                   >
                     <FiLogIn className="h-4 w-4" />
                     Sign In
                   </Link>
                 )}
-
               </div>
             </div>
           </div>
         )}
       </header>
 
-      <main>
-        {children}
-      </main>
+      <main>{children}</main>
 
-      <SearchPanel
-        open={searchOpen}
-        onClose={() => setSearchOpen(false)}
-      />
-
+      <SearchPanel open={searchOpen} onClose={() => setSearchOpen(false)} />
       <AIChatWidget />
 
       {/* FOOTER */}
       <footer
         className="border-t border-white/[0.07] mt-8"
-        style={{
-          background: 'rgba(10,9,20,0.8)',
-        }}
+        style={{ background: 'rgba(10,9,20,0.8)' }}
       >
         <div className="mx-auto grid max-w-6xl gap-8 px-5 py-10 sm:grid-cols-3">
-
           <div>
             <div className="flex items-center gap-2.5 mb-3">
               <img
@@ -275,20 +238,17 @@ export default function Layout({ children }) {
                 alt="BLW Logo"
                 className="h-8 w-8 rounded-full object-cover ring-1 ring-white/10"
               />
-
               <span
-                className="font-semibold text-white text-sm"
-                style={{
-                  fontFamily: 'Montserrat, sans-serif',
-                }}
+                className="font-semibold text-sm"
+                style={{ fontFamily: 'Montserrat, sans-serif' }}
               >
-                Believers' LoveWorld CM Kenya Zone
+                <span style={{ color: '#FFFFFF' }}>Believers' LoveWorld CM</span>{' '}
+                <span style={{ color: '#F2A31C' }}>Kenya Zone</span>
               </span>
             </div>
 
             <p className="text-xs text-white/40 leading-relaxed">
-              Fellowship Without Borders for students and young
-              professionals across Kenya Zone.
+              Fellowship Without Borders for students and young professionals across Kenya Zone.
             </p>
           </div>
 
@@ -299,44 +259,12 @@ export default function Layout({ children }) {
             >
               Quick Links
             </h4>
-
             <div className="flex flex-col gap-2 text-sm text-white/50">
-
-              <Link
-                to="/sermons"
-                className="hover:text-white transition"
-              >
-                Sermons
-              </Link>
-
-              <Link
-                to="/outreaches"
-                className="hover:text-white transition"
-              >
-                Outreaches
-              </Link>
-
-              <Link
-                to="/events"
-                className="hover:text-white transition"
-              >
-                Events
-              </Link>
-
-              <Link
-                to="/give"
-                className="hover:text-white transition"
-              >
-                Give
-              </Link>
-
-              <Link
-                to="/salvation"
-                className="hover:text-white transition"
-              >
-                Salvation
-              </Link>
-
+              <Link to="/sermons" className="hover:text-white transition">Sermons</Link>
+              <Link to="/outreaches" className="hover:text-white transition">Outreaches</Link>
+              <Link to="/events" className="hover:text-white transition">Events</Link>
+              <Link to="/give" className="hover:text-white transition">Give</Link>
+              <Link to="/salvation" className="hover:text-white transition">Salvation</Link>
             </div>
           </div>
 
@@ -347,9 +275,7 @@ export default function Layout({ children }) {
             >
               Stay Connected
             </h4>
-
             <div className="flex items-center gap-3 text-white/50">
-
               <a
                 href="https://wa.me/254700000000"
                 className="rounded-xl border border-white/10 p-3 transition hover:border-white/25 hover:text-white"
@@ -357,7 +283,6 @@ export default function Layout({ children }) {
               >
                 <FiPhone className="h-4 w-4" />
               </a>
-
               <Link
                 to="/connect"
                 className="rounded-xl border border-white/10 p-3 transition hover:border-white/25 hover:text-white"
@@ -365,17 +290,14 @@ export default function Layout({ children }) {
               >
                 <FiHeart className="h-4 w-4" />
               </Link>
-
             </div>
           </div>
-
         </div>
 
         <div className="border-t border-white/[0.05] py-4 text-center text-xs text-white/25">
           © {new Date().getFullYear()} Believers' LoveWorld CM Kenya Zone · Kenya Zone
         </div>
       </footer>
-
     </div>
   );
 }
