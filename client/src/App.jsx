@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
 import Layout from './layouts/Layout';
-
 import Home from './pages/Home';
 import Outreaches from './pages/Outreaches';
 import Events from './pages/Events';
@@ -18,13 +17,17 @@ import Dashboard from './pages/Dashboard';
 import RecordSouls from './pages/RecordSouls';
 import AdminDashboard from './pages/AdminDashboard';
 import LeadersForum from './pages/LeadersForum';
-
-import { useAuth } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import OfflineBanner from './components/OfflineBanner';
+
+const Protected = ({ children }) => (
+  <Layout>
+    <ProtectedRoute>{children}</ProtectedRoute>
+  </Layout>
+);
 
 const AnimatedRoutes = () => {
   const location = useLocation();
-  const { user } = useAuth();
 
   return (
     <AnimatePresence mode="wait">
@@ -36,157 +39,21 @@ const AnimatedRoutes = () => {
         transition={{ duration: 0.3 }}
       >
         <Routes location={location}>
-
-          {/* Home */}
-          <Route
-            path="/"
-            element={
-              <Layout>
-                <Home />
-              </Layout>
-            }
-          />
-
-          {/* Outreaches */}
-          <Route
-            path="/outreaches"
-            element={
-              <Layout>
-                <Outreaches />
-              </Layout>
-            }
-          />
-
-          {/* Events */}
-          <Route
-            path="/events"
-            element={
-              <Layout>
-                <Events />
-              </Layout>
-            }
-          />
-
-          {/* Live */}
-          <Route
-            path="/live"
-            element={
-              <Layout>
-                <Live />
-              </Layout>
-            }
-          />
-
-          {/* Sermons */}
-          <Route
-            path="/sermons"
-            element={
-              <Layout>
-                <Sermons />
-              </Layout>
-            }
-          />
-
-          {/* Check-in */}
-          <Route
-            path="/checkin"
-            element={
-              <Layout>
-                <Checkin />
-              </Layout>
-            }
-          />
-
-          {/* Give */}
-          <Route
-            path="/give"
-            element={
-              <Layout>
-                <Give />
-              </Layout>
-            }
-          />
-
-          {/* Salvation */}
-          <Route
-            path="/salvation"
-            element={
-              <Layout>
-                <Salvation />
-              </Layout>
-            }
-          />
-
-          {/* Connect */}
-          <Route
-            path="/connect"
-            element={
-              <Layout>
-                <Connect />
-              </Layout>
-            }
-          />
-
-          {/* Authentication */}
-          <Route
-            path="/auth"
-            element={
-              <Layout>
-                <Auth />
-              </Layout>
-            }
-          />
-
-          {/* User Dashboard */}
-          <Route
-            path="/dashboard"
-            element={
-              <Layout>
-                {user ? <Dashboard /> : <Auth />}
-              </Layout>
-            }
-          />
-
-          {/* Record Souls */}
-          <Route
-            path="/record-souls"
-            element={
-              <Layout>
-                {user ? <RecordSouls /> : <Auth />}
-              </Layout>
-            }
-          />
-
-          {/* Admin */}
-          <Route
-            path="/admin"
-            element={
-              <Layout>
-                <AdminDashboard />
-              </Layout>
-            }
-          />
-
-          {/* Leaders Forum */}
-          <Route
-            path="/leaders-forum"
-            element={
-              <Layout>
-                <LeadersForum />
-              </Layout>
-            }
-          />
-
-          {/* Unknown routes return home */}
-          <Route
-            path="*"
-            element={
-              <Layout>
-                <Home />
-              </Layout>
-            }
-          />
-
+          <Route path="/" element={<Layout><Home /></Layout>} />
+          <Route path="/outreaches" element={<Layout><Outreaches /></Layout>} />
+          <Route path="/events" element={<Layout><Events /></Layout>} />
+          <Route path="/live" element={<Layout><Live /></Layout>} />
+          <Route path="/sermons" element={<Layout><Sermons /></Layout>} />
+          <Route path="/checkin" element={<Layout><Checkin /></Layout>} />
+          <Route path="/give" element={<Layout><Give /></Layout>} />
+          <Route path="/salvation" element={<Layout><Salvation /></Layout>} />
+          <Route path="/connect" element={<Layout><Connect /></Layout>} />
+          <Route path="/auth" element={<Layout><Auth /></Layout>} />
+          <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
+          <Route path="/record-souls" element={<Protected><RecordSouls /></Protected>} />
+          <Route path="/admin" element={<Protected><AdminDashboard /></Protected>} />
+          <Route path="/leaders-forum" element={<Protected><LeadersForum /></Protected>} />
+          <Route path="*" element={<Layout><Home /></Layout>} />
         </Routes>
       </motion.div>
     </AnimatePresence>
