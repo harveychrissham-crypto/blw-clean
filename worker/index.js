@@ -70,10 +70,71 @@ function authCorsHeaders(origin) {
   return {
     'access-control-allow-origin': origin,
     'access-control-allow-credentials': 'true',
-    'access-control-allow-methods': 'GET,POST,OPTIONS',
+    'access-control-allow-methods': 'GET,POST,DELETE,OPTIONS',
     'access-control-allow-headers': 'Content-Type, Authorization',
     vary: 'Origin',
   };
+}
+
+function getBearerToken(request) {
+  const authorization = request.headers.get('Authorization') || request.headers.get('authorization');
+  if (authorization?.startsWith('Bearer ')) return authorization.slice(7).trim();
+
+  const cookie = request.headers.get('Cookie') || request.headers.get('cookie') || '';
+  const match = cookie.split(';').map((part) => part.trim()).find((part) => part.startsWith('blw_auth_token='));
+  return match ? decodeURIComponent(match.slice('blw_auth_token='.length)) : '';
+}
+
+async function handleAccountDelete(request, workerEnv, url) {
+  const origin = url.origin;
+  const corsHeaders = authCorsHeaders(origin);
+
+  if (url.pathname !== '/api/auth/account/delete' && url.pathname !== '/api/auth/account') return null;
+  if (request.method !== 'POST' && request.method !== 'DELETE') {
+    return json({ error: 'Method not allowed.' }, 405, corsHeaders);
+  }
+
+  const databaseUrl = workerEnv.HYPERDRIVE?.connectionString || workerEnv.DATABASE_URL || '';
+  const jwtSecret = workerEnv.JWT_SECRET || databaseUrl || '';
+  if (!databaseUrl) return json({ error: 'Database connection is not configured.' }, 503, corsHeaders);
+  if (!jwtSecret) return json({ error: 'Authentication is not configured.' }, 503, corsHeaders);
+
+  const token = getBearerToken(request);
+  if (!token) return json({ error: 'Authorization token missing.' }, 401, corsHeaders);
+
+  try {
+    const { default: jwt } = await import('jsonwebtoken');
+    const decoded = jwt.verify(token, jwtSecret);
+    const email = sanitizeEmail(decoded?.user?.email);
+    if (!email) return json({ error: 'Invalid authentication token.' }, 401, corsHeaders);
+
+    const result = await withDb(workerEnv, async (client) => {
+      await ensureUsersTable(client);
+      return client.query(
+        'DELETE FROM users WHERE LOWER(email) = LOWER($1) RETURNING email',
+        [email]
+      );
+    });
+
+    if (!result.rows.length) {
+      return json({ error: 'Account not found.' }, 404, corsHeaders);
+    }
+
+    return json(
+      { status: 'ok', message: 'Account deleted successfully.' },
+      200,
+      {
+        ...corsHeaders,
+        'set-cookie': 'blw_auth_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax; Secure',
+      }
+    );
+  } catch (error) {
+    console.error('[worker] direct account deletion failed', error);
+    if (error?.name === 'JsonWebTokenError' || error?.name === 'TokenExpiredError') {
+      return json({ error: 'Invalid or expired token.' }, 401, corsHeaders);
+    }
+    return json({ error: 'Unable to delete account at this time.' }, 500, corsHeaders);
+  }
 }
 
 async function handleAuthApi(request, workerEnv, url) {
@@ -81,6 +142,9 @@ async function handleAuthApi(request, workerEnv, url) {
   const corsHeaders = authCorsHeaders(origin);
 
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders });
+
+  const accountDeleteResponse = await handleAccountDelete(request, workerEnv, url);
+  if (accountDeleteResponse) return accountDeleteResponse;
 
   if (url.pathname === '/api/auth/health' && request.method === 'GET') {
     return json({ status: 'ok', message: 'Auth service ready' }, 200, corsHeaders);
@@ -126,7 +190,6 @@ async function handleAuthApi(request, workerEnv, url) {
     try {
       const result = await withDb(workerEnv, async (client) => {
         await ensureUsersTable(client);
-
         const duplicate = await client.query(
           'SELECT 1 FROM users WHERE LOWER(email) = LOWER($1) OR phone = $2 LIMIT 1',
           [email, phone]
@@ -143,46 +206,29 @@ async function handleAuthApi(request, workerEnv, url) {
            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'Verified')
            RETURNING email, full_name, phone, campus_zone, chapter, country, residence,
                      birthday, invited_by, gender, membership_id, badge, status`,
-          [fullName, email, hashedPassword, phone, campusZone, chapter, country,
-            residence, birthday || null, invitedBy, gender, membershipId, badge]
+          [fullName, email, phone, campusZone, chapter, country, residence,
+            birthday || null, invitedBy, gender, membershipId, badge]
         );
         return { user: inserted.rows[0] };
       });
 
-      if (result.duplicate) {
-        return json({ error: 'An account with that email or phone already exists.' }, 409, corsHeaders);
-      }
+      if (result.duplicate) return json({ error: 'An account with that email or phone already exists.' }, 409, corsHeaders);
 
       const user = result.user;
       const payloadUser = {
-        email: user.email,
-        name: user.full_name,
-        phone: user.phone,
-        campusZone: user.campus_zone,
-        chapter: user.chapter,
-        country: user.country,
-        residence: user.residence,
-        birthday: user.birthday,
-        invitedBy: user.invited_by,
-        gender: user.gender,
-        membershipId: user.membership_id,
-        badge: user.badge,
-        status: user.status,
+        email: user.email, name: user.full_name, phone: user.phone,
+        campusZone: user.campus_zone, chapter: user.chapter, country: user.country,
+        residence: user.residence, birthday: user.birthday, invitedBy: user.invited_by,
+        gender: user.gender, membershipId: user.membership_id, badge: user.badge, status: user.status,
       };
       const token = jwt.sign({ user: payloadUser }, jwtSecret, { expiresIn: '7d' });
-      return json(
-        { user: payloadUser, token },
-        201,
-        {
-          ...corsHeaders,
-          'set-cookie': `blw_auth_token=${encodeURIComponent(token)}; Max-Age=604800; Path=/; HttpOnly; SameSite=Lax; Secure`,
-        }
-      );
+      return json({ user: payloadUser, token }, 201, {
+        ...corsHeaders,
+        'set-cookie': `blw_auth_token=${encodeURIComponent(token)}; Max-Age=604800; Path=/; HttpOnly; SameSite=Lax; Secure`,
+      });
     } catch (error) {
       console.error('[worker] direct registration failed', error);
-      if (error?.code === '23505') {
-        return json({ error: 'An account with that email or phone already exists.' }, 409, corsHeaders);
-      }
+      if (error?.code === '23505') return json({ error: 'An account with that email or phone already exists.' }, 409, corsHeaders);
       return json({ error: 'Unable to process registration at this time.' }, 500, corsHeaders);
     }
   }
@@ -198,8 +244,7 @@ async function handleAuthApi(request, workerEnv, url) {
       const result = await client.query(
         `SELECT full_name, email, phone, campus_zone, chapter, country, residence,
                 birthday, invited_by, gender, membership_id, badge, status, password_hash
-         FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1`,
-        [email]
+         FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1`, [email]
       );
       if (!result.rows.length) return null;
       const row = result.rows[0];
@@ -210,29 +255,16 @@ async function handleAuthApi(request, workerEnv, url) {
     if (!user) return json({ error: 'Invalid email or password.' }, 401, corsHeaders);
 
     const payloadUser = {
-      email: user.email,
-      name: user.full_name,
-      phone: user.phone,
-      campusZone: user.campus_zone,
-      chapter: user.chapter,
-      country: user.country,
-      residence: user.residence,
-      birthday: user.birthday,
-      invitedBy: user.invited_by,
-      gender: user.gender,
-      membershipId: user.membership_id,
-      badge: user.badge,
-      status: user.status,
+      email: user.email, name: user.full_name, phone: user.phone,
+      campusZone: user.campus_zone, chapter: user.chapter, country: user.country,
+      residence: user.residence, birthday: user.birthday, invitedBy: user.invited_by,
+      gender: user.gender, membershipId: user.membership_id, badge: user.badge, status: user.status,
     };
     const token = jwt.sign({ user: payloadUser }, jwtSecret, { expiresIn: '7d' });
-    return json(
-      { user: payloadUser, token },
-      200,
-      {
-        ...corsHeaders,
-        'set-cookie': `blw_auth_token=${encodeURIComponent(token)}; Max-Age=604800; Path=/; HttpOnly; SameSite=Lax; Secure`,
-      }
-    );
+    return json({ user: payloadUser, token }, 200, {
+      ...corsHeaders,
+      'set-cookie': `blw_auth_token=${encodeURIComponent(token)}; Max-Age=604800; Path=/; HttpOnly; SameSite=Lax; Secure`,
+    });
   } catch (error) {
     console.error('[worker] direct login failed', error);
     return json({ error: 'Unable to process login at this time.' }, 500, corsHeaders);
@@ -243,19 +275,15 @@ async function getExpressHandler(workerEnv) {
   if (!expressHandlerPromise) {
     expressHandlerPromise = (async () => {
       process.env.CLOUDFLARE_WORKERS = 'true';
-
       const databaseUrl = workerEnv.HYPERDRIVE?.connectionString || workerEnv.DATABASE_URL || '';
       const jwtSecret = workerEnv.JWT_SECRET || databaseUrl || '';
-
       process.env.DATABASE_URL = databaseUrl;
       process.env.JWT_SECRET = jwtSecret;
       process.env.SUPABASE_URL = workerEnv.SUPABASE_URL || '';
       process.env.SUPABASE_SERVICE_ROLE_KEY = workerEnv.SUPABASE_SERVICE_ROLE_KEY || '';
       process.env.SUPABASE_STORAGE_BUCKET = workerEnv.SUPABASE_STORAGE_BUCKET || 'outreach-photos';
-
       if (!databaseUrl) throw new Error('HYPERDRIVE/DATABASE_URL is required for the API.');
       if (!jwtSecret) throw new Error('JWT_SECRET is required for authentication.');
-
       const { createApp } = await import('../server/server.js');
       const app = createApp({ serveStatic: false });
       app.listen(3000);
@@ -268,29 +296,23 @@ async function getExpressHandler(workerEnv) {
 export default {
   async fetch(request, workerEnv, ctx) {
     const url = new URL(request.url);
-
-    if (!url.pathname.startsWith('/api/')) {
-      return workerEnv.ASSETS.fetch(request);
-    }
+    if (!url.pathname.startsWith('/api/')) return workerEnv.ASSETS.fetch(request);
 
     try {
       const directAuthResponse = await handleAuthApi(request, workerEnv, url);
       if (directAuthResponse) return directAuthResponse;
     } catch (error) {
       console.error('[worker] direct auth handler failed', error);
-      return json({ error: 'API service is temporarily unavailable.' }, 503);
+      return json({ error: 'API service is temporarily unavailable.' }, 503, authCorsHeaders(url.origin));
     }
 
-    // Same-origin browser requests use the Worker origin. This also keeps the
-    // Express fallback compatible with the Capacitor app and local development.
     process.env.ALLOWED_ORIGIN = workerEnv.ALLOWED_ORIGIN || url.origin;
-
     try {
       const expressHandler = await getExpressHandler(workerEnv);
       return await expressHandler.fetch(request, workerEnv, ctx);
     } catch (error) {
       console.error('[worker] API request failed', error);
-      return json({ error: 'API service is temporarily unavailable.' }, 503);
+      return json({ error: 'API service is temporarily unavailable.' }, 503, authCorsHeaders(url.origin));
     }
   },
 };
