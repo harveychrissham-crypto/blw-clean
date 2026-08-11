@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import pkg from 'pg';
-const { Pool } = pkg;
+const { Client, Pool } = pkg;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -14,14 +14,32 @@ if (!connectionString) {
   throw new Error('DATABASE_URL is not defined. Set it in server/.env or the environment.');
 }
 
-const pool = new Pool({ connectionString });
+// Cloudflare Hyperdrive requires database clients to be scoped to a request.
+// A module-level pg Pool/Client can become stale between Worker invocations.
+// Keep the existing Pool for normal Node/Render deployments, but create a
+// short-lived Client for Cloudflare Worker requests.
+const pool = process.env.CLOUDFLARE_WORKERS === 'true'
+  ? null
+  : new Pool({ connectionString });
 
 export const query = async (text, params = []) => {
+  if (process.env.CLOUDFLARE_WORKERS === 'true') {
+    const client = new Client({ connectionString: process.env.DATABASE_URL });
+    await client.connect();
+    try {
+      return await client.query(text, params);
+    } finally {
+      // Hyperdrive manages the underlying connection pool. Ending this
+      // request-scoped client is safe and prevents stale clients in Workers.
+      await client.end().catch(() => {});
+    }
+  }
+
   return pool.query(text, params);
 };
 
 export const initDb = async () => {
-  await pool.query(`
+  await query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
       full_name TEXT NOT NULL,
@@ -43,15 +61,13 @@ export const initDb = async () => {
     );
   `);
 
-  // Check-in tracking — added after initial launch, so use ADD COLUMN IF NOT EXISTS
-  // to upgrade existing tables without dropping data.
-  await pool.query(`
+  await query(`
     ALTER TABLE users
       ADD COLUMN IF NOT EXISTS checked_in BOOLEAN NOT NULL DEFAULT FALSE,
       ADD COLUMN IF NOT EXISTS checked_in_at TIMESTAMP WITH TIME ZONE;
   `);
 
-  await pool.query(`
+  await query(`
     CREATE TABLE IF NOT EXISTS events (
       id SERIAL PRIMARY KEY,
       title TEXT NOT NULL,
@@ -64,7 +80,7 @@ export const initDb = async () => {
     );
   `);
 
-  await pool.query(`
+  await query(`
     CREATE TABLE IF NOT EXISTS outreach_stories (
       id SERIAL PRIMARY KEY,
       tag TEXT NOT NULL DEFAULT '',
@@ -75,13 +91,12 @@ export const initDb = async () => {
     );
   `);
 
-  // Full story body — added after initial launch, so existing tables get it via ADD COLUMN.
-  await pool.query(`
+  await query(`
     ALTER TABLE outreach_stories
       ADD COLUMN IF NOT EXISTS body TEXT NOT NULL DEFAULT '';
   `);
 
-  await pool.query(`
+  await query(`
     CREATE TABLE IF NOT EXISTS sermons (
       id SERIAL PRIMARY KEY,
       title TEXT NOT NULL,
@@ -92,18 +107,12 @@ export const initDb = async () => {
     );
   `);
 
-  // Lets an admin pick which sermon plays as the main/featured video,
-  // instead of it always being whichever was added most recently.
-  await pool.query(`
+  await query(`
     ALTER TABLE sermons
       ADD COLUMN IF NOT EXISTS is_featured BOOLEAN NOT NULL DEFAULT FALSE;
   `);
 
-  // Admin-managed service venue/time per chapter, shown on the member
-  // dashboard's Sunday self check-in card. Replaces the old hardcoded
-  // "Believers' LoveWorld CM Kenya Zone (LAA & Avenor)" text, which
-  // was the same for every member regardless of their chapter.
-  await pool.query(`
+  await query(`
     CREATE TABLE IF NOT EXISTS chapter_venues (
       id SERIAL PRIMARY KEY,
       chapter TEXT NOT NULL UNIQUE,
@@ -113,11 +122,7 @@ export const initDb = async () => {
     );
   `);
 
-  // Single-row settings for the public /live page. A leader pastes the
-  // YouTube (or YouTube Live) URL and flips is_live on when the stream
-  // starts; the frontend embeds it via youtube-nocookie.com, same as
-  // the sermons feature.
-  await pool.query(`
+  await query(`
     CREATE TABLE IF NOT EXISTS live_stream (
       id INTEGER PRIMARY KEY DEFAULT 1,
       title TEXT NOT NULL DEFAULT '',
@@ -127,28 +132,21 @@ export const initDb = async () => {
       CONSTRAINT live_stream_singleton CHECK (id = 1)
     );
   `);
-  // Added alongside the Google Meet option — lets a leader set a Meet link
-  // as a second way to join the live service, next to the YouTube embed.
-  await pool.query(`
+
+  await query(`
     ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS google_meet_url TEXT NOT NULL DEFAULT '';
   `);
-  // Replaces the Google Meet link as the "join the call" option — a Daily.co
-  // room URL that embeds inline via daily-js instead of opening a new tab.
-  await pool.query(`
+
+  await query(`
     ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS daily_room_url TEXT NOT NULL DEFAULT '';
   `);
-  await pool.query(`
+
+  await query(`
     INSERT INTO live_stream (id) VALUES (1)
     ON CONFLICT (id) DO NOTHING;
   `);
 
-  // Lightweight, mandatory sign-in on the public /live page: visitors type
-  // their name + who invited them before watching. `client_id` is a random
-  // id the frontend generates once and stores in localStorage, so repeat
-  // visits from the same browser update the existing row (via upsert in the
-  // controller) instead of creating a new one — visit_count and
-  // watch_seconds accumulate across visits/returns instead of duplicating.
-  await pool.query(`
+  await query(`
     CREATE TABLE IF NOT EXISTS live_viewers (
       id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
@@ -156,32 +154,26 @@ export const initDb = async () => {
       created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
     );
   `);
-  await pool.query(`
+
+  await query(`
     ALTER TABLE live_viewers ADD COLUMN IF NOT EXISTS client_id TEXT;
   `);
-  await pool.query(`
+
+  await query(`
     ALTER TABLE live_viewers ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW();
   `);
-  await pool.query(`
+
+  await query(`
     ALTER TABLE live_viewers ADD COLUMN IF NOT EXISTS visit_count INTEGER NOT NULL DEFAULT 1;
   `);
-  await pool.query(`
+
+  await query(`
     ALTER TABLE live_viewers ADD COLUMN IF NOT EXISTS watch_seconds INTEGER NOT NULL DEFAULT 0;
   `);
-  // Plain (non-partial) unique index — Postgres already treats NULLs as
-  // distinct from one another in a unique index, so older rows recorded
-  // before this feature (client_id IS NULL) don't conflict with each other
-  // or need a WHERE clause here. That matters because ON CONFLICT (client_id)
-  // in the controller can only auto-infer a *non-partial* unique index; a
-  // partial one (e.g. "WHERE client_id IS NOT NULL") would make every
-  // insert fail with "no unique or exclusion constraint matching the
-  // ON CONFLICT specification" — which is exactly what was happening here.
-  // The DROP first is needed because an earlier version of this migration
-  // already created the (broken, partial) index under this same name on
-  // any environment that had already booted with it — "IF NOT EXISTS" on
-  // CREATE would otherwise silently skip fixing it.
-  await pool.query(`DROP INDEX IF EXISTS live_viewers_client_id_idx;`);
-  await pool.query(`
+
+  await query(`DROP INDEX IF EXISTS live_viewers_client_id_idx;`);
+
+  await query(`
     CREATE UNIQUE INDEX IF NOT EXISTS live_viewers_client_id_idx
       ON live_viewers (client_id);
   `);
