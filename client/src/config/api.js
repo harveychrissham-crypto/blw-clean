@@ -1,14 +1,14 @@
 import { getToken } from '../utils/authToken';
 
 /**
- * The app's static UI is bundled locally (see capacitor.config.ts — no
- * `server.url`), so it opens instantly with no internet connection.
- *
- * All API calls, however, must reach across to the live backend explicitly,
- * since there is no same-origin server to call a relative "/api/..." path
- * against once the UI is running from the local bundle.
+ * The mobile app is bundled locally, so relative /api/... URLs do not reach
+ * the Cloudflare Worker. Keep the live Worker URL as the production fallback.
+ * VITE_API_BASE_URL can still override it for development or another backend.
  */
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+export const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ||
+  'https://blw-kenya-zone.harveychrissham.workers.dev'
+).replace(/\/$/, '');
 
 export function apiUrl(path) {
   if (/^https?:\/\//i.test(path)) return path;
@@ -16,12 +16,9 @@ export function apiUrl(path) {
 }
 
 /**
- * Drop-in replacement for fetch() that:
- *  - always targets the live backend, regardless of where the UI itself
- *    is currently loaded from (local bundle, dev server, or the live site)
- *  - attaches Authorization: Bearer <token> when a token is stored
- *    (see utils/authToken.js) — this is what keeps the user logged in
- *    across app restarts without relying on cross-origin cookies
+ * Drop-in replacement for fetch().
+ * Adds the stored Bearer token when available so API requests work from the
+ * local Capacitor bundle as well as the deployed website.
  */
 export async function apiFetch(path, options = {}) {
   const token = await getToken();
