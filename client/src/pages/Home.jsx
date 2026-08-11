@@ -4,7 +4,7 @@ import { FiHeart, FiUsers, FiBookOpen, FiGlobe, FiArrowRight, FiDownload } from 
 import { MdQrCodeScanner } from 'react-icons/md';
 
 const ANDROID_APK_URL =
-  'https://github.com/harveychrissham-crypto/blw-clean/releases/download/latest-android/blw-campus-ministry.apk';
+  'https://github.com/harveychrissham-crypto/blw-clean/releases/latest/download/blw-campus-ministry.apk';
 
 const features = [
   {
