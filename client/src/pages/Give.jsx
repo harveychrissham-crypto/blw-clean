@@ -1,6 +1,8 @@
-import { motion } from 'framer-motion';
-import { FiCreditCard, FiCopy, FiDollarSign, FiGlobe, FiCheck } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiCreditCard, FiCopy, FiDollarSign, FiCheck, FiX } from 'react-icons/fi';
 import { useState } from 'react';
+
+const MPESA_PAYBILL = '400200';
 
 const mpesaAccounts = [
   { name: 'Offering', account: '1022039' },
@@ -27,10 +29,10 @@ export default function Give() {
   const [mpesaOpen, setMpesaOpen] = useState(false);
   const [copied, setCopied] = useState('');
 
-  const copyAccount = async (account) => {
+  const copyText = async (value) => {
     try {
-      await navigator.clipboard.writeText(account);
-      setCopied(account);
+      await navigator.clipboard.writeText(value);
+      setCopied(value);
       window.setTimeout(() => setCopied(''), 1800);
     } catch {
       // Clipboard access may be unavailable in some browsers/webviews.
@@ -69,39 +71,71 @@ export default function Give() {
         </div>
       </div>
 
-      {mpesaOpen && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mt-6 rounded-2xl p-6 sm:p-8" style={card}>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#F2A31C' }}>M-Pesa Giving</p>
-              <h3 className="mt-2 text-xl font-extrabold text-white">Choose what you would like to give towards</h3>
-            </div>
-            <button type="button" onClick={() => setMpesaOpen(false)} className="rounded-full px-3 py-1 text-xs text-white/60 hover:bg-white/10">Close</button>
-          </div>
+      <AnimatePresence>
+        {mpesaOpen && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setMpesaOpen(false)}
+          >
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="mpesa-giving-title"
+              className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl p-6 shadow-2xl sm:p-8"
+              style={{ background: '#101018', border: '1px solid rgba(255,255,255,0.1)' }}
+              initial={{ opacity: 0, scale: 0.96, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 20 }}
+              transition={{ duration: 0.2 }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#F2A31C' }}>M-Pesa Giving</p>
+                  <h3 id="mpesa-giving-title" className="mt-2 text-xl font-extrabold text-white sm:text-2xl">Choose what you would like to give towards</h3>
+                </div>
+                <button type="button" onClick={() => setMpesaOpen(false)} className="rounded-full p-2 text-white/60 transition hover:bg-white/10 hover:text-white" aria-label="Close M-Pesa details">
+                  <FiX size={20} />
+                </button>
+              </div>
 
-          <div className="mt-5 rounded-xl p-5" style={{ background: 'rgba(242,163,28,0.08)', border: '1px solid rgba(242,163,28,0.2)' }}>
-            <div className="text-xs font-bold uppercase tracking-widest text-white/50">M-Pesa Paybill</div>
-            <div className="mt-2 text-sm text-white/70">Paybill details will appear here once the official Paybill number is configured.</div>
-          </div>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {mpesaAccounts.map((item) => (
-              <div key={item.name} className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <div className="text-sm font-semibold text-white">{item.name}</div>
-                <div className="mt-2 flex items-center justify-between gap-3">
-                  <span className="font-mono text-lg font-bold tracking-wide" style={{ color: '#F2A31C' }}>{item.account}</span>
-                  <button type="button" onClick={() => copyAccount(item.account)} className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs text-white/70 hover:bg-white/10" aria-label={`Copy ${item.name} account number`}>
-                    {copied === item.account ? <FiCheck /> : <FiCopy />}
-                    {copied === item.account ? 'Copied' : 'Copy'}
+              <div className="mt-6 rounded-xl p-5" style={{ background: 'rgba(242,163,28,0.08)', border: '1px solid rgba(242,163,28,0.25)' }}>
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-widest text-white/50">M-Pesa Paybill</div>
+                    <div className="mt-1 text-3xl font-black tracking-wider text-white">{MPESA_PAYBILL}</div>
+                  </div>
+                  <button type="button" onClick={() => copyText(MPESA_PAYBILL)} className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/80 transition hover:bg-white/10">
+                    {copied === MPESA_PAYBILL ? <FiCheck /> : <FiCopy />}
+                    {copied === MPESA_PAYBILL ? 'Copied' : 'Copy Paybill'}
                   </button>
                 </div>
+                <p className="mt-3 text-sm leading-relaxed text-white/60">Use Paybill <span className="font-bold text-white">{MPESA_PAYBILL}</span>, then enter the account number for the giving category below.</p>
               </div>
-            ))}
-          </div>
 
-          <p className="mt-5 text-xs leading-relaxed text-white/40">Select the giving category, use its account number with the official M-Pesa Paybill, and confirm the transaction on your phone. An automatic M-Pesa STK prompt requires the site's Daraja credentials and a phone number, so this page does not pretend to send a prompt until that backend is configured.</p>
-        </motion.div>
-      )}
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {mpesaAccounts.map((item) => (
+                  <button key={item.name} type="button" onClick={() => copyText(item.account)} className="rounded-xl p-4 text-left transition hover:bg-white/10" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="text-sm font-semibold text-white">{item.name}</div>
+                    <div className="mt-2 flex items-center justify-between gap-3">
+                      <span className="font-mono text-lg font-bold tracking-wide" style={{ color: '#F2A31C' }}>{item.account}</span>
+                      <span className="text-white/45">{copied === item.account ? <FiCheck /> : <FiCopy />}</span>
+                    </div>
+                    <div className="mt-1 text-[11px] text-white/35">Tap to copy account</div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-6 rounded-xl bg-white/[0.03] p-4 text-xs leading-relaxed text-white/45">
+                <span className="font-semibold text-white/70">How to give:</span> Open M-Pesa → Lipa na M-Pesa → Pay Bill → enter <span className="font-semibold text-white">{MPESA_PAYBILL}</span> → enter the account number for your chosen category → enter the amount → confirm.
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
