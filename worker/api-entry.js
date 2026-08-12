@@ -1,5 +1,6 @@
 import legacyWorker from './index.js';
 import { handleSermons } from './sermon-api.js';
+import { handleFellowships } from './fellowship-api.js';
 
 const json = (body, status = 200, headers = {}) => new Response(
   JSON.stringify(body),
@@ -83,4 +84,4 @@ async function handleLive(request, env, url) {
     return{status:405,body:{error:'Method not allowed.'}}; }); return json(result.body,result.status,headers); } catch(error){console.error('[worker] live API failed',error);return json({error:'Unable to access the live service right now.'},503,headers);}
 }
 
-export default { async fetch(request,env,ctx){const url=new URL(request.url);const members=await handleMembers(request,env,url);if(members)return members;const sermons=await handleSermons(request,env,url);if(sermons)return sermons;const live=await handleLive(request,env,url);if(live)return live;if(url.pathname==='/api/health'&&request.method==='GET')return json({status:'ok',message:'BLW Campus Ministry API is running'},200,cors(url.origin));return legacyWorker.fetch(request,env,ctx);} };
+export default { async fetch(request,env,ctx){const url=new URL(request.url);const members=await handleMembers(request,env,url);if(members)return members;const sermons=await handleSermons(request,env,url);if(sermons)return sermons;const fellowships=await handleFellowships(request,env,url);if(fellowships)return fellowships;const live=await handleLive(request,env,url);if(live)return live;if(url.pathname==='/api/health'&&request.method==='GET')return json({status:'ok',message:'BLW Campus Ministry API is running'},200,cors(url.origin));return legacyWorker.fetch(request,env,ctx);} };
