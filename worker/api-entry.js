@@ -1,6 +1,7 @@
 import legacyWorker from './index.js';
 import { handleSermons } from './sermon-api.js';
 import { handleFellowships } from './fellowship-api.js';
+import { sendEmail, serviceReminderEmail, welcomeEmail } from './email.js';
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', ...headers } });
 const cors = (origin) => ({ 'access-control-allow-origin': origin, 'access-control-allow-credentials': 'true', 'access-control-allow-methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS', 'access-control-allow-headers': 'Content-Type, Authorization', vary: 'Origin' });
@@ -13,4 +14,62 @@ const youtubeId=(value)=>{if(typeof value!=='string')return null;const m=value.m
 const liveDto=(row)=>({title:row.title||'',youtubeUrl:row.youtube_url||'',youtubeId:youtubeId(row.youtube_url),googleMeetUrl:row.google_meet_url||'',dailyRoomUrl:row.daily_room_url||'',isLive:!!row.is_live,updatedAt:row.updated_at});
 async function handleLive(request,env,url){if(!url.pathname.startsWith('/api/live'))return null;const headers=cors(url.origin);if(request.method==='OPTIONS')return new Response(null,{status:204,headers});try{const result=await db(env,async(client)=>{await ensureLiveTables(client);if(url.pathname==='/api/live'&&request.method==='GET'){const r=await client.query('SELECT * FROM live_stream WHERE id=1');return{status:200,body:{live:liveDto(r.rows[0])}};}if(url.pathname==='/api/live'&&request.method==='PUT'){const body=await request.json().catch(()=>null);if(!body)return{status:400,body:{error:'Invalid JSON request body.'}};const youtubeUrl=typeof body.youtubeUrl==='string'?body.youtubeUrl.trim():'';const googleMeetUrl=typeof body.googleMeetUrl==='string'?body.googleMeetUrl.trim():'';const dailyRoomUrl=typeof body.dailyRoomUrl==='string'?body.dailyRoomUrl.trim():'';if(youtubeUrl&&!youtubeId(youtubeUrl))return{status:400,body:{error:'Invalid YouTube URL.'}};if(googleMeetUrl&&!/^https:\/\/meet\.google\.com\/[a-z0-9-]+/i.test(googleMeetUrl))return{status:400,body:{error:'Invalid Google Meet URL.'}};if(body.isLive&&!youtubeUrl&&!googleMeetUrl&&!dailyRoomUrl)return{status:400,body:{error:'Add a YouTube, Google Meet, or Daily link before going live.'}};const r=await client.query(`UPDATE live_stream SET title=$1,youtube_url=$2,google_meet_url=$3,daily_room_url=$4,is_live=$5,updated_at=NOW() WHERE id=1 RETURNING *`,[body.title||'',youtubeUrl,googleMeetUrl,dailyRoomUrl,!!body.isLive]);return{status:200,body:{live:liveDto(r.rows[0])}};}if(url.pathname==='/api/live/viewers'&&request.method==='GET'){const r=await client.query('SELECT * FROM live_viewers ORDER BY last_seen_at DESC LIMIT 500');return{status:200,body:{viewers:r.rows.map(v=>({id:v.id,name:v.name,invitedBy:v.invited_by||'',createdAt:v.created_at,lastSeenAt:v.last_seen_at,visitCount:v.visit_count||1,watchSeconds:v.watch_seconds||0}))}};}if(url.pathname==='/api/live/viewers'&&request.method==='POST'){const body=await request.json().catch(()=>null);const name=typeof body?.name==='string'?body.name.trim().slice(0,120):'';const invitedBy=typeof body?.invitedBy==='string'?body.invitedBy.trim().slice(0,120):'';const clientId=typeof body?.clientId==='string'?body.clientId.trim().slice(0,64):'';if(!name)return{status:400,body:{error:'Name is required.'}};const r=clientId?await client.query(`INSERT INTO live_viewers (name,invited_by,client_id,last_seen_at,visit_count) VALUES ($1,$2,$3,NOW(),1) ON CONFLICT (client_id) DO UPDATE SET name=EXCLUDED.name,invited_by=CASE WHEN EXCLUDED.invited_by<>'' THEN EXCLUDED.invited_by ELSE live_viewers.invited_by END,last_seen_at=NOW(),visit_count=live_viewers.visit_count+1 RETURNING *`,[name,invitedBy,clientId]):await client.query('INSERT INTO live_viewers (name,invited_by) VALUES ($1,$2) RETURNING *',[name,invitedBy]);const v=r.rows[0];return{status:201,body:{viewer:{id:v.id,name:v.name,invitedBy:v.invited_by||'',createdAt:v.created_at,lastSeenAt:v.last_seen_at,visitCount:v.visit_count||1,watchSeconds:v.watch_seconds||0}}};}if(url.pathname==='/api/live/viewers/heartbeat'&&request.method==='PATCH'){const body=await request.json().catch(()=>null);const clientId=typeof body?.clientId==='string'?body.clientId.trim().slice(0,64):'';const seconds=Number(body?.seconds);if(!clientId||!Number.isFinite(seconds)||seconds<=0)return{status:400,body:{error:'Invalid heartbeat.'}};const r=await client.query('UPDATE live_viewers SET watch_seconds=watch_seconds+$1,last_seen_at=NOW() WHERE client_id=$2 RETURNING *',[Math.min(Math.round(seconds),300),clientId]);if(!r.rows.length)return{status:204,body:null};const v=r.rows[0];return{status:200,body:{viewer:{id:v.id,name:v.name,invitedBy:v.invited_by||'',createdAt:v.created_at,lastSeenAt:v.last_seen_at,visitCount:v.visit_count||1,watchSeconds:v.watch_seconds||0}}};}return{status:405,body:{error:'Method not allowed.'}};});return json(result.body,result.status,headers);}catch(error){console.error('[worker] live API failed',error);return json({error:'Unable to access the live service right now.'},503,headers);}}
 
-export default { async fetch(request,env,ctx){const url=new URL(request.url);const members=await handleMembers(request,env,url);if(members)return members;const fellowships=await handleFellowships(request,env,url);if(fellowships)return fellowships;const sermons=await handleSermons(request,env,url);if(sermons)return sermons;const live=await handleLive(request,env,url);if(live)return live;if(url.pathname==='/api/health'&&request.method==='GET')return json({status:'ok',message:'BLW Campus Ministry API is running'},200,cors(url.origin));return legacyWorker.fetch(request,env,ctx);} };
+async function sendWelcomeAfterRegistration(response, env, ctx) {
+  if (response.status !== 201 || !response.clone) return;
+  try {
+    const body = await response.clone().json();
+    const user = body?.user;
+    if (!user?.email) return;
+    ctx.waitUntil((async () => {
+      try {
+        await sendEmail(env, { to: user.email, ...welcomeEmail(user) });
+      } catch (error) {
+        console.error('[email] welcome email failed', error);
+      }
+    })());
+  } catch (error) {
+    console.error('[email] unable to inspect registration response', error);
+  }
+}
+
+async function sendWeeklyServiceReminders(env) {
+  if (!env.RESEND_API_KEY || !env.EMAIL_FROM) {
+    console.warn('[email] reminder job skipped: email provider not configured.');
+    return;
+  }
+  const period = new Date().toISOString().slice(0, 10);
+  await db(env, async (client) => {
+    await client.query(`CREATE TABLE IF NOT EXISTS email_deliveries (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, message_type TEXT NOT NULL, period_key TEXT NOT NULL, sent_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(), UNIQUE (user_id, message_type, period_key))`);
+    const result = await client.query(`SELECT u.id, u.full_name, u.email, u.chapter, cv.venue, cv.service_time FROM users u LEFT JOIN chapter_venues cv ON LOWER(cv.chapter)=LOWER(u.chapter) WHERE COALESCE(u.email,'')<>'' AND LOWER(COALESCE(u.status,'')) NOT IN ('disabled','deleted') ORDER BY u.id ASC`);
+    for (const user of result.rows) {
+      const delivery = await client.query(`INSERT INTO email_deliveries (user_id, message_type, period_key) VALUES ($1,'service_reminder',$2) ON CONFLICT (user_id,message_type,period_key) DO NOTHING RETURNING id`, [user.id, period]);
+      if (!delivery.rows.length) continue;
+      try {
+        await sendEmail(env, { to: user.email, ...serviceReminderEmail(user, user) });
+      } catch (error) {
+        await client.query('DELETE FROM email_deliveries WHERE id=$1', [delivery.rows[0].id]);
+        console.error('[email] service reminder failed for user', user.id, error);
+      }
+    }
+  });
+}
+
+export default {
+  async fetch(request,env,ctx){
+    const url=new URL(request.url);
+    if(url.pathname==='/api/auth/register'&&request.method==='POST'){
+      const response=await legacyWorker.fetch(request,env,ctx);
+      await sendWelcomeAfterRegistration(response,env,ctx);
+      return response;
+    }
+    const members=await handleMembers(request,env,url);if(members)return members;
+    const fellowships=await handleFellowships(request,env,url);if(fellowships)return fellowships;
+    const sermons=await handleSermons(request,env,url);if(sermons)return sermons;
+    const live=await handleLive(request,env,url);if(live)return live;
+    if(url.pathname==='/api/health'&&request.method==='GET')return json({status:'ok',message:'BLW Campus Ministry API is running'},200,cors(url.origin));
+    return legacyWorker.fetch(request,env,ctx);
+  },
+  async scheduled(_controller, env, ctx) {
+    ctx.waitUntil(sendWeeklyServiceReminders(env));
+  },
+};
