@@ -57,11 +57,20 @@ async function handle(request, env, url) {
       const adminRoute = url.pathname === '/api/fellowships/admin' || url.pathname.startsWith('/api/fellowships/admin/');
       if (request.method === 'GET' && !adminRoute) {
         const q = clean(url.searchParams.get('q') || '', 120).toLowerCase(), country = clean(url.searchParams.get('country') || '', 80).toLowerCase();
+        const nearby = url.searchParams.get('nearby') === 'current';
         const params = [], where = ['is_active = TRUE'];
         if (q) { params.push(`%${q}%`); where.push(`LOWER(COALESCE(fellowship_name,'') || ' ' || COALESCE(country,'') || ' ' || COALESCE(city,'') || ' ' || COALESCE(town,'') || ' ' || COALESCE(area,'') || ' ' || COALESCE(university,'') || ' ' || COALESCE(address,'')) LIKE $${params.length}`); }
         if (country) { params.push(`%${country}%`); where.push(`LOWER(country) LIKE $${params.length}`); }
         const rows = await client.query(`SELECT * FROM chapter_venues WHERE ${where.join(' AND ')} ORDER BY country, COALESCE(city,town), fellowship_name, id LIMIT 50`, params);
-        return { status: 200, body: { fellowships: rows.rows.map(locationDto) } };
+        const body = { fellowships: rows.rows.map(locationDto) };
+        if (nearby) {
+          const cf = request.cf || {};
+          const latitude = Number(cf.latitude), longitude = Number(cf.longitude);
+          if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+            body.location = { latitude, longitude, city: cf.city || null, country: cf.country || null, source: 'cloudflare-ip' };
+          }
+        }
+        return { status: 200, body };
       }
       if (!validLeaderToken(request, env)) return { status: 403, body: { error: 'Valid leadership access is required.' } };
       if (request.method === 'GET' && url.pathname === '/api/fellowships/admin') {
