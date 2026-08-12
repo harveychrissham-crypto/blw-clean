@@ -12,18 +12,21 @@ const features = [
     label: 'CAMPUS FELLOWSHIP',
     title: 'Campus Fellowship',
     desc: 'Join a local community of believers, discipleship circles, and impactful student programs.',
+    to: '/connect',
   },
   {
     icon: FiBookOpen,
     label: 'RHAPSODY & TEACHING',
     title: 'Rhapsody & Teaching',
-    desc: 'Access the latest edition of our publication and discover resources for daily spiritual growth.',
+    desc: 'Access sermons and teaching resources for daily spiritual growth.',
+    to: '/sermons',
   },
   {
     icon: FiHeart,
     label: 'OUTREACH & IMPACT',
     title: 'Outreach & Impact',
     desc: 'Participate in national and regional outreaches that serve communities and share hope.',
+    to: '/outreaches',
   },
 ];
 
@@ -65,12 +68,7 @@ export default function Home() {
               <Link to="/checkin" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10">
                 Check In <MdQrCodeScanner className="h-4 w-4" />
               </Link>
-              <a
-                href={ANDROID_APK_URL}
-                download
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10"
-                aria-label="Download the latest Android app"
-              >
+              <a href={ANDROID_APK_URL} download className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10" aria-label="Download the latest Android app">
                 Download App <FiDownload className="h-4 w-4" />
               </a>
             </div>
@@ -83,14 +81,22 @@ export default function Home() {
           {features.map((f, i) => {
             const Icon = f.icon;
             return (
-              <motion.div key={f.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 * i, duration: 0.5 }} className="group rounded-2xl p-6 transition-all duration-200 hover:border-white/15" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                <div className="mb-4 inline-flex rounded-xl p-3" style={{ background: 'linear-gradient(135deg,rgba(236,47,168,0.18),rgba(138,43,226,0.18))' }}>
-                  <Icon className="h-5 w-5" style={{ color: '#EC2FA8' }} />
-                </div>
-                <p className="mb-2 text-[0.65rem] font-bold uppercase tracking-widest" style={{ color: '#F2A31C' }}>{f.label}</p>
-                <h3 className="text-base font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>{f.title}</h3>
-                <p className="mt-2 text-sm text-white/50 leading-relaxed">{f.desc}</p>
-              </motion.div>
+              <Link
+                key={f.title}
+                to={f.to}
+                className="group block rounded-2xl p-6 transition-all duration-200 hover:-translate-y-1 hover:border-white/15 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+                aria-label={`Open ${f.title}`}
+              >
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 * i, duration: 0.5 }}>
+                  <div className="mb-4 inline-flex rounded-xl p-3" style={{ background: 'linear-gradient(135deg,rgba(236,47,168,0.18),rgba(138,43,226,0.18))' }}>
+                    <Icon className="h-5 w-5" style={{ color: '#EC2FA8' }} />
+                  </div>
+                  <p className="mb-2 text-[0.65rem] font-bold uppercase tracking-widest" style={{ color: '#F2A31C' }}>{f.label}</p>
+                  <h3 className="text-base font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>{f.title}</h3>
+                  <p className="mt-2 text-sm text-white/50 leading-relaxed">{f.desc}</p>
+                </motion.div>
+              </Link>
             );
           })}
         </div>
