@@ -112,6 +112,19 @@ export default function Connect() {
   const [locating, setLocating] = useState(false);
   const [mapMessage, setMapMessage] = useState('');
 
+  const rankNearby = (lat, lng, all) => all
+    .filter((item) => Number.isFinite(Number(item.latitude)) && Number.isFinite(Number(item.longitude)))
+    .map((item) => ({ ...item, distanceKm: distanceKm(lat, lng, Number(item.latitude), Number(item.longitude)) }))
+    .filter((item) => item.distanceKm <= NEARBY_RADIUS_KM)
+    .sort((a, b) => a.distanceKm - b.distanceKm);
+
+  const applyNearbyLocation = (lat, lng, all, label = '', precise = false) => {
+    setNearbyFellowships(rankNearby(lat, lng, all));
+    setCenter([lat, lng]);
+    setSelectedPlace(label || null);
+    setMapMessage(precise ? `Showing fellowships within ${NEARBY_RADIUS_KM} km of you.` : `Showing nearby fellowships using an approximate location.`);
+  };
+
   const fetchNearby = async (lat, lng, label = '') => {
     setMapMessage('');
     try {
@@ -119,17 +132,31 @@ export default function Connect() {
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || 'Unable to load fellowship locations.');
       const all = Array.isArray(body.fellowships) ? body.fellowships : [];
-      const ranked = all
-        .filter((item) => Number.isFinite(Number(item.latitude)) && Number.isFinite(Number(item.longitude)))
-        .map((item) => ({ ...item, distanceKm: distanceKm(lat, lng, Number(item.latitude), Number(item.longitude)) }))
-        .filter((item) => item.distanceKm <= NEARBY_RADIUS_KM)
-        .sort((a, b) => a.distanceKm - b.distanceKm);
-      setNearbyFellowships(ranked);
-      setCenter([lat, lng]);
-      setSelectedPlace(label || null);
+      applyNearbyLocation(lat, lng, all, label, label === 'Where I am');
     } catch (error) {
       setNearbyFellowships([]);
       setMapMessage(error.message || 'Unable to load nearby fellowships.');
+    }
+  };
+
+  const fetchApproximateLocation = async () => {
+    try {
+      const response = await apiFetch('/api/fellowships?nearby=current');
+      const body = await response.json().catch(() => ({}));
+      const latitude = Number(body?.location?.latitude);
+      const longitude = Number(body?.location?.longitude);
+      const all = Array.isArray(body?.fellowships) ? body.fellowships : [];
+      if (!response.ok || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        throw new Error(body?.error || 'Approximate location is unavailable.');
+      }
+      const placeName = body.location.city || 'your area';
+      setUserLocation(null);
+      setCampusSearch('Where I am');
+      setSuggestions([]);
+      applyNearbyLocation(latitude, longitude, all, `Near ${placeName}`, false);
+      return true;
+    } catch {
+      return false;
     }
   };
 
@@ -161,12 +188,17 @@ export default function Connect() {
   }, [campusSearch, selectedPlace]);
 
   const useMyLocation = () => {
-    if (!navigator.geolocation) {
-      setMapMessage('Location is not available on this device.');
-      return;
-    }
     setLocating(true);
     setMapMessage('Finding your location...');
+
+    if (!navigator.geolocation) {
+      fetchApproximateLocation().then((ok) => {
+        setLocating(false);
+        if (!ok) setMapMessage('Location is unavailable on this device.');
+      });
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
         const location = [coords.latitude, coords.longitude];
@@ -174,12 +206,12 @@ export default function Connect() {
         setCampusSearch('Where I am');
         setSuggestions([]);
         await fetchNearby(coords.latitude, coords.longitude, 'Where I am');
-        setMapMessage(`Showing fellowships within ${NEARBY_RADIUS_KM} km of you.`);
         setLocating(false);
       },
-      (error) => {
+      async () => {
+        const usedFallback = await fetchApproximateLocation();
         setLocating(false);
-        setMapMessage(error.code === error.PERMISSION_DENIED ? 'Location permission was denied. Please allow location access and try again.' : 'Unable to determine your location.');
+        if (!usedFallback) setMapMessage('We could not access precise location. Please allow location access and try again.');
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
     );
