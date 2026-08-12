@@ -22,9 +22,6 @@ const createToken = (user) => {
   return jwt.sign({ user }, secret, { expiresIn: TOKEN_MAX_AGE });
 };
 
-// Express does not provide res.cookie() unless cookie-parser is installed.
-// Keep authentication compatible with the existing dependency set by writing
-// the cookie header directly.
 const setAuthCookie = (res, token) => {
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
   res.setHeader(
@@ -51,7 +48,7 @@ export const login = async (req, res) => {
   try {
     const result = await query(
       `SELECT full_name, email, phone, campus_zone, chapter, country, residence,
-              birthday, invited_by, gender, membership_id, badge, status, password_hash
+              birthday, invited_by, gender, membership_id, badge, status, password_hash, is_admin
        FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1`, [email]
     );
     if (!result.rows.length) return res.status(401).json({ error: 'Invalid email or password.' });
@@ -63,6 +60,7 @@ export const login = async (req, res) => {
       campusZone: user.campus_zone, chapter: user.chapter, country: user.country,
       residence: user.residence, birthday: user.birthday, invitedBy: user.invited_by,
       gender: user.gender, membershipId: user.membership_id, badge: user.badge, status: user.status,
+      isAdmin: !!user.is_admin,
     };
     const token = createToken(payloadUser);
     setAuthCookie(res, token);
@@ -103,6 +101,7 @@ export const register = async (req, res) => {
       campusZone: user.campus_zone, chapter: user.chapter, country: user.country,
       residence: user.residence, birthday: user.birthday, invitedBy: user.invited_by,
       gender: user.gender, membershipId: user.membership_id, badge: user.badge, status: user.status,
+      isAdmin: false,
     };
     const token = createToken(payloadUser);
     setAuthCookie(res, token);
