@@ -110,6 +110,7 @@ export default function Connect() {
   const [userLocation, setUserLocation] = useState(null);
   const [nearbyFellowships, setNearbyFellowships] = useState([]);
   const [locating, setLocating] = useState(false);
+  const [searching, setSearching] = useState(false);
   const [mapMessage, setMapMessage] = useState('');
 
   const rankNearby = (lat, lng, all) => all
@@ -122,11 +123,10 @@ export default function Connect() {
     setNearbyFellowships(rankNearby(lat, lng, all));
     setCenter([lat, lng]);
     setSelectedPlace(label || null);
-    setMapMessage(precise ? `Showing fellowships within ${NEARBY_RADIUS_KM} km of you.` : `Showing nearby fellowships using an approximate location.`);
+    setMapMessage(precise ? `Showing fellowships within ${NEARBY_RADIUS_KM} km of you.` : `Showing nearby fellowships around ${label || 'this place'}.`);
   };
 
   const fetchNearby = async (lat, lng, label = '') => {
-    setMapMessage('');
     try {
       const response = await apiFetch('/api/fellowships');
       const body = await response.json().catch(() => ({}));
@@ -146,9 +146,7 @@ export default function Connect() {
       const latitude = Number(body?.location?.latitude);
       const longitude = Number(body?.location?.longitude);
       const all = Array.isArray(body?.fellowships) ? body.fellowships : [];
-      if (!response.ok || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-        throw new Error(body?.error || 'Approximate location is unavailable.');
-      }
+      if (!response.ok || !Number.isFinite(latitude) || !Number.isFinite(longitude)) throw new Error(body?.error || 'Approximate location is unavailable.');
       const placeName = body.location.city || 'your area';
       setUserLocation(null);
       setCampusSearch('Where I am');
@@ -157,6 +155,40 @@ export default function Connect() {
       return true;
     } catch {
       return false;
+    }
+  };
+
+  const searchPlace = async () => {
+    const query = campusSearch.trim();
+    if (query.length < 2 || searching) return;
+    setSearching(true);
+    setSuggestions([]);
+    setUserLocation(null);
+    setMapMessage(`Searching for ${query}...`);
+
+    try {
+      const [geoResponse, fellowshipResponse] = await Promise.all([
+        apiFetch(`/api/geocode?q=${encodeURIComponent(query)}`),
+        apiFetch('/api/fellowships'),
+      ]);
+      const geoBody = await geoResponse.json().catch(() => ({}));
+      const fellowshipBody = await fellowshipResponse.json().catch(() => ({}));
+      if (!geoResponse.ok) throw new Error(geoBody.error || 'Unable to search for that place.');
+
+      const result = Array.isArray(geoBody.results) ? geoBody.results[0] : null;
+      if (!result || !Number.isFinite(Number(result.lat)) || !Number.isFinite(Number(result.lon))) {
+        throw new Error(`No map location was found for “${query}”. Try adding the country, town, or university.`);
+      }
+
+      const all = Array.isArray(fellowshipBody.fellowships) ? fellowshipBody.fellowships : [];
+      const shortLabel = result.address?.town || result.address?.city || result.address?.municipality || result.address?.suburb || query;
+      setCampusSearch(query);
+      applyNearbyLocation(Number(result.lat), Number(result.lon), all, shortLabel, false);
+    } catch (error) {
+      setNearbyFellowships([]);
+      setMapMessage(error.message || 'Unable to search for that place right now.');
+    } finally {
+      setSearching(false);
     }
   };
 
@@ -227,6 +259,13 @@ export default function Connect() {
     if (Number.isFinite(lat) && Number.isFinite(lng)) await fetchNearby(lat, lng, label);
   };
 
+  const handleKeyDown = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      searchPlace();
+    }
+  };
+
   const locationSummary = useMemo(() => selectedPlace === 'Where I am' ? 'Your current area' : selectedPlace || 'Search for a place or use your current location', [selectedPlace]);
 
   return (
@@ -258,13 +297,14 @@ export default function Connect() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="flex flex-col gap-3 lg:flex-row">
                   <div className="relative flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/70 px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition focus-within:border-[#A53DFF]/70 focus-within:bg-slate-950">
                     <FiMapPin className="h-4 w-4 shrink-0 text-[#D8B2FF]/70" />
-                    <input value={campusSearch} onChange={(event) => { setCampusSearch(event.target.value); setSelectedPlace(null); if (event.target.value !== 'Where I am') setUserLocation(null); }} className="min-w-0 flex-1 bg-transparent py-3.5 text-sm text-white outline-none placeholder:text-white/30" placeholder="Try Juja, Thika, Ruiru or JKUAT" autoComplete="off" />
+                    <input value={campusSearch} onChange={(event) => { setCampusSearch(event.target.value); setSelectedPlace(null); if (event.target.value !== 'Where I am') setUserLocation(null); }} onKeyDown={handleKeyDown} className="min-w-0 flex-1 bg-transparent py-3.5 text-sm text-white outline-none placeholder:text-white/30" placeholder="Try Juja, Thika, Ruiru or JKUAT" autoComplete="off" />
                     {suggestionsLoading ? <FiLoader className="h-4 w-4 shrink-0 animate-spin text-white/35" /> : <FiChevronDown className="h-4 w-4 shrink-0 text-white/30" />}
                     {suggestions.length > 0 && <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-30 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/98 shadow-2xl shadow-black/40 backdrop-blur-xl">{suggestions.map((location) => <button key={location.id} type="button" onClick={() => chooseSuggestion(location)} className="flex w-full items-start gap-3 border-b border-white/5 px-4 py-3.5 text-left transition last:border-b-0 hover:bg-white/[0.05]"><span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#8A2BE2]/15 text-[#D8B2FF]"><FiMapPin className="h-4 w-4" /></span><span className="min-w-0"><span className="block truncate text-sm font-semibold text-white">{location.fellowshipName}</span><span className="mt-1 block truncate text-xs text-white/40">{[location.town || location.city, location.area, location.university, location.country].filter(Boolean).join(' • ')}</span></span></button>)}</div>}
                   </div>
+                  <button type="button" onClick={searchPlace} disabled={searching || campusSearch.trim().length < 2} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-6 py-3.5 text-sm font-bold text-white shadow-[0_12px_28px_rgba(138,43,226,0.2)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-45">{searching ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiSearch className="h-4 w-4" />} Search</button>
                   <button type="button" onClick={useMyLocation} disabled={locating} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#8A2BE2]/30 bg-[#8A2BE2]/10 px-5 py-3.5 text-sm font-bold text-white transition hover:border-[#8A2BE2]/50 hover:bg-[#8A2BE2]/15 disabled:opacity-60">{locating ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiNavigation className="h-4 w-4" />} Where I am</button>
                 </div>
 
@@ -273,7 +313,7 @@ export default function Connect() {
                     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3"><div><p className="text-sm font-semibold text-white">{locationSummary}</p><p className="mt-0.5 text-xs text-white/35">Fellowships within {NEARBY_RADIUS_KM} km</p></div><span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/55">{nearbyFellowships.length} nearby</span></div>
                     <NearbyMap center={center} userLocation={userLocation} fellowships={nearbyFellowships} />
                     {mapMessage && <p className="border-t border-white/10 px-4 py-3 text-xs text-white/45">{mapMessage}</p>}
-                    {nearbyFellowships.length > 0 && <div className="border-t border-white/10 p-3"><div className="space-y-2">{nearbyFellowships.slice(0, 6).map((location) => <div key={location.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5"><div className="min-w-0"><p className="truncate text-sm font-semibold text-white">{location.fellowshipName}</p><p className="truncate text-xs text-white/40">{[location.town || location.city, location.area, location.university].filter(Boolean).join(' • ')}</p></div><span className="shrink-0 text-xs font-semibold text-[#D8B2FF]">{location.distanceKm.toFixed(1)} km</span></div>)}</div></div>}
+                    {nearbyFellowships.length > 0 ? <div className="border-t border-white/10 p-3"><div className="space-y-2">{nearbyFellowships.slice(0, 6).map((location) => <div key={location.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5"><div className="min-w-0"><p className="truncate text-sm font-semibold text-white">{location.fellowshipName}</p><p className="truncate text-xs text-white/40">{[location.town || location.city, location.area, location.university].filter(Boolean).join(' • ')}</p></div><span className="shrink-0 text-xs font-semibold text-[#D8B2FF]">{location.distanceKm.toFixed(1)} km</span></div>)}</div></div> : <div className="border-t border-white/10 px-4 py-4 text-sm text-white/40">No fellowships are currently registered within {NEARBY_RADIUS_KM} km of this location.</div>}
                   </div>
                 )}
               </div>
