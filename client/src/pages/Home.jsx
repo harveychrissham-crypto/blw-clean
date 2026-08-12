@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { FiHeart, FiUsers, FiBookOpen, FiGlobe, FiArrowRight, FiDownload } from 'react-icons/fi';
 import { MdQrCodeScanner } from 'react-icons/md';
 
+// Deployment sync marker: keeps the connected Cloudflare build pipeline in sync with main.
 const ANDROID_APK_URL =
   'https://github.com/harveychrissham-crypto/blw-clean/releases/latest/download/blw-campus-ministry.apk';
 
