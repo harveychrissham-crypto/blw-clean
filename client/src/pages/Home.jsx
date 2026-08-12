@@ -16,8 +16,8 @@ const features = [
   },
   {
     icon: FiBookOpen,
-    label: 'RHAPSODY & TEACHING',
-    title: 'Rhapsody & Teaching',
+    label: 'SERMONS',
+    title: 'Sermons',
     desc: 'Access sermons and teaching resources for daily spiritual growth.',
     to: '/sermons',
   },
