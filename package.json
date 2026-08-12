@@ -10,7 +10,7 @@
     "cf:typegen": "wrangler types"
   },
   "devDependencies": {
-    "wrangler": "^4.44.0"
+    "wrangler": "4.114.0"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
