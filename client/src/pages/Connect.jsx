@@ -1,11 +1,50 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { FiMail, FiPhone, FiMapPin, FiSend, FiHeart } from 'react-icons/fi';
+import { FiMail, FiPhone, FiMapPin, FiSend, FiHeart, FiChevronDown } from 'react-icons/fi';
 
 const tabs = ['Contact', 'Prayer Requests', 'Find a Campus Group'];
 
+const campusLocations = [
+  { country: 'Kenya', city: 'Nairobi', label: 'Nairobi, Kenya', lat: -1.286389, lon: 36.817223 },
+  { country: 'Kenya', city: 'Eldoret', label: 'Eldoret, Kenya', lat: 0.5143, lon: 35.2698 },
+  { country: 'Kenya', city: 'Kisumu', label: 'Kisumu, Kenya', lat: -0.1022, lon: 34.7617 },
+  { country: 'Uganda', city: 'Kampala', label: 'Kampala, Uganda', lat: 0.3476, lon: 32.5825 },
+  { country: 'Uganda', city: 'Jinja', label: 'Jinja, Uganda', lat: 0.4244, lon: 33.2041 },
+  { country: 'Uganda', city: 'Mbale', label: 'Mbale, Uganda', lat: 1.0821, lon: 34.175 },
+  { country: 'Rwanda', city: 'Kigali', label: 'Kigali, Rwanda', lat: -1.9441, lon: 30.0619 },
+  { country: 'Rwanda', city: 'Huye', label: 'Huye, Rwanda', lat: -2.5967, lon: 29.7394 },
+  { country: 'Rwanda', city: 'Musanze', label: 'Musanze, Rwanda', lat: -1.4998, lon: 29.6348 },
+];
+
+const mapUrl = (location) => {
+  const delta = 0.045;
+  const left = location.lon - delta;
+  const right = location.lon + delta;
+  const top = location.lat + delta;
+  const bottom = location.lat - delta;
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${location.lat}%2C${location.lon}`;
+};
+
 export default function Connect() {
   const [activeTab, setActiveTab] = useState('Contact');
+  const [campusSearch, setCampusSearch] = useState('');
+  const [selectedCampus, setSelectedCampus] = useState(null);
+
+  const campusSuggestions = useMemo(() => {
+    const query = campusSearch.trim().toLowerCase();
+    if (!query) return [];
+
+    return campusLocations
+      .filter((location) =>
+        `${location.city} ${location.country}`.toLowerCase().includes(query)
+      )
+      .slice(0, 6);
+  }, [campusSearch]);
+
+  const chooseCampus = (location) => {
+    setCampusSearch(location.label);
+    setSelectedCampus(location);
+  };
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
@@ -49,12 +88,63 @@ export default function Connect() {
               <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#D8B2FF]">Campus Groups</p>
               <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Find a fellowship near you.</h2>
               <p className="mt-4 text-lg text-slate-400">Search for a campus group by country, city, or university and get connected.</p>
-              <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-                <input className="w-full rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm outline-none focus:border-[#A53DFF]" placeholder="Search by country or city" />
+
+              <div className="relative mt-6 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-900/60 px-4 focus-within:border-[#A53DFF]">
+                  <input
+                    value={campusSearch}
+                    onChange={(event) => {
+                      setCampusSearch(event.target.value);
+                      setSelectedCampus(null);
+                    }}
+                    className="w-full bg-transparent py-3 text-sm outline-none"
+                    placeholder="Search by country or city"
+                    autoComplete="off"
+                  />
+                  <FiChevronDown className="h-4 w-4 shrink-0 text-white/40" />
+                </div>
+
+                {campusSuggestions.length > 0 && (
+                  <div className="absolute left-4 right-4 top-[calc(100%+8px)] z-20 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
+                    {campusSuggestions.map((location) => (
+                      <button
+                        key={location.label}
+                        type="button"
+                        onClick={() => chooseCampus(location)}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-white/5"
+                      >
+                        <FiMapPin className="h-4 w-4 shrink-0 text-[#D8B2FF]" />
+                        <span>
+                          <span className="block text-sm font-semibold text-white">{location.city}</span>
+                          <span className="block text-xs text-slate-400">{location.country}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {selectedCampus && (
+                  <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/50">
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <div>
+                        <p className="text-sm font-semibold text-white">{selectedCampus.label}</p>
+                        <p className="mt-0.5 text-xs text-slate-400">Campus area map</p>
+                      </div>
+                      <FiMapPin className="h-4 w-4 text-[#D8B2FF]" />
+                    </div>
+                    <iframe
+                      title={`Map of ${selectedCampus.label}`}
+                      src={mapUrl(selectedCampus)}
+                      className="h-48 w-full border-0"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           )}
         </motion.div>
+
         <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#A53DFF]/10 to-[#8A2BE2]/10 p-6">
           <div className="flex items-center gap-2 text-[#D8B2FF]"><FiMapPin /> Connect globally</div>
           <div className="mt-6 space-y-4">
