@@ -297,15 +297,19 @@ export default function Connect() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3 lg:flex-row">
-                  <div className="relative flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/70 px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition focus-within:border-[#A53DFF]/70 focus-within:bg-slate-950">
-                    <FiMapPin className="h-4 w-4 shrink-0 text-[#D8B2FF]/70" />
-                    <input value={campusSearch} onChange={(event) => { setCampusSearch(event.target.value); setSelectedPlace(null); if (event.target.value !== 'Where I am') setUserLocation(null); }} onKeyDown={handleKeyDown} className="min-w-0 flex-1 bg-transparent py-3.5 text-sm text-white outline-none placeholder:text-white/30" placeholder="Try Juja, Thika, Ruiru or JKUAT" autoComplete="off" />
-                    {suggestionsLoading ? <FiLoader className="h-4 w-4 shrink-0 animate-spin text-white/35" /> : <FiChevronDown className="h-4 w-4 shrink-0 text-white/30" />}
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto]">
+                  <div className="relative min-w-0">
+                    <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/70 px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition focus-within:border-[#A53DFF]/70 focus-within:bg-slate-950">
+                      <FiMapPin className="h-4 w-4 shrink-0 text-[#D8B2FF]/70" />
+                      <input value={campusSearch} onChange={(event) => { setCampusSearch(event.target.value); setSelectedPlace(null); if (event.target.value !== 'Where I am') setUserLocation(null); }} onKeyDown={handleKeyDown} className="min-w-0 flex-1 bg-transparent py-3.5 text-sm text-white outline-none placeholder:text-white/30" placeholder="Try Juja, Thika, Ruiru or JKUAT" autoComplete="off" />
+                      {suggestionsLoading ? <FiLoader className="h-4 w-4 shrink-0 animate-spin text-white/35" /> : <FiChevronDown className="h-4 w-4 shrink-0 text-white/30" />}
+                    </div>
                     {suggestions.length > 0 && <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-30 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/98 shadow-2xl shadow-black/40 backdrop-blur-xl">{suggestions.map((location) => <button key={location.id} type="button" onClick={() => chooseSuggestion(location)} className="flex w-full items-start gap-3 border-b border-white/5 px-4 py-3.5 text-left transition last:border-b-0 hover:bg-white/[0.05]"><span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#8A2BE2]/15 text-[#D8B2FF]"><FiMapPin className="h-4 w-4" /></span><span className="min-w-0"><span className="block truncate text-sm font-semibold text-white">{location.fellowshipName}</span><span className="mt-1 block truncate text-xs text-white/40">{[location.town || location.city, location.area, location.university, location.country].filter(Boolean).join(' • ')}</span></span></button>)}</div>}
                   </div>
-                  <button type="button" onClick={searchPlace} disabled={searching || campusSearch.trim().length < 2} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-6 py-3.5 text-sm font-bold text-white shadow-[0_12px_28px_rgba(138,43,226,0.2)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-45">{searching ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiSearch className="h-4 w-4" />} Search</button>
-                  <button type="button" onClick={useMyLocation} disabled={locating} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#8A2BE2]/30 bg-[#8A2BE2]/10 px-5 py-3.5 text-sm font-bold text-white transition hover:border-[#8A2BE2]/50 hover:bg-[#8A2BE2]/15 disabled:opacity-60">{locating ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiNavigation className="h-4 w-4" />} Where I am</button>
+
+                  <button type="button" onClick={searchPlace} disabled={searching || campusSearch.trim().length < 2} className="inline-flex min-w-[110px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-6 py-3.5 text-sm font-bold text-white shadow-[0_12px_28px_rgba(138,43,226,0.2)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-45">{searching ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiSearch className="h-4 w-4" />} <span>Search</span></button>
+
+                  <button type="button" onClick={useMyLocation} disabled={locating} className="inline-flex min-w-[150px] items-center justify-center gap-2 rounded-2xl border border-[#8A2BE2]/30 bg-[#8A2BE2]/10 px-5 py-3.5 text-sm font-bold text-white transition hover:border-[#8A2BE2]/50 hover:bg-[#8A2BE2]/15 disabled:opacity-60">{locating ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiNavigation className="h-4 w-4" />} <span>Where I am</span></button>
                 </div>
 
                 {(selectedPlace || nearbyFellowships.length > 0 || mapMessage) && (
