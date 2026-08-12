@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiHeart, FiUsers, FiBookOpen, FiGlobe, FiArrowRight, FiDownload } from 'react-icons/fi';
+import { FiHeart, FiUsers, FiBookOpen, FiGlobe, FiArrowRight, FiDownload, FiMapPin } from 'react-icons/fi';
 import { MdQrCodeScanner } from 'react-icons/md';
 
 // Deployment sync marker: keeps the connected Cloudflare build pipeline in sync with main.
@@ -63,9 +63,9 @@ export default function Home() {
               <Link to="/auth" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-white transition hover:opacity-90" style={{ background: 'linear-gradient(135deg,#EC2FA8 0%,#8A2BE2 55%,#3D5AFE 100%)', boxShadow: '0 12px 36px rgba(236,47,168,0.28)' }}>
                 Register Now <FiArrowRight className="h-4 w-4" />
               </Link>
-              <a href="/give" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10">
-                Sow a Seed <FiHeart className="h-4 w-4" />
-              </a>
+              <Link to="/connect" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10">
+                Find a Campus Group <FiMapPin className="h-4 w-4" />
+              </Link>
               <Link to="/checkin" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10">
                 Check In <MdQrCodeScanner className="h-4 w-4" />
               </Link>
