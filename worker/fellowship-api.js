@@ -14,37 +14,19 @@ async function db(env, fn) {
 const clean = (value, max = 240) => typeof value === 'string' ? value.trim().replace(/[<>]/g, '').slice(0, max) : '';
 const locationDto = (row) => ({ id: row.id, fellowshipName: row.fellowship_name || row.venue || row.chapter || '', country: row.country || '', city: row.city || '', town: row.town || '', area: row.area || '', university: row.university || '', address: row.address || row.venue || '', description: row.description || '', serviceTime: row.service_time || '', latitude: row.latitude == null ? null : Number(row.latitude), longitude: row.longitude == null ? null : Number(row.longitude), isActive: row.is_active !== false, updatedAt: row.updated_at });
 
-// Keep the authentication secret stable across requests. Do not use the database
-// connection string as the JWT signing key because Hyperdrive/runtime configuration
-// can differ between requests or deployments.
-const leaderAccessCode = (env) => typeof env.FELLOWSHIP_ADMIN_ACCESS_CODE === 'string' && env.FELLOWSHIP_ADMIN_ACCESS_CODE.trim()
-  ? env.FELLOWSHIP_ADMIN_ACCESS_CODE.trim()
-  : DEFAULT_LEADER_ACCESS_CODE;
-const authSecret = (env) => (typeof env.JWT_SECRET === 'string' && env.JWT_SECRET.trim())
-  ? env.JWT_SECRET.trim()
-  : `blw-leader-auth:${leaderAccessCode(env)}`;
-
-const validLeaderToken = (request, env) => {
-  try {
-    const header = request.headers.get('authorization') || '';
-    if (!header.startsWith('Bearer ')) return false;
-    const token = header.slice(7).trim();
-    if (!token) return false;
-    const payload = jwt.verify(token, authSecret(env));
-    return payload?.leaderAdmin === true;
-  } catch { return false; }
-};
+const leaderAccessCode = (env) => typeof env.FELLOWSHIP_ADMIN_ACCESS_CODE === 'string' && env.FELLOWSHIP_ADMIN_ACCESS_CODE.trim() ? env.FELLOWSHIP_ADMIN_ACCESS_CODE.trim() : DEFAULT_LEADER_ACCESS_CODE;
+const authSecret = (env) => (typeof env.JWT_SECRET === 'string' && env.JWT_SECRET.trim()) ? env.JWT_SECRET.trim() : `blw-leader-auth:${leaderAccessCode(env)}`;
+const validLeaderToken = (request, env) => { try { const header = request.headers.get('authorization') || ''; if (!header.startsWith('Bearer ')) return false; const token = header.slice(7).trim(); if (!token) return false; const payload = jwt.verify(token, authSecret(env)); return payload?.leaderAdmin === true; } catch { return false; } };
 
 const parseLocation = (body) => {
   const fellowshipName = clean(body?.fellowshipName || body?.venue || body?.chapter, 180);
-  const country = clean(body?.country, 80), city = clean(body?.city, 100), town = clean(body?.town, 100), area = clean(body?.area, 120);
+  const country = clean(body?.country, 80) || 'Kenya', city = clean(body?.city, 100), town = clean(body?.town, 100), area = clean(body?.area, 120);
   const university = clean(body?.university, 180), address = clean(body?.address, 240), description = clean(body?.description, 500), serviceTime = clean(body?.serviceTime, 100);
   const latitude = Number(body?.latitude), longitude = Number(body?.longitude), isActive = body?.isActive !== false;
   if (!fellowshipName) return { error: 'Fellowship name is required.' };
-  if (!country) return { error: 'Country is required.' };
-  if (!city && !town) return { error: 'Add a city or town.' };
-  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) return { error: 'Enter a valid latitude.' };
-  if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) return { error: 'Enter a valid longitude.' };
+  if (!city && !town && !area) return { error: 'Add a town or area.' };
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) return { error: 'Place the fellowship pin on the map.' };
+  if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) return { error: 'Place the fellowship pin on the map.' };
   return { value: { fellowshipName, country, city, town, area, university, address, description, serviceTime, latitude, longitude, isActive } };
 };
 
@@ -57,56 +39,36 @@ async function handle(request, env, url) {
     const query = clean(url.searchParams.get('q') || '', 160);
     if (!query) return json({ results: [] }, 200, headers);
     try {
-      const nominatim = new URL('https://nominatim.openstreetmap.org/search');
-      nominatim.searchParams.set('q', query);
-      nominatim.searchParams.set('format', 'jsonv2');
-      nominatim.searchParams.set('addressdetails', '1');
-      nominatim.searchParams.set('limit', '6');
+      const nominatim = new URL('https://nominatim.openstreetmap.org/search'); nominatim.searchParams.set('q', query); nominatim.searchParams.set('format', 'jsonv2'); nominatim.searchParams.set('addressdetails', '1'); nominatim.searchParams.set('limit', '6');
       const response = await fetch(nominatim.toString(), { headers: { accept: 'application/json', 'user-agent': 'BLW Kenya Zone Fellowship Finder/1.0' } });
       if (!response.ok) throw new Error(`Geocoder returned ${response.status}`);
       const results = await response.json();
       return json({ results: Array.isArray(results) ? results.map((item) => ({ lat: Number(item.lat), lon: Number(item.lon), displayName: item.display_name || query, type: item.type || '', address: item.address || {} })).filter((item) => Number.isFinite(item.lat) && Number.isFinite(item.lon)) : [] }, 200, headers);
-    } catch (error) {
-      console.error('[worker] geocoding failed', error);
-      return json({ error: 'Unable to search for that place right now.' }, 502, headers);
-    }
+    } catch (error) { console.error('[worker] geocoding failed', error); return json({ error: 'Unable to search for that place right now.' }, 502, headers); }
   }
 
   try {
     const result = await db(env, async (client) => {
       if (url.pathname === '/api/fellowships/admin/auth' && request.method === 'POST') {
-        const body = await request.json().catch(() => null);
-        const supplied = typeof body?.accessCode === 'string' ? body.accessCode.trim() : '';
-        const expected = leaderAccessCode(env);
+        const body = await request.json().catch(() => null), supplied = typeof body?.accessCode === 'string' ? body.accessCode.trim() : '', expected = leaderAccessCode(env);
         if (!supplied || supplied !== expected) return { status: 401, body: { error: 'Invalid leadership access code.' } };
         return { status: 200, body: { token: jwt.sign({ leaderAdmin: true }, authSecret(env), { expiresIn: '8h' }) } };
       }
-
       const adminRoute = url.pathname === '/api/fellowships/admin' || url.pathname.startsWith('/api/fellowships/admin/');
       if (request.method === 'GET' && !adminRoute) {
-        const q = clean(url.searchParams.get('q') || '', 120).toLowerCase(), country = clean(url.searchParams.get('country') || '', 80).toLowerCase();
-        const nearby = url.searchParams.get('nearby') === 'current';
+        const q = clean(url.searchParams.get('q') || '', 120).toLowerCase(), country = clean(url.searchParams.get('country') || '', 80).toLowerCase(), nearby = url.searchParams.get('nearby') === 'current';
         const params = [], where = ['is_active = TRUE'];
         if (q) { params.push(`%${q}%`); where.push(`LOWER(COALESCE(fellowship_name,'') || ' ' || COALESCE(country,'') || ' ' || COALESCE(city,'') || ' ' || COALESCE(town,'') || ' ' || COALESCE(area,'') || ' ' || COALESCE(university,'') || ' ' || COALESCE(address,'')) LIKE $${params.length}`); }
         if (country) { params.push(`%${country}%`); where.push(`LOWER(country) LIKE $${params.length}`); }
-        const rows = await client.query(`SELECT * FROM chapter_venues WHERE ${where.join(' AND ')} ORDER BY country, COALESCE(city,town), fellowship_name, id LIMIT 50`, params);
-        const body = { fellowships: rows.rows.map(locationDto) };
-        if (nearby) {
-          const cf = request.cf || {};
-          const latitude = Number(cf.latitude), longitude = Number(cf.longitude);
-          if (Number.isFinite(latitude) && Number.isFinite(longitude)) body.location = { latitude, longitude, city: cf.city || null, country: cf.country || null, source: 'cloudflare-ip' };
-        }
+        const rows = await client.query(`SELECT * FROM chapter_venues WHERE ${where.join(' AND ')} ORDER BY country, COALESCE(city,town), fellowship_name, id LIMIT 50`, params); const body = { fellowships: rows.rows.map(locationDto) };
+        if (nearby) { const cf = request.cf || {}, latitude = Number(cf.latitude), longitude = Number(cf.longitude); if (Number.isFinite(latitude) && Number.isFinite(longitude)) body.location = { latitude, longitude, city: cf.city || null, country: cf.country || null, source: 'cloudflare-ip' }; }
         return { status: 200, body };
       }
       if (!validLeaderToken(request, env)) return { status: 403, body: { error: 'Valid leadership access is required.' } };
-      if (request.method === 'GET' && url.pathname === '/api/fellowships/admin') {
-        const rows = await client.query('SELECT * FROM chapter_venues ORDER BY is_active DESC, country, COALESCE(city,town), fellowship_name, id');
-        return { status: 200, body: { fellowships: rows.rows.map(locationDto) } };
-      }
+      if (request.method === 'GET' && url.pathname === '/api/fellowships/admin') { const rows = await client.query('SELECT * FROM chapter_venues ORDER BY is_active DESC, country, COALESCE(city,town), fellowship_name, id'); return { status: 200, body: { fellowships: rows.rows.map(locationDto) } }; }
       if (request.method === 'POST' && url.pathname === '/api/fellowships/admin') {
-        const parsed = parseLocation(await request.json().catch(() => null)); if (parsed.error) return { status: 400, body: { error: parsed.error } };
-        const v = parsed.value;
-        const rows = await client.query(`INSERT INTO chapter_venues (chapter,venue,service_time,fellowship_name,country,city,town,area,university,address,description,latitude,longitude,is_active,updated_at) VALUES ($1,$2,$3,$1,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,NOW()) RETURNING *`, [v.fellowshipName, v.address || v.fellowshipName, v.serviceTime, v.country, v.city, v.town, v.area, v.university, v.address, v.description, v.latitude, v.longitude, v.isActive]);
+        const parsed = parseLocation(await request.json().catch(() => null)); if (parsed.error) return { status: 400, body: { error: parsed.error } }; const v = parsed.value;
+        const rows = await client.query(`INSERT INTO chapter_venues (chapter,venue,service_time,fellowship_name,country,city,town,area,university,address,description,latitude,longitude,is_active,updated_at) VALUES ($1,$2,$3,$1,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,NOW()) RETURNING *`, [v.fellowshipName, v.address || v.fellowshipName, v.serviceTime, v.country, v.city, v.town, v.area, v.university, v.address, v.description, v.latitude, v.longitude, v.isActive]);
         return { status: 201, body: { fellowship: locationDto(rows.rows[0]) } };
       }
       const match = url.pathname.match(/^\/api\/fellowships\/admin\/(\d+)$/);
@@ -118,7 +80,7 @@ async function handle(request, env, url) {
       return { status: 405, body: { error: 'Method not allowed.' } };
     });
     return json(result.body, result.status, headers);
-  } catch (error) { console.error('[worker] fellowships API failed', error); return json({ error: 'Unable to access fellowship locations right now.' }, 503, headers); }
+  } catch (error) { console.error('[worker] fellowships API failed', { message: error?.message, code: error?.code, path: url.pathname, method: request.method }); return json({ error: error?.message || 'Unable to access fellowship locations right now.' }, 503, headers); }
 }
 
 export { handle as handleFellowships };
