@@ -16,6 +16,7 @@ import Dashboard from './pages/Dashboard';
 import RecordSouls from './pages/RecordSouls';
 import LeaderAdmin from './pages/LeaderAdmin';
 import LeadersForum from './pages/LeadersForum';
+import FellowshipLocationsAdmin from './pages/FellowshipLocationsAdmin';
 import { useAuth } from './context/AuthContext';
 import OfflineBanner from './components/OfflineBanner';
 
@@ -38,6 +39,7 @@ const AnimatedRoutes = () => {
     <Route path="/record-souls" element={route(user ? <RecordSouls /> : <Auth />)} />
     <Route path="/admin" element={route(<LeaderAdmin />)} />
     <Route path="/leaders-forum" element={route(<LeadersForum />)} />
+    <Route path="/fellowship-locations" element={route(<FellowshipLocationsAdmin />)} />
     <Route path="*" element={route(<Home />)} />
   </Routes></motion.div></AnimatePresence>;
 };
