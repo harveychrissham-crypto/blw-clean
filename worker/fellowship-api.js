@@ -65,7 +65,10 @@ async function handle(request, env, url) {
         return { status: 200, body };
       }
       if (!validLeaderToken(request, env)) return { status: 403, body: { error: 'Valid leadership access is required.' } };
-      if (request.method === 'GET' && url.pathname === '/api/fellowships/admin') { const rows = await client.query('SELECT * FROM chapter_venues ORDER BY is_active DESC, country, COALESCE(city,town), fellowship_name, id'); return { status: 200, body: { fellowships: rows.rows.map(locationDto) } }; }
+      if (request.method === 'GET' && url.pathname === '/api/fellowships/admin') {
+        const rows = await client.query('SELECT * FROM chapter_venues WHERE is_active = TRUE ORDER BY country, COALESCE(city,town), fellowship_name, id');
+        return { status: 200, body: { fellowships: rows.rows.map(locationDto) } };
+      }
       if (request.method === 'POST' && url.pathname === '/api/fellowships/admin') {
         const parsed = parseLocation(await request.json().catch(() => null)); if (parsed.error) return { status: 400, body: { error: parsed.error } }; const v = parsed.value;
         const rows = await client.query(`INSERT INTO chapter_venues (chapter,venue,service_time,fellowship_name,country,city,town,area,university,address,description,latitude,longitude,is_active,updated_at) VALUES ($1,$2,$3,$1,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,NOW()) RETURNING *`, [v.fellowshipName, v.address || v.fellowshipName, v.serviceTime, v.country, v.city, v.town, v.area, v.university, v.address, v.description, v.latitude, v.longitude, v.isActive]);
@@ -74,7 +77,11 @@ async function handle(request, env, url) {
       const match = url.pathname.match(/^\/api\/fellowships\/admin\/(\d+)$/);
       if (match) {
         const id = Number(match[1]);
-        if (request.method === 'DELETE') { const rows = await client.query('DELETE FROM chapter_venues WHERE id=$1 RETURNING id', [id]); return rows.rows.length ? { status: 200, body: { deleted: true } } : { status: 404, body: { error: 'Fellowship location not found.' } }; }
+        if (request.method === 'DELETE') {
+          const rows = await client.query('UPDATE chapter_venues SET is_active = FALSE, updated_at = NOW() WHERE id = $1 RETURNING id', [id]);
+          if (!rows.rows.length) return { status: 404, body: { error: 'Fellowship location not found.' } };
+          return { status: 200, body: { deleted: true, id } };
+        }
         if (request.method === 'PUT' || request.method === 'PATCH') { const parsed = parseLocation(await request.json().catch(() => null)); if (parsed.error) return { status: 400, body: { error: parsed.error } }; const v = parsed.value; const rows = await client.query(`UPDATE chapter_venues SET chapter=$1,venue=$2,service_time=$3,fellowship_name=$1,country=$4,city=$5,town=$6,area=$7,university=$8,address=$9,description=$10,latitude=$11,longitude=$12,is_active=$13,updated_at=NOW() WHERE id=$14 RETURNING *`, [v.fellowshipName, v.address || v.fellowshipName, v.serviceTime, v.country, v.city, v.town, v.area, v.university, v.address, v.description, v.latitude, v.longitude, v.isActive, id]); return rows.rows.length ? { status: 200, body: { fellowship: locationDto(rows.rows[0]) } } : { status: 404, body: { error: 'Fellowship location not found.' } }; }
       }
       return { status: 405, body: { error: 'Method not allowed.' } };
