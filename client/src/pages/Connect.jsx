@@ -1,48 +1,63 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiMail, FiPhone, FiMapPin, FiSend, FiHeart, FiChevronDown } from 'react-icons/fi';
+import { apiFetch } from '../config/api';
 
 const tabs = ['Contact', 'Prayer Requests', 'Find a Campus Group'];
 
-const campusLocations = [
-  { country: 'Kenya', city: 'Nairobi', label: 'Nairobi, Kenya', lat: -1.286389, lon: 36.817223 },
-  { country: 'Kenya', city: 'Eldoret', label: 'Eldoret, Kenya', lat: 0.5143, lon: 35.2698 },
-  { country: 'Kenya', city: 'Kisumu', label: 'Kisumu, Kenya', lat: -0.1022, lon: 34.7617 },
-  { country: 'Uganda', city: 'Kampala', label: 'Kampala, Uganda', lat: 0.3476, lon: 32.5825 },
-  { country: 'Uganda', city: 'Jinja', label: 'Jinja, Uganda', lat: 0.4244, lon: 33.2041 },
-  { country: 'Uganda', city: 'Mbale', label: 'Mbale, Uganda', lat: 1.0821, lon: 34.175 },
-  { country: 'Rwanda', city: 'Kigali', label: 'Kigali, Rwanda', lat: -1.9441, lon: 30.0619 },
-  { country: 'Rwanda', city: 'Huye', label: 'Huye, Rwanda', lat: -2.5967, lon: 29.7394 },
-  { country: 'Rwanda', city: 'Musanze', label: 'Musanze, Rwanda', lat: -1.4998, lon: 29.6348 },
-];
-
 const mapUrl = (location) => {
-  const delta = 0.045;
-  const left = location.lon - delta;
-  const right = location.lon + delta;
-  const top = location.lat + delta;
-  const bottom = location.lat - delta;
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${location.lat}%2C${location.lon}`;
+  const delta = 0.018;
+  const left = Number(location.longitude) - delta;
+  const right = Number(location.longitude) + delta;
+  const top = Number(location.latitude) + delta;
+  const bottom = Number(location.latitude) - delta;
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${location.latitude}%2C${location.longitude}`;
 };
+
+const locationSubtitle = (location) => [location.university, location.area || location.town || location.city, location.country].filter(Boolean).join(' • ');
 
 export default function Connect() {
   const [activeTab, setActiveTab] = useState('Contact');
   const [campusSearch, setCampusSearch] = useState('');
   const [selectedCampus, setSelectedCampus] = useState(null);
+  const [locations, setLocations] = useState([]);
+  const [loadingLocations, setLoadingLocations] = useState(false);
+  const [locationError, setLocationError] = useState('');
+
+  useEffect(() => {
+    if (activeTab !== 'Find a Campus Group') return;
+    let cancelled = false;
+    setLoadingLocations(true);
+    setLocationError('');
+    apiFetch('/api/fellowships')
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body.error || 'Unable to load fellowship locations.');
+        if (!cancelled) setLocations(Array.isArray(body.fellowships) ? body.fellowships : []);
+      })
+      .catch((error) => {
+        if (!cancelled) setLocationError(error.message || 'Unable to load fellowship locations.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingLocations(false);
+      });
+    return () => { cancelled = true; };
+  }, [activeTab]);
 
   const campusSuggestions = useMemo(() => {
     const query = campusSearch.trim().toLowerCase();
-    if (!query) return [];
-
-    return campusLocations
-      .filter((location) =>
-        `${location.city} ${location.country}`.toLowerCase().includes(query)
-      )
-      .slice(0, 6);
-  }, [campusSearch]);
+    if (!query) return locations.slice(0, 8);
+    return locations
+      .filter((location) => [location.fellowshipName, location.country, location.city, location.town, location.area, location.university, location.address]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .includes(query))
+      .slice(0, 8);
+  }, [campusSearch, locations]);
 
   const chooseCampus = (location) => {
-    setCampusSearch(location.label);
+    setCampusSearch(location.fellowshipName);
     setSelectedCampus(location);
   };
 
@@ -74,6 +89,7 @@ export default function Connect() {
               </form>
             </div>
           )}
+
           {activeTab === 'Prayer Requests' && (
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#D8B2FF]">Prayer Requests</p>
@@ -83,61 +99,54 @@ export default function Connect() {
               <button className="mt-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-5 py-3 font-semibold text-white"><FiHeart /> Submit Request</button>
             </div>
           )}
+
           {activeTab === 'Find a Campus Group' && (
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#D8B2FF]">Campus Groups</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#D8B2FF]">Fellowship Locations</p>
               <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Find a fellowship near you.</h2>
-              <p className="mt-4 text-lg text-slate-400">Search for a campus group by country, city, or university and get connected.</p>
+              <p className="mt-4 text-lg text-slate-400">Search by country, city, town, area, university, or fellowship name.</p>
 
               <div className="relative mt-6 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
                 <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-900/60 px-4 focus-within:border-[#A53DFF]">
                   <input
                     value={campusSearch}
-                    onChange={(event) => {
-                      setCampusSearch(event.target.value);
-                      setSelectedCampus(null);
-                    }}
+                    onChange={(event) => { setCampusSearch(event.target.value); setSelectedCampus(null); }}
                     className="w-full bg-transparent py-3 text-sm outline-none"
-                    placeholder="Search by country or city"
+                    placeholder="Search Nairobi, Thika, Juja, Ruiru, JKUAT..."
                     autoComplete="off"
                   />
                   <FiChevronDown className="h-4 w-4 shrink-0 text-white/40" />
                 </div>
 
+                {loadingLocations && <p className="mt-3 px-2 text-xs text-white/35">Loading fellowship locations...</p>}
+                {locationError && <p className="mt-3 px-2 text-xs text-red-300">{locationError}</p>}
+
                 {campusSuggestions.length > 0 && (
-                  <div className="absolute left-4 right-4 top-[calc(100%+8px)] z-20 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
+                  <div className="absolute left-4 right-4 top-[calc(100%+8px)] z-20 max-h-80 overflow-auto rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
                     {campusSuggestions.map((location) => (
-                      <button
-                        key={location.label}
-                        type="button"
-                        onClick={() => chooseCampus(location)}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-white/5"
-                      >
-                        <FiMapPin className="h-4 w-4 shrink-0 text-[#D8B2FF]" />
+                      <button key={location.id} type="button" onClick={() => chooseCampus(location)} className="flex w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-white/5">
+                        <FiMapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#D8B2FF]" />
                         <span>
-                          <span className="block text-sm font-semibold text-white">{location.city}</span>
-                          <span className="block text-xs text-slate-400">{location.country}</span>
+                          <span className="block text-sm font-semibold text-white">{location.fellowshipName}</span>
+                          <span className="mt-0.5 block text-xs text-slate-400">{locationSubtitle(location)}</span>
+                          {location.address && <span className="mt-0.5 block text-xs text-white/25">{location.address}</span>}
                         </span>
                       </button>
                     ))}
                   </div>
                 )}
 
-                {selectedCampus && (
+                {selectedCampus && selectedCampus.latitude != null && selectedCampus.longitude != null && (
                   <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/50">
-                    <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-start justify-between gap-4 px-4 py-3">
                       <div>
-                        <p className="text-sm font-semibold text-white">{selectedCampus.label}</p>
-                        <p className="mt-0.5 text-xs text-slate-400">Campus area map</p>
+                        <p className="text-sm font-semibold text-white">{selectedCampus.fellowshipName}</p>
+                        <p className="mt-0.5 text-xs text-slate-400">{locationSubtitle(selectedCampus)}</p>
+                        {selectedCampus.description && <p className="mt-2 text-xs leading-relaxed text-white/40">{selectedCampus.description}</p>}
                       </div>
-                      <FiMapPin className="h-4 w-4 text-[#D8B2FF]" />
+                      <FiMapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#D8B2FF]" />
                     </div>
-                    <iframe
-                      title={`Map of ${selectedCampus.label}`}
-                      src={mapUrl(selectedCampus)}
-                      className="h-48 w-full border-0"
-                      loading="lazy"
-                    />
+                    <iframe title={`Map of ${selectedCampus.fellowshipName}`} src={mapUrl(selectedCampus)} className="h-52 w-full border-0" loading="lazy" />
                   </div>
                 )}
               </div>
@@ -146,11 +155,15 @@ export default function Connect() {
         </motion.div>
 
         <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#A53DFF]/10 to-[#8A2BE2]/10 p-6">
-          <div className="flex items-center gap-2 text-[#D8B2FF]"><FiMapPin /> Connect globally</div>
-          <div className="mt-6 space-y-4">
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4"><div className="text-lg font-semibold text-white">Kenya</div><p className="mt-1 text-sm text-slate-400">Nairobi, Eldoret, Kisumu</p></div>
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4"><div className="text-lg font-semibold text-white">Uganda</div><p className="mt-1 text-sm text-slate-400">Kampala, Jinja, Mbale</p></div>
-            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4"><div className="text-lg font-semibold text-white">Rwanda</div><p className="mt-1 text-sm text-slate-400">Kigali, Huye, Musanze</p></div>
+          <div className="flex items-center gap-2 text-[#D8B2FF]"><FiMapPin /> Fellowship network</div>
+          <div className="mt-6 space-y-3">
+            {locations.slice(0, 6).map((location) => (
+              <button key={location.id} type="button" onClick={() => { setActiveTab('Find a Campus Group'); chooseCampus(location); }} className="w-full rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-left transition hover:bg-white/5">
+                <div className="text-base font-semibold text-white">{location.fellowshipName}</div>
+                <p className="mt-1 text-sm text-slate-400">{locationSubtitle(location)}</p>
+              </button>
+            ))}
+            {!loadingLocations && locations.length === 0 && <p className="text-sm text-white/30">Fellowship locations will appear here as the administrator adds them.</p>}
           </div>
         </div>
       </div>
