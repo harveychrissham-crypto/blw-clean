@@ -1,6 +1,5 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLocation } from 'react-router-dom';
 import Layout from './layouts/Layout';
 import Home from './pages/Home';
 import Outreaches from './pages/Outreaches';
@@ -19,6 +18,24 @@ import LeadersForumWithFellowship from './pages/LeadersForumWithFellowship';
 import FellowshipLocationsAdmin from './pages/FellowshipLocationsAdmin';
 import { useAuth } from './context/AuthContext';
 import OfflineBanner from './components/OfflineBanner';
+
+const FellowshipLocationsPage = () => {
+  const navigate = useNavigate();
+  return (
+    <div className="relative">
+      <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+        <button
+          type="button"
+          onClick={() => navigate('/leaders-forum')}
+          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/75 transition hover:bg-white/10 hover:text-white"
+        >
+          ← Back to Leaders Forum
+        </button>
+      </div>
+      <FellowshipLocationsAdmin />
+    </div>
+  );
+};
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -39,7 +56,7 @@ const AnimatedRoutes = () => {
     <Route path="/record-souls" element={route(user ? <RecordSouls /> : <Auth />)} />
     <Route path="/admin" element={route(<LeaderAdmin />)} />
     <Route path="/leaders-forum" element={route(<LeadersForumWithFellowship />)} />
-    <Route path="/fellowship-locations" element={route(<FellowshipLocationsAdmin />)} />
+    <Route path="/fellowship-locations" element={route(<FellowshipLocationsPage />)} />
     <Route path="*" element={route(<Home />)} />
   </Routes></motion.div></AnimatePresence>;
 };
