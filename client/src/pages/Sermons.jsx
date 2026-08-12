@@ -69,28 +69,29 @@ function OfflineSermonRow({ sermon, index }) {
 function LockedSermon({ sermon, index }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
-      <div className="flex aspect-video w-full items-center justify-center bg-black/30 px-6">
+      <div className="flex min-h-[190px] w-full items-center justify-center bg-black/30 px-5 py-7">
         <div className="text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white/5">
-            <FiLock className="h-6 w-6 text-white/50" />
+          <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/5">
+            <FiLock className="h-5 w-5 text-white/50" />
           </div>
-          <h4 className="text-lg font-bold text-white">Create an account to watch this sermon</h4>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/45">
-            The featured sermon is available publicly. Create a free account to access the rest of our sermons and teachings.
+          <h4 className="text-base font-bold text-white">Create an account to watch this sermon</h4>
+          <p className="mx-auto mt-1.5 max-w-sm text-sm leading-relaxed text-white/45">
+            The featured sermon is public. Create a free account to access the rest of our sermons and teachings.
           </p>
           <Link
             to="/auth"
-            className="mt-5 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-90"
+            className="mt-4 inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold text-white transition hover:opacity-90"
             style={{ background: 'linear-gradient(135deg,#EC2FA8 0%,#8A2BE2 55%,#3D5AFE 100%)' }}
           >
-            <FiUserPlus className="h-4 w-4" />
+            <FiUserPlus className="h-3.5 w-3.5" />
             Create Account
           </Link>
         </div>
       </div>
-      <div className="p-5">
+
+      <div className="p-4">
         <p className="text-xs font-bold uppercase tracking-widest text-white/30">Sermon {index + 2}</p>
-        <h4 className="mt-1 text-lg font-bold text-white">{sermon.title}</h4>
+        <h4 className="mt-1 text-base font-bold text-white">{sermon.title}</h4>
         {sermon.speaker && <p className="mt-1 text-sm font-semibold" style={{ color: '#F2A31C' }}>{sermon.speaker}</p>}
       </div>
     </div>
@@ -121,7 +122,6 @@ export default function Sermons() {
 
   useEffect(() => { load(); }, [load]);
 
-  // Only the featured/main sermon is public. Every other sermon requires an account.
   const activeSermon = sermons.find((sermon) => sermon.isFeatured) || sermons[0] || null;
   const olderSermons = sermons.filter((sermon) => sermon.id !== activeSermon?.id);
 
@@ -137,13 +137,15 @@ export default function Sermons() {
 
       {!loading && error && (
         <div className="flex items-center gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm text-red-300">
-          <FiAlertCircle className="h-5 w-5 shrink-0" /><span>{error}</span>
+          <FiAlertCircle className="h-5 w-5 shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
       {!loading && !error && !activeSermon && (
         <div className="flex aspect-video max-w-2xl flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] text-white/40">
-          <FiFilm className="h-8 w-8" /><p className="text-sm">No sermons have been added yet.</p>
+          <FiFilm className="h-8 w-8" />
+          <p className="text-sm">No sermons have been added yet.</p>
         </div>
       )}
 
@@ -162,16 +164,12 @@ export default function Sermons() {
       {!loading && olderSermons.length > 0 && (
         <div className="mt-14">
           <h3 className="mb-6 text-sm font-bold uppercase tracking-widest text-white/50">More Sermons</h3>
-          <div className="space-y-10">
+          <div className="space-y-6">
             {olderSermons.map((sermon, index) => {
               if (authLoading) {
-                return <div key={sermon.id} className="flex aspect-video w-full items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-sm text-white/30">Checking account access...</div>;
+                return <div key={sermon.id} className="flex min-h-[120px] w-full items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-sm text-white/30">Checking account access...</div>;
               }
-
-              if (!user) {
-                return <LockedSermon key={sermon.id} sermon={sermon} index={index} />;
-              }
-
+              if (!user) return <LockedSermon key={sermon.id} sermon={sermon} index={index} />;
               return isOnline ? (
                 <motion.div key={sermon.id} initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                   <SermonPlayer sermon={sermon} />
