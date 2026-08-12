@@ -38,9 +38,45 @@ const parseLocation = (body) => {
 };
 
 async function handle(request, env, url) {
-  if (!url.pathname.startsWith('/api/fellowships')) return null;
+  if (!url.pathname.startsWith('/api/fellowships') && url.pathname !== '/api/geocode') return null;
   const headers = cors(url.origin);
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
+
+  // Place search used by the fellowship finder. This keeps geocoding behind the Worker,
+  // identifies the application to the geocoder, and lets us search towns/cities even
+  // when no fellowship has been added there yet.
+  if (url.pathname === '/api/geocode' && request.method === 'GET') {
+    const query = clean(url.searchParams.get('q') || '', 160);
+    if (!query) return json({ results: [] }, 200, headers);
+    try {
+      const nominatim = new URL('https://nominatim.openstreetmap.org/search');
+      nominatim.searchParams.set('q', query);
+      nominatim.searchParams.set('format', 'jsonv2');
+      nominatim.searchParams.set('addressdetails', '1');
+      nominatim.searchParams.set('limit', '6');
+      const response = await fetch(nominatim.toString(), {
+        headers: {
+          accept: 'application/json',
+          'user-agent': 'BLW Kenya Zone Fellowship Finder/1.0',
+        },
+      });
+      if (!response.ok) throw new Error(`Geocoder returned ${response.status}`);
+      const results = await response.json();
+      return json({
+        results: Array.isArray(results) ? results.map((item) => ({
+          lat: Number(item.lat),
+          lon: Number(item.lon),
+          displayName: item.display_name || query,
+          type: item.type || '',
+          address: item.address || {},
+        })).filter((item) => Number.isFinite(item.lat) && Number.isFinite(item.lon)) : [],
+      }, 200, headers);
+    } catch (error) {
+      console.error('[worker] geocoding failed', error);
+      return json({ error: 'Unable to search for that place right now.' }, 502, headers);
+    }
+  }
+
   try {
     const result = await db(env, async (client) => {
       if (url.pathname === '/api/fellowships/admin/auth' && request.method === 'POST') {
@@ -78,7 +114,8 @@ async function handle(request, env, url) {
         return { status: 200, body: { fellowships: rows.rows.map(locationDto) } };
       }
       if (request.method === 'POST' && url.pathname === '/api/fellowships/admin') {
-        const parsed = parseLocation(await request.json().catch(() => null)); if (parsed.error) return { status: 400, body: { error: parsed.error } }; const v = parsed.value;
+        const parsed = parseLocation(await request.json().catch(() => null)); if (parsed.error) return { status: 400, body: { error: parsed.error } };
+        const v = parsed.value;
         const rows = await client.query(`INSERT INTO chapter_venues (chapter,venue,service_time,fellowship_name,country,city,town,area,university,address,description,latitude,longitude,is_active,updated_at) VALUES ($1,$2,$3,$1,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,NOW()) RETURNING *`, [v.fellowshipName, v.address || v.fellowshipName, v.serviceTime, v.country, v.city, v.town, v.area, v.university, v.address, v.description, v.latitude, v.longitude, v.isActive]);
         return { status: 201, body: { fellowship: locationDto(rows.rows[0]) } };
       }
