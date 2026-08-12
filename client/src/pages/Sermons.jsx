@@ -150,9 +150,9 @@ export default function Sermons() {
       )}
 
       {!loading && activeSermon && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid gap-8 lg:grid-cols-[minmax(0,600px)_1fr] lg:items-start">
-          <div className="w-full"><SermonPlayer sermon={activeSermon} /></div>
-          <div className="pt-1">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid gap-6 lg:grid-cols-[minmax(0,560px)_minmax(0,1fr)] lg:items-start">
+          <div className="w-full lg:justify-self-start"><SermonPlayer sermon={activeSermon} /></div>
+          <div className="pt-1 lg:text-left">
             <div className="mb-3 inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-white/50">Featured Sermon</div>
             <h2 className="text-2xl font-extrabold leading-tight text-white sm:text-3xl" style={{ fontFamily: 'Montserrat, sans-serif' }}>{activeSermon.title}</h2>
             {activeSermon.speaker && <p className="mt-2 text-sm font-semibold" style={{ color: '#F2A31C' }}>{activeSermon.speaker}</p>}
