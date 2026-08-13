@@ -6,12 +6,13 @@ import {
   recordViewerHeartbeat,
   listLiveViewers,
 } from '../controllers/liveController.js';
+import { requireLeaderAdmin } from '../middleware/leaderAdminMiddleware.js';
 
 const router = express.Router();
 
 router.get('/', getLiveStream);
-router.put('/', updateLiveStream);
-router.get('/viewers', listLiveViewers);
+router.put('/', requireLeaderAdmin, updateLiveStream);
+router.get('/viewers', requireLeaderAdmin, listLiveViewers);
 router.post('/viewers', recordLiveViewer);
 router.patch('/viewers/heartbeat', recordViewerHeartbeat);
 
