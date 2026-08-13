@@ -15,10 +15,13 @@
   },
   "dependencies": {
     "@capacitor/android": "^6.2.0",
+    "@capacitor/app": "^6.0.1",
     "@capacitor/core": "^6.2.0",
     "@capacitor/ios": "^6.2.0",
     "@capacitor/network": "^6.0.4",
     "@capacitor/preferences": "^6.0.4",
+    "@capacitor/push-notifications": "^6.0.3",
+    "@capacitor/status-bar": "^6.0.2",
     "@daily-co/daily-js": "^0.83.1",
     "framer-motion": "^11.11.9",
     "qrcode": "^1.5.4",
