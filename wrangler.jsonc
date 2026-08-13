@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "blw-kenya-zone",
-  "main": "worker/api-entry.js",
+  "main": "worker/secure-entry.js",
   "compatibility_date": "2026-08-11",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
