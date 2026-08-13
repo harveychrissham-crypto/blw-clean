@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Layout from './layouts/Layout';
@@ -18,6 +19,7 @@ import LeadersForumWithFellowship from './pages/LeadersForumWithFellowship';
 import FellowshipLocationsAdmin from './pages/FellowshipLocationsAdmin';
 import { useAuth } from './context/AuthContext';
 import OfflineBanner from './components/OfflineBanner';
+import { startOfflineSyncListeners } from './offlineSync';
 
 const FellowshipLocationsPage = () => {
   const navigate = useNavigate();
@@ -61,5 +63,8 @@ const AnimatedRoutes = () => {
   </Routes></motion.div></AnimatePresence>;
 };
 
-function App() { return <><OfflineBanner /><AnimatedRoutes /></>; }
+function App() {
+  useEffect(() => startOfflineSyncListeners(), []);
+  return <><OfflineBanner /><AnimatedRoutes /></>;
+}
 export default App;
