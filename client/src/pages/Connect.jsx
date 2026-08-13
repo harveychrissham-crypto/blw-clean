@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { FiMail, FiPhone, FiSend, FiHeart, FiNavigation, FiLoader, FiSearch, FiMapPin } from 'react-icons/fi';
+import { FiNavigation, FiLoader, FiSearch, FiMapPin } from 'react-icons/fi';
 import { apiFetch } from '../config/api';
-import { Card, Eyebrow, InfoTile } from '../components/ui/Card';
+import { Card, Eyebrow } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
 
-const tabs = ['Contact', 'Prayer Requests', 'Find a Campus Group'];
 const LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
 const LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
 const DEFAULT_CENTER = [-1.286389, 36.817223];
@@ -102,7 +101,6 @@ function NearbyMap({ center, userLocation, fellowships }) {
 }
 
 export default function Connect() {
-  const [activeTab, setActiveTab] = useState('Contact');
   const [campusSearch, setCampusSearch] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
@@ -249,17 +247,9 @@ export default function Connect() {
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-      <div className="mb-8 flex flex-wrap gap-3">
-        {tabs.map((tab) => <button key={tab} onClick={() => setActiveTab(tab)} className={`rounded-full px-4 py-2 text-sm font-semibold transition ${activeTab === tab ? 'bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] text-white' : 'border border-white/10 bg-white/5 text-slate-300'}`}>{tab}</button>)}
-      </div>
-
       <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr]">
         <Card as={motion.div} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} variant="raised" className="p-8 shadow-soft">
-          {activeTab === 'Contact' && <div><Eyebrow color="#D8B2FF">Contact</Eyebrow><h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">We would love to hear from you.</h2><div className="mt-6 grid gap-3 sm:grid-cols-2"><InfoTile label="Email" value="hello@blwcampusministry.org" icon={FiMail} /><InfoTile label="WhatsApp" value="+254 700 000 000" icon={FiPhone} /></div><form className="mt-6 space-y-4"><input className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none" placeholder="Your name" /><input className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none" placeholder="Email address" /><textarea className="min-h-[140px] w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none" placeholder="How can we help?" /><button className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-5 py-3 font-semibold text-white"><FiSend /> Send Message</button></form></div>}
-
-          {activeTab === 'Prayer Requests' && <div><Eyebrow color="#D8B2FF">Prayer Requests</Eyebrow><h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Bring your burdens before God.</h2><p className="mt-4 text-lg text-slate-400">We are committed to praying with you and standing in faith for every need.</p><textarea className="mt-6 min-h-[160px] w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none" placeholder="Share your request with our prayer team..." /><button className="mt-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-5 py-3 font-semibold text-white"><FiHeart /> Submit Request</button></div>}
-
-          {activeTab === 'Find a Campus Group' && <div>
+          <div>
             <Eyebrow color="#D8B2FF">Campus Groups</Eyebrow>
             <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Find a fellowship near you.</h2>
             <p className="mt-4 text-lg text-slate-400">Search by country, city, town, area, university, or fellowship name.</p>
@@ -284,7 +274,7 @@ export default function Connect() {
                 {nearbyFellowships.length > 0 ? <div className="border-t border-white/10 p-3"><div className="space-y-2">{nearbyFellowships.slice(0, 6).map((location) => <Card key={location.id} variant="subtle" className="flex items-center justify-between gap-3 px-3 py-2.5"><div className="min-w-0"><p className="truncate text-sm font-semibold text-white">{location.fellowshipName}</p><p className="truncate text-xs text-white/40">{[location.town || location.city, location.area, location.university].filter(Boolean).join(' • ')}</p></div><span className="shrink-0 text-xs font-semibold text-[#D8B2FF]">{location.distanceKm.toFixed(1)} km</span></Card>)}</div></div> : <div className="border-t border-white/10 px-4 py-4"><EmptyState icon={FiMapPin} title="No nearby fellowships" hint={`Nothing is registered within ${NEARBY_RADIUS_KM} km of this location yet.`} /></div>}
               </div>}
             </Card>
-          </div>}
+          </div>
         </Card>
 
         <Card variant="subtle" className="p-6"><div className="flex items-center gap-2 text-[#D8B2FF]"><FiMapPin /> Connect globally</div><p className="mt-4 text-sm leading-relaxed text-slate-400">Search any town, area, university or fellowship, or use “Where I am” to see nearby fellowship locations on the map.</p></Card>
