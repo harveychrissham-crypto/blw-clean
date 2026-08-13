@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { uploadPhoto } from '../controllers/uploadController.js';
+import { requireLeaderAdmin } from '../middleware/leaderAdminMiddleware.js';
 
 const router = express.Router();
 
@@ -10,6 +11,6 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-router.post('/', upload.single('photo'), uploadPhoto);
+router.post('/', requireLeaderAdmin, upload.single('photo'), uploadPhoto);
 
 export default router;
