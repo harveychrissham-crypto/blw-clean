@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FiCheckCircle, FiClock, FiSearch, FiX, FiUsers } from 'react-icons/fi';
+import { fetchAllMembers, getCachedMembers } from '../utils/members';
 import { getOfflineCheckinQueue } from '../utils/offlineCheckin';
 
 function localDateKey() {
@@ -13,6 +14,7 @@ function localDateKey() {
 export default function OfflineAttendanceSheet({ members = [], onClose }) {
   const [query, setQuery] = useState('');
   const [queue, setQueue] = useState([]);
+  const [directory, setDirectory] = useState(members);
 
   const loadQueue = async () => {
     try {
@@ -22,9 +24,32 @@ export default function OfflineAttendanceSheet({ members = [], onClose }) {
     }
   };
 
+  const loadDirectory = async () => {
+    if (members.length) {
+      setDirectory(members);
+      return;
+    }
+
+    try {
+      if (navigator.onLine) {
+        const fresh = await fetchAllMembers();
+        setDirectory(fresh);
+        return;
+      }
+    } catch {
+      // Fall back to the locally cached member directory.
+    }
+
+    setDirectory(await getCachedMembers());
+  };
+
   useEffect(() => {
     loadQueue();
-    const timer = window.setInterval(loadQueue, 2000);
+    loadDirectory();
+    const timer = window.setInterval(() => {
+      loadQueue();
+      loadDirectory();
+    }, 2000);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -33,7 +58,7 @@ export default function OfflineAttendanceSheet({ members = [], onClose }) {
   const pendingIds = new Set(pendingToday.map((item) => item.membershipId));
 
   const rows = useMemo(() => {
-    const byId = new Map(members.map((member) => [member.membershipId, { ...member }]));
+    const byId = new Map(directory.map((member) => [member.membershipId, { ...member }]));
 
     for (const item of pendingToday) {
       if (!byId.has(item.membershipId)) {
@@ -51,7 +76,7 @@ export default function OfflineAttendanceSheet({ members = [], onClose }) {
     return [...byId.values()].sort((a, b) =>
       String(a.name || '').localeCompare(String(b.name || ''))
     );
-  }, [members, pendingToday]);
+  }, [directory, pendingToday]);
 
   const filtered = rows.filter((member) => {
     const q = query.trim().toLowerCase();
