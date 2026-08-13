@@ -1,13 +1,9 @@
 import jwt from 'jsonwebtoken';
 
-const DEFAULT_ACCESS_CODE = '1120363';
-
 function authSecret() {
-  const configured = typeof process.env.JWT_SECRET === 'string' ? process.env.JWT_SECRET.trim() : '';
-  const code = typeof process.env.FELLOWSHIP_ADMIN_ACCESS_CODE === 'string' && process.env.FELLOWSHIP_ADMIN_ACCESS_CODE.trim()
-    ? process.env.FELLOWSHIP_ADMIN_ACCESS_CODE.trim()
-    : DEFAULT_ACCESS_CODE;
-  return configured || `blw-leader-auth:${code}`;
+  const secret = typeof process.env.JWT_SECRET === 'string' ? process.env.JWT_SECRET.trim() : '';
+  if (!secret) throw new Error('JWT_SECRET is not configured.');
+  return secret;
 }
 
 export function requireLeaderAdmin(req, res, next) {
