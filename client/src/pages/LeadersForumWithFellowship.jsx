@@ -97,11 +97,21 @@ export default function LeadersForumWithFellowship() {
     setTimeout(() => target.click(), 0);
   };
 
+  const openAttendance = () => {
+    setToolsOpen(false);
+    setShowAttendance(true);
+  };
+
+  const backToLeadershipTools = () => {
+    setShowAttendance(false);
+    setToolsOpen(true);
+  };
+
   return <>
     <LeadersForum />
     {toolsGrid&&createPortal(<LeadershipToolsCard onOpen={()=>setToolsOpen(true)}/>,toolsGrid)}
-    {toolsOpen&&<ToolsDashboard onClose={()=>setToolsOpen(false)} onFellowship={()=>setShowFellowship(true)} onInternalOpen={openInternal} onAttendance={()=>setShowAttendance(true)}/>} 
-    {showAttendance&&<OfflineAttendanceSheet members={[]} onClose={()=>{setShowAttendance(false);setToolsOpen(true);}} />}
+    {toolsOpen&&<ToolsDashboard onClose={()=>setToolsOpen(false)} onFellowship={()=>setShowFellowship(true)} onInternalOpen={openInternal} onAttendance={openAttendance}/>} 
+    {showAttendance&&<div className="fixed inset-0 z-[120]"><OfflineAttendanceSheet members={[]} onClose={backToLeadershipTools} /></div>}
     {showFellowship&&<div className="fixed inset-0 z-[120] overflow-y-auto bg-[#0d0c18]/98 backdrop-blur-xl"><div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8"><div className="mx-auto max-w-7xl"><div className="mb-3 flex justify-end"><button type="button" onClick={()=>{setShowFellowship(false);setToolsOpen(true);}} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-white/80 hover:bg-white/10"><FiX /> Back to Leadership Tools</button></div><FellowshipLocationsAdmin /></div></div></div>}
   </>;
 }
