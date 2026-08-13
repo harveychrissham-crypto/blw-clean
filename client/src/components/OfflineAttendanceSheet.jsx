@@ -16,6 +16,14 @@ export default function OfflineAttendanceSheet({ members = [], onClose, onBackTo
   const [queue, setQueue] = useState([]);
   const [directory, setDirectory] = useState(members);
 
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
   const loadQueue = async () => {
     try {
       setQueue(await getOfflineCheckinQueue());
@@ -89,7 +97,7 @@ export default function OfflineAttendanceSheet({ members = [], onClose, onBackTo
   const pending = rows.filter((member) => pendingIds.has(member.membershipId)).length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0c18]/95 px-4 py-8">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center overscroll-contain bg-[#0d0c18]/95 px-4 py-8">
       <div className="relative w-full max-w-2xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#12111d] shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
           <div>
@@ -138,7 +146,7 @@ export default function OfflineAttendanceSheet({ members = [], onClose, onBackTo
             />
           </div>
 
-          <div className="max-h-[55vh] overflow-y-auto rounded-2xl border border-white/10">
+          <div className="max-h-[55vh] overflow-y-auto overscroll-contain rounded-2xl border border-white/10">
             {filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-3 px-6 py-12 text-center">
                 <FiUsers className="h-8 w-8 text-white/20" />
