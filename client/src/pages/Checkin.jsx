@@ -22,12 +22,57 @@ function MemberQRCode({ member }) {
     });
   }, [qrPayload]);
 
-  const handleDownload = () => {
-    if (!canvasRef.current) return;
-    const link = document.createElement('a');
-    link.download = `${member.name.replace(/\s+/g, '_')}_QR_Badge.png`;
-    link.href = canvasRef.current.toDataURL('image/png');
-    link.click();
+  const handleDownload = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const safeName = String(member.name || 'Member')
+      .trim()
+      .replace(/[^a-z0-9]+/gi, '_')
+      .replace(/^_+|_+$/g, '') || 'Member';
+    const fileName = `${safeName}_QR_Badge.png`;
+
+    try {
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((value) => (value ? resolve(value) : reject(new Error('Unable to create QR image.'))), 'image/png');
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.rel = 'noopener';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      return;
+    } catch {
+      // Fall through to the Android/browser share fallback.
+    }
+
+    try {
+      const dataUrl = canvas.toDataURL('image/png');
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const file = new File([blob], fileName, { type: 'image/png' });
+
+      if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+        await navigator.share({
+          title: `${member.name} QR Badge`,
+          text: `BLW Campus Ministry QR badge for ${member.name}`,
+          files: [file],
+        });
+        return;
+      }
+
+      const imageUrl = URL.createObjectURL(blob);
+      const popup = window.open(imageUrl, '_blank', 'noopener,noreferrer');
+      if (!popup) window.location.href = imageUrl;
+      setTimeout(() => URL.revokeObjectURL(imageUrl), 10000);
+    } catch (error) {
+      console.error('Unable to download/share QR badge:', error);
+    }
   };
 
   return (
