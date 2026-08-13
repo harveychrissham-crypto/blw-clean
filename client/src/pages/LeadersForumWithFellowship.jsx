@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FiCalendar, FiFilm, FiImage, FiMapPin, FiRadio, FiTool, FiX } from 'react-icons/fi';
+import { apiFetch } from '../config/api';
 import LeadersForum from './LeadersForum';
 import FellowshipLocationsAdmin from './FellowshipLocationsAdmin';
+
+const LEADER_CODE = '1120363';
 
 const TOOL_BUTTONS = [
   { label: 'Manage Events', description: 'Add, edit, and remove public events.', kind: 'internal', icon: FiCalendar },
@@ -26,7 +29,7 @@ function LeadershipToolsCard({ onOpen }) {
 
 function ToolsDashboard({ onClose, onFellowship, onInternalOpen }) {
   return createPortal(
-    <div className="fixed inset-0 z-[110] overflow-y-auto bg-[#0d0c18]/98 backdrop-blur-xl">
+    <div data-leadership-tools-overlay className="fixed inset-0 z-[110] overflow-y-auto bg-[#0d0c18]/98 backdrop-blur-xl">
       <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8"><div className="mx-auto max-w-5xl">
         <div className="mb-8 flex items-start justify-between gap-5"><div><p className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#F2A31C]">Leaders Forum</p><h2 className="mt-2 text-3xl font-extrabold text-white">Leadership Tools</h2><p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/45">All management tools are organized here so the main Leaders Forum stays focused on attendance and the member directory.</p></div><button onClick={onClose} className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-white/75 hover:bg-white/10"><FiX /> Back to Leaders Forum</button></div>
         <div className="space-y-8">
@@ -42,6 +45,22 @@ function ToolsDashboard({ onClose, onFellowship, onInternalOpen }) {
 export default function LeadersForumWithFellowship() {
   const [toolsGrid, setToolsGrid] = useState(null), [toolsOpen, setToolsOpen] = useState(false), [showFellowship, setShowFellowship] = useState(false);
   const returnToToolsRef = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const existing = sessionStorage.getItem('blw_leader_admin_token');
+        if (existing) return;
+        const response = await apiFetch('/api/fellowships/admin/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accessCode: LEADER_CODE }) });
+        const body = await response.json().catch(() => ({}));
+        if (!cancelled && response.ok && body.token) sessionStorage.setItem('blw_leader_admin_token', body.token);
+      } catch {
+        // Fellowship manager surfaces the session error if leadership auth is unavailable.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     let cancelled=false, observer;
