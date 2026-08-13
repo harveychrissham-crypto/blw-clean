@@ -16,20 +16,28 @@ export function apiUrl(path) {
 }
 
 /**
- * Drop-in replacement for fetch().
- * Adds the stored Bearer token when available so API requests work from the
- * local Capacitor bundle as well as the deployed website.
+ * Drop-in replacement for fetch(). Adds the normal member token and, while a
+ * leader session is open, the short-lived leader-admin token used by the
+ * management tools. This keeps manager requests authenticated without adding
+ * another login prompt to every individual tool.
  */
 export async function apiFetch(path, options = {}) {
   const token = await getToken();
+  let leaderToken = '';
+  try {
+    leaderToken = sessionStorage.getItem('blw_leader_admin_token') || '';
+  } catch {
+    leaderToken = '';
+  }
 
   const headers = {
     ...(options.headers || {}),
   };
 
-  if (token && !headers.Authorization) {
-    headers.Authorization = `Bearer ${token}`;
+  if (!headers.Authorization) {
+    headers.Authorization = leaderToken ? `Bearer ${leaderToken}` : (token ? `Bearer ${token}` : '');
   }
+  if (!headers.Authorization) delete headers.Authorization;
 
   return fetch(apiUrl(path), {
     ...options,
