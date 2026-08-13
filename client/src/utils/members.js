@@ -1,7 +1,9 @@
+import { Preferences } from '@capacitor/preferences';
 import { apiFetch } from '../config/api';
 import { getOfflineCheckinQueue, removeOfflineCheckins, queueOfflineCheckin } from './offlineCheckin';
 
 const LEADER_TOKEN_KEY = 'blw_leader_admin_token';
+const MEMBERS_CACHE_KEY = 'blw_leader_members_cache_v1';
 
 async function handle(res) {
   let body = null;
@@ -36,13 +38,45 @@ async function leaderFetch(path, options = {}) {
   });
 }
 
+async function saveMembersCache(members) {
+  try {
+    await Preferences.set({ key: MEMBERS_CACHE_KEY, value: JSON.stringify(members) });
+  } catch {
+    // Cache is an enhancement; the online API remains the source of truth.
+  }
+}
+
+async function readMembersCache() {
+  try {
+    const { value } = await Preferences.get({ key: MEMBERS_CACHE_KEY });
+    return value ? JSON.parse(value) : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchAllMembers() {
   const res = await leaderFetch('/api/members');
   const body = await handle(res);
-  return body.members || [];
+  const members = body.members || [];
+  await saveMembersCache(members);
+  return members;
 }
 
 export async function searchMembers(q) {
+  if (!navigator.onLine) {
+    const raw = String(q || '').trim().toLowerCase();
+    if (!raw) return [];
+    const cached = await readMembersCache();
+    const matches = cached.filter((member) => [
+      member.membershipId,
+      member.name,
+      member.email,
+      member.phone,
+    ].some((value) => String(value || '').toLowerCase().includes(raw)));
+    return matches.slice(0, 8);
+  }
+
   const res = await leaderFetch(`/api/members/search?q=${encodeURIComponent(q)}`);
   if (res.status === 404) return [];
   const body = await handle(res);
@@ -82,10 +116,6 @@ export async function checkInMember(membershipId, memberHint = null) {
   return body.member;
 }
 
-/**
- * Flush attendance records created while the device was offline.
- * The server endpoint is idempotent for a member/day, so retries are safe.
- */
 export async function syncOfflineCheckins() {
   if (!navigator.onLine) return { synced: 0, remaining: (await getOfflineCheckinQueue()).length };
 
