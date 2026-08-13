@@ -1,4 +1,5 @@
 import { apiFetch } from '../config/api';
+import { getOfflineCheckinQueue, removeOfflineCheckins, queueOfflineCheckin } from './offlineCheckin';
 
 const LEADER_TOKEN_KEY = 'blw_leader_admin_token';
 
@@ -48,10 +49,62 @@ export async function searchMembers(q) {
   return body.members || [];
 }
 
-export async function checkInMember(membershipId) {
+function localDateKey() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+export async function checkInMember(membershipId, memberHint = null) {
+  if (!navigator.onLine) {
+    const now = new Date().toISOString();
+    await queueOfflineCheckin({
+      membershipId,
+      name: memberHint?.name || '',
+      dateKey: localDateKey(),
+      checkedInAt: now,
+    });
+    return {
+      ...(memberHint || {}),
+      membershipId,
+      checkedIn: true,
+      checkedInAt: now,
+      offlineQueued: true,
+    };
+  }
+
   const res = await leaderFetch(`/api/members/${encodeURIComponent(membershipId)}/checkin`, {
     method: 'POST',
   });
   const body = await handle(res);
   return body.member;
+}
+
+/**
+ * Flush attendance records created while the device was offline.
+ * The server endpoint is idempotent for a member/day, so retries are safe.
+ */
+export async function syncOfflineCheckins() {
+  if (!navigator.onLine) return { synced: 0, remaining: (await getOfflineCheckinQueue()).length };
+
+  const queue = await getOfflineCheckinQueue();
+  if (!queue.length) return { synced: 0, remaining: 0 };
+
+  const syncedIds = [];
+  for (const item of queue) {
+    try {
+      await leaderFetch(`/api/members/${encodeURIComponent(item.membershipId)}/checkin`, {
+        method: 'POST',
+      });
+      syncedIds.push(item.membershipId);
+    } catch (error) {
+      console.warn('[checkin] offline sync item failed:', item.membershipId, error?.message || error);
+    }
+  }
+
+  await removeOfflineCheckins(syncedIds);
+  const remaining = await getOfflineCheckinQueue();
+  return { synced: syncedIds.length, remaining: remaining.length };
 }
