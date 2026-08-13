@@ -11,7 +11,7 @@ function localDateKey() {
   return `${y}-${m}-${d}`;
 }
 
-export default function OfflineAttendanceSheet({ members = [], onClose }) {
+export default function OfflineAttendanceSheet({ members = [], onClose, onBackToTools }) {
   const [query, setQuery] = useState('');
   const [queue, setQueue] = useState([]);
   const [directory, setDirectory] = useState(members);
@@ -97,9 +97,19 @@ export default function OfflineAttendanceSheet({ members = [], onClose }) {
             <h2 className="mt-1 text-xl font-bold text-white">Check Attendance</h2>
             <p className="mt-1 text-xs text-white/40">Works offline. Pending records sync automatically when connection returns.</p>
           </div>
-          <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10">
-            <FiX />
-          </button>
+          <div className="flex items-center gap-2">
+            {onBackToTools && (
+              <button
+                onClick={onBackToTools}
+                className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-xs font-semibold text-white/75 transition hover:bg-white/10 hover:text-white"
+              >
+                Back to Leadership Tools
+              </button>
+            )}
+            <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10">
+              <FiX />
+            </button>
+          </div>
         </div>
 
         <div className="p-6">
