@@ -23,11 +23,9 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install frontend dependencies
+      - name: Install frontend dependencies from package.json
         working-directory: client
-        # Resolve the dependency tree from package.json instead of requiring
-        # a pre-built lockfile. This lets CI pick up newly added packages.
-        run: npm install --no-package-lock
+        run: npm install --no-package-lock --ignore-scripts
 
       - name: Build web assets
         working-directory: client
@@ -77,6 +75,7 @@ jobs:
             -PappVersionCode=${{ github.run_number }} \
             -PappVersionName=1.0.${{ github.run_number }}
 
+      - name: Rename APK for a stable download filename
       - name: Rename APK for a stable download filename
         run: |
           mkdir -p dist-apk
