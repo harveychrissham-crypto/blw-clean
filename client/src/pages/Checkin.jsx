@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { FiSearch, FiPhone, FiMail, FiDownload, FiCheckCircle, FiLogIn } from 'react-icons/fi';
+import { FiSearch, FiPhone, FiMail, FiDownload, FiCheckCircle } from 'react-icons/fi';
 import { MdQrCodeScanner } from 'react-icons/md';
 import QRCode from 'qrcode';
 import { apiFetch } from '../config/api';
 import { useAuth } from '../context/AuthContext';
+import { Card, Eyebrow, InfoTile } from '../components/ui/Card';
 
 const MEMBER_SEARCH_URL = '/api/members/search';
 const SELF_CHECKIN_URL = '/api/members/self-checkin';
@@ -129,10 +130,10 @@ export default function Checkin() {
       {!found ? (
         <div className="mb-12 grid items-start gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
-            <div className="flex items-center gap-2"><MdQrCodeScanner className="text-xl text-[#D8B2FF]" /><p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#D8B2FF]">Member Check-In</p></div>
+            <div className="flex items-center gap-2"><MdQrCodeScanner className="text-xl text-[#D8B2FF]" /><Eyebrow color="#D8B2FF">Member Check-In</Eyebrow></div>
             <h1 className="mt-4 text-3xl font-semibold text-white sm:text-4xl">Find your profile and complete attendance instantly.</h1>
             <p className="mt-4 max-w-2xl text-lg text-slate-300">Enter the phone number or email you registered with. Signed-in members can then mark themselves present.</p>
-            <div className="mt-8 rounded-3xl border border-white/10 bg-slate-950/70 p-8 shadow-soft">
+            <Card variant="raised" className="mt-8 p-8">
               <form onSubmit={handleSearch} className="space-y-4">
                 <div className="rounded-2xl border border-white/10 bg-[#121321]/80 px-4 py-3">
                   <label className="block text-sm font-medium text-slate-400">Phone number or email</label>
@@ -143,52 +144,66 @@ export default function Checkin() {
                 </button>
               </form>
               <p className="mt-4 text-sm text-slate-400">{message}</p>
-            </div>
+            </Card>
           </div>
           <div className="space-y-6">
-            <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-6 shadow-soft">
+            <Card variant="raised" className="p-6">
               <div className="flex items-center gap-3 text-[#D8B2FF]"><MdQrCodeScanner className="text-xl" /><span className="text-sm font-semibold uppercase tracking-[0.3em]">Quick check-in</span></div>
               <div className="mt-6 space-y-4 text-slate-300">
                 <div><p className="text-sm font-semibold text-white">Find your profile</p><p className="mt-2 text-sm">Use the phone number or email on your registration.</p></div>
                 <div><p className="text-sm font-semibold text-white">Check yourself in</p><p className="mt-2 text-sm">You must be signed in with the same member account for the attendance action.</p></div>
                 <div><p className="text-sm font-semibold text-white">QR badge ready</p><p className="mt-2 text-sm">Your QR badge can still be presented to the welcome team.</p></div>
               </div>
-            </div>
-            <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#A53DFF]/10 to-[#8A2BE2]/10 p-6">
-              <p className="text-sm uppercase tracking-[0.3em] text-[#D8B2FF]">Member support</p>
+            </Card>
+            <Card variant="filled" className="p-6">
+              <Eyebrow color="rgba(255,255,255,0.85)">Member support</Eyebrow>
               <h2 className="mt-3 text-2xl font-semibold text-white">Need help checking in?</h2>
-              <p className="mt-4 text-sm text-slate-300">If your profile does not appear, contact the campus desk or support team.</p>
+              <p className="mt-4 text-sm text-white/85">If your profile does not appear, contact the campus desk or support team.</p>
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4"><div className="flex items-center gap-2 text-[#D8B2FF]"><FiPhone /> Phone</div><p className="mt-2 text-sm text-slate-400">+254 700 000 000</p></div>
-                <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4"><div className="flex items-center gap-2 text-[#D8B2FF]"><FiMail /> Email</div><p className="mt-2 text-sm text-slate-400">hello@blwcampusministry.org</p></div>
+                <div className="rounded-2xl bg-white/10 p-4"><div className="flex items-center gap-2 text-white"><FiPhone /> Phone</div><p className="mt-2 text-sm text-white/80">+254 700 000 000</p></div>
+                <div className="rounded-2xl bg-white/10 p-4"><div className="flex items-center gap-2 text-white"><FiMail /> Email</div><p className="mt-2 text-sm text-white/80">hello@blwcampusministry.org</p></div>
               </div>
-            </div>
+            </Card>
           </div>
         </div>
       ) : null}
 
       {found && foundProfile && (
-        <div className="space-y-8">
-          <div className="rounded-3xl border border-white/10 bg-slate-950/80 p-6 shadow-soft">
+        <div className="space-y-6">
+          <Card variant="raised" className="p-4">
             <div className="flex flex-col gap-6 rounded-3xl border border-white/10 bg-[#121321]/80 p-6 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-4"><div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] p-2 shadow-soft"><div className="flex h-full w-full items-center justify-center rounded-3xl bg-slate-950 text-3xl font-bold text-white">{foundProfile.name?.charAt(0).toUpperCase()}</div></div><div><p className="text-sm uppercase tracking-[0.3em] text-[#D8B2FF]">Church Member</p><h2 className="mt-2 text-3xl font-semibold text-white">{foundProfile.name}</h2><p className="mt-1 text-sm text-slate-400">{foundProfile.email}</p><p className="text-sm text-slate-400">{foundProfile.phone}</p></div></div>
-              <div className="flex flex-wrap items-center gap-3"><span className="rounded-full border border-[#A53DFF]/30 bg-[#A53DFF]/10 px-4 py-2 text-sm font-semibold text-[#D8B2FF]">{foundProfile.membershipId}</span><span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300">{foundProfile.checkedIn ? 'Checked in' : foundProfile.status}</span></div>
+              <div className="flex items-center gap-4">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] text-2xl font-black text-white shadow-xl shadow-[#A53DFF]/20">
+                  {foundProfile.name?.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <Eyebrow color="#D8B2FF">Member file</Eyebrow>
+                  <h2 className="mt-1 text-2xl font-semibold text-white truncate">{foundProfile.name}</h2>
+                  <p className="mt-1 text-sm text-slate-400 truncate">{foundProfile.email}</p>
+                  <p className="text-sm text-slate-400">{foundProfile.phone}</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="w-fit rounded-full border border-[#A53DFF]/30 bg-[#A53DFF]/10 px-4 py-2 text-xs font-semibold text-[#D8B2FF]">{foundProfile.membershipId}</span>
+                <span className="w-fit rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-300">{foundProfile.checkedIn ? 'Checked in' : foundProfile.status}</span>
+              </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-            <div className="space-y-6">
-              <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-6 shadow-soft">
-                <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+            <div className="space-y-4">
+              <div>
+                <Eyebrow className="mb-2 px-1">Profile details</Eyebrow>
+                <div className="grid gap-2.5 sm:grid-cols-2">
                   {[
                     ['Phone', foundProfile.phone], ['Email', foundProfile.email], ['Gender', foundProfile.gender || '—'], ['Birthday', foundProfile.birthday || '—'],
                     ['Campus Zone', foundProfile.campusZone || '—'], ['Chapter', foundProfile.chapter || '—'], ['Country', foundProfile.country || '—'], ['Residence', foundProfile.residence || '—'],
                     ['Invited By', foundProfile.invitedBy || '—'], ['Date Joined', foundProfile.joinDate || '—'], ['Membership ID', foundProfile.membershipId], ['Badge', foundProfile.badge]
-                  ].map(([label,value]) => <div key={label} className="rounded-3xl border border-white/10 bg-[#121321]/80 p-4"><p className="text-xs uppercase tracking-[0.3em] text-slate-500">{label}</p><p className="mt-3 text-lg font-semibold text-white">{value}</p></div>)}
+                  ].map(([label, value]) => <InfoTile key={label} label={label} value={value} />)}
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-6 shadow-soft">
+              <Card variant="raised" className="p-6">
                 {checkinMessage && <div className="mb-4 flex items-center gap-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-300"><FiCheckCircle /> {checkinMessage}</div>}
                 {checkinError && <div className="mb-4 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">{checkinError}</div>}
                 {foundProfile.checkedIn ? (
@@ -199,7 +214,7 @@ export default function Checkin() {
                   </button>
                 )}
                 {!user?.email && !foundProfile.checkedIn && <p className="mt-3 text-center text-xs text-slate-500">Sign in to the same member account before checking in.</p>}
-              </div>
+              </Card>
             </div>
 
             <div className="space-y-4">
