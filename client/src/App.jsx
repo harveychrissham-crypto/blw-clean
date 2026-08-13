@@ -7,7 +7,6 @@ import Outreaches from './pages/Outreaches';
 import Events from './pages/Events';
 import Checkin from './pages/Checkin';
 import Give from './pages/Give';
-import Salvation from './pages/Salvation';
 import Connect from './pages/Connect';
 import Live from './pages/Live';
 import Sermons from './pages/Sermons';
@@ -56,7 +55,6 @@ const AnimatedRoutes = () => {
     <Route path="/sermons" element={route(<Sermons />)} />
     <Route path="/checkin" element={route(<Checkin />)} />
     <Route path="/give" element={route(<Give />)} />
-    <Route path="/salvation" element={route(<Salvation />)} />
     <Route path="/connect" element={route(<Connect />)} />
     <Route path="/auth" element={route(<Auth />)} />
     <Route path="/dashboard" element={route(user ? <Dashboard /> : <Auth />)} />
