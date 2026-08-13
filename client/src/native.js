@@ -1,11 +1,13 @@
 import { Capacitor } from '@capacitor/core';
 
 /**
- * Native-only setup (status bar theming, Android back button, push
- * notifications). Safe to call on web/dev builds — everything here is
- * gated behind Capacitor.isNativePlatform() and wrapped so a missing
- * plugin or unconfigured Firebase project degrades quietly instead of
- * crashing the app.
+ * Native-only setup (status bar and Android back button).
+ *
+ * Push notifications are intentionally NOT initialized here yet. The Android
+ * project does not currently include google-services.json/Firebase
+ * configuration, and registering PushNotifications during app startup can
+ * cause the native process to terminate before the WebView finishes loading.
+ * Once Firebase is configured, push registration can be re-enabled safely.
  */
 export async function initNative() {
   if (!Capacitor.isNativePlatform()) return;
@@ -13,14 +15,13 @@ export async function initNative() {
   await Promise.allSettled([
     setUpStatusBar(),
     setUpBackButton(),
-    setUpPushNotifications(),
   ]);
 }
 
 async function setUpStatusBar() {
   try {
     const { StatusBar, Style } = await import('@capacitor/status-bar');
-    await StatusBar.setStyle({ style: Style.Dark }); // light text/icons, for our dark theme
+    await StatusBar.setStyle({ style: Style.Dark });
     await StatusBar.setBackgroundColor({ color: '#0d0c18' });
   } catch (error) {
     console.warn('[native] status bar setup skipped:', error?.message || error);
@@ -30,12 +31,12 @@ async function setUpStatusBar() {
 /**
  * Makes the Android hardware back button behave like a browser back button
  * within the app (go back through route history) instead of Capacitor's
- * default of closing the WebView/app unexpectedly from a nested screen.
+ * default of closing the WebView unexpectedly from a nested screen.
  */
 async function setUpBackButton() {
   try {
     const { App } = await import('@capacitor/app');
-    App.addListener('backButton', () => {
+    await App.addListener('backButton', () => {
       if (window.history.length > 1) {
         window.history.back();
       } else {
@@ -47,14 +48,9 @@ async function setUpBackButton() {
   }
 }
 
-/**
- * Requests permission and registers for push notifications. This only
- * produces a working device token once a Firebase project is wired up
- * (client/android/app/google-services.json — see build.gradle, which
- * already conditionally applies the google-services plugin only if that
- * file exists). Until then this safely no-ops.
- */
-async function setUpPushNotifications() {
+// Push notification setup is intentionally deferred until Firebase is wired.
+// Keep the implementation here for when google-services.json is added.
+export async function setUpPushNotifications() {
   try {
     const { PushNotifications } = await import('@capacitor/push-notifications');
     const permission = await PushNotifications.requestPermissions();
@@ -63,10 +59,6 @@ async function setUpPushNotifications() {
     await PushNotifications.register();
 
     PushNotifications.addListener('registration', (token) => {
-      // TODO: send token.value to the backend once there's an endpoint to
-      // store per-member push tokens (e.g. POST /api/members/push-token),
-      // so the worker's weekly reminder job (or a "we're live" trigger)
-      // can target real devices instead of only sending email.
       console.log('[native] push registration token:', token.value);
     });
 
