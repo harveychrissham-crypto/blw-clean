@@ -37,6 +37,8 @@ function isLeader(request, env) {
 
 function needsLeader(request, url) {
   const { pathname } = url;
+  if (pathname === '/api/members/search') return false;
+  if (pathname === '/api/members/self-checkin') return false;
   if (pathname.startsWith('/api/members')) return true;
   if (pathname.startsWith('/api/fellowships/admin')) return false; // fellowship-api already authenticates itself
   if (pathname.startsWith('/api/events') && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) return true;
@@ -56,7 +58,7 @@ export default {
       return app.fetch(request, env, ctx);
     }
     if (needsLeader(request, url) && !isLeader(request, env)) {
-      return json({ error: 'Leadership authorization is required.' }, 403, url.origin);
+      return json({ error: 'Leadership authorization is required.' }, 403, request.headers.get('Origin') || url.origin);
     }
     return app.fetch(request, env, ctx);
   },

@@ -32,7 +32,7 @@ const parseLocation = (body) => {
 
 async function handle(request, env, url) {
   if (!url.pathname.startsWith('/api/fellowships') && url.pathname !== '/api/geocode') return null;
-  const headers = cors(url.origin);
+  const headers = cors(request.headers.get('Origin') || url.origin);
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
 
   if (url.pathname === '/api/geocode' && request.method === 'GET') {

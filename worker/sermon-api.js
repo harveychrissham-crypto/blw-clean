@@ -49,7 +49,7 @@ const sermonDto = (s) => ({
 
 export async function handleSermons(request, env, url) {
   if (!url.pathname.startsWith('/api/sermons')) return null;
-  const headers = cors(url.origin);
+  const headers = cors(request.headers.get('Origin') || url.origin);
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
 
   try {

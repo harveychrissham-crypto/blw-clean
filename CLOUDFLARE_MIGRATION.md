@@ -4,7 +4,32 @@ This project is prepared to move the existing BLW website from a traditional Ren
 Node/Express server to Cloudflare Workers while keeping the existing PostgreSQL/Supabase
 database.
 
-## Architecture
+## Current mode: API-only, no domain required
+
+This deployment currently serves **only the API** — no custom domain is needed.
+Every Cloudflare Worker gets a permanent, free `*.workers.dev` address
+automatically (e.g. `https://blw-kenya-zone.YOUR-SUBDOMAIN.workers.dev`), and
+that's what the app talks to.
+
+The mobile app (Capacitor) doesn't load the website at all: its UI is bundled
+directly into the APK/IPA (see `client/capacitor.config.ts` — no `server.url`
+is set), and every API call goes to the absolute URL configured in
+`client/src/config/api.js`. Make sure that URL matches your actual
+`wrangler deploy` output.
+
+The `assets` block in `wrangler.jsonc` (which would serve the public website
+from this same Worker) is commented out for now. Nothing else needs to change
+to bring the website online later:
+
+1. Build the site: `npm run build` (produces `client/dist`).
+2. Uncomment the `assets` block in `wrangler.jsonc`.
+3. `wrangler deploy` again.
+
+`worker/index.js` already checks for the `ASSETS` binding before using it, so
+non-`/api/` requests return a small "API-only" JSON message until then instead
+of erroring.
+
+## Original architecture notes
 
 - React + Vite frontend: `client/`
 - Express API: `server/`
