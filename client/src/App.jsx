@@ -76,19 +76,37 @@ function App() {
     const previousOverflow = body.style.overflow;
     const previousTouchAction = body.style.touchAction;
 
+    const isFullScreenOverlay = (el) => {
+      if (!(el instanceof HTMLElement)) return false;
+      if (!el.classList.contains('fixed')) return false;
+
+      const fillsViewport =
+        el.classList.contains('inset-0') ||
+        (el.classList.contains('top-0') && el.classList.contains('bottom-0'));
+
+      if (!fillsViewport) return false;
+
+      // Ignore the normal fixed navigation/header elements.
+      const text = el.textContent || '';
+      const hasOverlaySignals =
+        el.className.includes('z-[') ||
+        /(?:^|:)z-(?:40|50|\[\d+\])/.test(el.className) ||
+        /backdrop|modal|overlay|dialog/i.test(text) ||
+        el.getAttribute('role') === 'dialog' ||
+        el.hasAttribute('data-leadership-tools-overlay');
+
+      return hasOverlaySignals;
+    };
+
     const syncBodyScrollLock = () => {
-      const leadershipOverlay = document.querySelector('[data-leadership-tools-overlay]');
-      const attendanceOverlay = Array.from(document.querySelectorAll('[class*="z-[120]"]')).find((el) =>
-        (el.textContent || '').includes('Check Attendance')
-      );
-      const locked = !!leadershipOverlay || !!attendanceOverlay;
+      const locked = Array.from(document.querySelectorAll('.fixed')).some(isFullScreenOverlay);
       body.style.overflow = locked ? 'hidden' : previousOverflow;
       body.style.touchAction = locked ? 'none' : previousTouchAction;
     };
 
     syncBodyScrollLock();
     const observer = new MutationObserver(syncBodyScrollLock);
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'role', 'data-leadership-tools-overlay'] });
 
     return () => {
       observer.disconnect();
