@@ -42,6 +42,11 @@ const FellowshipLocationsPage = () => {
 const AnimatedRoutes = () => {
   const location = useLocation();
   const { user } = useAuth();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [location.pathname]);
+
   const route = (element) => <Layout>{element}</Layout>;
   return <AnimatePresence mode="wait"><motion.div key={location.pathname} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}><Routes location={location}>
     <Route path="/" element={route(<Home />)} />
