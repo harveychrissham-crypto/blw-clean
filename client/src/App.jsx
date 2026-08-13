@@ -42,12 +42,12 @@ const FellowshipLocationsPage = () => {
 const AnimatedRoutes = () => {
   const location = useLocation();
   const { user } = useAuth();
+  const route = (element) => <Layout>{element}</Layout>;
 
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [location.pathname]);
 
-  const route = (element) => <Layout>{element}</Layout>;
   return <AnimatePresence mode="wait"><motion.div key={location.pathname} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}><Routes location={location}>
     <Route path="/" element={route(<Home />)} />
     <Route path="/outreaches" element={route(<Outreaches />)} />
@@ -70,6 +70,33 @@ const AnimatedRoutes = () => {
 
 function App() {
   useEffect(() => startOfflineSyncListeners(), []);
+
+  useEffect(() => {
+    const body = document.body;
+    const previousOverflow = body.style.overflow;
+    const previousTouchAction = body.style.touchAction;
+
+    const syncBodyScrollLock = () => {
+      const leadershipOverlay = document.querySelector('[data-leadership-tools-overlay]');
+      const attendanceOverlay = Array.from(document.querySelectorAll('[class*="z-[120]"]')).find((el) =>
+        (el.textContent || '').includes('Check Attendance')
+      );
+      const locked = !!leadershipOverlay || !!attendanceOverlay;
+      body.style.overflow = locked ? 'hidden' : previousOverflow;
+      body.style.touchAction = locked ? 'none' : previousTouchAction;
+    };
+
+    syncBodyScrollLock();
+    const observer = new MutationObserver(syncBodyScrollLock);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      observer.disconnect();
+      body.style.overflow = previousOverflow;
+      body.style.touchAction = previousTouchAction;
+    };
+  }, []);
+
   return <><OfflineBanner /><AnimatedRoutes /></>;
 }
 export default App;
