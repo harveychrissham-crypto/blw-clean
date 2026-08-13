@@ -30,8 +30,6 @@ function WelcomePopup({ onDone }) {
     setError('');
 
     try {
-      // Viewer registration is best-effort. The Live page must never be
-      // blocked just because the analytics/API service is temporarily down.
       await submitLiveViewer({ name: name.trim(), invitedBy: invitedBy.trim() });
     } catch {
       // Continue locally. This allows YouTube/Daily/Meet to remain usable
@@ -48,7 +46,7 @@ function WelcomePopup({ onDone }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 p-4 backdrop-blur-md"
+      className="fixed inset-0 z-40 flex items-center justify-center overscroll-contain bg-black/30 p-4 backdrop-blur-md"
     >
       <motion.div
         initial={{ opacity: 0, y: 24, scale: 0.96 }}
@@ -133,6 +131,26 @@ export default function Live() {
       });
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    if (!showWelcome) return undefined;
+
+    const previousHtmlOverflow = html.style.overflow;
+    const previousBodyOverflow = body.style.overflow;
+    const previousBodyTouchAction = body.style.touchAction;
+
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    body.style.touchAction = 'none';
+
+    return () => {
+      html.style.overflow = previousHtmlOverflow;
+      body.style.overflow = previousBodyOverflow;
+      body.style.touchAction = previousBodyTouchAction;
+    };
+  }, [showWelcome]);
 
   const isLiveNow = status === 'loaded' && !!live?.isLive;
   const isStreaming = isLiveNow && !!live?.youtubeId;
