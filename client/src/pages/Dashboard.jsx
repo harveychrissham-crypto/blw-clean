@@ -15,7 +15,12 @@ import {
   FiCheckCircle,
   FiShield,
   FiGlobe,
+  FiCalendar,
+  FiFileText,
+  FiClock,
 } from 'react-icons/fi';
+import { Card, Eyebrow, StatGroup, ActionBanner, InfoTile } from '../components/ui/Card';
+import EmptyState from '../components/ui/EmptyState';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -157,180 +162,170 @@ export default function Dashboard() {
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
-      <div className="grid gap-3">
-        <div className="space-y-4">
-          <div className="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/95 shadow-sm">
-            <div className="p-4">
-              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex items-center gap-5">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-[#FF4F9A] via-[#A53DFF] to-[#3D5AFE] text-2xl font-black text-white shadow-xl shadow-[#A53DFF]/20">
-                    {displayName.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-[#F7C948]">Member dashboard</p>
-                    <h1 className="mt-1 text-2xl font-semibold text-white">Brother {displayName}</h1>
-                    <p className="mt-1 text-[11px] text-slate-400">{email}</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={openEdit}
-                    className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-4 py-2 text-sm font-semibold text-white shadow-[0_20px_40px_rgba(236,47,168,0.18)] transition hover:opacity-95"
-                  >
-                    <FiEdit2 /> Edit Profile
-                  </button>
-                  <button
-                    type="button"
-                    onClick={goToRecordSouls}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-800/60 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/5"
-                  >
-                    <FiHeart /> Record Souls
-                  </button>
-                  <button
-                    type="button"
-                    onClick={logout}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/70 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/5"
-                  >
-                    <FiLogOut /> Sign Out
-                  </button>
-                </div>
+      <div className="space-y-4">
+        {/* Identity + primary actions */}
+        <Card variant="raised" className="p-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-[#FF4F9A] via-[#A53DFF] to-[#3D5AFE] text-2xl font-black text-white shadow-xl shadow-[#A53DFF]/20">
+                {displayName.charAt(0).toUpperCase()}
               </div>
-
-              <div className="mt-3 rounded-[1.5rem] border border-white/10 bg-white/5 p-2.5 shadow-inner shadow-white/5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-medium text-slate-400">Profile completion</p>
-                  </div>
-                  <span className="text-[11px] font-semibold text-[#FF4F9A]">60%</span>
-                </div>
-                <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-900">
-                  <div className="h-full w-[60%] rounded-full bg-gradient-to-r from-[#FF4F9A] via-[#A53DFF] to-[#3D5AFE] shadow-[0_0_20px_rgba(163,77,255,0.45)]" />
-                </div>
+              <div className="min-w-0">
+                <Eyebrow>Member dashboard</Eyebrow>
+                <h1 className="mt-1 text-2xl font-semibold text-white truncate">Brother {displayName}</h1>
+                <p className="mt-1 text-[11px] text-slate-400 truncate">{email}</p>
               </div>
-              
-              {/* Record Souls banner - large, clickable */}
-              <div
-                onClick={goToRecordSouls}
-                role="button"
-                tabIndex={0}
-                className="mt-6 w-full cursor-pointer overflow-hidden rounded-[1.5rem] bg-gradient-to-r from-[#FF8B5C] via-[#FF4F9A] to-[#A53DFF] p-6 text-white shadow-[0_30px_60px_rgba(163,77,255,0.12)] transition-transform hover:-translate-y-1"
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') goToRecordSouls(); }}
+            </div>
+
+            <div className="flex flex-wrap gap-2.5">
+              <button
+                type="button"
+                onClick={openEdit}
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-4 py-2 text-sm font-semibold text-white shadow-[0_20px_40px_rgba(236,47,168,0.18)] transition hover:opacity-95"
               >
-                <div className="flex items-center justify-between gap-6">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/90">Soul-winning</p>
-                    <h2 className="mt-2 text-2xl font-extrabold">Record Souls Dashboard <span className="text-white/90">▸</span></h2>
-                    <p className="mt-2 text-sm text-white/90">Tap to log a soul you invited to church.</p>
-                  </div>
-                  <div className="ml-auto flex h-20 w-20 items-center justify-center rounded-xl bg-white/10">
-                    <svg className="h-8 w-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2c1.657 0 3 1.343 3 3 0 1.657-1.343 3-3 3s-3-1.343-3-3c0-1.657 1.343-3 3-3zM6 10c3.866 0 7 3.134 7 7v5H6v-5c0-3.866 3.134-7 7-7" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </div>
-                </div>
-              </div>
+                <FiEdit2 /> Edit Profile
+              </button>
+              <button
+                type="button"
+                onClick={logout}
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/70 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/5"
+              >
+                <FiLogOut /> Sign Out
+              </button>
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/95 p-5 shadow-sm">
-              <div className="flex items-start gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#FF4F9A] via-[#A53DFF] to-[#3D5AFE] flex items-center justify-center text-white">
-                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 7h18M3 12h18M3 17h18" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </div>
-                <div className="flex-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-[#F7C948]">Sunday self check-in</p>
-                  <h3 className="mt-1 text-xl font-semibold text-white">
-                    {venueStatus === 'loaded' && venue?.serviceTime ? venue.serviceTime : 'Service time to be announced'}
-                  </h3>
-                  <p className="mt-1 text-[11px] text-slate-300">
-                    {venueStatus === 'loading' && 'Loading your chapter\'s venue…'}
-                    {venueStatus === 'loaded' && venue?.venue}
-                    {venueStatus === 'none' && (user?.chapter ? `No venue set yet for ${user.chapter}. Check with your leaders.` : 'Add your chapter in Edit Profile to see your service venue.')}
-                    {venueStatus === 'error' && 'Unable to load your service venue right now.'}
-                  </p>
-                  <div className="mt-3 rounded-2xl border border-white/10 p-4 text-sm text-slate-400">The 3rd service hasn't been opened yet by the team. Please try again in a moment.</div>
-                  <div className="mt-4">
-                    <button className="inline-flex items-center gap-2 rounded-full border border-pink-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-pink-600/10">
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      Show my QR badge
-                    </button>
-                  </div>
-                </div>
-              </div>
+          <div className="mt-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[11px] font-medium text-slate-400">Profile completion</p>
+              <span className="text-[11px] font-semibold text-[#FF4F9A]">60%</span>
             </div>
-          
-          <div className="mt-4 overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/95 p-5 shadow-sm">
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-950">
+              <div className="h-full w-[60%] rounded-full bg-gradient-to-r from-[#FF4F9A] via-[#A53DFF] to-[#3D5AFE] shadow-[0_0_20px_rgba(163,77,255,0.45)]" />
+            </div>
+          </div>
+        </Card>
+
+        {/* ONE primary call-to-action for this screen — everything else is quieter */}
+        <ActionBanner
+          eyebrow="Soul-winning"
+          title="Record Souls Dashboard"
+          subtitle="Tap to log a soul you invited to church."
+          onClick={goToRecordSouls}
+          icon={FiHeart}
+        />
+
+        {/* Quick stats, grouped in one card instead of three competing boxes */}
+        <StatGroup
+          items={[
+            { label: 'Services', value: 0, icon: FiCalendar, accent: '#FF4F9A' },
+            { label: 'Souls won', value: 0, icon: FiHeart, accent: '#FF8B5C' },
+            { label: 'Follow-ups', value: 0, icon: FiCheckCircle, accent: '#8EE3FF' },
+          ]}
+        />
+
+        {/* Sunday check-in */}
+        <Card variant="raised" className="p-5">
+          <div className="flex items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FF4F9A] via-[#A53DFF] to-[#3D5AFE] text-white">
+              <FiClock className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <Eyebrow>Sunday self check-in</Eyebrow>
+              <h3 className="mt-1 text-lg font-semibold text-white">
+                {venueStatus === 'loaded' && venue?.serviceTime ? venue.serviceTime : 'Service time to be announced'}
+              </h3>
+              <p className="mt-1 text-[12px] text-slate-400">
+                {venueStatus === 'loading' && "Loading your chapter's venue…"}
+                {venueStatus === 'loaded' && venue?.venue}
+                {venueStatus === 'none' && (user?.chapter ? `No venue set yet for ${user.chapter}. Check with your leaders.` : 'Add your chapter in Edit Profile to see your service venue.')}
+                {venueStatus === 'error' && 'Unable to load your service venue right now.'}
+              </p>
+              <div className="mt-3">
+                <EmptyState
+                  icon={FiClock}
+                  title="3rd service isn't open yet"
+                  hint="The team hasn't opened check-in. Please try again in a moment."
+                />
+              </div>
+              <button className="mt-4 inline-flex items-center gap-2 rounded-full border border-pink-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-pink-600/10">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                Show my QR badge
+              </button>
+            </div>
+          </div>
+        </Card>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Card variant="raised" className="p-5">
             <div className="flex items-start gap-4">
-              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#56CCF2] via-[#2F80ED] to-[#6A5AFF] flex items-center justify-center text-white">
-                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#56CCF2] via-[#2F80ED] to-[#6A5AFF] text-white">
+                <FiFileText className="h-5 w-5" />
               </div>
-              <div className="flex-1">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-[#8EE3FF]">Service Notes</p>
-                <h3 className="mt-1 text-xl font-semibold text-white">Recent notes from your services</h3>
-                <div className="mt-3 rounded-2xl border border-white/10 p-4 text-sm text-slate-400">
-                  <p className="font-medium text-white">No notes yet</p>
-                  <p className="mt-1">When your leaders post service notes or highlights, they will appear here for quick review.</p>
+              <div className="min-w-0 flex-1">
+                <Eyebrow color="#8EE3FF">Service notes</Eyebrow>
+                <h3 className="mt-1 text-base font-semibold text-white">Recent notes from your services</h3>
+                <div className="mt-3">
+                  <EmptyState
+                    icon={FiFileText}
+                    title="No notes yet"
+                    hint="When leaders post service notes or highlights, they'll appear here."
+                  />
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
 
-            <div className="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-900/95 p-5 shadow-sm">
-              <div className="flex items-start gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#FF8B5C] via-[#FF4F9A] to-[#A53DFF] flex items-center justify-center text-white">
-                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 8v4l3 3" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </div>
-                <div className="flex-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-[#F7C948]">Your attendance</p>
-                  <h3 className="mt-1 text-xl font-semibold text-white">Services you've attended</h3>
-                  <div className="mt-3 rounded-2xl border border-white/10 p-6 text-center text-slate-400">
-                    <svg className="mx-auto h-8 w-8 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="16" rx="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    <p className="mt-3 font-semibold text-white">No services attended yet</p>
-                    <p className="mt-1 text-sm">Check in this Sunday and your visits will appear here.</p>
-                  </div>
+          <Card variant="raised" className="p-5">
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FF8B5C] via-[#FF4F9A] to-[#A53DFF] text-white">
+                <FiCalendar className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <Eyebrow>Your attendance</Eyebrow>
+                <h3 className="mt-1 text-base font-semibold text-white">Services you've attended</h3>
+                <div className="mt-3">
+                  <EmptyState
+                    icon={FiCalendar}
+                    title="No services attended yet"
+                    hint="Check in this Sunday and your visits will appear here."
+                  />
                 </div>
               </div>
             </div>
+          </Card>
+        </div>
+
+        {/* Profile details */}
+        <div>
+          <Eyebrow className="mb-2 px-1">Profile details</Eyebrow>
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            {details.map(({ label, value, icon }) => (
+              <InfoTile key={label} label={label} value={value} icon={icon} />
+            ))}
           </div>
         </div>
 
-      </div>
-
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
-        {details.map(({ label, value, icon: Icon }) => (
-          <div key={label} className="overflow-hidden rounded-[1.75rem] border border-slate-800 bg-slate-900/95 p-3 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950/80 border border-slate-800 text-[#FF4F9A]">
-                <Icon className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-500">{label}</p>
-                <p className="mt-2 text-lg font-semibold text-white">{value}</p>
-              </div>
+        {/* Danger zone */}
+        <Card variant="subtle" className="border-red-500/20 bg-red-950/60 p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <Eyebrow color="#FCA5A5">Danger zone</Eyebrow>
+              <h3 className="mt-2 text-lg font-semibold text-white">Delete account</h3>
             </div>
+            <span className="w-fit rounded-full bg-red-500/15 px-3 py-1 text-xs font-semibold text-red-200">Permanent</span>
           </div>
-        ))}
-      </div>
-
-      <div className="mt-5 overflow-hidden rounded-[2rem] border border-red-500/20 bg-red-950/80 p-5 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-red-100">Danger zone</p>
-            <h3 className="mt-3 text-xl font-semibold text-white">Delete account</h3>
-          </div>
-          <span className="rounded-full bg-red-500/15 px-3 py-1 text-sm font-semibold text-red-200">Permanent</span>
-        </div>
-        <p className="mt-4 text-sm text-red-200">Deleting your account removes your profile and all saved ministry records. This action cannot be undone.</p>
-        {error && <p className="mt-4 text-sm text-red-100">{error}</p>}
-        {status === 'success' && <p className="mt-4 text-sm text-emerald-200">Your account has been deleted successfully.</p>}
-        <button
-          type="button"
-          onClick={handleDelete}
-          className="mt-5 inline-flex items-center gap-2 rounded-full border border-red-500 bg-red-500/10 px-5 py-3 text-sm font-semibold text-red-100 transition hover:bg-red-500/20"
-        >
-          Delete my account
-        </button>
+          <p className="mt-3 text-sm text-red-200/90">Deleting your account removes your profile and all saved ministry records. This action cannot be undone.</p>
+          {error && <p className="mt-3 text-sm text-red-100">{error}</p>}
+          {status === 'success' && <p className="mt-3 text-sm text-emerald-200">Your account has been deleted successfully.</p>}
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="mt-4 inline-flex items-center gap-2 rounded-full border border-red-500 bg-red-500/10 px-5 py-2.5 text-sm font-semibold text-red-100 transition hover:bg-red-500/20"
+          >
+            Delete my account
+          </button>
+        </Card>
       </div>
 
       {isEditing && (
@@ -348,7 +343,8 @@ export default function Dashboard() {
                 <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#F7C948]">Edit your profile</p>
                 <h2 className="mt-3 text-3xl font-semibold text-white">Keep your info up to date so we can stay connected.</h2>
               </div>
-              <form onSubmit={handleSaveProfile} className="space-y-6 overflow-y-auto px-6 py-5" style={{ maxHeight: 'calc(90vh - 100px)' }}>
+              <form onSubmit={handleSaveProfile} className="space-y-5 overflow-y-auto px-6 py-5" style={{ maxHeight: 'calc(90vh - 100px)' }}>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/40">Personal info</p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2">
                   <span className="text-sm font-semibold text-slate-300">Title</span>
@@ -370,7 +366,9 @@ export default function Dashboard() {
                 </label>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="border-t border-white/[0.06] pt-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/40">Contact</p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2">
                   <span className="text-sm font-semibold text-slate-300">Phone</span>
                   <input
@@ -392,6 +390,7 @@ export default function Dashboard() {
                     <option value="KENYA_ZONE_B">Kenya Zone B</option>
                   </select>
                 </label>
+              </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -424,7 +423,9 @@ export default function Dashboard() {
                 </label>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="border-t border-white/[0.06] pt-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/40">Ministry</p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2">
                   <span className="text-sm font-semibold text-slate-300">Service church</span>
                   <input
@@ -444,8 +445,11 @@ export default function Dashboard() {
                   />
                 </label>
               </div>
+              </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="border-t border-white/[0.06] pt-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/40">Address</p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2">
                   <span className="text-sm font-semibold text-slate-300">Residential address</span>
                   <input
@@ -485,6 +489,7 @@ export default function Dashboard() {
                     className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
                   />
                 </label>
+              </div>
               </div>
 
               <label className="space-y-2">
