@@ -12,10 +12,25 @@ import { Capacitor } from '@capacitor/core';
 export async function initNative() {
   if (!Capacitor.isNativePlatform()) return;
 
+  markQrCameraSessions();
+
   await Promise.allSettled([
     setUpStatusBar(),
     setUpBackButton(),
   ]);
+}
+
+function markQrCameraSessions() {
+  try {
+    if (!navigator.mediaDevices?.getUserMedia) return;
+    const original = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    navigator.mediaDevices.getUserMedia = async (...args) => {
+      sessionStorage.setItem('blw_qr_scan_active', '1');
+      return original(...args);
+    };
+  } catch (error) {
+    console.warn('[native] camera session marker skipped:', error?.message || error);
+  }
 }
 
 async function setUpStatusBar() {
