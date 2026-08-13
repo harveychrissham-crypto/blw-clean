@@ -22,12 +22,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: client/package-lock.json
 
-      - name: Install frontend dependencies
+      - name: Install frontend dependencies from package.json
         working-directory: client
-        run: npm ci
+        run: npm install --no-package-lock --ignore-scripts
 
       - name: Build web assets
         working-directory: client
