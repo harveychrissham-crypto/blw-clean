@@ -5,12 +5,13 @@ import {
   updateStory,
   deleteStory,
 } from '../controllers/outreachStoryController.js';
+import { requireLeaderAdmin } from '../middleware/leaderAdminMiddleware.js';
 
 const router = express.Router();
 
 router.get('/', listStories);
-router.post('/', createStory);
-router.put('/:id', updateStory);
-router.delete('/:id', deleteStory);
+router.post('/', requireLeaderAdmin, createStory);
+router.put('/:id', requireLeaderAdmin, updateStory);
+router.delete('/:id', requireLeaderAdmin, deleteStory);
 
 export default router;
