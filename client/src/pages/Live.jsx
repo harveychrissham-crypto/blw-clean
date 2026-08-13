@@ -277,13 +277,13 @@ export default function Live() {
               <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-400"><FiCalendar /> Service schedule</div>
               <div className="mt-4 space-y-3">
                 {schedule.map((item) => (
-                  <div key={item.day} className="rounded-2xl border border-white/10 bg-slate-950/50 p-3">
+                  <Card key={item.day} variant="subtle" className="p-3">
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-semibold text-white">{item.day}</span>
                       <span className="text-slate-400">{item.time}</span>
                     </div>
                     <p className="mt-1 text-sm text-slate-400">{item.title}</p>
-                  </div>
+                  </Card>
                 ))}
               </div>
             </Card>

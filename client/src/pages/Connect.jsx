@@ -264,7 +264,7 @@ export default function Connect() {
             <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Find a fellowship near you.</h2>
             <p className="mt-4 text-lg text-slate-400">Search by country, city, town, area, university, or fellowship name.</p>
 
-            <div className="mt-7 rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.025] p-4 sm:p-5">
+            <Card variant="subtle" className="mt-7 p-4 sm:p-5">
               <div className="mb-4 flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#8A2BE2]/15 text-[#D8B2FF]"><FiSearch className="h-5 w-5" /></div><div><p className="text-sm font-bold text-white">Find your nearest fellowship</p><p className="text-xs text-white/40">Search a place or use your current location.</p></div></div>
 
               <div className="flex flex-col gap-3 lg:flex-row">
@@ -283,7 +283,7 @@ export default function Connect() {
                 {mapMessage && <p className="border-t border-white/10 px-4 py-3 text-xs text-white/45">{mapMessage}</p>}
                 {nearbyFellowships.length > 0 ? <div className="border-t border-white/10 p-3"><div className="space-y-2">{nearbyFellowships.slice(0, 6).map((location) => <Card key={location.id} variant="subtle" className="flex items-center justify-between gap-3 px-3 py-2.5"><div className="min-w-0"><p className="truncate text-sm font-semibold text-white">{location.fellowshipName}</p><p className="truncate text-xs text-white/40">{[location.town || location.city, location.area, location.university].filter(Boolean).join(' • ')}</p></div><span className="shrink-0 text-xs font-semibold text-[#D8B2FF]">{location.distanceKm.toFixed(1)} km</span></Card>)}</div></div> : <div className="border-t border-white/10 px-4 py-4"><EmptyState icon={FiMapPin} title="No nearby fellowships" hint={`Nothing is registered within ${NEARBY_RADIUS_KM} km of this location yet.`} /></div>}
               </div>}
-            </div>
+            </Card>
           </div>}
         </Card>
 

@@ -61,9 +61,7 @@ function StoryModal({ story, onClose }) {
           )}
 
           <div className="p-6 sm:p-8">
-            {story.tag && (
-              <p className="mb-2 text-xs font-bold uppercase tracking-widest" style={{ color: '#F2A31C' }}>{story.tag}</p>
-            )}
+            {story.tag && <Eyebrow className="mb-2">{story.tag}</Eyebrow>}
             <h2 className="text-2xl font-extrabold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>{story.title}</h2>
             {story.subtitle && <p className="mt-2 text-sm text-white/50">{story.subtitle}</p>}
             <p className="mt-5 whitespace-pre-line text-sm leading-relaxed text-white/75">
@@ -159,7 +157,7 @@ export default function Outreaches() {
                 <div className="p-5">
                   <h3 className="text-base font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>{story.title}</h3>
                   <p className="mt-1 text-sm text-white/50">{story.subtitle}</p>
-                  <p className="mt-3 text-xs font-semibold uppercase tracking-widest" style={{ color: '#F2A31C' }}>Read story →</p>
+                  <Eyebrow className="mt-3">Read story →</Eyebrow>
                 </div>
               </Card>
             );

@@ -11,9 +11,7 @@ export default function Salvation() {
           <h2 className="text-2xl font-extrabold text-white sm:text-3xl" style={{ fontFamily: 'Montserrat, sans-serif' }}>The gospel of Jesus Christ changes everything.</h2>
           <p className="mt-4 text-sm text-white/55 leading-relaxed">If you are seeking peace, forgiveness, or a new beginning, the prayer below is a simple invitation to receive Christ and begin a life of faith.</p>
           <div className="mt-6 rounded-2xl p-5" style={{ background: 'rgba(236,47,168,0.08)', border: '1px solid rgba(236,47,168,0.18)' }}>
-            <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest" style={{ color: '#F2A31C' }}>
-              <FiHeart /> Prayer of Salvation
-            </div>
+            <div className="mb-2 flex items-center gap-2"><FiHeart className="text-[#F7C948]" /><Eyebrow>Prayer of Salvation</Eyebrow></div>
             <p className="text-sm text-white/70 italic leading-relaxed">"Dear Lord, I believe in my heart that Jesus is the Son of God; that He died for my sins and rose from the dead for my justification. I confess that Jesus is my Lord and my personal Saviour. I am born again! I am a new creation in Christ; old things have passed away, and I have become a brand new person, in Jesus' name. Thank you, Lord, for saving my soul. I am now a child of God. Hallelujah!"</p>
             <p className="mt-3 text-xs text-white/35">— Prayer of Salvation, Rhapsody of Realities by Pastor Chris Oyakhilome</p>
           </div>
