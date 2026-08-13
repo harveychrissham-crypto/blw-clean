@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { FiLogIn, FiUserPlus } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
+import { Card } from '../components/ui/Card';
+
+const inputClass = 'w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-[#A53DFF]';
+const sectionLabelClass = 'text-xs font-semibold uppercase tracking-[0.3em] text-white/40';
 
 const AUTH_LOGIN_URL = '/api/auth/login';
 const AUTH_REGISTER_URL = '/api/auth/register';
@@ -136,7 +140,7 @@ export default function Auth() {
   return (
     <section className="min-h-screen w-full bg-slate-950">
       <div className="mx-auto flex min-h-screen w-full max-w-6xl items-center px-4 py-20 sm:px-6 lg:px-8">
-        <div className="flex w-full flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/70 shadow-soft lg:flex-row">
+        <Card variant="raised" className="flex w-full flex-col shadow-soft lg:flex-row">
           <div className="h-72 overflow-hidden bg-slate-950/40 lg:h-auto lg:w-1/2">
             <img src="/illustration.png" alt="BLW registration illustration" className="h-full w-full object-cover" />
           </div>
@@ -157,50 +161,62 @@ export default function Auth() {
               )}
 
               <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-                {mode === 'register' && (
-                  <input className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-[#A53DFF]" placeholder="FULL NAME" value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} required />
-                )}
-
-                <input className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-[#A53DFF]" type="email" placeholder="EMAIL ADDRESS" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
-
                 {mode === 'login' && (
-                  <input className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-[#A53DFF]" type="password" placeholder="Password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required />
+                  <>
+                    <input className={inputClass} type="email" placeholder="EMAIL ADDRESS" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
+                    <input className={inputClass} type="password" placeholder="Password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required />
+                  </>
                 )}
 
                 {mode === 'register' && (
                   <>
-                    <input className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-[#A53DFF]" type="tel" inputMode="tel" pattern="\d{9,15}" placeholder="PHONE NUMBER *" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} required title="Enter a phone number with only digits." />
-                    <input className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-[#A53DFF]" type="password" placeholder="PASSWORD" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required />
-                    <select className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-[#A53DFF]" value={form.gender} onChange={(event) => setForm({ ...form, gender: event.target.value })} required>
-                      <option value="">SELECT YOUR GENDER *</option><option value="MALE">MALE</option><option value="FEMALE">FEMALE</option>
-                    </select>
-                    <select className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-[#A53DFF]" value={form.campusZone} onChange={handleCampusZoneChange} required>
-                      <option value="">CAMPUS ZONE *</option><option value="BLW KENYA ZONE A">BLW KENYA ZONE A</option><option value="BLW KENYA ZONE B">BLW KENYA ZONE B</option>
-                    </select>
-                    <select className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-[#A53DFF]" value={form.chapter} onChange={(event) => setForm({ ...form, chapter: event.target.value })} required>
-                      <option value="">CHAPTER *</option><option value="UON CHAPTER">UON CHAPTER</option><option value="TUK CHAPTER">TUK CHAPTER</option>
-                    </select>
-                    <select className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-[#A53DFF]" value={form.country} onChange={(event) => setForm({ ...form, country: event.target.value })} required>
-                      <option value="">COUNTRY *</option><option value="KENYA">KENYA</option><option value="UGANDA">UGANDA</option><option value="TANZANIA">TANZANIA</option><option value="SOMALIA">SOMALIA</option><option value="RWANDA">RWANDA</option><option value="BURUNDI">BURUNDI</option>
-                    </select>
-                    <input className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-[#A53DFF]" placeholder="RESIDENCE *" value={form.residence} onChange={(event) => setForm({ ...form, residence: event.target.value })} required />
+                    <div className="space-y-3">
+                      <p className={sectionLabelClass}>Personal info</p>
+                      <input className={inputClass} placeholder="FULL NAME" value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} required />
+                      <select className={inputClass} value={form.gender} onChange={(event) => setForm({ ...form, gender: event.target.value })} required>
+                        <option value="">SELECT YOUR GENDER *</option><option value="MALE">MALE</option><option value="FEMALE">FEMALE</option>
+                      </select>
+                      <input
+                        className={inputClass}
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="bday"
+                        placeholder="BIRTHDAY (DD/MM/YYYY)"
+                        value={form.birthday}
+                        onChange={(event) => setForm({ ...form, birthday: formatBirthday(event.target.value) })}
+                        pattern="\d{2}/\d{2}/\d{4}"
+                        maxLength={10}
+                        required
+                        aria-label="Birthday, day month year"
+                        title="Enter your birthday as DD/MM/YYYY"
+                      />
+                    </div>
 
-                    <input
-                      className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-[#A53DFF]"
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="bday"
-                      placeholder="BIRTHDAY (DD/MM/YYYY)"
-                      value={form.birthday}
-                      onChange={(event) => setForm({ ...form, birthday: formatBirthday(event.target.value) })}
-                      pattern="\d{2}/\d{2}/\d{4}"
-                      maxLength={10}
-                      required
-                      aria-label="Birthday, day month year"
-                      title="Enter your birthday as DD/MM/YYYY"
-                    />
+                    <div className="space-y-3 border-t border-white/[0.06] pt-4">
+                      <p className={sectionLabelClass}>Contact</p>
+                      <input className={inputClass} type="email" placeholder="EMAIL ADDRESS" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
+                      <input className={inputClass} type="tel" inputMode="tel" pattern="\d{9,15}" placeholder="PHONE NUMBER *" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} required title="Enter a phone number with only digits." />
+                      <input className={inputClass} type="password" placeholder="PASSWORD" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required />
+                    </div>
 
-                    <input className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-[#A53DFF]" placeholder="INVITED BY *" value={form.invitedBy} onChange={(event) => setForm({ ...form, invitedBy: event.target.value })} required />
+                    <div className="space-y-3 border-t border-white/[0.06] pt-4">
+                      <p className={sectionLabelClass}>Ministry</p>
+                      <select className={inputClass} value={form.campusZone} onChange={handleCampusZoneChange} required>
+                        <option value="">CAMPUS ZONE *</option><option value="BLW KENYA ZONE A">BLW KENYA ZONE A</option><option value="BLW KENYA ZONE B">BLW KENYA ZONE B</option>
+                      </select>
+                      <select className={inputClass} value={form.chapter} onChange={(event) => setForm({ ...form, chapter: event.target.value })} required>
+                        <option value="">CHAPTER *</option><option value="UON CHAPTER">UON CHAPTER</option><option value="TUK CHAPTER">TUK CHAPTER</option>
+                      </select>
+                      <input className={inputClass} placeholder="INVITED BY *" value={form.invitedBy} onChange={(event) => setForm({ ...form, invitedBy: event.target.value })} required />
+                    </div>
+
+                    <div className="space-y-3 border-t border-white/[0.06] pt-4">
+                      <p className={sectionLabelClass}>Address</p>
+                      <select className={inputClass} value={form.country} onChange={(event) => setForm({ ...form, country: event.target.value })} required>
+                        <option value="">COUNTRY *</option><option value="KENYA">KENYA</option><option value="UGANDA">UGANDA</option><option value="TANZANIA">TANZANIA</option><option value="SOMALIA">SOMALIA</option><option value="RWANDA">RWANDA</option><option value="BURUNDI">BURUNDI</option>
+                      </select>
+                      <input className={inputClass} placeholder="RESIDENCE *" value={form.residence} onChange={(event) => setForm({ ...form, residence: event.target.value })} required />
+                    </div>
                   </>
                 )}
 
@@ -226,7 +242,7 @@ export default function Auth() {
               )}
             </div>
           </div>
-        </div>
+        </Card>
       </div>
     </section>
   );

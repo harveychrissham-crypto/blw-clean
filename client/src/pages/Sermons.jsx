@@ -5,30 +5,32 @@ import { Link } from 'react-router-dom';
 import { fetchSermons } from '../utils/sermons';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { useAuth } from '../context/AuthContext';
+import { Card, Eyebrow } from '../components/ui/Card';
+import EmptyState from '../components/ui/EmptyState';
 
 function SermonPlayer({ sermon }) {
   const isOnline = useOnlineStatus();
 
   if (!sermon?.youtubeId) {
     return (
-      <div className="flex aspect-video w-full items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-sm text-white/40">
+      <Card variant="subtle" className="flex aspect-video w-full items-center justify-center text-sm text-white/40">
         <div className="text-center">
           <FiFilm className="mx-auto mb-2 h-8 w-8" />
           <p>Video unavailable</p>
         </div>
-      </div>
+      </Card>
     );
   }
 
   if (!isOnline) {
     return (
-      <div className="flex aspect-video w-full items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-sm text-white/40">
+      <Card variant="subtle" className="flex aspect-video w-full items-center justify-center text-sm text-white/40">
         <div className="text-center">
           <FiWifiOff className="mx-auto mb-2 h-8 w-8" />
           <p>Video needs an internet connection</p>
           <p className="mt-1 text-xs text-white/30">Details are saved, but playback requires you to be online.</p>
         </div>
-      </div>
+      </Card>
     );
   }
 
@@ -52,7 +54,7 @@ function SermonPlayer({ sermon }) {
 
 function OfflineSermonRow({ sermon, index }) {
   return (
-    <div className="flex gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+    <Card variant="subtle" className="flex gap-4 p-4">
       <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-white/5 text-white/30">
         <FiFilm className="h-5 w-5" />
       </div>
@@ -62,13 +64,13 @@ function OfflineSermonRow({ sermon, index }) {
         {sermon.speaker && <p className="mt-1 text-sm font-semibold" style={{ color: '#F2A31C' }}>{sermon.speaker}</p>}
         {sermon.description && <p className="mt-2 text-sm leading-relaxed text-white/50">{sermon.description}</p>}
       </div>
-    </div>
+    </Card>
   );
 }
 
 function LockedSermon({ sermon, index }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+    <Card variant="subtle" className="overflow-hidden">
       <div className="flex min-h-[190px] w-full items-center justify-center bg-black/30 px-5 py-7">
         <div className="text-center">
           <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/5">
@@ -94,7 +96,7 @@ function LockedSermon({ sermon, index }) {
         <h4 className="mt-1 text-base font-bold text-white">{sermon.title}</h4>
         {sermon.speaker && <p className="mt-1 text-sm font-semibold" style={{ color: '#F2A31C' }}>{sermon.speaker}</p>}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -128,12 +130,12 @@ export default function Sermons() {
   return (
     <section className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-6 sm:py-14">
       <div className="mb-8">
-        <p className="mb-3 text-xs font-bold uppercase tracking-widest" style={{ color: '#F2A31C' }}>Sermons</p>
+        <Eyebrow className="mb-3">Sermons</Eyebrow>
         <h1 className="text-3xl font-extrabold text-white sm:text-4xl" style={{ fontFamily: 'Montserrat, sans-serif' }}>Sermons &amp; Teachings</h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/50">Watch sermons and teachings from Believers' LoveWorld Campus Ministry.</p>
       </div>
 
-      {loading && <div className="flex aspect-video max-w-2xl items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-sm text-white/40">Loading sermons...</div>}
+      {loading && <Card variant="subtle" className="flex aspect-video max-w-2xl items-center justify-center text-sm text-white/40">Loading sermons...</Card>}
 
       {!loading && error && (
         <div className="flex items-center gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm text-red-300">
@@ -143,9 +145,8 @@ export default function Sermons() {
       )}
 
       {!loading && !error && !activeSermon && (
-        <div className="flex aspect-video max-w-2xl flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] text-white/40">
-          <FiFilm className="h-8 w-8" />
-          <p className="text-sm">No sermons have been added yet.</p>
+        <div className="max-w-2xl">
+          <EmptyState icon={FiFilm} title="No sermons yet" hint="Sermons and teachings will show up here once they're added." />
         </div>
       )}
 
@@ -167,7 +168,7 @@ export default function Sermons() {
           <div className="space-y-6">
             {olderSermons.map((sermon, index) => {
               if (authLoading) {
-                return <div key={sermon.id} className="flex min-h-[120px] w-full items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-sm text-white/30">Checking account access...</div>;
+                return <Card key={sermon.id} variant="subtle" className="flex min-h-[120px] w-full items-center justify-center text-sm text-white/30">Checking account access...</Card>;
               }
               if (!user) return <LockedSermon key={sermon.id} sermon={sermon} index={index} />;
               return isOnline ? (

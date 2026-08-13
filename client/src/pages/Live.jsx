@@ -4,6 +4,7 @@ import { FiRadio, FiClock, FiPlayCircle, FiCalendar, FiUsers, FiVideo, FiLogIn }
 import { useNavigate } from 'react-router-dom';
 import DailyIframe from '@daily-co/daily-js';
 import { fetchLiveStream, submitLiveViewer, sendLiveHeartbeat, sendLiveHeartbeatBeacon } from '../utils/live';
+import { Card } from '../components/ui/Card';
 
 const schedule = [
   { day: 'Sunday', time: '10:00 AM', title: 'Main Worship Service' },
@@ -193,7 +194,7 @@ export default function Live() {
       <AnimatePresence>
         {showWelcome && <WelcomePopup onDone={() => setShowWelcome(false)} />}
       </AnimatePresence>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="rounded-3xl border border-white/10 bg-slate-900/70 p-8 shadow-soft">
+      <Card as={motion.div} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} variant="raised" className="p-8 shadow-soft">
         <div className="flex flex-wrap items-center gap-3">
           {isLiveNow ? (
             <span className="inline-flex items-center gap-2 rounded-full bg-red-500/20 px-3 py-1 text-sm font-semibold text-red-300">
@@ -268,11 +269,11 @@ export default function Live() {
             {isStreaming && live?.title && <p className="mt-4 text-lg font-semibold text-white">{live.title}</p>}
           </div>
           <div className="space-y-6">
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <Card variant="subtle" className="p-6">
               <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-400"><FiClock /> Next service</div>
               <p className="mt-4 text-sm text-slate-400">See the schedule below for the next broadcast.</p>
-            </div>
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            </Card>
+            <Card variant="subtle" className="p-6">
               <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-400"><FiCalendar /> Service schedule</div>
               <div className="mt-4 space-y-3">
                 {schedule.map((item) => (
@@ -285,10 +286,10 @@ export default function Live() {
                   </div>
                 ))}
               </div>
-            </div>
+            </Card>
           </div>
         </div>
-      </motion.div>
+      </Card>
     </section>
   );
 }

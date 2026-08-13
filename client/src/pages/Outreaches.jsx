@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiHeart, FiStar, FiMapPin, FiUsers, FiArrowRight, FiSend, FiCompass, FiX } from 'react-icons/fi';
 import { fetchOutreachStories } from '../utils/outreachStories';
-
-const card = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' };
+import { Card, Eyebrow, StatGroup } from '../components/ui/Card';
 
 const stats = [
   { label: 'Souls Won', value: '12k+', icon: FiStar },
@@ -115,38 +114,23 @@ export default function Outreaches() {
         </motion.div>
 
         {/* ── Stats ── */}
-        <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {stats.map((stat, i) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08 }}
-                className="rounded-2xl p-5"
-                style={card}
-              >
-                <Icon className="mb-3 h-4 w-4 text-white/40" />
-                <p className="text-3xl font-extrabold sm:text-4xl" style={{ color: '#FF6B4A', fontFamily: 'Montserrat, sans-serif' }}>{stat.value}</p>
-                <p className="mt-1 text-[0.65rem] font-bold uppercase tracking-widest text-white/40">{stat.label}</p>
-              </motion.div>
-            );
-          })}
-        </div>
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="mt-12">
+          <StatGroup items={stats.map((stat) => ({ label: stat.label, value: stat.value, icon: stat.icon, accent: '#FF8B5C' }))} />
+        </motion.div>
       </div>
 
       {/* ── Field reports ── */}
       <div className="mx-auto mt-20 max-w-6xl">
-        <p className="mb-2 text-xs font-bold uppercase tracking-widest" style={{ color: '#F2A31C' }}>Field Reports</p>
+        <Eyebrow className="mb-2">Field Reports</Eyebrow>
         <h2 className="text-2xl font-extrabold text-white sm:text-3xl" style={{ fontFamily: 'Montserrat, sans-serif' }}>Stories from the field.</h2>
 
         <div className="mt-8 grid gap-5 sm:grid-cols-3">
           {stories.map((story, i) => {
             const Icon = story.icon || FALLBACK_ICONS[i % FALLBACK_ICONS.length];
             return (
-              <motion.div
+              <Card
                 key={story.id || story.title}
+                as={motion.div}
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.08 }}
@@ -154,8 +138,8 @@ export default function Outreaches() {
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setActiveStory(story)}
-                className="cursor-pointer overflow-hidden rounded-2xl transition hover:-translate-y-0.5"
-                style={card}
+                variant="raised"
+                className="cursor-pointer transition hover:-translate-y-0.5"
               >
                 <div
                   className="relative flex h-44 items-center justify-center"
@@ -177,7 +161,7 @@ export default function Outreaches() {
                   <p className="mt-1 text-sm text-white/50">{story.subtitle}</p>
                   <p className="mt-3 text-xs font-semibold uppercase tracking-widest" style={{ color: '#F2A31C' }}>Read story →</p>
                 </div>
-              </motion.div>
+              </Card>
             );
           })}
         </div>
@@ -185,12 +169,7 @@ export default function Outreaches() {
 
       {/* ── CTA ── */}
       <div className="mx-auto mt-16 max-w-6xl">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="overflow-hidden rounded-[2rem] px-6 py-16 text-center sm:px-12"
-          style={{ background: 'linear-gradient(120deg,#EC2FA8,#8A2BE2,#3D5AFE)' }}
-        >
+        <Card as={motion.div} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} variant="filled" className="px-6 py-16 text-center sm:px-12">
           <h2 className="text-3xl font-extrabold text-white sm:text-4xl" style={{ fontFamily: 'Montserrat, sans-serif' }}>
             Join the next outreach
           </h2>
@@ -200,7 +179,7 @@ export default function Outreaches() {
           <button className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#0d0c18] px-7 py-3.5 text-sm font-bold text-white transition hover:bg-black">
             Get Involved <FiArrowRight className="h-4 w-4" />
           </button>
-        </motion.div>
+        </Card>
       </div>
 
       {activeStory && <StoryModal story={activeStory} onClose={() => setActiveStory(null)} />}

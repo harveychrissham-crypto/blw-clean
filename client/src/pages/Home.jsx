@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiHeart, FiUsers, FiBookOpen, FiGlobe, FiArrowRight, FiDownload, FiMapPin } from 'react-icons/fi';
 import { MdQrCodeScanner } from 'react-icons/md';
+import { Card, Eyebrow } from '../components/ui/Card';
 
 // Deployment sync marker: keeps the connected Cloudflare build pipeline in sync with main.
 const ANDROID_APK_URL =
@@ -82,22 +83,23 @@ export default function Home() {
           {features.map((f, i) => {
             const Icon = f.icon;
             return (
-              <Link
+              <Card
                 key={f.title}
+                as={Link}
                 to={f.to}
-                className="group block rounded-2xl p-6 transition-all duration-200 hover:-translate-y-1 hover:border-white/15 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+                variant="raised"
+                className="group block p-6 transition-all duration-200 hover:-translate-y-1 hover:border-white/15 focus:outline-none focus:ring-2 focus:ring-pink-500/50"
                 aria-label={`Open ${f.title}`}
               >
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 * i, duration: 0.5 }}>
                   <div className="mb-4 inline-flex rounded-xl p-3" style={{ background: 'linear-gradient(135deg,rgba(236,47,168,0.18),rgba(138,43,226,0.18))' }}>
                     <Icon className="h-5 w-5" style={{ color: '#EC2FA8' }} />
                   </div>
-                  <p className="mb-2 text-[0.65rem] font-bold uppercase tracking-widest" style={{ color: '#F2A31C' }}>{f.label}</p>
+                  <Eyebrow className="mb-2">{f.label}</Eyebrow>
                   <h3 className="text-base font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>{f.title}</h3>
                   <p className="mt-2 text-sm text-white/50 leading-relaxed">{f.desc}</p>
                 </motion.div>
-              </Link>
+              </Card>
             );
           })}
         </div>

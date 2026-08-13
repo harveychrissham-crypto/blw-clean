@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FiCalendar, FiChevronLeft, FiChevronRight, FiClock, FiMapPin, FiArrowRight } from 'react-icons/fi';
 import { fetchEvents } from '../utils/events';
+import { Card, Eyebrow } from '../components/ui/Card';
+import EmptyState from '../components/ui/EmptyState';
 
 const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const card = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' };
 
 const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -81,7 +82,7 @@ export default function Events() {
   return (
     <section className="mx-auto max-w-6xl px-5 py-16">
       <div className="mb-8">
-        <p className="mb-2 text-xs font-bold uppercase tracking-widest" style={{ color: '#F2A31C' }}>Events</p>
+        <Eyebrow className="mb-2">Events</Eyebrow>
         <h2 className="text-2xl font-extrabold text-white sm:text-3xl" style={{ fontFamily: 'Montserrat, sans-serif' }}>Gatherings that build, inspire, and connect.</h2>
       </div>
 
@@ -94,7 +95,7 @@ export default function Events() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
         {/* Calendar */}
-        <div className="rounded-2xl p-6" style={card}>
+        <Card variant="raised" className="p-6">
           <div className="mb-4 flex items-center justify-between">
             <span className="text-sm font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>{monthNames[viewMonth]} {viewYear}</span>
             <div className="flex gap-1">
@@ -124,35 +125,35 @@ export default function Events() {
               );
             })}
           </div>
-        </div>
+        </Card>
 
         {/* Event details + upcoming */}
         <div className="space-y-4">
           {loading && <p className="text-sm text-white/40">Loading events…</p>}
 
           {!loading && selectedEvents.length === 0 && (
-            <p className="text-sm text-white/30">No events scheduled for {monthNames[viewMonth]} {selectedDay}.</p>
+            <EmptyState icon={FiCalendar} title="No events scheduled" hint={`Nothing on the calendar for ${monthNames[viewMonth]} ${selectedDay} yet.`} />
           )}
 
           {selectedEvents.map((event) => (
-            <motion.div key={event.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-2xl p-6" style={card}>
-              <p className="mb-2 text-[0.65rem] font-bold uppercase tracking-widest" style={{ color: '#F2A31C' }}>{event.category}</p>
+            <Card key={event.id} as={motion.div} initial={{ opacity: 0 }} animate={{ opacity: 1 }} variant="raised" className="p-6">
+              <Eyebrow className="mb-2">{event.category}</Eyebrow>
               <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>{event.title}</h3>
               <div className="mt-3 flex flex-wrap gap-4 text-xs text-white/45">
                 {event.time && <span className="flex items-center gap-1.5"><FiClock className="h-3 w-3" />{event.time}</span>}
                 {event.location && <span className="flex items-center gap-1.5"><FiMapPin className="h-3 w-3" />{event.location}</span>}
               </div>
               {event.description && <p className="mt-3 text-sm text-white/50">{event.description}</p>}
-            </motion.div>
+            </Card>
           ))}
 
           {upcomingEvents.length > 0 && (
             <>
               <p className="text-xs font-bold uppercase tracking-widest text-white/30 pt-2">Upcoming</p>
               {upcomingEvents.map((event, i) => (
-                <motion.div key={event.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }} className="flex items-center justify-between rounded-2xl px-5 py-4" style={card}>
+                <Card key={event.id} as={motion.div} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }} variant="subtle" className="flex items-center justify-between px-5 py-4">
                   <div>
-                    <p className="text-[0.65rem] font-bold uppercase tracking-widest mb-0.5" style={{ color: '#F2A31C' }}>{event.category}</p>
+                    <Eyebrow className="mb-0.5">{event.category}</Eyebrow>
                     <h4 className="text-sm font-bold text-white">{event.title}</h4>
                     <div className="mt-1 flex gap-3 text-xs text-white/40">
                       <span className="flex items-center gap-1"><FiCalendar className="h-3 w-3" />{formatDate(event.date)}</span>
@@ -160,7 +161,7 @@ export default function Events() {
                     </div>
                   </div>
                   <FiArrowRight className="h-4 w-4 shrink-0 text-white/25" />
-                </motion.div>
+                </Card>
               ))}
             </>
           )}
