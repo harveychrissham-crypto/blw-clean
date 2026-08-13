@@ -25,13 +25,7 @@ const FellowshipLocationsPage = () => {
   return (
     <div className="relative">
       <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
-        <button
-          type="button"
-          onClick={() => navigate('/leaders-forum')}
-          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/75 transition hover:bg-white/10 hover:text-white"
-        >
-          ← Back to Leaders Forum
-        </button>
+        <button type="button" onClick={() => navigate('/leaders-forum')} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/75 transition hover:bg-white/10 hover:text-white">← Back to Leaders Forum</button>
       </div>
       <FellowshipLocationsAdmin />
     </div>
@@ -43,9 +37,7 @@ const AnimatedRoutes = () => {
   const { user } = useAuth();
   const route = (element) => <Layout>{element}</Layout>;
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  }, [location.pathname]);
+  useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); }, [location.pathname]);
 
   return <AnimatePresence mode="wait"><motion.div key={location.pathname} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}><Routes location={location}>
     <Route path="/" element={route(<Home />)} />
@@ -78,25 +70,12 @@ function App() {
     const previousHtmlTouchAction = html.style.touchAction;
 
     const isFullScreenOverlay = (el) => {
-      if (!(el instanceof HTMLElement)) return false;
-      if (!el.classList.contains('fixed')) return false;
-
+      if (!(el instanceof HTMLElement) || !el.classList.contains('fixed')) return false;
       const className = String(el.className);
-      const fillsViewport =
-        el.classList.contains('inset-0') ||
-        (el.classList.contains('top-0') && el.classList.contains('bottom-0'));
-
+      const fillsViewport = el.classList.contains('inset-0') || (el.classList.contains('top-0') && el.classList.contains('bottom-0'));
       if (!fillsViewport) return false;
-
       const text = el.textContent || '';
-      const hasOverlaySignals =
-        className.includes('z-[') ||
-        /(?:^|:)z-(?:40|50|\[\d+\])/.test(className) ||
-        /backdrop|modal|overlay|dialog|Leaders tool|Leadership Tools|Member Check-In|Check Attendance|Manage (?:Events|Outreach Stories|Sermons|Service Venues|Live Stream)|Fellowship Locations/i.test(text) ||
-        el.getAttribute('role') === 'dialog' ||
-        el.hasAttribute('data-leadership-tools-overlay');
-
-      return hasOverlaySignals;
+      return className.includes('z-[') || /(?:^|:)z-(?:40|50|\[\d+\])/.test(className) || /backdrop|modal|overlay|dialog|Leaders tool|Leadership Tools|Member Check-In|Check Attendance|Manage (?:Events|Outreach Stories|Sermons|Service Venues|Live Stream)|Fellowship Locations/i.test(text) || el.hasAttribute('data-live-welcome-overlay') || el.getAttribute('role') === 'dialog' || el.hasAttribute('data-leadership-tools-overlay');
     };
 
     const syncBodyScrollLock = () => {
@@ -109,12 +88,7 @@ function App() {
 
     syncBodyScrollLock();
     const observer = new MutationObserver(syncBodyScrollLock);
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['class', 'style', 'role', 'data-leadership-tools-overlay'],
-    });
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'role', 'data-leadership-tools-overlay', 'data-live-welcome-overlay'] });
 
     return () => {
       observer.disconnect();
