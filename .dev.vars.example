@@ -1,8 +1,11 @@
 # Local Wrangler secrets/variables. Copy to .dev.vars and fill real values.
 JWT_SECRET=replace-me
+FELLOWSHIP_ADMIN_ACCESS_CODE=replace-me-with-a-strong-leader-code
 SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=replace-me
 SUPABASE_STORAGE_BUCKET=outreach-photos
+RESEND_API_KEY=replace-me
+EMAIL_FROM=BLW Kenya Zone <notifications@example.org>
 # For local Wrangler you can use a normal Postgres URL if desired.
 DATABASE_URL=postgres://USER:PASSWORD@HOST:5432/DATABASE
 ALLOWED_ORIGIN=http://localhost:5173
