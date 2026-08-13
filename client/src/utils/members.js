@@ -55,6 +55,10 @@ async function readMembersCache() {
   }
 }
 
+export async function getCachedMembers() {
+  return readMembersCache();
+}
+
 export async function fetchAllMembers() {
   const res = await leaderFetch('/api/members');
   const body = await handle(res);
