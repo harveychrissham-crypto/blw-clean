@@ -41,6 +41,9 @@ export const listMembers = async (_req, res) => {
 
 // GET /api/members/search?q=... — fuzzy search across ID, name, email, phone.
 // Returns up to 8 matches, ranked exact-match-first, for autocomplete/lookup.
+// An exact membership-ID lookup is also treated as a check-in action in the
+// Leaders Forum. QR scanning always searches by the exact membership ID, so
+// the member is marked signed in as soon as the scan resolves successfully.
 export const searchMembers = async (req, res) => {
   const rawQuery = String(req.query.q || '').trim();
   if (!rawQuery) {
@@ -66,10 +69,29 @@ export const searchMembers = async (req, res) => {
     );
 
     if (!result.rows.length) {
-      return res.status(404).json({ error: `No member found matching "${rawQuery}".` });
+      return res.status(404).json({ error: `No member found matching \"${rawQuery}\".` });
     }
 
-    return res.json({ members: result.rows.map(toMember) });
+    const exactMember = result.rows.find(
+      (row) => String(row.membership_id || '').toLowerCase() === normalized
+    );
+
+    if (exactMember) {
+      const checkedInResult = await query(
+        `UPDATE users
+           SET checked_in = TRUE, checked_in_at = NOW()
+         WHERE membership_id = $1
+         RETURNING ${SELECT_FIELDS}`,
+        [exactMember.membership_id]
+      );
+
+      if (checkedInResult.rows.length) {
+        const checkedInMember = toMember(checkedInResult.rows[0]);
+        return res.json({ members: [checkedInMember], checkedIn: true });
+      }
+    }
+
+    return res.json({ members: result.rows.map(toMember), checkedIn: false });
   } catch (error) {
     console.error('[member] search error', error);
     return res.status(500).json({ error: 'Unable to search members at this time.' });
