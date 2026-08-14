@@ -42,7 +42,7 @@ import { fetchSermons, createSermon, updateSermon, deleteSermon, setFeaturedSerm
 import { fetchVenues, saveVenue, deleteVenue as deleteVenueApi } from '../utils/venues';
 import { fetchLiveStream, updateLiveStream, fetchLiveViewers } from '../utils/live';
 import { apiFetch } from '../config/api';
-import { Eyebrow, Card } from '../components/ui/Card';
+import { Eyebrow, Card, StatGroup, ActionBanner } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -1880,56 +1880,45 @@ export default function LeadersForum() {
       </div>
 
       {/* Stats row */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div className="rounded-[1.5rem] border border-white/[0.07] bg-white/[0.04] p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white/40">Total members</p>
-          <p className="mt-2 text-3xl font-bold text-white">{totalCount}</p>
-        </div>
-        <div className="rounded-[1.5rem] border border-emerald-500/20 bg-emerald-950/40 p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-emerald-500">Checked in today</p>
-          <p className="mt-2 text-3xl font-bold text-emerald-400">{checkedInCount}</p>
-        </div>
-        <div className="col-span-2 sm:col-span-1 rounded-[1.5rem] border border-white/[0.07] bg-white/[0.04] p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white/40">Attendance rate</p>
-          <p className="mt-2 text-3xl font-bold text-white">
-            {totalCount ? Math.round((checkedInCount / totalCount) * 100) : 0}%
-          </p>
-        </div>
+      <div className="mb-6">
+        <StatGroup
+          items={[
+            { label: 'Total members', value: totalCount, icon: FiUsers, accent: '#F7C948' },
+            { label: 'Checked in today', value: checkedInCount, icon: FiCheckCircle, accent: '#34D399' },
+            {
+              label: 'Attendance rate',
+              value: `${totalCount ? Math.round((checkedInCount / totalCount) * 100) : 0}%`,
+              icon: FiStar,
+              accent: '#FF4F9A',
+            },
+          ]}
+        />
       </div>
 
       {/* Tools row */}
       <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {/* QR Scanner card */}
-        <div
+        {/* QR Scanner card — the one primary/filled action on this screen */}
+        <ActionBanner
+          eyebrow="Member attendance"
+          title="Scan QR Badge"
+          subtitle="Use device camera to scan & verify members."
+          icon={MdQrCodeScanner}
           onClick={() => setScannerOpen(true)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setScannerOpen(true)}
-          className="group cursor-pointer overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] p-6 shadow-[0_20px_50px_rgba(242,163,28,0.15)] transition hover:-translate-y-0.5"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-white/80">Member attendance</p>
-              <h3 className="mt-2 text-xl font-bold text-white">Scan QR Badge ▸</h3>
-              <p className="mt-1 text-sm text-white/80">Use device camera to scan &amp; verify members.</p>
-            </div>
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-white group-hover:bg-white/20 transition">
-              <MdQrCodeScanner className="h-8 w-8" />
-            </div>
-          </div>
-        </div>
+        />
 
         {/* Manage Events card */}
-        <div
-          onClick={() => setEventsManagerOpen(true)}
+        <Card
+          as="div"
+          variant="raised"
           role="button"
           tabIndex={0}
+          onClick={() => setEventsManagerOpen(true)}
           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setEventsManagerOpen(true)}
-          className="group cursor-pointer overflow-hidden rounded-[2rem] border border-white/[0.07] bg-white/[0.04] p-6 transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
+          className="group cursor-pointer p-6 transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#A53DFF]">Content</p>
+              <Eyebrow color="#A53DFF">Content</Eyebrow>
               <h3 className="mt-2 text-xl font-bold text-white">Manage Events ▸</h3>
               <p className="mt-1 text-sm text-white/50">Add, edit, or remove events shown on the public Events page.</p>
             </div>
@@ -1937,15 +1926,17 @@ export default function LeadersForum() {
               <FiCalendar className="h-7 w-7" />
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Manage Outreach Stories card */}
-        <div
-          onClick={() => setStoriesManagerOpen(true)}
+        <Card
+          as="div"
+          variant="raised"
           role="button"
           tabIndex={0}
+          onClick={() => setStoriesManagerOpen(true)}
           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setStoriesManagerOpen(true)}
-          className="group cursor-pointer overflow-hidden rounded-[2rem] border border-white/[0.07] bg-white/[0.04] p-6 transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
+          className="group cursor-pointer p-6 transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
         >
           <div className="flex items-center justify-between">
             <div>
@@ -1957,19 +1948,21 @@ export default function LeadersForum() {
               <FiImage className="h-7 w-7" />
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Manage Sermons card */}
-        <div
-          onClick={() => setSermonsManagerOpen(true)}
+        <Card
+          as="div"
+          variant="raised"
           role="button"
           tabIndex={0}
+          onClick={() => setSermonsManagerOpen(true)}
           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSermonsManagerOpen(true)}
-          className="group cursor-pointer overflow-hidden rounded-[2rem] border border-white/[0.07] bg-white/[0.04] p-6 transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
+          className="group cursor-pointer p-6 transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#3D5AFE]">Content</p>
+              <Eyebrow color="#3D5AFE">Content</Eyebrow>
               <h3 className="mt-2 text-xl font-bold text-white">Manage Sermons ▸</h3>
               <p className="mt-1 text-sm text-white/50">Add YouTube sermon links shown on the public Sermons page.</p>
             </div>
@@ -1977,15 +1970,17 @@ export default function LeadersForum() {
               <FiFilm className="h-7 w-7" />
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Manage Service Venues card */}
-        <div
-          onClick={() => setVenuesManagerOpen(true)}
+        <Card
+          as="div"
+          variant="raised"
           role="button"
           tabIndex={0}
+          onClick={() => setVenuesManagerOpen(true)}
           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setVenuesManagerOpen(true)}
-          className="group cursor-pointer overflow-hidden rounded-[2rem] border border-white/[0.07] bg-white/[0.04] p-6 transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
+          className="group cursor-pointer p-6 transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
         >
           <div className="flex items-center justify-between">
             <div>
@@ -1997,19 +1992,21 @@ export default function LeadersForum() {
               <FiMapPin className="h-7 w-7" />
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Manage Live Stream card */}
-        <div
-          onClick={() => setLiveManagerOpen(true)}
+        <Card
+          as="div"
+          variant="raised"
           role="button"
           tabIndex={0}
+          onClick={() => setLiveManagerOpen(true)}
           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setLiveManagerOpen(true)}
-          className="group cursor-pointer overflow-hidden rounded-[2rem] border border-white/[0.07] bg-white/[0.04] p-6 transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
+          className="group cursor-pointer p-6 transition hover:-translate-y-0.5 hover:bg-white/[0.06]"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-red-400">Content</p>
+              <Eyebrow color="#F87171">Content</Eyebrow>
               <h3 className="mt-2 text-xl font-bold text-white">Manage Live Stream ▸</h3>
               <p className="mt-1 text-sm text-white/50">Set the stream link and go live/offline for the public Live page.</p>
             </div>
@@ -2017,7 +2014,7 @@ export default function LeadersForum() {
               <FiRadio className="h-7 w-7" />
             </div>
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Members list */}

@@ -4,6 +4,7 @@ import { FiLogIn, FiUserPlus } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
 import { Card } from '../components/ui/Card';
+import { Toast } from '../components/ui/Toast';
 
 const inputClass = 'w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-[#A53DFF]';
 const sectionLabelClass = 'text-xs font-semibold uppercase tracking-[0.3em] text-white/40';
@@ -54,6 +55,7 @@ export default function Auth() {
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
   const [lastMode, setLastMode] = useState('login');
+  const [toast, setToast] = useState(null);
   const { login } = useAuth();
 
   const handleCampusZoneChange = (event) => {
@@ -69,6 +71,7 @@ export default function Auth() {
       if (!form.email || !form.password) {
         setError('Email and password are required for sign in.');
         setStatus('error');
+        setToast({ type: 'error', message: 'Email and password are required for sign in.' });
         return;
       }
 
@@ -80,18 +83,23 @@ export default function Auth() {
         });
         const body = await response.json().catch(() => ({}));
         if (!response.ok) {
-          setError(body.error || 'Unable to sign in.');
+          const message = body.error || 'Unable to sign in.';
+          setError(message);
           setStatus('error');
+          setToast({ type: 'error', message });
           return;
         }
         await login(body.user, body.token);
         setForm({ ...emptyForm, email: form.email });
         setLastMode('login');
         setStatus('submitted');
+        setToast({ type: 'success', message: 'Signed in successfully.' });
         navigate('/dashboard');
       } catch (err) {
-        setError(err.message || 'Unable to sign in.');
+        const message = err.message || 'Unable to sign in.';
+        setError(message);
         setStatus('error');
+        setToast({ type: 'error', message });
       }
       return;
     }
@@ -99,6 +107,7 @@ export default function Auth() {
     if (!isValidBirthday(form.birthday)) {
       setError('Please enter a valid birthday in DD/MM/YYYY format.');
       setStatus('error');
+      setToast({ type: 'error', message: 'Please enter a valid birthday in DD/MM/YYYY format.' });
       return;
     }
 
@@ -122,18 +131,23 @@ export default function Auth() {
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(body.message || body.error || 'Unable to register.');
+        const message = body.message || body.error || 'Unable to register.';
+        setError(message);
         setStatus('error');
+        setToast({ type: 'error', message });
         return;
       }
       await login(body.user, body.token);
       setForm(emptyForm);
       setLastMode('register');
       setStatus('submitted');
+      setToast({ type: 'success', message: 'Your account has been created and signed in successfully.' });
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Unable to register.');
+      const message = err.message || 'Unable to register.';
+      setError(message);
       setStatus('error');
+      setToast({ type: 'error', message });
     }
   };
 
@@ -244,6 +258,7 @@ export default function Auth() {
           </div>
         </Card>
       </div>
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </section>
   );
 }
