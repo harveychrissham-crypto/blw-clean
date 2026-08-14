@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { FiCpu, FiSend, FiX } from 'react-icons/fi';
+import { Card } from './ui/Card';
 
 const suggestions = [
   'What is Believers\' LoveWorld Campus Ministry Kenya Zone Region?',
@@ -15,24 +16,24 @@ export default function AIChatWidget() {
   return (
     <div className="fixed bottom-4 right-4 z-[60]">
       {open ? (
-        <div className="w-[320px] rounded-3xl border border-white/10 bg-[#140A30]/95 p-4 shadow-soft backdrop-blur">
+        <Card variant="raised" className="w-[320px] p-4 shadow-soft backdrop-blur">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-white">AI Ministry Assistant</p>
               <p className="text-xs text-slate-400">Helpful guidance for visitors, members, and prayer seekers.</p>
             </div>
-            <button onClick={() => setOpen(false)} className="rounded-full border border-white/10 p-2 text-slate-300 hover:text-white">
+            <button onClick={() => setOpen(false)} className="rounded-full border border-white/10 p-2 text-slate-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
               <FiX />
             </button>
           </div>
           <div className="mt-4 space-y-2">
             {suggestions.map((item) => (
-              <button key={item} onClick={() => setSelected(item)} className={`w-full rounded-2xl border px-3 py-2 text-left text-sm ${selected === item ? 'border-[#A53DFF]/40 bg-[#8A2BE2]/10 text-fuchsia-300' : 'border-white/10 bg-white/5 text-slate-300'}`}>
+              <button key={item} onClick={() => setSelected(item)} className={`w-full rounded-2xl border px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${selected === item ? 'border-[#A53DFF]/40 bg-[#8A2BE2]/10 text-fuchsia-300' : 'border-white/10 bg-white/5 text-slate-300'}`}>
                 {item}
               </button>
             ))}
           </div>
-          <div className="mt-4 rounded-2xl border border-white/10 bg-[#121321]/60 p-3 text-sm text-slate-300">
+          <Card variant="subtle" className="mt-4 p-3 text-sm text-slate-300">
             <p className="font-semibold text-white">Suggested response</p>
             <p className="mt-2 text-slate-400">
               {selected === suggestions[0] && 'Believers\' LoveWorld Campus Ministry Kenya Zone Region is a Christ-centered movement focused on discipleship, worship, outreach, leadership, and fellowship across Kenya Zone.'}
@@ -40,14 +41,14 @@ export default function AIChatWidget() {
               {selected === suggestions[2] && 'You can register for upcoming outreaches through the Outreaches page or by contacting the ministry team directly.'}
               {selected === suggestions[3] && 'You can connect with a counselor through the Salvation or Connect pages for support and prayer.'}
             </p>
-          </div>
-          <div className="mt-4 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+          </Card>
+          <Card variant="subtle" className="mt-4 flex items-center gap-2 px-3 py-2">
             <input className="flex-1 bg-transparent text-sm text-white outline-none" placeholder="Ask a ministry question" />
-            <button className="rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] p-2 text-white"><FiSend /></button>
-          </div>
-        </div>
+            <button className="rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] p-2 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"><FiSend /></button>
+          </Card>
+        </Card>
       ) : (
-        <button onClick={() => setOpen(true)} className="flex items-center gap-2 rounded-full border border-[#A53DFF]/40 bg-[#A53DFF]/15 px-4 py-3 text-sm font-semibold text-fuchsia-300 backdrop-blur">
+        <button onClick={() => setOpen(true)} className="flex items-center gap-2 rounded-full border border-[#A53DFF]/40 bg-[#A53DFF]/15 px-4 py-3 text-sm font-semibold text-fuchsia-300 backdrop-blur focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
           <FiCpu /> AI Assistant
         </button>
       )}
