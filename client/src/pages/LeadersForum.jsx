@@ -42,6 +42,8 @@ import { fetchSermons, createSermon, updateSermon, deleteSermon, setFeaturedSerm
 import { fetchVenues, saveVenue, deleteVenue as deleteVenueApi } from '../utils/venues';
 import { fetchLiveStream, updateLiveStream, fetchLiveViewers } from '../utils/live';
 import { apiFetch } from '../config/api';
+import { Eyebrow } from '../components/ui/Card';
+import EmptyState from '../components/ui/EmptyState';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const LEADER_CODE = '1120363';
@@ -90,7 +92,7 @@ function AccessGate({ onUnlock }) {
             <img src="/logo.png" alt="BLW Logo" className="h-full w-full object-cover" />
           </div>
           <div className="text-center">
-            <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#F2A31C]">Restricted access</p>
+            <Eyebrow>Restricted access</Eyebrow>
             <h1 className="mt-2 text-3xl font-extrabold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>Leaders Forum</h1>
             <p className="mt-2 text-sm text-white/50">Enter your 7-digit leader access code to continue.</p>
           </div>
@@ -290,7 +292,7 @@ function QRScannerPanel({ members, checkedInIds, onCheckIn, onClose, onViewProfi
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#F2A31C]">Leaders tool</p>
+            <Eyebrow>Leaders tool</Eyebrow>
             <h2 className="mt-1 text-xl font-bold text-white">Member Check-In</h2>
           </div>
           <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10">
@@ -603,7 +605,7 @@ function MemberModal({ member, onClose }) {
                 {member.name.charAt(0)}
               </div>
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#F2A31C]">Member profile</p>
+                <Eyebrow>Member profile</Eyebrow>
                 <h2 className="mt-1 text-2xl font-bold text-white">{member.name}</h2>
                 <p className="mt-1 text-xs text-white/50">{member.membershipId}</p>
                 <div className="mt-2 flex items-center gap-2">
@@ -767,7 +769,7 @@ function EventsManagerPanel({ onClose }) {
       <div className="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.04] shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#F2A31C]">Leaders tool</p>
+            <Eyebrow>Leaders tool</Eyebrow>
             <h2 className="mt-1 text-xl font-bold text-white">Manage Events</h2>
           </div>
           <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10">
@@ -805,7 +807,7 @@ function EventsManagerPanel({ onClose }) {
 
               {loading && <p className="text-sm text-white/40">Loading events…</p>}
               {!loading && events.length === 0 && !error && (
-                <p className="py-4 text-center text-sm text-white/40">No events yet. Add the first one above.</p>
+                <EmptyState icon={FiCalendar} title="No events yet" hint="Add the first one above." />
               )}
 
               <div className="space-y-2">
@@ -1008,7 +1010,7 @@ function StoriesManagerPanel({ onClose }) {
       <div className="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.04] shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#F2A31C]">Leaders tool</p>
+            <Eyebrow>Leaders tool</Eyebrow>
             <h2 className="mt-1 text-xl font-bold text-white">Manage Outreach Stories</h2>
           </div>
           <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10">
@@ -1046,7 +1048,7 @@ function StoriesManagerPanel({ onClose }) {
 
               {loading && <p className="text-sm text-white/40">Loading stories…</p>}
               {!loading && stories.length === 0 && !error && (
-                <p className="py-4 text-center text-sm text-white/40">No stories yet. Add the first one above.</p>
+                <EmptyState icon={FiImage} title="No stories yet" hint="Add the first one above." />
               )}
 
               <div className="space-y-2">
@@ -1209,7 +1211,7 @@ function SermonsManagerPanel({ onClose }) {
       <div className="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.04] shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#F2A31C]">Leaders tool</p>
+            <Eyebrow>Leaders tool</Eyebrow>
             <h2 className="mt-1 text-xl font-bold text-white">Manage Sermons</h2>
           </div>
           <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10">
@@ -1249,7 +1251,7 @@ function SermonsManagerPanel({ onClose }) {
 
               {loading && <p className="text-sm text-white/40">Loading sermons…</p>}
               {!loading && sermons.length === 0 && !error && (
-                <p className="py-4 text-center text-sm text-white/40">No sermons yet. Add the first one above.</p>
+                <EmptyState icon={FiFilm} title="No sermons yet" hint="Add the first one above." />
               )}
 
               <div className="space-y-2">
@@ -1418,7 +1420,7 @@ function VenuesManagerPanel({ onClose }) {
       <div className="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.04] shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#F2A31C]">Leaders tool</p>
+            <Eyebrow>Leaders tool</Eyebrow>
             <h2 className="mt-1 text-xl font-bold text-white">Manage Service Venues</h2>
           </div>
           <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10">
@@ -1459,7 +1461,7 @@ function VenuesManagerPanel({ onClose }) {
 
               {loading && <p className="text-sm text-white/40">Loading venues…</p>}
               {!loading && venues.length === 0 && !error && (
-                <p className="py-4 text-center text-sm text-white/40">No venues set yet. Add the first one above.</p>
+                <EmptyState icon={FiMapPin} title="No venues set yet" hint="Add the first one above." />
               )}
 
               <div className="space-y-2">
@@ -1531,7 +1533,7 @@ function LiveViewersList() {
     );
   }
   if (!viewers.length) {
-    return <p className="py-4 text-center text-sm text-white/40">No one has signed in yet. Names appear here as people fill in the popup on the public Live page.</p>;
+    return <EmptyState icon={FiUserCheck} title="No one has signed in yet" hint="Names appear here as people fill in the popup on the public Live page." />;
   }
 
   return (
@@ -1633,7 +1635,7 @@ function LiveManagerPanel({ onClose }) {
       <div className="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.04] shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#F2A31C]">Leaders tool</p>
+            <Eyebrow>Leaders tool</Eyebrow>
             <h2 className="mt-1 text-xl font-bold text-white">Manage Live Stream</h2>
           </div>
           <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10">
@@ -1744,7 +1746,7 @@ function MembersList({ members, checkedInIds, onSelectMember }) {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#F2A31C]">Directory</p>
+          <Eyebrow>Directory</Eyebrow>
           <h3 className="mt-1 text-lg font-bold text-white">All Members</h3>
         </div>
         <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/70">
@@ -1768,7 +1770,7 @@ function MembersList({ members, checkedInIds, onSelectMember }) {
       {/* List */}
       <div className="divide-y divide-white/5">
         {filtered.length === 0 && (
-          <p className="py-8 text-center text-sm text-white/40">No members match your search.</p>
+          <EmptyState icon={FiSearch} title="No members match your search" />
         )}
         {filtered.map((member) => {
           const isIn = checkedInIds.has(member.membershipId);
@@ -1862,7 +1864,7 @@ export default function LeadersForum() {
               <img src="/logo.png" alt="BLW Logo" className="h-full w-full object-cover" />
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#F2A31C]">Leaders Forum</p>
+              <Eyebrow>Leaders Forum</Eyebrow>
               <h1 className="text-2xl font-extrabold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>Leader Dashboard</h1>
             </div>
           </div>
@@ -1945,7 +1947,7 @@ export default function LeadersForum() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#F2A31C]">Content</p>
+              <Eyebrow>Content</Eyebrow>
               <h3 className="mt-2 text-xl font-bold text-white">Manage Outreach ▸</h3>
               <p className="mt-1 text-sm text-white/50">Add stories &amp; photos to the public Outreaches page.</p>
             </div>
@@ -1985,7 +1987,7 @@ export default function LeadersForum() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#F2A31C]">Content</p>
+              <Eyebrow>Content</Eyebrow>
               <h3 className="mt-2 text-xl font-bold text-white">Manage Service Venues ▸</h3>
               <p className="mt-1 text-sm text-white/50">Set each chapter's Sunday check-in venue and time.</p>
             </div>
