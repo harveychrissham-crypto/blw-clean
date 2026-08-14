@@ -123,7 +123,7 @@ export default function Give() {
             {options.map((item) => (
               <Card as="button" key={item.name} type="button" onClick={() => item.name === 'M-Pesa' && openMpesa()} variant="subtle" className="block w-full p-4 text-left transition hover:bg-white/10">
                 <div className="text-sm font-semibold text-white">{item.name}</div>
-                <div className="mt-0.5 text-xs text-white/40">{item.desc}</div>
+                <div className="mt-0.5 text-xs text-white/60">{item.desc}</div>
               </Card>
             ))}
           </div>
@@ -141,7 +141,7 @@ export default function Give() {
                   <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{mpesaAccounts.map((item) => (
                     <Card as="button" key={item.name} type="button" onClick={() => selectGiving(item)} variant="subtle" className="p-4 text-left transition hover:bg-white/10">
                       <div className="text-sm font-semibold text-white">{item.name}</div>
-                      <div className="mt-2 flex items-center justify-between"><span className="font-mono text-lg font-bold" style={{ color: '#F2A31C' }}>{item.account}</span><span className="text-xs text-white/40">Select</span></div>
+                      <div className="mt-2 flex items-center justify-between"><span className="font-mono text-lg font-bold" style={{ color: '#F2A31C' }}>{item.account}</span><span className="text-xs text-white/60">Select</span></div>
                     </Card>
                   ))}</div>
                 </>

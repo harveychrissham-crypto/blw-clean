@@ -131,7 +131,7 @@ function AccessGate({ onUnlock }) {
 
           <button
             type="submit"
-            className="mt-5 w-full rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 text-sm font-bold text-white shadow-[0_12px_30px_rgba(236,47,168,0.28)] transition hover:opacity-90"
+            className="mt-5 w-full rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 text-sm font-bold text-white shadow-[0_12px_30px_rgba(236,47,168,0.28)] transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           >
             <FiUnlock className="mr-2 inline" /> Enter Leaders Forum
           </button>
@@ -297,7 +297,7 @@ function QRScannerPanel({ members, checkedInIds, onCheckIn, onClose, onViewProfi
             <Eyebrow>Leaders tool</Eyebrow>
             <h2 className="mt-1 text-xl font-bold text-white">Member Check-In</h2>
           </div>
-          <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10">
+          <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
             <FiX />
           </button>
         </div>
@@ -307,7 +307,7 @@ function QRScannerPanel({ members, checkedInIds, onCheckIn, onClose, onViewProfi
           <div className="flex border-b border-white/10">
             <button
               onClick={() => switchTab('scan')}
-              className={`flex flex-1 items-center justify-center gap-2 py-3.5 text-sm font-semibold transition ${
+              className={`focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 flex flex-1 items-center justify-center gap-2 py-3.5 text-sm font-semibold transition ${
                 tab === 'scan'
                   ? 'border-b-2 border-[#F2A31C] text-[#F2A31C]'
                   : 'text-white/40 hover:text-white/70'
@@ -317,7 +317,7 @@ function QRScannerPanel({ members, checkedInIds, onCheckIn, onClose, onViewProfi
             </button>
             <button
               onClick={() => switchTab('manual')}
-              className={`flex flex-1 items-center justify-center gap-2 py-3.5 text-sm font-semibold transition ${
+              className={`focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 flex flex-1 items-center justify-center gap-2 py-3.5 text-sm font-semibold transition ${
                 tab === 'manual'
                   ? 'border-b-2 border-[#F2A31C] text-[#F2A31C]'
                   : 'text-white/40 hover:text-white/70'
@@ -349,18 +349,18 @@ function QRScannerPanel({ members, checkedInIds, onCheckIn, onClose, onViewProfi
                 {!scanning && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                     <MdQrCodeScanner className="h-16 w-16 text-white/30" />
-                    <p className="text-sm text-white/40">Camera inactive</p>
+                    <p className="text-sm text-white/60">Camera inactive</p>
                   </div>
                 )}
                 <canvas ref={canvasRef} className="hidden" />
               </div>
 
               {!scanning ? (
-                <button onClick={startCamera} className="w-full rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 text-sm font-bold text-white transition hover:opacity-90">
+                <button onClick={startCamera} className="w-full rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 text-sm font-bold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
                   <FiCamera className="mr-2 inline" /> Start Camera
                 </button>
               ) : (
-                <button onClick={stopCamera} className="w-full rounded-2xl border border-white/10 bg-white/[0.05] py-3 text-sm font-semibold text-white transition hover:bg-white/10">
+                <button onClick={stopCamera} className="w-full rounded-2xl border border-white/10 bg-white/[0.05] py-3 text-sm font-semibold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
                   Stop Scanning
                 </button>
               )}
@@ -392,7 +392,7 @@ function QRScannerPanel({ members, checkedInIds, onCheckIn, onClose, onViewProfi
                   className="w-full rounded-2xl border border-white/10 bg-white/[0.05] py-3 pl-10 pr-4 text-sm text-white placeholder-white/20 outline-none focus:border-[#F2A31C] focus:ring-2 focus:ring-[#F2A31C]/20"
                 />
                 {manualId && (
-                  <button onClick={() => { setManualId(''); setSuggestions([]); setError(''); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white">
+                  <button onClick={() => { setManualId(''); setSuggestions([]); setError(''); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
                     <FiX className="h-4 w-4" />
                   </button>
                 )}
@@ -405,14 +405,14 @@ function QRScannerPanel({ members, checkedInIds, onCheckIn, onClose, onViewProfi
                     <button
                       key={m.membershipId}
                       onClick={() => { setManualId(m.name); handleManualLookup(m); }}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-white/5 border-b border-white/5 last:border-0"
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-white/5 border-b border-white/5 last:border-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                     >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#FF4F9A] via-[#A53DFF] to-[#3D5AFE] text-sm font-black text-white">
                         {m.name.charAt(0)}
                       </div>
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-white">{m.name}</p>
-                        <p className="text-xs text-white/40">{m.membershipId} · {m.chapter}</p>
+                        <p className="text-xs text-white/60">{m.membershipId} · {m.chapter}</p>
                       </div>
                       {checkedInBadge(checkedInIds.has(m.membershipId))}
                     </button>
@@ -422,7 +422,7 @@ function QRScannerPanel({ members, checkedInIds, onCheckIn, onClose, onViewProfi
 
               <button
                 onClick={() => handleManualLookup()}
-                className="mt-4 w-full rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 text-sm font-bold text-white transition hover:opacity-90"
+                className="mt-4 w-full rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 text-sm font-bold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
                 <FiSearch className="mr-2 inline" /> Look Up Member
               </button>
@@ -441,14 +441,14 @@ function QRScannerPanel({ members, checkedInIds, onCheckIn, onClose, onViewProfi
                     <button
                       key={m.membershipId}
                       onClick={() => { setManualId(m.name); handleManualLookup(m); }}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-white/5 border-b border-white/5 last:border-0"
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-white/5 border-b border-white/5 last:border-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                     >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#FF4F9A] via-[#A53DFF] to-[#3D5AFE] text-sm font-black text-white">
                         {m.name.charAt(0)}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-white">{m.name}</p>
-                        <p className="text-xs text-white/40">{m.membershipId}</p>
+                        <p className="text-xs text-white/60">{m.membershipId}</p>
                       </div>
                       {checkedInBadge(checkedInIds.has(m.membershipId))}
                     </button>
@@ -548,20 +548,20 @@ function MemberResultCard({ member, confirmed, onConfirm, onReset, onViewProfile
         {!confirmed && (
           <button
             onClick={onConfirm}
-            className="flex-1 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 py-3 text-sm font-bold text-white transition hover:opacity-90"
+            className="flex-1 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 py-3 text-sm font-bold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           >
             <FiCheckCircle className="mr-2 inline" /> Confirm Check-In
           </button>
         )}
         <button
           onClick={onViewProfile}
-          className="flex-1 rounded-2xl border border-[#F2A31C]/30 bg-[#F2A31C]/10 py-3 text-sm font-semibold text-[#F2A31C] transition hover:bg-[#F2A31C]/20"
+          className="flex-1 rounded-2xl border border-[#F2A31C]/30 bg-[#F2A31C]/10 py-3 text-sm font-semibold text-[#F2A31C] transition hover:bg-[#F2A31C]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
         >
           <FiUsers className="mr-2 inline" /> View Full Profile
         </button>
         <button
           onClick={onReset}
-          className="flex-1 rounded-2xl border border-white/10 bg-white/[0.05] py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+          className="flex-1 rounded-2xl border border-white/10 bg-white/[0.05] py-3 text-sm font-semibold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
         >
           {confirmed ? 'Scan Another' : 'Cancel'}
         </button>
@@ -594,7 +594,7 @@ function MemberModal({ member, onClose }) {
       <Card variant="raised" className="relative w-full max-w-lg rounded-[2.5rem] shadow-2xl">
         <button
           onClick={onClose}
-          className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10"
+          className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
         >
           <FiX />
         </button>
@@ -705,10 +705,10 @@ function EventForm({ initial, onCancel, onSave }) {
       )}
 
       <div className="flex gap-3 pt-1">
-        <button type="submit" disabled={saving} className="flex-1 rounded-xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50">
+        <button type="submit" disabled={saving} className="flex-1 rounded-xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
           {saving ? 'Saving…' : 'Save Event'}
         </button>
-        <button type="button" onClick={onCancel} className="flex-1 rounded-xl border border-white/10 bg-white/[0.05] py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">
+        <button type="button" onClick={onCancel} className="flex-1 rounded-xl border border-white/10 bg-white/[0.05] py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
           Cancel
         </button>
       </div>
@@ -774,7 +774,7 @@ function EventsManagerPanel({ onClose }) {
             <Eyebrow>Leaders tool</Eyebrow>
             <h2 className="mt-1 text-xl font-bold text-white">Manage Events</h2>
           </div>
-          <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10">
+          <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
             <FiX />
           </button>
         </div>
@@ -796,7 +796,7 @@ function EventsManagerPanel({ onClose }) {
             <>
               <button
                 onClick={() => setMode('create')}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 text-sm font-bold text-white transition hover:opacity-90"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 text-sm font-bold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
                 <FiPlus /> Add New Event
               </button>
@@ -807,7 +807,7 @@ function EventsManagerPanel({ onClose }) {
                 </div>
               )}
 
-              {loading && <p className="text-sm text-white/40">Loading events…</p>}
+              {loading && <p className="text-sm text-white/60">Loading events…</p>}
               {!loading && events.length === 0 && !error && (
                 <EmptyState icon={FiCalendar} title="No events yet" hint="Add the first one above." />
               )}
@@ -817,17 +817,17 @@ function EventsManagerPanel({ onClose }) {
                   <Card key={event.id} variant="subtle" className="flex items-center gap-3 px-4 py-3">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-white">{event.title}</p>
-                      <p className="text-xs text-white/40">{formatDate(event.date)} {event.time && `· ${event.time}`} {event.location && `· ${event.location}`}</p>
+                      <p className="text-xs text-white/60">{formatDate(event.date)} {event.time && `· ${event.time}`} {event.location && `· ${event.location}`}</p>
                     </div>
                     <button
                       onClick={() => { setEditingEvent(event); setMode('edit'); }}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 text-white/60 transition hover:bg-white/10 hover:text-white"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 text-white/60 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                     >
                       <FiEdit2 className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => handleDelete(event)}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-500/20 text-red-400 transition hover:bg-red-500/10"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-500/20 text-red-400 transition hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                     >
                       <FiTrash2 className="h-3.5 w-3.5" />
                     </button>
@@ -931,7 +931,7 @@ function StoryForm({ initial, onCancel, onSave }) {
             <input type="file" accept="image/*" onChange={handlePhotoChange} disabled={uploading} className="hidden" />
           </label>
           {form.imageUrl && !uploading && (
-            <button type="button" onClick={() => setForm((f) => ({ ...f, imageUrl: '' }))} className="rounded-xl border border-red-500/20 px-3 py-2 text-sm text-red-300 transition hover:bg-red-500/10">
+            <button type="button" onClick={() => setForm((f) => ({ ...f, imageUrl: '' }))} className="rounded-xl border border-red-500/20 px-3 py-2 text-sm text-red-300 transition hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
               Remove
             </button>
           )}
@@ -952,10 +952,10 @@ function StoryForm({ initial, onCancel, onSave }) {
       )}
 
       <div className="flex gap-3 pt-1">
-        <button type="submit" disabled={saving || uploading} className="flex-1 rounded-xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50">
+        <button type="submit" disabled={saving || uploading} className="flex-1 rounded-xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
           {saving ? 'Saving…' : 'Save Story'}
         </button>
-        <button type="button" onClick={onCancel} className="flex-1 rounded-xl border border-white/10 bg-white/[0.05] py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">
+        <button type="button" onClick={onCancel} className="flex-1 rounded-xl border border-white/10 bg-white/[0.05] py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
           Cancel
         </button>
       </div>
@@ -1015,7 +1015,7 @@ function StoriesManagerPanel({ onClose }) {
             <Eyebrow>Leaders tool</Eyebrow>
             <h2 className="mt-1 text-xl font-bold text-white">Manage Outreach Stories</h2>
           </div>
-          <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10">
+          <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
             <FiX />
           </button>
         </div>
@@ -1037,7 +1037,7 @@ function StoriesManagerPanel({ onClose }) {
             <>
               <button
                 onClick={() => setMode('create')}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 text-sm font-bold text-white transition hover:opacity-90"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 text-sm font-bold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
                 <FiPlus /> Add New Story
               </button>
@@ -1048,7 +1048,7 @@ function StoriesManagerPanel({ onClose }) {
                 </div>
               )}
 
-              {loading && <p className="text-sm text-white/40">Loading stories…</p>}
+              {loading && <p className="text-sm text-white/60">Loading stories…</p>}
               {!loading && stories.length === 0 && !error && (
                 <EmptyState icon={FiImage} title="No stories yet" hint="Add the first one above." />
               )}
@@ -1065,17 +1065,17 @@ function StoriesManagerPanel({ onClose }) {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-white">{story.title}</p>
-                      <p className="truncate text-xs text-white/40">{story.tag && `${story.tag} · `}{story.subtitle}</p>
+                      <p className="truncate text-xs text-white/60">{story.tag && `${story.tag} · `}{story.subtitle}</p>
                     </div>
                     <button
                       onClick={() => { setEditingStory(story); setMode('edit'); }}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 text-white/60 transition hover:bg-white/10 hover:text-white"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 text-white/60 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                     >
                       <FiEdit2 className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => handleDelete(story)}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-500/20 text-red-400 transition hover:bg-red-500/10"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-500/20 text-red-400 transition hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                     >
                       <FiTrash2 className="h-3.5 w-3.5" />
                     </button>
@@ -1144,10 +1144,10 @@ function SermonForm({ initial, onCancel, onSave }) {
       )}
 
       <div className="flex gap-3 pt-1">
-        <button type="submit" disabled={saving} className="flex-1 rounded-xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50">
+        <button type="submit" disabled={saving} className="flex-1 rounded-xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
           {saving ? 'Saving…' : 'Save Sermon'}
         </button>
-        <button type="button" onClick={onCancel} className="flex-1 rounded-xl border border-white/10 bg-white/[0.05] py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">
+        <button type="button" onClick={onCancel} className="flex-1 rounded-xl border border-white/10 bg-white/[0.05] py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
           Cancel
         </button>
       </div>
@@ -1216,7 +1216,7 @@ function SermonsManagerPanel({ onClose }) {
             <Eyebrow>Leaders tool</Eyebrow>
             <h2 className="mt-1 text-xl font-bold text-white">Manage Sermons</h2>
           </div>
-          <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10">
+          <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
             <FiX />
           </button>
         </div>
@@ -1238,7 +1238,7 @@ function SermonsManagerPanel({ onClose }) {
             <>
               <button
                 onClick={() => setMode('create')}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 text-sm font-bold text-white transition hover:opacity-90"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 text-sm font-bold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
                 <FiPlus /> Add New Sermon
               </button>
@@ -1251,7 +1251,7 @@ function SermonsManagerPanel({ onClose }) {
                 </div>
               )}
 
-              {loading && <p className="text-sm text-white/40">Loading sermons…</p>}
+              {loading && <p className="text-sm text-white/60">Loading sermons…</p>}
               {!loading && sermons.length === 0 && !error && (
                 <EmptyState icon={FiFilm} title="No sermons yet" hint="Add the first one above." />
               )}
@@ -1277,25 +1277,25 @@ function SermonsManagerPanel({ onClose }) {
                           <span className="shrink-0 rounded-full bg-[#F2A31C]/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#F2A31C]">Main</span>
                         )}
                       </div>
-                      <p className="truncate text-xs text-white/40">{sermon.speaker}</p>
+                      <p className="truncate text-xs text-white/60">{sermon.speaker}</p>
                     </div>
                     <button
                       onClick={() => handleSetFeatured(sermon)}
                       disabled={sermon.isFeatured}
                       title={sermon.isFeatured ? 'Currently the main video' : 'Set as main video'}
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition ${sermon.isFeatured ? 'border-[#F2A31C]/40 text-[#F2A31C]' : 'border-white/10 text-white/60 hover:bg-white/10 hover:text-white'}`}
+                      className={`focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition ${sermon.isFeatured ? 'border-[#F2A31C]/40 text-[#F2A31C]' : 'border-white/10 text-white/60 hover:bg-white/10 hover:text-white'}`}
                     >
                       <FiStar className="h-3.5 w-3.5" fill={sermon.isFeatured ? 'currentColor' : 'none'} />
                     </button>
                     <button
                       onClick={() => { setEditingSermon(sermon); setMode('edit'); }}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 text-white/60 transition hover:bg-white/10 hover:text-white"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 text-white/60 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                     >
                       <FiEdit2 className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => handleDelete(sermon)}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-500/20 text-red-400 transition hover:bg-red-500/10"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-500/20 text-red-400 transition hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                     >
                       <FiTrash2 className="h-3.5 w-3.5" />
                     </button>
@@ -1366,10 +1366,10 @@ function VenueForm({ initial, lockChapter, onCancel, onSave }) {
       )}
 
       <div className="flex gap-3 pt-1">
-        <button type="submit" disabled={saving} className="flex-1 rounded-xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50">
+        <button type="submit" disabled={saving} className="flex-1 rounded-xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
           {saving ? 'Saving…' : 'Save Venue'}
         </button>
-        <button type="button" onClick={onCancel} className="flex-1 rounded-xl border border-white/10 bg-white/[0.05] py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">
+        <button type="button" onClick={onCancel} className="flex-1 rounded-xl border border-white/10 bg-white/[0.05] py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
           Cancel
         </button>
       </div>
@@ -1429,7 +1429,7 @@ function VenuesManagerPanel({ onClose }) {
             <Eyebrow>Leaders tool</Eyebrow>
             <h2 className="mt-1 text-xl font-bold text-white">Manage Service Venues</h2>
           </div>
-          <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10">
+          <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
             <FiX />
           </button>
         </div>
@@ -1452,7 +1452,7 @@ function VenuesManagerPanel({ onClose }) {
             <>
               <button
                 onClick={() => setMode('create')}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 text-sm font-bold text-white transition hover:opacity-90"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 text-sm font-bold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
                 <FiPlus /> Set a Chapter's Venue
               </button>
@@ -1465,7 +1465,7 @@ function VenuesManagerPanel({ onClose }) {
                 </div>
               )}
 
-              {loading && <p className="text-sm text-white/40">Loading venues…</p>}
+              {loading && <p className="text-sm text-white/60">Loading venues…</p>}
               {!loading && venues.length === 0 && !error && (
                 <EmptyState icon={FiMapPin} title="No venues set yet" hint="Add the first one above." />
               )}
@@ -1478,17 +1478,17 @@ function VenuesManagerPanel({ onClose }) {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-white">{v.chapter}</p>
-                      <p className="truncate text-xs text-white/40">{v.venue}{v.serviceTime ? ` · ${v.serviceTime}` : ''}</p>
+                      <p className="truncate text-xs text-white/60">{v.venue}{v.serviceTime ? ` · ${v.serviceTime}` : ''}</p>
                     </div>
                     <button
                       onClick={() => { setEditingVenue(v); setMode('edit'); }}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 text-white/60 transition hover:bg-white/10 hover:text-white"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 text-white/60 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                     >
                       <FiEdit2 className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => handleDelete(v)}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-500/20 text-red-400 transition hover:bg-red-500/10"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-500/20 text-red-400 transition hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                     >
                       <FiTrash2 className="h-3.5 w-3.5" />
                     </button>
@@ -1530,7 +1530,7 @@ function LiveViewersList() {
     return () => { cancelled = true; };
   }, []);
 
-  if (loading) return <p className="text-sm text-white/40">Loading viewers…</p>;
+  if (loading) return <p className="text-sm text-white/60">Loading viewers…</p>;
   if (error) {
     return (
       <div className="flex items-start gap-2 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-300">
@@ -1559,7 +1559,7 @@ function LiveViewersList() {
                 </span>
               )}
             </div>
-            <p className="truncate text-xs text-white/40">
+            <p className="truncate text-xs text-white/60">
               {v.invitedBy ? `Invited by ${v.invitedBy}` : 'No invited-by given'} · {formatWatchTime(v.watchSeconds)} watched
             </p>
           </div>
@@ -1644,7 +1644,7 @@ function LiveManagerPanel({ onClose }) {
             <Eyebrow>Leaders tool</Eyebrow>
             <h2 className="mt-1 text-xl font-bold text-white">Manage Live Stream</h2>
           </div>
-          <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10">
+          <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
             <FiX />
           </button>
         </div>
@@ -1653,7 +1653,7 @@ function LiveManagerPanel({ onClose }) {
         <div className="flex border-b border-white/10 px-6">
           <button
             onClick={() => setTab('settings')}
-            className={`px-4 py-3 text-xs font-bold uppercase tracking-[0.2em] transition ${
+            className={`focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 px-4 py-3 text-xs font-bold uppercase tracking-[0.2em] transition ${
               tab === 'settings' ? 'border-b-2 border-[#F2A31C] text-white' : 'text-white/40 hover:text-white/70'
             }`}
           >
@@ -1661,7 +1661,7 @@ function LiveManagerPanel({ onClose }) {
           </button>
           <button
             onClick={() => setTab('viewers')}
-            className={`px-4 py-3 text-xs font-bold uppercase tracking-[0.2em] transition ${
+            className={`focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 px-4 py-3 text-xs font-bold uppercase tracking-[0.2em] transition ${
               tab === 'viewers' ? 'border-b-2 border-[#F2A31C] text-white' : 'text-white/40 hover:text-white/70'
             }`}
           >
@@ -1672,7 +1672,7 @@ function LiveManagerPanel({ onClose }) {
         <div className="max-h-[70vh] overflow-y-auto p-6 space-y-4">
           {tab === 'settings' && (
             loading ? (
-              <p className="text-sm text-white/40">Loading live stream settings…</p>
+              <p className="text-sm text-white/60">Loading live stream settings…</p>
             ) : (
               <>
                 <Card
@@ -1683,14 +1683,14 @@ function LiveManagerPanel({ onClose }) {
                     <FiRadio className={form.isLive ? 'text-red-400 animate-pulse' : 'text-white/40'} />
                     <div>
                       <p className="text-sm font-semibold text-white">{form.isLive ? 'Currently live' : 'Currently offline'}</p>
-                      <p className="text-xs text-white/40">Members see the stream on /live only while this is on.</p>
+                      <p className="text-xs text-white/60">Members see the stream on /live only while this is on.</p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => toggleLive(!form.isLive)}
                     disabled={saving}
-                    className={`rounded-full px-4 py-2 text-xs font-bold transition disabled:opacity-50 ${form.isLive ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30' : 'bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] text-white hover:opacity-90'}`}
+                    className={`focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 rounded-full px-4 py-2 text-xs font-bold transition disabled:opacity-50 ${form.isLive ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30' : 'bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] text-white hover:opacity-90'}`}
                   >
                     {form.isLive ? 'Go Offline' : 'Go Live'}
                   </button>
@@ -1724,7 +1724,7 @@ function LiveManagerPanel({ onClose }) {
                   )}
                   {saved && <p className="text-xs text-emerald-300">Saved.</p>}
 
-                  <button type="submit" disabled={saving} className="w-full rounded-xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50">
+                  <button type="submit" disabled={saving} className="w-full rounded-xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
                     {saving ? 'Saving…' : 'Save Details'}
                   </button>
                 </Card>
@@ -1787,14 +1787,14 @@ function MembersList({ members, checkedInIds, onSelectMember }) {
             <button
               key={member.membershipId}
               onClick={() => onSelectMember(member)}
-              className="flex w-full items-center gap-4 px-6 py-4 text-left transition hover:bg-white/5"
+              className="flex w-full items-center gap-4 px-6 py-4 text-left transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FF4F9A] via-[#A53DFF] to-[#3D5AFE] text-sm font-black text-white">
                 {member.name.charAt(0)}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-white">{member.name}</p>
-                <p className="text-xs text-white/40">{member.membershipId} · {member.chapter}</p>
+                <p className="text-xs text-white/60">{member.membershipId} · {member.chapter}</p>
               </div>
               <div className="shrink-0">
                 {isIn ? (
@@ -1880,7 +1880,7 @@ export default function LeadersForum() {
         </div>
         <button
           onClick={() => setUnlocked(false)}
-          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-white/70 transition hover:bg-white/10 hover:text-white"
+          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-white/70 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
         >
           <FiLock className="h-3.5 w-3.5" /> Lock Forum
         </button>
@@ -2033,7 +2033,7 @@ export default function LeadersForum() {
       {loadError && (
         <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-3 text-sm text-red-300">
           <span>{loadError}</span>
-          <button onClick={loadMembers} className="shrink-0 rounded-full border border-red-400/30 px-3 py-1 text-xs font-semibold hover:bg-red-500/10">
+          <button onClick={loadMembers} className="shrink-0 rounded-full border border-red-400/30 px-3 py-1 text-xs font-semibold hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
             Retry
           </button>
         </div>

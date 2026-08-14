@@ -187,14 +187,14 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={openEdit}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-4 py-2 text-sm font-semibold text-white shadow-[0_20px_40px_rgba(236,47,168,0.18)] transition hover:opacity-95"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-4 py-2 text-sm font-semibold text-white shadow-[0_20px_40px_rgba(236,47,168,0.18)] transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
                 <FiEdit2 /> Edit Profile
               </button>
               <button
                 type="button"
                 onClick={logout}
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/70 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/5"
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/70 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
                 <FiLogOut /> Sign Out
               </button>
@@ -262,7 +262,7 @@ export default function Dashboard() {
                   hint="The team hasn't opened check-in. Please try again in a moment."
                 />
               </div>
-              <button className="mt-4 inline-flex items-center gap-2 rounded-full border border-pink-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-pink-600/10">
+              <button className="mt-4 inline-flex items-center gap-2 rounded-full border border-pink-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-pink-600/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 Show my QR badge
               </button>
@@ -335,7 +335,7 @@ export default function Dashboard() {
           <button
             type="button"
             onClick={handleDelete}
-            className="mt-4 inline-flex items-center gap-2 rounded-full border border-red-500 bg-red-500/10 px-5 py-2.5 text-sm font-semibold text-red-100 transition hover:bg-red-500/20"
+            className="mt-4 inline-flex items-center gap-2 rounded-full border border-red-500 bg-red-500/10 px-5 py-2.5 text-sm font-semibold text-red-100 transition hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           >
             Delete my account
           </button>
@@ -348,7 +348,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => setIsEditing(false)}
-              className="absolute right-5 top-5 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-slate-900/80 text-slate-200 transition hover:bg-white/10"
+              className="absolute right-5 top-5 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-slate-900/80 text-slate-200 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
               ✕
             </button>
@@ -534,13 +534,13 @@ export default function Dashboard() {
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
-                  className="inline-flex items-center justify-center rounded-full border border-white/10 bg-slate-900/80 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+                  className="inline-flex items-center justify-center rounded-full border border-white/10 bg-slate-900/80 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95"
+                  className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                 >
                   Save Changes
                 </button>

@@ -104,7 +104,7 @@ export default function OfflineAttendanceSheet({ members = [], onClose, onBackTo
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.4em] text-[#F2A31C]">Leaders tool</p>
             <h2 className="mt-1 text-xl font-bold text-white">Check Attendance</h2>
-            <p className="mt-1 text-xs text-white/40">Works offline. Pending records sync automatically when connection returns.</p>
+            <p className="mt-1 text-xs text-white/60">Works offline. Pending records sync automatically when connection returns.</p>
           </div>
           <div className="flex items-center gap-2">
             {onBackToTools && (
@@ -147,7 +147,7 @@ export default function OfflineAttendanceSheet({ members = [], onClose, onBackTo
             {filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-3 px-6 py-12 text-center">
                 <FiUsers className="h-8 w-8 text-white/20" />
-                <p className="text-sm text-white/40">No attendance records to show.</p>
+                <p className="text-sm text-white/60">No attendance records to show.</p>
               </div>
             ) : (
               <div className="divide-y divide-white/5">
@@ -161,7 +161,7 @@ export default function OfflineAttendanceSheet({ members = [], onClose, onBackTo
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-white">{member.name || 'Unknown member'}</p>
-                        <p className="truncate text-xs text-white/40">{member.membershipId}{member.chapter ? ` · ${member.chapter}` : ''}</p>
+                        <p className="truncate text-xs text-white/60">{member.membershipId}{member.chapter ? ` · ${member.chapter}` : ''}</p>
                       </div>
                       {isPending ? (
                         <span className="flex shrink-0 items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-1 text-[10px] font-semibold text-amber-300">

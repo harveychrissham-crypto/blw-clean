@@ -50,7 +50,7 @@ export function Toast({ toast, onClose, duration = 3000 }) {
         <button
           type="button"
           onClick={onClose}
-          className="shrink-0 rounded-full p-1 text-white/40 transition hover:bg-white/10 hover:text-white"
+          className="shrink-0 rounded-full p-1 text-white/40 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           aria-label="Dismiss"
         >
           <FiX className="h-3.5 w-3.5" />

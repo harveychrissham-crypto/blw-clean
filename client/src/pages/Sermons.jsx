@@ -14,7 +14,7 @@ function SermonPlayer({ sermon }) {
 
   if (!sermon?.youtubeId) {
     return (
-      <Card variant="subtle" className="flex aspect-video w-full items-center justify-center text-sm text-white/40">
+      <Card variant="subtle" className="flex aspect-video w-full items-center justify-center text-sm text-white/60">
         <div className="text-center">
           <FiFilm className="mx-auto mb-2 h-8 w-8" />
           <p>Video unavailable</p>
@@ -25,7 +25,7 @@ function SermonPlayer({ sermon }) {
 
   if (!isOnline) {
     return (
-      <Card variant="subtle" className="flex aspect-video w-full items-center justify-center text-sm text-white/40">
+      <Card variant="subtle" className="flex aspect-video w-full items-center justify-center text-sm text-white/60">
         <div className="text-center">
           <FiWifiOff className="mx-auto mb-2 h-8 w-8" />
           <p>Video needs an internet connection</p>

@@ -161,7 +161,7 @@ export default function Events() {
                   <div>
                     <Eyebrow className="mb-0.5">{event.category}</Eyebrow>
                     <h4 className="text-sm font-bold text-white">{event.title}</h4>
-                    <div className="mt-1 flex gap-3 text-xs text-white/40">
+                    <div className="mt-1 flex gap-3 text-xs text-white/60">
                       <span className="flex items-center gap-1"><FiCalendar className="h-3 w-3" />{formatDate(event.date)}</span>
                       {event.location && <span className="flex items-center gap-1"><FiMapPin className="h-3 w-3" />{event.location}</span>}
                     </div>

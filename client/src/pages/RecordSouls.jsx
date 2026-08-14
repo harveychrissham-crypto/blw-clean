@@ -190,7 +190,7 @@ export default function RecordSouls() {
 
             {error && <p className="text-sm text-red-300">{error}</p>}
 
-            <button type="submit" className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95">
+            <button type="submit" className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
               Record soul
             </button>
           </form>
@@ -223,7 +223,7 @@ export default function RecordSouls() {
                       <button
                         type="button"
                         onClick={() => handleDeleteEntry(entry.id)}
-                        className="shrink-0 text-xs font-semibold text-slate-400 transition hover:text-white"
+                        className="shrink-0 text-xs font-semibold text-slate-400 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                       >
                         Remove
                       </button>
