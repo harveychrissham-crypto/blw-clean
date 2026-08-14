@@ -21,11 +21,14 @@ import {
 } from 'react-icons/fi';
 import { Card, Eyebrow, StatGroup, ActionBanner, InfoTile } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
+import { Toast } from '../components/ui/Toast';
+import { Skeleton } from '../components/ui/Skeleton';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
+  const [toast, setToast] = useState(null);
   const { user, logout, login } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [venue, setVenue] = useState(null);
@@ -100,6 +103,7 @@ export default function Dashboard() {
       if (!response.ok) {
         setError(body.error || body.message || 'Unable to delete your account.');
         setStatus('error');
+        setToast({ type: 'error', message: body.error || body.message || 'Unable to delete your account.' });
         return;
       }
 
@@ -150,6 +154,7 @@ export default function Dashboard() {
       const updatedUser = { ...user, name: editForm.fullName, fullName: editForm.fullName, phone: editForm.phone, birthday: editForm.birthday, gender: editForm.gender, status: editForm.status, church: editForm.church, chapter: editForm.chapter, campusZone: editForm.campusZone, residence: editForm.residence, city: editForm.city, country: editForm.country, invitedBy: editForm.invitedBy, about: editForm.about };
       login(updatedUser);
       setEditStatus('success');
+      setToast({ type: 'success', message: 'Profile updated successfully.' });
       setTimeout(() => {
         setIsEditing(false);
         setEditStatus('idle');
@@ -157,6 +162,7 @@ export default function Dashboard() {
     } catch (err) {
       setEditError(err?.message || 'Unable to update profile.');
       setEditStatus('error');
+      setToast({ type: 'error', message: err?.message || 'Unable to update profile.' });
     }
   };
 
@@ -232,15 +238,23 @@ export default function Dashboard() {
             </div>
             <div className="min-w-0 flex-1">
               <Eyebrow>Sunday self check-in</Eyebrow>
-              <h3 className="mt-1 text-lg font-semibold text-white">
-                {venueStatus === 'loaded' && venue?.serviceTime ? venue.serviceTime : 'Service time to be announced'}
-              </h3>
-              <p className="mt-1 text-[12px] text-slate-400">
-                {venueStatus === 'loading' && "Loading your chapter's venue…"}
-                {venueStatus === 'loaded' && venue?.venue}
-                {venueStatus === 'none' && (user?.chapter ? `No venue set yet for ${user.chapter}. Check with your leaders.` : 'Add your chapter in Edit Profile to see your service venue.')}
-                {venueStatus === 'error' && 'Unable to load your service venue right now.'}
-              </p>
+              {venueStatus === 'loading' ? (
+                <div className="mt-2 space-y-2">
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              ) : (
+                <>
+                  <h3 className="mt-1 text-lg font-semibold text-white">
+                    {venueStatus === 'loaded' && venue?.serviceTime ? venue.serviceTime : 'Service time to be announced'}
+                  </h3>
+                  <p className="mt-1 text-[12px] text-slate-400">
+                    {venueStatus === 'loaded' && venue?.venue}
+                    {venueStatus === 'none' && (user?.chapter ? `No venue set yet for ${user.chapter}. Check with your leaders.` : 'Add your chapter in Edit Profile to see your service venue.')}
+                    {venueStatus === 'error' && 'Unable to load your service venue right now.'}
+                  </p>
+                </>
+              )}
               <div className="mt-3">
                 <EmptyState
                   icon={FiClock}
@@ -536,6 +550,7 @@ export default function Dashboard() {
         </div>
       </div>
       )}
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </section>
   );
 }

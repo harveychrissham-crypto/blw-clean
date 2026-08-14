@@ -5,6 +5,8 @@ import QRCode from 'qrcode';
 import { apiFetch } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import { Card, Eyebrow, InfoTile } from '../components/ui/Card';
+import { Toast } from '../components/ui/Toast';
+import { SkeletonRow } from '../components/ui/Skeleton';
 
 const MEMBER_SEARCH_URL = '/api/members/search';
 const SELF_CHECKIN_URL = '/api/members/self-checkin';
@@ -117,6 +119,7 @@ export default function Checkin() {
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [checkinMessage, setCheckinMessage] = useState('');
   const [checkinError, setCheckinError] = useState('');
+  const [toast, setToast] = useState(null);
 
   const handleSearch = async (event) => {
     event.preventDefault();
@@ -159,8 +162,10 @@ export default function Checkin() {
       const checked = body.member || { ...foundProfile, checkedIn: true };
       setFoundProfile(checked);
       setCheckinMessage(body.message || 'You are checked in successfully.');
+      setToast({ type: 'success', message: body.message || 'You are checked in successfully.' });
     } catch (error) {
       setCheckinError(error?.message || 'Unable to check in right now.');
+      setToast({ type: 'error', message: error?.message || 'Unable to check in right now.' });
     } finally { setIsCheckingIn(false); }
   };
 
@@ -189,6 +194,7 @@ export default function Checkin() {
                 </button>
               </form>
               <p className="mt-4 text-sm text-slate-400">{message}</p>
+              {isLoading && <div className="mt-4"><SkeletonRow /></div>}
             </Card>
           </div>
           <div className="space-y-6">
@@ -269,6 +275,7 @@ export default function Checkin() {
           </div>
         </div>
       )}
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </section>
   );
 }

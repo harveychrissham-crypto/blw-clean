@@ -29,6 +29,20 @@ export default {
       },
       boxShadow: {
         soft: '0 20px 60px rgba(15, 23, 42, 0.14)'
+      },
+      keyframes: {
+        toastIn: {
+          '0%': { opacity: '0', transform: 'translateY(8px) scale(0.98)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' }
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' }
+        }
+      },
+      animation: {
+        'toast-in': 'toastIn 0.2s ease-out',
+        shimmer: 'shimmer 1.8s ease-in-out infinite'
       }
     }
   },

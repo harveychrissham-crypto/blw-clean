@@ -10,6 +10,7 @@ import {
 import { loadSoulEntries, saveSoulEntries } from '../utils/soulStorage';
 import { Card, Eyebrow, StatGroup } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
+import { Toast } from '../components/ui/Toast';
 
 export default function RecordSouls() {
   const [entries, setEntries] = useState([]);
@@ -22,6 +23,7 @@ export default function RecordSouls() {
   });
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     setEntries(loadSoulEntries());
@@ -47,6 +49,7 @@ export default function RecordSouls() {
     if (!form.name.trim() || !form.contact.trim()) {
       setError('Provide both a name and a contact method before recording the soul.');
       setStatus('error');
+      setToast({ type: 'error', message: 'Add a name and contact method to save this entry.' });
       return;
     }
 
@@ -70,6 +73,7 @@ export default function RecordSouls() {
     });
     setStatus('success');
     setError('');
+    setToast({ type: 'success', message: `Saved ${nextEntry.name}'s entry.` });
     window.setTimeout(() => setStatus('idle'), 2500);
   };
 
@@ -185,7 +189,6 @@ export default function RecordSouls() {
             </label>
 
             {error && <p className="text-sm text-red-300">{error}</p>}
-            {status === 'success' && <p className="text-sm text-emerald-300">Soul entry saved.</p>}
 
             <button type="submit" className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95">
               Record soul
@@ -266,6 +269,7 @@ export default function RecordSouls() {
           </Card>
         </div>
       </div>
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </section>
   );
 }
