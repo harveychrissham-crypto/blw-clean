@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import DailyIframe from '@daily-co/daily-js';
 import { fetchLiveStream, submitLiveViewer, sendLiveHeartbeat, sendLiveHeartbeatBeacon } from '../utils/live';
 import { Card } from '../components/ui/Card';
+import { Skeleton } from '../components/ui/Skeleton';
 
 const schedule = [
   { day: 'Sunday', time: '10:00 AM', title: 'Main Worship Service' },
@@ -251,11 +252,12 @@ export default function Live() {
                 />
               ) : showDailyEmbed ? (
                 <div ref={dailyContainerRef} className="h-full w-full" />
+              ) : status === 'loading' ? (
+                <Skeleton className="h-full w-full rounded-2xl" />
               ) : (
                 <div className="flex h-full items-center justify-center p-6 text-center">
                   <div>
                     <FiPlayCircle className="mx-auto text-5xl text-[#D8B2FF]" />
-                    {status === 'loading' && <p className="mt-3 text-lg font-semibold">Checking stream status…</p>}
                     {status === 'error' && (
                       <>
                         <p className="mt-3 text-lg font-semibold">Live service is temporarily unavailable.</p>

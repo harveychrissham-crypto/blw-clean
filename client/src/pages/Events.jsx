@@ -4,6 +4,7 @@ import { FiCalendar, FiChevronLeft, FiChevronRight, FiClock, FiMapPin, FiArrowRi
 import { fetchEvents } from '../utils/events';
 import { Card, Eyebrow } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
+import { SkeletonCard } from '../components/ui/Skeleton';
 
 const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -129,7 +130,12 @@ export default function Events() {
 
         {/* Event details + upcoming */}
         <div className="space-y-4">
-          {loading && <p className="text-sm text-white/40">Loading events…</p>}
+          {loading && (
+            <div className="space-y-4">
+              <SkeletonCard lines={2} />
+              <SkeletonCard lines={2} />
+            </div>
+          )}
 
           {!loading && selectedEvents.length === 0 && (
             <EmptyState icon={FiCalendar} title="No events scheduled" hint={`Nothing on the calendar for ${monthNames[viewMonth]} ${selectedDay} yet.`} />

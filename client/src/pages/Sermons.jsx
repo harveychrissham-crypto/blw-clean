@@ -7,6 +7,7 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { useAuth } from '../context/AuthContext';
 import { Card, Eyebrow } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
+import { Skeleton } from '../components/ui/Skeleton';
 
 function SermonPlayer({ sermon }) {
   const isOnline = useOnlineStatus();
@@ -135,7 +136,21 @@ export default function Sermons() {
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/50">Watch sermons and teachings from Believers' LoveWorld Campus Ministry.</p>
       </div>
 
-      {loading && <Card variant="subtle" className="flex aspect-video max-w-2xl items-center justify-center text-sm text-white/40">Loading sermons...</Card>}
+      {loading && (
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,560px)_minmax(0,1fr)] lg:items-start">
+          <Skeleton className="aspect-video w-full rounded-2xl" />
+          <div className="pt-1">
+            <Skeleton className="h-6 w-32 rounded-full" />
+            <Skeleton className="mt-4 h-8 w-3/4" />
+            <Skeleton className="mt-3 h-4 w-1/3" />
+            <div className="mt-4 space-y-2">
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-2/3" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {!loading && error && (
         <div className="flex items-center gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-4 text-sm text-red-300">

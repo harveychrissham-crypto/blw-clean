@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiCreditCard, FiCopy, FiDollarSign, FiCheck, FiX, FiArrowLeft } from 'react-icons/fi';
 import { useState } from 'react';
 import { Card, Eyebrow } from '../components/ui/Card';
+import { Toast } from '../components/ui/Toast';
 
 const MPESA_PAYBILL = '400200';
 const API_BASE = import.meta.env.VITE_API_URL || '';
@@ -32,13 +33,17 @@ export default function Give() {
   const [amount, setAmount] = useState('');
   const [status, setStatus] = useState('');
   const [copied, setCopied] = useState('');
+  const [toast, setToast] = useState(null);
 
-  const copyText = async (value) => {
+  const copyText = async (value, label) => {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(value);
+      setToast({ type: 'success', message: `${label} copied to clipboard.` });
       window.setTimeout(() => setCopied(''), 1800);
-    } catch {}
+    } catch {
+      setToast({ type: 'error', message: `Could not copy ${label.toLowerCase()}.` });
+    }
   };
 
   const openMpesa = () => {
@@ -132,7 +137,7 @@ export default function Give() {
               {!selectedGiving ? (
                 <>
                   <div className="flex items-start justify-between gap-4"><div><Eyebrow>M-Pesa Giving</Eyebrow><h3 className="mt-2 text-xl font-extrabold text-white sm:text-2xl">Choose what you would like to give towards</h3></div><button type="button" onClick={() => setMpesaOpen(false)} className="rounded-full p-2 text-white/60 hover:bg-white/10 hover:text-white"><FiX size={20} /></button></div>
-                  <div className="mt-6 rounded-xl p-5" style={{ background: 'rgba(242,163,28,0.08)', border: '1px solid rgba(242,163,28,0.25)' }}><div className="flex flex-wrap items-center justify-between gap-4"><div><div className="text-xs font-bold uppercase tracking-widest text-white/50">M-Pesa Paybill</div><div className="mt-1 text-3xl font-black tracking-wider text-white">{MPESA_PAYBILL}</div></div><button type="button" onClick={() => copyText(MPESA_PAYBILL)} className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/80 hover:bg-white/10">{copied === MPESA_PAYBILL ? <FiCheck /> : <FiCopy />}{copied === MPESA_PAYBILL ? 'Copied' : 'Copy Paybill'}</button></div></div>
+                  <div className="mt-6 rounded-xl p-5" style={{ background: 'rgba(242,163,28,0.08)', border: '1px solid rgba(242,163,28,0.25)' }}><div className="flex flex-wrap items-center justify-between gap-4"><div><div className="text-xs font-bold uppercase tracking-widest text-white/50">M-Pesa Paybill</div><div className="mt-1 text-3xl font-black tracking-wider text-white">{MPESA_PAYBILL}</div></div><button type="button" onClick={() => copyText(MPESA_PAYBILL, 'Paybill number')} className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/80 hover:bg-white/10">{copied === MPESA_PAYBILL ? <FiCheck /> : <FiCopy />}{copied === MPESA_PAYBILL ? 'Copied' : 'Copy Paybill'}</button></div></div>
                   <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{mpesaAccounts.map((item) => (
                     <Card as="button" key={item.name} type="button" onClick={() => selectGiving(item)} variant="subtle" className="p-4 text-left transition hover:bg-white/10">
                       <div className="text-sm font-semibold text-white">{item.name}</div>
@@ -142,7 +147,7 @@ export default function Give() {
                 </>
               ) : (
                 <>
-                  <div className="flex items-start justify-between gap-4"><div><button type="button" onClick={() => setSelectedGiving(null)} className="mb-3 inline-flex items-center gap-2 text-xs font-semibold text-white/50 hover:text-white"><FiArrowLeft /> Back</button><Eyebrow>M-Pesa Giving</Eyebrow><h3 className="mt-2 text-2xl font-extrabold text-white">{selectedGiving.name}</h3><p className="mt-1 text-sm text-white/45">Account {selectedGiving.account} · Paybill {MPESA_PAYBILL}</p></div><button type="button" onClick={() => setMpesaOpen(false)} className="rounded-full p-2 text-white/60 hover:bg-white/10 hover:text-white"><FiX size={20} /></button></div>
+                  <div className="flex items-start justify-between gap-4"><div><button type="button" onClick={() => setSelectedGiving(null)} className="mb-3 inline-flex items-center gap-2 text-xs font-semibold text-white/50 hover:text-white"><FiArrowLeft /> Back</button><Eyebrow>M-Pesa Giving</Eyebrow><h3 className="mt-2 text-2xl font-extrabold text-white">{selectedGiving.name}</h3><div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-white/45"><span>Account {selectedGiving.account} · Paybill {MPESA_PAYBILL}</span><button type="button" onClick={() => copyText(selectedGiving.account, 'Account number')} className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-xs font-semibold text-white/70 hover:bg-white/10">{copied === selectedGiving.account ? <FiCheck /> : <FiCopy />}{copied === selectedGiving.account ? 'Copied' : 'Copy account'}</button></div></div><button type="button" onClick={() => setMpesaOpen(false)} className="rounded-full p-2 text-white/60 hover:bg-white/10 hover:text-white"><FiX size={20} /></button></div>
                   <form onSubmit={sendPrompt} className="mt-7 space-y-5">
                     <div><label className="mb-2 block text-sm font-semibold text-white">M-Pesa phone number</label><input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" autoComplete="tel" placeholder="0712 345 678" className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none focus:border-[#F2A31C]" /></div>
                     <div><label className="mb-2 block text-sm font-semibold text-white">Amount (KES)</label><input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ''))} inputMode="numeric" type="text" placeholder="Enter amount" className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none focus:border-[#F2A31C]" /></div>
@@ -156,6 +161,7 @@ export default function Give() {
           </motion.div>
         )}
       </AnimatePresence>
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </section>
   );
 }
