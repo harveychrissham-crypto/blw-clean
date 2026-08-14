@@ -42,7 +42,7 @@ import { fetchSermons, createSermon, updateSermon, deleteSermon, setFeaturedSerm
 import { fetchVenues, saveVenue, deleteVenue as deleteVenueApi } from '../utils/venues';
 import { fetchLiveStream, updateLiveStream, fetchLiveViewers } from '../utils/live';
 import { apiFetch } from '../config/api';
-import { Eyebrow } from '../components/ui/Card';
+import { Eyebrow, Card } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -99,9 +99,11 @@ function AccessGate({ onUnlock }) {
         </div>
 
         {/* Code form */}
-        <form
+        <Card
+          as="form"
           onSubmit={handleSubmit}
-          className={`overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 shadow-2xl transition-all ${shake ? 'animate-shake' : ''}`}
+          variant="raised"
+          className={`p-6 shadow-2xl transition-all ${shake ? 'animate-shake' : ''}`}
         >
           <label className="block">
             <span className="text-xs font-semibold uppercase tracking-[0.3em] text-white/40">Access code</span>
@@ -133,7 +135,7 @@ function AccessGate({ onUnlock }) {
           >
             <FiUnlock className="mr-2 inline" /> Enter Leaders Forum
           </button>
-        </form>
+        </Card>
 
         <p className="mt-5 text-center text-xs text-white/30">
           This area is exclusively for ordained leaders &amp; zone coordinators.
@@ -287,7 +289,7 @@ function QRScannerPanel({ members, checkedInIds, onCheckIn, onClose, onViewProfi
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0c18]/95 px-4 py-8">
-      <div className="relative w-full max-w-lg overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.04] shadow-2xl">
+      <Card variant="raised" className="relative w-full max-w-lg rounded-[2.5rem] shadow-2xl">
 
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
@@ -467,7 +469,7 @@ function QRScannerPanel({ members, checkedInIds, onCheckIn, onClose, onViewProfi
             />
           )}
         </div>
-      </div>
+      </Card>
 
       <style>{`
         @keyframes scan {
@@ -589,7 +591,7 @@ function MemberModal({ member, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0c18]/95 px-4 py-8">
-      <div className="relative w-full max-w-lg overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.04] shadow-2xl">
+      <Card variant="raised" className="relative w-full max-w-lg rounded-[2.5rem] shadow-2xl">
         <button
           onClick={onClose}
           className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10"
@@ -626,17 +628,17 @@ function MemberModal({ member, onClose }) {
           {/* Fields */}
           <div className="p-6 space-y-2">
             {fields.map(({ label, value, icon: Icon }) => (
-              <div key={label} className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.04] px-4 py-3">
+              <Card key={label} variant="subtle" className="flex items-center gap-3 px-4 py-3">
                 <Icon className="h-4 w-4 shrink-0 text-[#F2A31C]" />
                 <div className="min-w-0">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">{label}</p>
                   <p className="mt-0.5 text-sm font-medium text-white break-words">{value}</p>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
