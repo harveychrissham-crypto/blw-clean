@@ -234,19 +234,19 @@ export default function Auth() {
                   </>
                 )}
 
-                <button type="submit" className="inline-flex w-full justify-center rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-5 py-3 font-semibold text-white" disabled={status === 'submitting'}>
+                <button type="submit" className="inline-flex w-full justify-center rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-5 py-3 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" disabled={status === 'submitting'}>
                   {status === 'submitting' ? 'Submitting…' : mode === 'register' ? 'Create Account' : 'Sign In'}
                 </button>
               </form>
 
               {mode === 'login' && (
                 <div className="mt-4 flex items-center justify-between text-sm text-slate-400">
-                  <button type="button" className="text-[#D8B2FF] hover:text-[#EC9EFF]">Forgot password?</button>
-                  <button type="button" className="text-[#D8B2FF] hover:text-[#EC9EFF]" onClick={() => setMode('register')}>Don’t have an account? Register</button>
+                  <button type="button" className="text-[#D8B2FF] hover:text-[#EC9EFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">Forgot password?</button>
+                  <button type="button" className="text-[#D8B2FF] hover:text-[#EC9EFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" onClick={() => setMode('register')}>Don’t have an account? Register</button>
                 </div>
               )}
               {mode === 'register' && (
-                <div className="mt-4 flex items-center justify-center text-sm text-slate-400"><span>Already have an account?</span><button type="button" className="ml-2 text-[#D8B2FF] hover:text-[#EC9EFF]" onClick={() => setMode('login')}>Sign in</button></div>
+                <div className="mt-4 flex items-center justify-center text-sm text-slate-400"><span>Already have an account?</span><button type="button" className="ml-2 text-[#D8B2FF] hover:text-[#EC9EFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" onClick={() => setMode('login')}>Sign in</button></div>
               )}
               {status === 'submitted' && (
                 <div className="mt-6 rounded-2xl border border-[#A53DFF]/30 bg-[#A53DFF]/10 p-4 text-sm text-[#D8B2FF]">{lastMode === 'login' ? 'Signed in successfully.' : 'Your account has been created and signed in successfully.'}</div>

@@ -43,7 +43,7 @@ function StoryModal({ story, onClose }) {
       >
         <button
           onClick={onClose}
-          className="absolute right-5 top-5 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white/70 transition hover:bg-black/60"
+          className="absolute right-5 top-5 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white/70 transition hover:bg-black/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
         >
           <FiX />
         </button>
@@ -174,7 +174,7 @@ export default function Outreaches() {
           <p className="mx-auto mt-4 max-w-xl text-sm text-white/85 sm:text-base">
             Be part of the move. Sign up, show up, and let's reach a soul together.
           </p>
-          <button className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#0d0c18] px-7 py-3.5 text-sm font-bold text-white transition hover:bg-black">
+          <button className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#0d0c18] px-7 py-3.5 text-sm font-bold text-white transition hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
             Get Involved <FiArrowRight className="h-4 w-4" />
           </button>
         </Card>

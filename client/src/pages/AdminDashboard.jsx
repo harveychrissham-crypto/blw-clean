@@ -202,7 +202,7 @@ export default function AdminDashboard() {
         <form onSubmit={saveLocation} className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-soft sm:p-7">
           <div className="flex items-center justify-between gap-4">
             <div><p className="text-xs font-bold uppercase tracking-widest text-[#F2A31C]">{editingId ? 'Edit location' : 'Add location'}</p><h2 className="mt-1 text-2xl font-bold text-white">{editingId ? 'Update fellowship' : 'New fellowship'}</h2></div>
-            {editingId && <button type="button" onClick={resetForm} className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 hover:bg-white/5"><FiX /> Cancel</button>}
+            {editingId && <button type="button" onClick={resetForm} className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"><FiX /> Cancel</button>}
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -222,7 +222,7 @@ export default function AdminDashboard() {
           </div>
 
           <label className="mt-4 flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/75"><input type="checkbox" checked={form.isActive} onChange={(event) => setField('isActive', event.target.checked)} /> Show this fellowship in public search</label>
-          <div className="mt-6 flex flex-wrap gap-3"><button type="submit" disabled={saving || !validCoords} className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-5 py-3 text-sm font-bold text-white disabled:opacity-50"><FiSave /> {saving ? 'Saving...' : editingId ? 'Save Changes' : 'Add Fellowship'}</button><button type="button" onClick={resetForm} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/80 hover:bg-white/10"><FiMapPin /> Reset Form</button></div>
+          <div className="mt-6 flex flex-wrap gap-3"><button type="submit" disabled={saving || !validCoords} className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-5 py-3 text-sm font-bold text-white disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"><FiSave /> {saving ? 'Saving...' : editingId ? 'Save Changes' : 'Add Fellowship'}</button><button type="button" onClick={resetForm} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white/80 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"><FiMapPin /> Reset Form</button></div>
         </form>
 
         <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-4 shadow-soft sm:p-5">
@@ -237,7 +237,7 @@ export default function AdminDashboard() {
         <div className="mt-5 space-y-3">{loading ? <div className="py-8 text-center text-sm text-white/30">Loading fellowship locations...</div> : locations.length === 0 ? <div className="py-8 text-center text-sm text-white/30">No fellowship locations have been added yet.</div> : locations.map((location) => (
           <div key={location.id} className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0"><div className="flex items-center gap-2"><FiMapPin className="h-4 w-4 shrink-0 text-[#D8B2FF]" /><h3 className="truncate text-base font-bold text-white">{location.fellowshipName}</h3></div><p className="mt-1 text-sm text-white/45">{[location.university, location.area || location.town || location.city, location.country].filter(Boolean).join(' • ')}</p>{location.latitude != null && <p className="mt-1 text-xs text-white/25">{location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}</p>}</div>
-            <div className="flex shrink-0 gap-2"><button onClick={() => startEdit(location)} className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-xs font-semibold text-white/75 hover:bg-white/5"><FiEdit2 /> Edit</button><button onClick={() => deleteLocation(location.id)} className="inline-flex items-center gap-2 rounded-full border border-red-500/20 px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-500/10"><FiTrash2 /> Delete</button></div>
+            <div className="flex shrink-0 gap-2"><button onClick={() => startEdit(location)} className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-xs font-semibold text-white/75 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"><FiEdit2 /> Edit</button><button onClick={() => deleteLocation(location.id)} className="inline-flex items-center gap-2 rounded-full border border-red-500/20 px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"><FiTrash2 /> Delete</button></div>
           </div>
         ))}</div>
       </div>

@@ -89,7 +89,7 @@ function WelcomePopup({ onDone }) {
           <button
             type="submit"
             disabled={submitting}
-            className="mt-4 w-full rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2 text-xs font-bold text-white transition hover:opacity-90 disabled:opacity-50"
+            className="mt-4 w-full rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2 text-xs font-bold text-white transition hover:opacity-90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           >
             {submitting ? 'Continuing…' : 'Continue to Live'}
           </button>
@@ -97,7 +97,7 @@ function WelcomePopup({ onDone }) {
           <button
             type="button"
             onClick={() => navigate('/auth')}
-            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] py-2 text-xs font-semibold text-white/80 transition hover:bg-white/[0.08]"
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] py-2 text-xs font-semibold text-white/80 transition hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           >
             <FiLogIn /> Sign in / Create account
           </button>

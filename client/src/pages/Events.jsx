@@ -90,7 +90,7 @@ export default function Events() {
       {error && (
         <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-5 py-3 text-sm text-red-300">
           <span>{error}</span>
-          <button onClick={load} className="shrink-0 rounded-full border border-red-400/30 px-3 py-1 text-xs font-semibold hover:bg-red-500/10">Retry</button>
+          <button onClick={load} className="shrink-0 rounded-full border border-red-400/30 px-3 py-1 text-xs font-semibold hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">Retry</button>
         </div>
       )}
 
@@ -100,8 +100,8 @@ export default function Events() {
           <div className="mb-4 flex items-center justify-between">
             <span className="text-sm font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>{monthNames[viewMonth]} {viewYear}</span>
             <div className="flex gap-1">
-              <button onClick={() => goMonth(-1)} className="rounded-lg p-1.5 text-white/40 hover:text-white hover:bg-white/5"><FiChevronLeft /></button>
-              <button onClick={() => goMonth(1)} className="rounded-lg p-1.5 text-white/40 hover:text-white hover:bg-white/5"><FiChevronRight /></button>
+              <button onClick={() => goMonth(-1)} className="rounded-lg p-1.5 text-white/40 hover:text-white hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"><FiChevronLeft /></button>
+              <button onClick={() => goMonth(1)} className="rounded-lg p-1.5 text-white/40 hover:text-white hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"><FiChevronRight /></button>
             </div>
           </div>
           <div className="grid grid-cols-7 gap-1 text-center">
@@ -117,7 +117,7 @@ export default function Events() {
                   onClick={() => cell.current && setSelectedDay(cell.day)}
                   className={`relative rounded-lg py-2 text-xs font-medium transition ${
                     isSelected ? 'text-white' : cell.current ? 'text-white/60 hover:text-white hover:bg-white/5' : 'text-white/20 cursor-default'
-                  }`}
+                  } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40`}
                   style={isSelected ? { background: 'linear-gradient(135deg,#EC2FA8,#8A2BE2)' } : {}}
                 >
                   {cell.day}

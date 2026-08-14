@@ -534,13 +534,13 @@ function MemberResultCard({ member, confirmed, onConfirm, onReset, onViewProfile
 
       <div className="mb-5 space-y-2">
         {fields.map(({ label, value, icon: Icon }) => (
-          <div key={label} className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.04] px-4 py-2.5">
+          <Card key={label} variant="subtle" className="flex items-center gap-3 px-4 py-2.5">
             <Icon className="h-3.5 w-3.5 shrink-0 text-[#F2A31C]" />
             <div className="min-w-0">
               <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">{label}</p>
               <p className="truncate text-sm font-medium text-white">{value}</p>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 
@@ -668,7 +668,7 @@ function EventForm({ initial, onCancel, onSave }) {
   };
 
   return (
-    <form onSubmit={submit} className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+    <Card as="form" onSubmit={submit} variant="raised" className="space-y-3 p-5">
       <div>
         <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Title</label>
         <input value={form.title} onChange={set('title')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="e.g. Campus Prayer Night" />
@@ -712,7 +712,7 @@ function EventForm({ initial, onCancel, onSave }) {
           Cancel
         </button>
       </div>
-    </form>
+    </Card>
   );
 }
 
@@ -814,7 +814,7 @@ function EventsManagerPanel({ onClose }) {
 
               <div className="space-y-2">
                 {events.map((event) => (
-                  <div key={event.id} className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.04] px-4 py-3">
+                  <Card key={event.id} variant="subtle" className="flex items-center gap-3 px-4 py-3">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-white">{event.title}</p>
                       <p className="text-xs text-white/40">{formatDate(event.date)} {event.time && `· ${event.time}`} {event.location && `· ${event.location}`}</p>
@@ -831,7 +831,7 @@ function EventsManagerPanel({ onClose }) {
                     >
                       <FiTrash2 className="h-3.5 w-3.5" />
                     </button>
-                  </div>
+                  </Card>
                 ))}
               </div>
             </>
@@ -891,7 +891,7 @@ function StoryForm({ initial, onCancel, onSave }) {
   };
 
   return (
-    <form onSubmit={submit} className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+    <Card as="form" onSubmit={submit} variant="raised" className="space-y-3 p-5">
       <div>
         <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Title</label>
         <input value={form.title} onChange={set('title')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="e.g. Streets of Nairobi" />
@@ -959,7 +959,7 @@ function StoryForm({ initial, onCancel, onSave }) {
           Cancel
         </button>
       </div>
-    </form>
+    </Card>
   );
 }
 
@@ -1055,7 +1055,7 @@ function StoriesManagerPanel({ onClose }) {
 
               <div className="space-y-2">
                 {stories.map((story) => (
-                  <div key={story.id} className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.04] px-4 py-3">
+                  <Card key={story.id} variant="subtle" className="flex items-center gap-3 px-4 py-3">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/[0.07]">
                       {story.imageUrl ? (
                         <img src={story.imageUrl} alt={story.title} className="h-full w-full object-cover" />
@@ -1079,7 +1079,7 @@ function StoriesManagerPanel({ onClose }) {
                     >
                       <FiTrash2 className="h-3.5 w-3.5" />
                     </button>
-                  </div>
+                  </Card>
                 ))}
               </div>
             </>
@@ -1118,7 +1118,7 @@ function SermonForm({ initial, onCancel, onSave }) {
   };
 
   return (
-    <form onSubmit={submit} className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+    <Card as="form" onSubmit={submit} variant="raised" className="space-y-3 p-5">
       <div>
         <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Title</label>
         <input value={form.title} onChange={set('title')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="e.g. Walking in Victory" />
@@ -1151,7 +1151,7 @@ function SermonForm({ initial, onCancel, onSave }) {
           Cancel
         </button>
       </div>
-    </form>
+    </Card>
   );
 }
 
@@ -1258,7 +1258,11 @@ function SermonsManagerPanel({ onClose }) {
 
               <div className="space-y-2">
                 {sermons.map((sermon) => (
-                  <div key={sermon.id} className={`flex items-center gap-3 rounded-2xl border px-4 py-3 ${sermon.isFeatured ? 'border-[#F2A31C]/40 bg-[#F2A31C]/[0.07]' : 'border-white/5 bg-white/[0.04]'}`}>
+                  <Card
+                    key={sermon.id}
+                    variant="subtle"
+                    className={`flex items-center gap-3 px-4 py-3 ${sermon.isFeatured ? '!border-[#F2A31C]/40 !bg-[#F2A31C]/[0.07]' : ''}`}
+                  >
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/[0.07]">
                       {sermon.youtubeId ? (
                         <img src={`https://i.ytimg.com/vi/${sermon.youtubeId}/default.jpg`} alt={sermon.title} className="h-full w-full object-cover" />
@@ -1295,7 +1299,7 @@ function SermonsManagerPanel({ onClose }) {
                     >
                       <FiTrash2 className="h-3.5 w-3.5" />
                     </button>
-                  </div>
+                  </Card>
                 ))}
               </div>
             </>
@@ -1335,7 +1339,7 @@ function VenueForm({ initial, lockChapter, onCancel, onSave }) {
   };
 
   return (
-    <form onSubmit={submit} className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+    <Card as="form" onSubmit={submit} variant="raised" className="space-y-3 p-5">
       <div>
         <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Chapter</label>
         {lockChapter ? (
@@ -1369,7 +1373,7 @@ function VenueForm({ initial, lockChapter, onCancel, onSave }) {
           Cancel
         </button>
       </div>
-    </form>
+    </Card>
   );
 }
 
@@ -1468,7 +1472,7 @@ function VenuesManagerPanel({ onClose }) {
 
               <div className="space-y-2">
                 {venues.map((v) => (
-                  <div key={v.chapter} className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.04] px-4 py-3">
+                  <Card key={v.chapter} variant="subtle" className="flex items-center gap-3 px-4 py-3">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/[0.07]">
                       <FiMapPin className="h-5 w-5 text-white/40" />
                     </div>
@@ -1488,7 +1492,7 @@ function VenuesManagerPanel({ onClose }) {
                     >
                       <FiTrash2 className="h-3.5 w-3.5" />
                     </button>
-                  </div>
+                  </Card>
                 ))}
               </div>
             </>
@@ -1542,7 +1546,7 @@ function LiveViewersList() {
     <div className="space-y-2">
       <p className="text-[11px] text-white/30">{viewers.length} viewer{viewers.length === 1 ? '' : 's'} recorded — most recently active first. Each browser is only counted once; returning visits add to their visit count and watch time instead of creating a new entry.</p>
       {viewers.map((v) => (
-        <div key={v.id} className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.04] px-4 py-3">
+        <Card key={v.id} variant="subtle" className="flex items-center gap-3 px-4 py-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.08] text-white/70">
             <FiUserCheck className="h-4 w-4" />
           </div>
@@ -1565,7 +1569,7 @@ function LiveViewersList() {
             </p>
             <p className="text-white/20">last seen</p>
           </div>
-        </div>
+        </Card>
       ))}
     </div>
   );
@@ -1671,7 +1675,10 @@ function LiveManagerPanel({ onClose }) {
               <p className="text-sm text-white/40">Loading live stream settings…</p>
             ) : (
               <>
-                <div className={`flex items-center justify-between rounded-2xl border px-4 py-3 ${form.isLive ? 'border-red-500/40 bg-red-500/[0.07]' : 'border-white/5 bg-white/[0.04]'}`}>
+                <Card
+                  variant="subtle"
+                  className={`flex items-center justify-between px-4 py-3 ${form.isLive ? '!border-red-500/40 !bg-red-500/[0.07]' : ''}`}
+                >
                   <div className="flex items-center gap-3">
                     <FiRadio className={form.isLive ? 'text-red-400 animate-pulse' : 'text-white/40'} />
                     <div>
@@ -1687,9 +1694,9 @@ function LiveManagerPanel({ onClose }) {
                   >
                     {form.isLive ? 'Go Offline' : 'Go Live'}
                   </button>
-                </div>
+                </Card>
 
-                <form onSubmit={submit} className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+                <Card as="form" onSubmit={submit} variant="raised" className="space-y-3 p-5">
                   <div>
                     <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Stream title</label>
                     <input value={form.title} onChange={set('title')} className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#F2A31C]/50" placeholder="e.g. Sunday 3rd Service" />
@@ -1720,7 +1727,7 @@ function LiveManagerPanel({ onClose }) {
                   <button type="submit" disabled={saving} className="w-full rounded-xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50">
                     {saving ? 'Saving…' : 'Save Details'}
                   </button>
-                </form>
+                </Card>
               </>
             )
           )}
@@ -1744,7 +1751,7 @@ function MembersList({ members, checkedInIds, onSelectMember }) {
   );
 
   return (
-    <div className="overflow-hidden rounded-[2rem] border border-white/[0.07] bg-white/[0.04]">
+    <Card variant="raised">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
         <div>
@@ -1804,7 +1811,7 @@ function MembersList({ members, checkedInIds, onSelectMember }) {
           );
         })}
       </div>
-    </div>
+    </Card>
   );
 }
 

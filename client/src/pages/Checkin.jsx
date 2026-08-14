@@ -102,7 +102,7 @@ function MemberQRCode({ member }) {
           {member.joinDate && <p className="text-xs text-slate-400">Joined: {member.joinDate}</p>}
         </div>
       </div>
-      <button type="button" onClick={handleDownload} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90">
+      <button type="button" onClick={handleDownload} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
         <FiDownload /> Download QR Badge
       </button>
     </div>
@@ -189,7 +189,7 @@ export default function Checkin() {
                   <label className="block text-sm font-medium text-slate-400">Phone number or email</label>
                   <input value={query} onChange={(e) => setQuery(e.target.value)} className="mt-2 w-full bg-transparent text-white outline-none placeholder:text-slate-500" placeholder="0712345678 or name@example.com" />
                 </div>
-                <button type="submit" disabled={isLoading} className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-60">
+                <button type="submit" disabled={isLoading} className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
                   <FiSearch /> {isLoading ? 'Searching...' : 'Find me'}
                 </button>
               </form>
@@ -260,7 +260,7 @@ export default function Checkin() {
                 {foundProfile.checkedIn ? (
                   <div className="flex items-center gap-3 rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-300"><FiCheckCircle className="h-5 w-5" /> You are already checked in for today.</div>
                 ) : (
-                  <button type="button" onClick={handleSelfCheckIn} disabled={isCheckingIn} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-4 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60">
+                  <button type="button" onClick={handleSelfCheckIn} disabled={isCheckingIn} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-4 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
                     <FiCheckCircle /> {isCheckingIn ? 'Checking in...' : user?.email ? 'Check In Now' : 'Sign In to Check In'}
                   </button>
                 )}
@@ -270,7 +270,7 @@ export default function Checkin() {
 
             <div className="space-y-4">
               <MemberQRCode member={foundProfile} />
-              <button type="button" onClick={resetSearch} className="w-full rounded-full border border-white/10 bg-slate-950/80 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-900">Search again</button>
+              <button type="button" onClick={resetSearch} className="w-full rounded-full border border-white/10 bg-slate-950/80 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">Search again</button>
             </div>
           </div>
         </div>
