@@ -32,7 +32,7 @@ export default function BottomNav({ onMoreClick, moreActive }) {
               to={tab.path}
               end={tab.end}
               className={({ isActive }) =>
-                `flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition ${
+                `flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
                   isActive ? 'text-white' : 'text-white/45'
                 }`
               }
@@ -56,7 +56,7 @@ export default function BottomNav({ onMoreClick, moreActive }) {
         <button
           type="button"
           onClick={onMoreClick}
-          className={`flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition ${
+          className={`flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
             moreActive ? 'text-white' : 'text-white/45'
           }`}
         >
