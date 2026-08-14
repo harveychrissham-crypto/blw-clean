@@ -36,19 +36,19 @@ export function Eyebrow({ children, color = '#F7C948', className = '' }) {
 }
 
 // A row of stat tiles inside ONE card (with dividers) instead of N separate
-// boxes competing for attention.
-export function StatGroup({ items }) {
+// boxes competing for attention. Pass compact for tighter contexts (e.g. modals).
+export function StatGroup({ items, compact = false }) {
   return (
     <Card variant="raised" className="p-0">
       <div className="grid" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0,1fr))` }}>
         {items.map(({ label, value, icon: Icon, accent = '#FF4F9A' }, i) => (
           <div
             key={label}
-            className={`px-3 py-4 text-center ${i > 0 ? 'border-l border-white/[0.06]' : ''}`}
+            className={`text-center ${compact ? 'px-2 py-2.5' : 'px-3 py-4'} ${i > 0 ? 'border-l border-white/[0.06]' : ''}`}
           >
-            {Icon && <Icon className="mx-auto mb-1.5 h-4 w-4" style={{ color: accent }} />}
-            <p className="text-xl font-bold text-white leading-none">{value}</p>
-            <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+            {Icon && <Icon className={`mx-auto ${compact ? 'mb-1 h-3.5 w-3.5' : 'mb-1.5 h-4 w-4'}`} style={{ color: accent }} />}
+            <p className={`font-bold text-white leading-none ${compact ? 'text-base' : 'text-xl'}`}>{value}</p>
+            <p className={`font-semibold uppercase text-slate-500 ${compact ? 'mt-1 text-[9px] tracking-wide' : 'mt-1.5 text-[10px] tracking-widest'}`}>
               {label}
             </p>
           </div>

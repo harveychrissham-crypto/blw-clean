@@ -124,6 +124,7 @@ export default function OfflineAttendanceSheet({ members = [], onClose, onBackTo
         <div className="p-6">
           <div className="mb-5">
             <StatGroup
+              compact
               items={[
                 { label: 'Members', value: rows.length, icon: FiUsers, accent: '#94a3b8' },
                 { label: 'Signed in', value: checkedIn, icon: FiCheckCircle, accent: '#34d399' },
