@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { FiCheckCircle, FiClock, FiSearch, FiX, FiUsers } from 'react-icons/fi';
 import { fetchAllMembers, getCachedMembers } from '../utils/members';
 import { getOfflineCheckinQueue } from '../utils/offlineCheckin';
+import { Card, StatGroup } from './ui/Card';
 
 function localDateKey() {
   const now = new Date();
@@ -109,31 +110,26 @@ export default function OfflineAttendanceSheet({ members = [], onClose, onBackTo
             {onBackToTools && (
               <button
                 onClick={onBackToTools}
-                className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-xs font-semibold text-white/75 transition hover:bg-white/10 hover:text-white"
+                className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-xs font-semibold text-white/75 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
                 Back to Leadership Tools
               </button>
             )}
-            <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10">
+            <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
               <FiX />
             </button>
           </div>
         </div>
 
         <div className="p-6">
-          <div className="mb-5 grid grid-cols-3 gap-2">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5">
-              <p className="text-[9px] uppercase tracking-[0.2em] text-white/40">Members</p>
-              <p className="mt-1 text-lg font-bold text-white">{rows.length}</p>
-            </div>
-            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-950/30 px-3 py-2.5">
-              <p className="text-[9px] uppercase tracking-[0.2em] text-emerald-400">Signed in</p>
-              <p className="mt-1 text-lg font-bold text-emerald-300">{checkedIn}</p>
-            </div>
-            <div className="rounded-2xl border border-amber-500/20 bg-amber-950/20 px-3 py-2.5">
-              <p className="text-[9px] uppercase tracking-[0.2em] text-amber-300">Pending sync</p>
-              <p className="mt-1 text-lg font-bold text-amber-200">{pending}</p>
-            </div>
+          <div className="mb-5">
+            <StatGroup
+              items={[
+                { label: 'Members', value: rows.length, icon: FiUsers, accent: '#94a3b8' },
+                { label: 'Signed in', value: checkedIn, icon: FiCheckCircle, accent: '#34d399' },
+                { label: 'Pending sync', value: pending, icon: FiClock, accent: '#fbbf24' },
+              ]}
+            />
           </div>
 
           <div className="relative mb-4">
@@ -146,7 +142,7 @@ export default function OfflineAttendanceSheet({ members = [], onClose, onBackTo
             />
           </div>
 
-          <div className="max-h-[55vh] overflow-y-auto overscroll-contain rounded-2xl border border-white/10">
+          <Card variant="raised" className="max-h-[55vh] overflow-y-auto overscroll-contain">
             {filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-3 px-6 py-12 text-center">
                 <FiUsers className="h-8 w-8 text-white/20" />
@@ -184,7 +180,7 @@ export default function OfflineAttendanceSheet({ members = [], onClose, onBackTo
                 })}
               </div>
             )}
-          </div>
+          </Card>
         </div>
       </div>
     </div>
