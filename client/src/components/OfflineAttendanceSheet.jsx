@@ -121,18 +121,18 @@ export default function OfflineAttendanceSheet({ members = [], onClose, onBackTo
         </div>
 
         <div className="p-6">
-          <div className="mb-5 grid grid-cols-3 gap-3">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-              <p className="text-[10px] uppercase tracking-[0.25em] text-white/40">Members</p>
-              <p className="mt-2 text-2xl font-bold text-white">{rows.length}</p>
+          <div className="mb-5 grid grid-cols-3 gap-2">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5">
+              <p className="text-[9px] uppercase tracking-[0.2em] text-white/40">Members</p>
+              <p className="mt-1 text-lg font-bold text-white">{rows.length}</p>
             </div>
-            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-950/30 p-4">
-              <p className="text-[10px] uppercase tracking-[0.25em] text-emerald-400">Signed in</p>
-              <p className="mt-2 text-2xl font-bold text-emerald-300">{checkedIn}</p>
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-950/30 px-3 py-2.5">
+              <p className="text-[9px] uppercase tracking-[0.2em] text-emerald-400">Signed in</p>
+              <p className="mt-1 text-lg font-bold text-emerald-300">{checkedIn}</p>
             </div>
-            <div className="rounded-2xl border border-amber-500/20 bg-amber-950/20 p-4">
-              <p className="text-[10px] uppercase tracking-[0.25em] text-amber-300">Pending sync</p>
-              <p className="mt-2 text-2xl font-bold text-amber-200">{pending}</p>
+            <div className="rounded-2xl border border-amber-500/20 bg-amber-950/20 px-3 py-2.5">
+              <p className="text-[9px] uppercase tracking-[0.2em] text-amber-300">Pending sync</p>
+              <p className="mt-1 text-lg font-bold text-amber-200">{pending}</p>
             </div>
           </div>
 
