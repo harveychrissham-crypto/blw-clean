@@ -16,6 +16,7 @@ import RecordSouls from './pages/RecordSouls';
 import LeaderAdmin from './pages/LeaderAdmin';
 import LeadersForumWithFellowship from './pages/LeadersForumWithFellowship';
 import FellowshipLocationsAdmin from './pages/FellowshipLocationsAdmin';
+import NotificationCenter from './pages/NotificationCenter';
 import { useAuth } from './context/AuthContext';
 import OfflineBanner from './components/OfflineBanner';
 import { startOfflineSyncListeners } from './offlineSync';
@@ -74,6 +75,7 @@ const AnimatedRoutes = () => {
     <Route path="/admin" element={route(<LeaderAdmin />)} />
     <Route path="/leaders-forum" element={route(<LeadersForumWithFellowship />)} />
     <Route path="/fellowship-locations" element={route(<FellowshipLocationsPage />)} />
+    <Route path="/leaders-forum/notifications" element={route(<NotificationCenter />)} />
     <Route path="*" element={route(<Home />)} />
   </Routes></motion.div></AnimatePresence>;
 };
