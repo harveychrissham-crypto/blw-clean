@@ -2,6 +2,7 @@ name: Build & release Android APK
 
 # Runs on every push to main, and can also be triggered manually from the
 # Actions tab (Run workflow button) without needing a push.
+# FCM build trigger refresh: latest Worker FCM configuration is deployed separately.
 on:
   push:
     branches: [main]
