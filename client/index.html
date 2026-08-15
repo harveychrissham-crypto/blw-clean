@@ -12,8 +12,8 @@
       /*
         Animated boot splash inspired by the supplied reference:
         a dark navy field with slow, soft purple and electric-blue light
-        waves moving through the frame. No logo or static image is placed
-        over the animation so the gradient itself is the first app screen.
+        waves moving through the frame. The ministry badge sits centered
+        above the animation while the gradient remains fully visible behind it.
       */
       #boot-splash {
         position: fixed;
@@ -37,7 +37,6 @@
         pointer-events: none;
       }
 
-      /* Broad purple light drifting from the left/bottom. */
       #boot-splash::before {
         background:
           radial-gradient(ellipse 38% 24% at 28% 72%, rgba(133, 38, 200, 0.72) 0%, rgba(104, 35, 165, 0.42) 38%, rgba(104, 35, 165, 0) 76%),
@@ -45,7 +44,6 @@
         animation: boot-purple-wave 10s ease-in-out infinite alternate;
       }
 
-      /* Thin blue-violet wave travelling along the lower-right edge. */
       #boot-splash::after {
         background:
           radial-gradient(ellipse 42% 11% at 72% 78%, rgba(0, 126, 255, 0.92) 0%, rgba(38, 82, 203, 0.62) 28%, rgba(45, 70, 180, 0.18) 53%, rgba(45, 70, 180, 0) 78%),
@@ -81,6 +79,19 @@
         animation: boot-ribbon-two 11s ease-in-out infinite alternate;
       }
 
+      #boot-splash .badge {
+        position: absolute;
+        z-index: 3;
+        left: 50%;
+        top: 50%;
+        width: min(42vmin, 240px);
+        height: min(42vmin, 240px);
+        object-fit: contain;
+        transform: translate(-50%, -50%);
+        filter: drop-shadow(0 0 30px rgba(255, 220, 150, 0.24));
+        animation: boot-badge-breathe 2.8s ease-in-out infinite;
+      }
+
       @keyframes boot-purple-wave {
         0%   { transform: translate3d(-3%, 5%, 0) scale(1.02); }
         100% { transform: translate3d(8%, -4%, 0) scale(1.10); }
@@ -101,6 +112,11 @@
         100% { transform: rotate(2deg) translate3d(-7%, -5%, 0) scale(1.17); }
       }
 
+      @keyframes boot-badge-breathe {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); }
+        50% { transform: translate(-50%, -50%) scale(1.035); }
+      }
+
       #boot-splash.boot-splash-hide {
         opacity: 0;
         pointer-events: none;
@@ -109,7 +125,8 @@
       @media (prefers-reduced-motion: reduce) {
         #boot-splash::before,
         #boot-splash::after,
-        #boot-splash .wave {
+        #boot-splash .wave,
+        #boot-splash .badge {
           animation: none;
         }
       }
@@ -119,6 +136,7 @@
     <div id="boot-splash" aria-hidden="true">
       <div class="wave wave-one"></div>
       <div class="wave wave-two"></div>
+      <img class="badge" src="/logo-badge.png" alt="" />
     </div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
