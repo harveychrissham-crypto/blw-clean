@@ -44,6 +44,7 @@ import { fetchLiveStream, updateLiveStream, fetchLiveViewers } from '../utils/li
 import { apiFetch } from '../config/api';
 import { Eyebrow, Card, StatGroup, ActionBanner } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
+import { SkeletonList } from '../components/ui/Skeleton';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const LEADER_CODE = '1120363';
@@ -288,7 +289,7 @@ function QRScannerPanel({ members, checkedInIds, onCheckIn, onClose, onViewProfi
   const reset = () => { setResult(null); setError(''); setManualId(''); setSuggestions([]); };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0c18]/95 px-4 py-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#0d0c18]/95 px-4 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
       <Card variant="raised" className="relative w-full max-w-lg rounded-[2.5rem] shadow-2xl">
 
         {/* Header */}
@@ -590,7 +591,7 @@ function MemberModal({ member, onClose }) {
   ].filter((f) => f.value);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0c18]/95 px-4 py-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#0d0c18]/95 px-4 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
       <Card variant="raised" className="relative w-full max-w-lg rounded-[2.5rem] shadow-2xl">
         <button
           onClick={onClose}
@@ -767,7 +768,7 @@ function EventsManagerPanel({ onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0c18]/95 px-4 py-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#0d0c18]/95 px-4 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
       <div className="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.04] shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
           <div>
@@ -807,7 +808,7 @@ function EventsManagerPanel({ onClose }) {
                 </div>
               )}
 
-              {loading && <p className="text-sm text-white/60">Loading events…</p>}
+              {loading && <SkeletonList rows={3} />}
               {!loading && events.length === 0 && !error && (
                 <EmptyState icon={FiCalendar} title="No events yet" hint="Add the first one above." />
               )}
@@ -1008,7 +1009,7 @@ function StoriesManagerPanel({ onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0c18]/95 px-4 py-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#0d0c18]/95 px-4 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
       <div className="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.04] shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
           <div>
@@ -1048,7 +1049,7 @@ function StoriesManagerPanel({ onClose }) {
                 </div>
               )}
 
-              {loading && <p className="text-sm text-white/60">Loading stories…</p>}
+              {loading && <SkeletonList rows={3} />}
               {!loading && stories.length === 0 && !error && (
                 <EmptyState icon={FiImage} title="No stories yet" hint="Add the first one above." />
               )}
@@ -1209,7 +1210,7 @@ function SermonsManagerPanel({ onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0c18]/95 px-4 py-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#0d0c18]/95 px-4 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
       <div className="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.04] shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
           <div>
@@ -1422,7 +1423,7 @@ function VenuesManagerPanel({ onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0c18]/95 px-4 py-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#0d0c18]/95 px-4 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
       <div className="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.04] shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
           <div>
@@ -1637,7 +1638,7 @@ function LiveManagerPanel({ onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0c18]/95 px-4 py-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#0d0c18]/95 px-4 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
       <div className="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.04] shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
           <div>

@@ -36,7 +36,7 @@ const DEFAULT_STORIES = [
 
 function StoryModal({ story, onClose }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0c18]/95 px-4 py-8" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0c18]/95 px-4 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom))]" onClick={onClose}>
       <div
         className="relative max-h-[85vh] w-full max-w-lg overflow-hidden rounded-[2rem] border border-white/10 bg-[#15131f] shadow-2xl"
         onClick={(e) => e.stopPropagation()}

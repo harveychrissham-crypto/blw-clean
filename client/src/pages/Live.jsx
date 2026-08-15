@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiRadio, FiClock, FiPlayCircle, FiCalendar, FiUsers, FiVideo, FiLogIn } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
@@ -6,6 +6,8 @@ import DailyIframe from '@daily-co/daily-js';
 import { fetchLiveStream, submitLiveViewer, sendLiveHeartbeat, sendLiveHeartbeatBeacon } from '../utils/live';
 import { Card } from '../components/ui/Card';
 import { Skeleton } from '../components/ui/Skeleton';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import PullToRefreshIndicator from '../components/PullToRefreshIndicator';
 
 const schedule = [
   { day: 'Sunday', time: '10:00 AM', title: 'Main Worship Service' },
@@ -133,6 +135,17 @@ export default function Live() {
     return () => { cancelled = true; };
   }, []);
 
+  const refreshLive = useCallback(async () => {
+    try {
+      const data = await fetchLiveStream();
+      setLive(data);
+      setStatus('loaded');
+    } catch {
+      // Manual pull-to-refresh: keep showing the last known state on failure
+      // rather than flipping to the full error view.
+    }
+  }, []);
+
   useEffect(() => {
     const html = document.documentElement;
     const body = document.body;
@@ -158,6 +171,13 @@ export default function Live() {
   const hasMeetLink = isLiveNow && !!live?.googleMeetUrl;
   const hasDailyRoom = isLiveNow && !!live?.dailyRoomUrl;
   const showDailyEmbed = hasDailyRoom && !isStreaming;
+
+  // Disabled while the welcome overlay owns touch/scroll (it already sets
+  // touchAction:'none') and while an embedded call is on-screen, so the pull
+  // gesture never competes with the iframe's own touch handling.
+  const { pullDistance, refreshing, bind } = usePullToRefresh(refreshLive, {
+    enabled: !showWelcome && !showDailyEmbed,
+  });
 
   const pendingSecondsRef = useRef(0);
   useEffect(() => {
@@ -209,7 +229,8 @@ export default function Live() {
   }, [showDailyEmbed, live?.dailyRoomUrl]);
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+    <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8" {...bind}>
+      <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
       <AnimatePresence>
         {showWelcome && <WelcomePopup onDone={() => setShowWelcome(false)} />}
       </AnimatePresence>

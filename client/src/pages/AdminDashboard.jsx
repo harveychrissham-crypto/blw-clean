@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { FiEdit2, FiMapPin, FiSave, FiTrash2, FiX } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
+import { SkeletonList } from '../components/ui/Skeleton';
 
 const DEFAULT_CENTER = [-1.286389, 36.817223];
 const LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
@@ -234,7 +235,7 @@ export default function AdminDashboard() {
 
       <div className="mt-10 rounded-3xl border border-white/10 bg-slate-900/70 p-5 shadow-soft sm:p-6">
         <div className="flex items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-widest text-[#F2A31C]">Locations</p><h2 className="mt-1 text-2xl font-bold text-white">All fellowship points</h2></div><span className="rounded-full bg-white/5 px-3 py-1 text-xs text-white/50">{locations.length} total</span></div>
-        <div className="mt-5 space-y-3">{loading ? <div className="py-8 text-center text-sm text-white/30">Loading fellowship locations...</div> : locations.length === 0 ? <div className="py-8 text-center text-sm text-white/30">No fellowship locations have been added yet.</div> : locations.map((location) => (
+        <div className="mt-5 space-y-3">{loading ? <SkeletonList rows={3} /> : locations.length === 0 ? <div className="py-8 text-center text-sm text-white/30">No fellowship locations have been added yet.</div> : locations.map((location) => (
           <div key={location.id} className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0"><div className="flex items-center gap-2"><FiMapPin className="h-4 w-4 shrink-0 text-[#D8B2FF]" /><h3 className="truncate text-base font-bold text-white">{location.fellowshipName}</h3></div><p className="mt-1 text-sm text-white/45">{[location.university, location.area || location.town || location.city, location.country].filter(Boolean).join(' • ')}</p>{location.latitude != null && <p className="mt-1 text-xs text-white/25">{location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}</p>}</div>
             <div className="flex shrink-0 gap-2"><button onClick={() => startEdit(location)} className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-xs font-semibold text-white/75 hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"><FiEdit2 /> Edit</button><button onClick={() => deleteLocation(location.id)} className="inline-flex items-center gap-2 rounded-full border border-red-500/20 px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"><FiTrash2 /> Delete</button></div>

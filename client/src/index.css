@@ -50,6 +50,23 @@ a, button, [role="button"], input, textarea, select {
   }
 }
 
+/* App-feel pass (v9): on touch devices, a long-press on a link or button
+   triggers the browser/OS's native text-selection magnifier and "Copy"
+   callout - the same behavior you'd get long-pressing a word in an article.
+   On a button that reads as a broken tap, not a press. Scoped to touch-only
+   (same @media (hover: none) gate as the two rules above) and to
+   interactive elements only, so normal text selection/copy still works
+   everywhere else - sermon descriptions, event details, form values, etc.
+   Inputs/textarea/select are deliberately excluded: users still need to
+   select and copy what they've typed. */
+@media (hover: none) {
+  a, button, [role="button"] {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
 ::selection { background: rgba(236,47,168,0.3); color: white; }
 
 /* Hide scrollbar on nav */

@@ -5,6 +5,8 @@ import { fetchEvents } from '../utils/events';
 import { Card, Eyebrow } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
 import { SkeletonCard } from '../components/ui/Skeleton';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import PullToRefreshIndicator from '../components/PullToRefreshIndicator';
 
 const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -46,6 +48,8 @@ export default function Events() {
 
   useEffect(() => { load(); }, [load]);
 
+  const { pullDistance, refreshing, bind } = usePullToRefresh(load);
+
   const calendarDays = buildCalendarGrid(viewYear, viewMonth);
   const pad = (n) => String(n).padStart(2, '0');
   const monthPrefix = `${viewYear}-${pad(viewMonth + 1)}-`;
@@ -81,7 +85,8 @@ export default function Events() {
   };
 
   return (
-    <section className="mx-auto max-w-6xl px-5 py-16">
+    <section className="mx-auto max-w-6xl px-5 py-16" {...bind}>
+      <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
       <div className="mb-8">
         <Eyebrow className="mb-2">Events</Eyebrow>
         <h2 className="text-2xl font-extrabold text-white sm:text-3xl" style={{ fontFamily: 'Montserrat, sans-serif' }}>Gatherings that build, inspire, and connect.</h2>

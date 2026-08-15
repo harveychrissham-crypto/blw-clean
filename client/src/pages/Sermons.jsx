@@ -8,6 +8,8 @@ import { useAuth } from '../context/AuthContext';
 import { Card, Eyebrow } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
 import { Skeleton } from '../components/ui/Skeleton';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import PullToRefreshIndicator from '../components/PullToRefreshIndicator';
 
 function SermonPlayer({ sermon }) {
   const isOnline = useOnlineStatus();
@@ -125,11 +127,14 @@ export default function Sermons() {
 
   useEffect(() => { load(); }, [load]);
 
+  const { pullDistance, refreshing, bind } = usePullToRefresh(load);
+
   const activeSermon = sermons.find((sermon) => sermon.isFeatured) || sermons[0] || null;
   const olderSermons = sermons.filter((sermon) => sermon.id !== activeSermon?.id);
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-6 sm:py-14">
+    <section className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-6 sm:py-14" {...bind}>
+      <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
       <div className="mb-8">
         <Eyebrow className="mb-3">Sermons</Eyebrow>
         <h1 className="text-3xl font-extrabold text-white sm:text-4xl" style={{ fontFamily: 'Montserrat, sans-serif' }}>Sermons &amp; Teachings</h1>

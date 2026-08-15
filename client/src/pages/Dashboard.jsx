@@ -343,7 +343,7 @@ export default function Dashboard() {
       </div>
 
       {isEditing && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/90 px-4 py-10">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/90 px-4 pt-10 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
           <div className="relative w-full max-w-3xl overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 shadow-2xl">
             <button
               type="button"
