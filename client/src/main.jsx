@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
-import { initNative } from './native';
+import { initNative, hideSplashScreen } from './native';
 import { bindGlobalTapHaptics } from './utils/haptics';
 import './index.css';
 
@@ -19,6 +19,15 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </BrowserRouter>
   </React.StrictMode>
 );
+
+// Two animation frames after render puts this after the browser has
+// actually painted the mounted app -- not a fixed setTimeout guess -- so
+// the native splash clears right as real content appears, not before.
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    hideSplashScreen();
+  });
+});
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

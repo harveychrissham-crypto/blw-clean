@@ -58,9 +58,12 @@ a, button, [role="button"], input, textarea, select {
    interactive elements only, so normal text selection/copy still works
    everywhere else - sermon descriptions, event details, form values, etc.
    Inputs/textarea/select are deliberately excluded: users still need to
-   select and copy what they've typed. */
+   select and copy what they've typed.
+   v11: added img - a long-press on a sermon/event/fellowship thumbnail was
+   still triggering the OS "Save Image" / "Open in new tab" callout, the
+   same category of bug this rule already fixed for links and buttons. */
 @media (hover: none) {
-  a, button, [role="button"] {
+  a, button, [role="button"], img {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;

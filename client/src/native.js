@@ -63,6 +63,23 @@ async function setUpBackButton() {
   }
 }
 
+/**
+ * Hides the native cold-boot splash screen. `launchAutoHide` is off in
+ * capacitor.config.ts, so the splash stays up until this is called -- it's
+ * meant to run once real content has actually painted, not on a fixed
+ * timer, so the splash never outlives the app being ready.
+ */
+export async function hideSplashScreen() {
+  if (!Capacitor.isNativePlatform()) return;
+
+  try {
+    const { SplashScreen } = await import('@capacitor/splash-screen');
+    await SplashScreen.hide();
+  } catch (error) {
+    console.warn('[native] splash screen hide skipped:', error?.message || error);
+  }
+}
+
 // Push notification setup is intentionally deferred until Firebase is wired.
 // Keep the implementation here for when google-services.json is added.
 export async function setUpPushNotifications() {
