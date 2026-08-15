@@ -66,10 +66,12 @@ async function setUpBackButton() {
 }
 
 /**
- * Hides the native cold-boot splash screen. `launchAutoHide` is off in
- * capacitor.config.ts, so the splash stays up until this is called -- it's
- * meant to run once real content has actually painted, not on a fixed
- * timer, so the splash never outlives the app being ready.
+ * Hides Capacitor's native splash overlay. Belt-and-braces only now --
+ * capacitor.config.ts sets launchShowDuration: 0 and launchAutoHide: true,
+ * so the plugin already dismisses itself immediately and never blocks the
+ * animated gradient boot screen (client/index.html #boot-splash) from
+ * showing. This call is just a safety net in case autoHide ever gets
+ * turned off again; it's a harmless no-op if the splash is already gone.
  */
 export async function hideSplashScreen() {
   if (!Capacitor.isNativePlatform()) return;

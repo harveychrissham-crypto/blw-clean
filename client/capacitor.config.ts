@@ -17,17 +17,24 @@ const config: CapacitorConfig = {
     allowMixedContent: false,
   },
 
-  // Keeps the native splash (matching the app's #0d0c18 background) visible
-  // across the native-launch-to-WebView-ready gap. autoHide is off on
-  // purpose: SplashScreen.hide() is called explicitly from native.js once
-  // the app has actually mounted, not on a timer, so the splash never
-  // outlives real content being ready.
+  // Capacitor's own splash overlay is deliberately turned off (duration 0 +
+  // autoHide) rather than tuned. It's a *static* bitmap that would otherwise
+  // sit on top of the WebView and block the animated gradient boot screen
+  // (client/index.html #boot-splash) from being seen until JS calls hide()
+  // -- i.e. it would show a still gradient, then snap to the moving one,
+  // which reads as two different splash screens back to back.
+  //
+  // What actually shows on launch is just: the OS-level Android 12+
+  // SplashScreen (a brief, unavoidable navy background + badge icon --
+  // see styles.xml's AppTheme.NoActionBarLaunch, that's an OS restriction,
+  // not something this plugin controls) and then, the moment the WebView
+  // starts painting, the animated gradient in index.html -- one continuous
+  // moving-gradient startup, not a static frame followed by a moving one.
   plugins: {
     SplashScreen: {
       launchShowDuration: 0,
-      launchAutoHide: false,
+      launchAutoHide: true,
       backgroundColor: '#0d0c18',
-      androidSplashResourceName: 'splash',
       androidScaleType: 'CENTER_CROP',
       showSpinner: false,
       splashFullScreen: true,
