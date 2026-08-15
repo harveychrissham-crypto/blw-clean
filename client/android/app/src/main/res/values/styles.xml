@@ -15,25 +15,4 @@
         <item name="android:background">@null</item>
     </style>
 
-
-    <!--
-        Android 12+ (API 31+) shows its own OS-level splash automatically,
-        driven purely by these windowSplashScreen* attributes; it ignores
-        drawable/splash.png entirely. Previously only android:background was
-        set, which isn't one of the attributes this theme actually reads, so
-        the OS fell back to its generic default (white/light background +
-        the app's launcher icon in a chip). Setting these explicitly gets a
-        dark-navy background with just the badge (no white chip), and then
-        MainActivity.java hands off to Capacitor's own splash (drawable/splash.png,
-        the full gradient artwork) once installSplashScreen() finishes.
-        postSplashScreenTheme swaps to the normal app theme right after.
-    -->
-    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/splashBackground</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
-        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
-        <!-- Pre-31 fallback path (androidx core-splashscreen compat): -->
-        <item name="android:background">@drawable/splash</item>
-        <item name="android:windowBackground">@drawable/splash</item>
-    </style>
 </resources>

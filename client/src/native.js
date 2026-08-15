@@ -65,25 +65,6 @@ async function setUpBackButton() {
   }
 }
 
-/**
- * Hides Capacitor's native splash overlay. Belt-and-braces only now --
- * capacitor.config.ts sets launchShowDuration: 0 and launchAutoHide: true,
- * so the plugin already dismisses itself immediately and never blocks the
- * animated gradient boot screen (client/index.html #boot-splash) from
- * showing. This call is just a safety net in case autoHide ever gets
- * turned off again; it's a harmless no-op if the splash is already gone.
- */
-export async function hideSplashScreen() {
-  if (!Capacitor.isNativePlatform()) return;
-
-  try {
-    const { SplashScreen } = await import('@capacitor/splash-screen');
-    await SplashScreen.hide();
-  } catch (error) {
-    console.warn('[native] splash screen hide skipped:', error?.message || error);
-  }
-}
-
 // Guards against double-registering listeners if setUpPushNotifications()
 // is called more than once in a session (e.g. logout then log back in).
 let pushNotificationsInitialized = false;
