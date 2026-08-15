@@ -27,9 +27,9 @@ jobs:
         working-directory: client
         run: npm install --no-package-lock --ignore-scripts
 
-      - name: Build web assets
+      - name: Build web assets for FCM test APK
         working-directory: client
-        run: npm run build
+        run: VITE_FCM_TEST_MODE=true npm run build
 
       - name: Sync Capacitor Android project
         working-directory: client
