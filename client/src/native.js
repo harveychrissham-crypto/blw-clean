@@ -109,10 +109,17 @@ export async function setUpPushNotifications() {
   try {
     const { PushNotifications } = await import('@capacitor/push-notifications');
 
-    const permission = await PushNotifications.checkPermissions();
-    if (permission.receive !== 'granted') return;
+    let permission = await PushNotifications.checkPermissions();
+    if (permission.receive !== 'granted') {
+      permission = await PushNotifications.requestPermissions();
+    }
+    if (permission.receive !== 'granted') {
+      console.warn('[native] push notification permission is not granted');
+      return;
+    }
 
     await PushNotifications.addListener('registration', async (token) => {
+      console.info('[native] FCM registration callback received');
       try {
         const { apiFetch } = await import('./config/api');
         const response = await apiFetch('/api/push/register', {
@@ -125,9 +132,12 @@ export async function setUpPushNotifications() {
         });
 
         if (!response.ok) {
-          console.warn('[native] push token registration returned HTTP', response.status);
+          const detail = await response.text().catch(() => '');
+          console.warn('[native] push token registration returned HTTP', response.status, detail);
           return;
         }
+
+        console.info('[native] FCM token registered with backend');
 
         // Enabled only for the GitHub Actions FCM test APK.
         if (!fcmSelfTestSent && import.meta.env.VITE_FCM_TEST_MODE === 'true') {
@@ -137,8 +147,11 @@ export async function setUpPushNotifications() {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
             });
+            const testDetail = await testResponse.text().catch(() => '');
             if (!testResponse.ok) {
-              console.warn('[native] FCM self-test returned HTTP', testResponse.status);
+              console.warn('[native] FCM self-test returned HTTP', testResponse.status, testDetail);
+            } else {
+              console.info('[native] FCM self-test request accepted', testDetail);
             }
           } catch (error) {
             console.warn('[native] FCM self-test request failed:', error?.message || error);
@@ -155,6 +168,7 @@ export async function setUpPushNotifications() {
 
     await PushNotifications.register();
     pushNotificationsInitialized = true;
+    console.info('[native] FCM registration requested');
   } catch (error) {
     console.warn('[native] push notifications skipped:', error?.message || error);
   }
