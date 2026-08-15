@@ -144,7 +144,12 @@ export const sendNotification = async (req, res) => {
   const rawData = req.body?.data && typeof req.body.data === 'object' && !Array.isArray(req.body.data)
     ? req.body.data
     : {};
-  const data = Object.fromEntries(Object.entries(rawData).slice(0, 20).map(([key, value]) => [sanitizeText(key, 100), sanitizeText(String(value), 1000)]).filter(([key]) => key));
+  const data = Object.fromEntries(
+    Object.entries(rawData)
+      .slice(0, 20)
+      .map(([key, value]) => [sanitizeText(key, 100), sanitizeText(String(value), 1000)])
+      .filter(([key]) => key)
+  );
 
   if (!title || !body) return res.status(400).json({ error: 'Notification title and body are required.' });
   if (!broadcast && !userEmails.length) {
@@ -153,8 +158,8 @@ export const sendNotification = async (req, res) => {
 
   try {
     const targetQuery = broadcast
-      ? 'SELECT token FROM push_tokens WHERE token IS NOT NULL AND token <> \"\"'
-      : 'SELECT token FROM push_tokens WHERE LOWER(user_email) = ANY($1::text[]) AND token IS NOT NULL AND token <> \"\"';
+      ? "SELECT token FROM push_tokens WHERE token IS NOT NULL AND token <> ''"
+      : "SELECT token FROM push_tokens WHERE LOWER(user_email) = ANY($1::text[]) AND token IS NOT NULL AND token <> ''";
     const result = broadcast ? await query(targetQuery) : await query(targetQuery, [userEmails]);
     const tokens = [...new Set(result.rows.map((row) => sanitizeToken(row.token)).filter(Boolean))];
 
