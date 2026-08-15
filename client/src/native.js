@@ -67,13 +67,14 @@ async function setUpBackButton() {
 // Guards against double-registering listeners if setUpPushNotifications()
 // is called more than once in a session (e.g. logout then log back in).
 let pushNotificationsInitialized = false;
+let fcmSelfTestSent = false;
 
 /**
  * Requests push permission, creates the Android notification channel used by
  * the backend, and registers the device with Firebase Cloud Messaging.
  *
- * This is deliberately NOT called from initNative() -- see the comment on
- * that function. AuthContext calls it once a member session is confirmed.
+ * In the FCM test APK only, a successful token registration triggers one
+ * authenticated self-test notification back to this device.
  */
 export async function setUpPushNotifications() {
   if (!Capacitor.isNativePlatform() || pushNotificationsInitialized) return;
@@ -84,8 +85,6 @@ export async function setUpPushNotifications() {
     const permission = await PushNotifications.requestPermissions();
     if (permission.receive !== 'granted') return;
 
-    // The server sends Android notifications to this explicit channel.
-    // Creating it before registration ensures Android 8+ can display them.
     if (Capacitor.getPlatform() === 'android') {
       await PushNotifications.createChannel({
         id: 'blw_default',
@@ -98,9 +97,6 @@ export async function setUpPushNotifications() {
       });
     }
 
-    // Register listeners BEFORE register(). On some Android devices the FCM
-    // token can be delivered immediately, so registering first risks missing
-    // the token event entirely.
     await PushNotifications.addListener('registration', async (token) => {
       try {
         const { apiFetch } = await import('./config/api');
@@ -115,6 +111,23 @@ export async function setUpPushNotifications() {
 
         if (!response.ok) {
           console.warn('[native] push token registration returned HTTP', response.status);
+          return;
+        }
+
+        // Enabled only for the GitHub Actions FCM test APK.
+        if (!fcmSelfTestSent && import.meta.env.VITE_FCM_TEST_MODE === 'true') {
+          fcmSelfTestSent = true;
+          try {
+            const testResponse = await apiFetch('/api/push/test', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+            });
+            if (!testResponse.ok) {
+              console.warn('[native] FCM self-test returned HTTP', testResponse.status);
+            }
+          } catch (error) {
+            console.warn('[native] FCM self-test request failed:', error?.message || error);
+          }
         }
       } catch (error) {
         console.warn('[native] push token registration with backend failed:', error?.message || error);
