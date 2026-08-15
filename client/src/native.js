@@ -4,11 +4,10 @@ import { Capacitor } from '@capacitor/core';
  * Native-only setup (status bar and Android back button).
  *
  * Push notifications are wired up (Firebase config lives in
- * android/app/google-services.json -- see that directory's README for how
- * to add it) but are deliberately NOT called from initNative(). Requesting
- * permission and registering with FCM during cold boot can delay/kill the
- * native process before the WebView finishes loading, so
- * setUpPushNotifications() is called later instead, once a member is
+ * android/app/google-services.json) but are deliberately NOT called from
+ * initNative(). Requesting permission and registering with FCM during cold
+ * boot can delay/kill the native process before the WebView finishes loading,
+ * so setUpPushNotifications() is called later instead, once a member is
  * actually signed in (see context/AuthContext.jsx).
  */
 export async function initNative() {
@@ -70,42 +69,64 @@ async function setUpBackButton() {
 let pushNotificationsInitialized = false;
 
 /**
- * Requests push permission and registers the device with FCM. Deliberately
- * NOT called from initNative() -- see the comment on that function. Callers
- * (currently: AuthContext, once a member session is confirmed) are expected
- * to already be on a native platform and signed in; this still no-ops
- * safely on web or if google-services.json isn't present yet, since
- * @capacitor/push-notifications simply fails to register in that case and
- * the catch below swallows it.
+ * Requests push permission, creates the Android notification channel used by
+ * the backend, and registers the device with Firebase Cloud Messaging.
+ *
+ * This is deliberately NOT called from initNative() -- see the comment on
+ * that function. AuthContext calls it once a member session is confirmed.
  */
 export async function setUpPushNotifications() {
   if (!Capacitor.isNativePlatform() || pushNotificationsInitialized) return;
 
   try {
     const { PushNotifications } = await import('@capacitor/push-notifications');
+
     const permission = await PushNotifications.requestPermissions();
     if (permission.receive !== 'granted') return;
 
-    pushNotificationsInitialized = true;
+    // The server sends Android notifications to this explicit channel.
+    // Creating it before registration ensures Android 8+ can display them.
+    if (Capacitor.getPlatform() === 'android') {
+      await PushNotifications.createChannel({
+        id: 'blw_default',
+        name: 'BLW Kenya Zone',
+        description: 'BLW Kenya Zone announcements and ministry updates',
+        importance: 5,
+        visibility: 1,
+        sound: 'default',
+        vibration: true,
+      });
+    }
 
-    await PushNotifications.register();
-
-    PushNotifications.addListener('registration', async (token) => {
+    // Register listeners BEFORE register(). On some Android devices the FCM
+    // token can be delivered immediately, so registering first risks missing
+    // the token event entirely.
+    await PushNotifications.addListener('registration', async (token) => {
       try {
         const { apiFetch } = await import('./config/api');
-        await apiFetch('/api/push/register', {
+        const response = await apiFetch('/api/push/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: token.value, platform: Capacitor.getPlatform() }),
+          body: JSON.stringify({
+            token: token.value,
+            platform: Capacitor.getPlatform(),
+          }),
         });
+
+        if (!response.ok) {
+          console.warn('[native] push token registration returned HTTP', response.status);
+        }
       } catch (error) {
         console.warn('[native] push token registration with backend failed:', error?.message || error);
       }
     });
 
-    PushNotifications.addListener('registrationError', (error) => {
+    await PushNotifications.addListener('registrationError', (error) => {
       console.warn('[native] push registration failed:', error);
     });
+
+    await PushNotifications.register();
+    pushNotificationsInitialized = true;
   } catch (error) {
     console.warn('[native] push notifications skipped:', error?.message || error);
   }
