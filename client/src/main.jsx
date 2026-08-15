@@ -26,8 +26,21 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 requestAnimationFrame(() => {
   requestAnimationFrame(() => {
     hideSplashScreen();
+    hideBootSplash();
   });
 });
+
+// Fades out and removes the CSS boot splash (see index.html) now that real
+// content is on screen. Fades rather than snapping away so the animated
+// gradient hand off to the app feels like one continuous moment, not a cut.
+function hideBootSplash() {
+  const el = document.getElementById('boot-splash');
+  if (!el) return;
+  el.classList.add('boot-splash-hide');
+  el.addEventListener('transitionend', () => el.remove(), { once: true });
+  // Fallback in case transitionend doesn't fire (e.g. reduced-motion skips it).
+  setTimeout(() => el.remove(), 800);
+}
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

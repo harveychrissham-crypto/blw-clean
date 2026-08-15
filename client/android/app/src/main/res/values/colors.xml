@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches the gradient splash background (client/index.html #boot-splash,
+         capacitor.config.ts SplashScreen.backgroundColor) so every layer of
+         the launch sequence (OS splash, Capacitor splash, in-app boot
+         overlay) opens on the same dark navy instead of flashing white. -->
+    <color name="splashBackground">#0d0c18</color>
+
+    <!-- Referenced by AppTheme below but previously undefined anywhere in
+         this project, which would fail the build. Set to the app's own
+         navy/gold brand colors rather than AppCompat's stock blue. -->
+    <color name="colorPrimary">#0d0c18</color>
+    <color name="colorPrimaryDark">#000000</color>
+    <color name="colorAccent">#F2A31C</color>
+</resources>
