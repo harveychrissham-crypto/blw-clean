@@ -12,7 +12,7 @@ export function Skeleton({ className = '' }) {
 // A raised-weight card skeleton — mirrors <Card variant="raised"> proportions.
 export function SkeletonCard({ lines = 3, className = '' }) {
   return (
-    <div className={`rounded-[1.5rem] border border-slate-800 bg-slate-900/95 p-5 ${className}`}>
+    <div className={`rounded-[1.5rem] border border-slate-700 bg-slate-900 p-5 ${className}`}>
       <Skeleton className="h-3 w-20" />
       <Skeleton className="mt-3 h-5 w-2/3" />
       <div className="mt-4 space-y-2">
@@ -27,7 +27,7 @@ export function SkeletonCard({ lines = 3, className = '' }) {
 // A single list-row skeleton — mirrors a <Card variant="subtle"> row.
 export function SkeletonRow({ className = '' }) {
   return (
-    <div className={`flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 ${className}`}>
+    <div className={`flex items-center gap-3 rounded-2xl border border-white/[0.12] bg-white/[0.07] p-4 ${className}`}>
       <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
       <div className="min-w-0 flex-1 space-y-2">
         <Skeleton className="h-3 w-1/3" />

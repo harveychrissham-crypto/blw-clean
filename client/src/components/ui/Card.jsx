@@ -8,8 +8,8 @@
 
 const VARIANTS = {
   filled: 'bg-gradient-to-r from-[#FF8B5C] via-[#FF4F9A] to-[#A53DFF] border border-white/10 shadow-[0_20px_50px_rgba(163,77,255,0.25)]',
-  raised: 'bg-slate-900/95 border border-slate-800 shadow-sm',
-  subtle: 'bg-white/[0.03] border border-white/[0.06]',
+  raised: 'bg-slate-900 border border-slate-700 shadow-sm',
+  subtle: 'bg-white/[0.07] border border-white/[0.12]',
 };
 
 export function Card({ variant = 'raised', className = '', children, as: Comp = 'div', ...props }) {
