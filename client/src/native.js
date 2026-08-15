@@ -3,12 +3,10 @@ import { Capacitor } from '@capacitor/core';
 /**
  * Native-only setup (status bar and Android back button).
  *
- * Push notifications are wired up (Firebase config lives in
- * android/app/google-services.json) but are deliberately NOT called from
- * initNative(). Requesting permission and registering with FCM during cold
- * boot can delay/kill the native process before the WebView finishes loading,
- * so setUpPushNotifications() is called later instead, once a member is
- * actually signed in (see context/AuthContext.jsx).
+ * Notification permission is requested during cold boot so the user sees the
+ * system permission prompt when the app opens, before signing in. Device-token
+ * registration remains deferred until a member is signed in, because the
+ * backend associates each FCM token with the signed-in account.
  */
 export async function initNative() {
   if (!Capacitor.isNativePlatform()) return;
@@ -18,6 +16,7 @@ export async function initNative() {
   await Promise.allSettled([
     setUpStatusBar(),
     setUpBackButton(),
+    requestPushPermissionOnLaunch(),
   ]);
 }
 
@@ -64,24 +63,14 @@ async function setUpBackButton() {
   }
 }
 
-// Guards against double-registering listeners if setUpPushNotifications()
-// is called more than once in a session (e.g. logout then log back in).
-let pushNotificationsInitialized = false;
-let fcmSelfTestSent = false;
-
 /**
- * Requests push permission, creates the Android notification channel used by
- * the backend, and registers the device with Firebase Cloud Messaging.
- *
- * In the FCM test APK only, a successful token registration triggers one
- * authenticated self-test notification back to this device.
+ * Requests notification permission at app launch without registering the
+ * device token with the backend yet. The token is registered later, after
+ * sign-in, by setUpPushNotifications().
  */
-export async function setUpPushNotifications() {
-  if (!Capacitor.isNativePlatform() || pushNotificationsInitialized) return;
-
+async function requestPushPermissionOnLaunch() {
   try {
     const { PushNotifications } = await import('@capacitor/push-notifications');
-
     const permission = await PushNotifications.requestPermissions();
     if (permission.receive !== 'granted') return;
 
@@ -96,6 +85,32 @@ export async function setUpPushNotifications() {
         vibration: true,
       });
     }
+  } catch (error) {
+    console.warn('[native] launch notification permission skipped:', error?.message || error);
+  }
+}
+
+// Guards against double-registering listeners if setUpPushNotifications()
+// is called more than once in a session (e.g. logout then log back in).
+let pushNotificationsInitialized = false;
+let fcmSelfTestSent = false;
+
+/**
+ * Registers the signed-in device with Firebase Cloud Messaging and associates
+ * the token with the current member account through the backend.
+ *
+ * Permission has already been requested at app launch. Calling this function
+ * after sign-in will therefore not show a second permission prompt unless the
+ * user has not granted permission yet.
+ */
+export async function setUpPushNotifications() {
+  if (!Capacitor.isNativePlatform() || pushNotificationsInitialized) return;
+
+  try {
+    const { PushNotifications } = await import('@capacitor/push-notifications');
+
+    const permission = await PushNotifications.checkPermissions();
+    if (permission.receive !== 'granted') return;
 
     await PushNotifications.addListener('registration', async (token) => {
       try {
