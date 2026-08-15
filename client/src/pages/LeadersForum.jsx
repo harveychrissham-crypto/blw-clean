@@ -45,6 +45,7 @@ import { apiFetch } from '../config/api';
 import { Eyebrow, Card, StatGroup, ActionBanner } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
 import { SkeletonList } from '../components/ui/Skeleton';
+import { hapticError } from '../utils/haptics';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const LEADER_CODE = '1120363';
@@ -753,6 +754,7 @@ function EventsManagerPanel({ onClose }) {
 
   const handleDelete = async (event) => {
     if (!window.confirm(`Delete "${event.title}"? This cannot be undone.`)) return;
+    hapticError();
     try {
       await deleteEvent(event.id);
       load();
@@ -1000,6 +1002,7 @@ function StoriesManagerPanel({ onClose }) {
 
   const handleDelete = async (story) => {
     if (!window.confirm(`Delete "${story.title}"? This cannot be undone.`)) return;
+    hapticError();
     try {
       await deleteOutreachStory(story.id);
       load();
@@ -1192,6 +1195,7 @@ function SermonsManagerPanel({ onClose }) {
 
   const handleDelete = async (sermon) => {
     if (!window.confirm(`Delete "${sermon.title}"? This cannot be undone.`)) return;
+    hapticError();
     try {
       await deleteSermon(sermon.id);
       load();
@@ -1414,6 +1418,7 @@ function VenuesManagerPanel({ onClose }) {
 
   const handleDelete = async (v) => {
     if (!window.confirm(`Remove the venue set for ${v.chapter}?`)) return;
+    hapticError();
     try {
       await deleteVenueApi(v.chapter);
       load();

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { fetchVenueByChapter } from '../utils/venues';
 import { apiFetch } from '../config/api';
+import { hapticError } from '../utils/haptics';
 import {
   FiEdit2,
   FiLogOut,
@@ -91,6 +92,7 @@ export default function Dashboard() {
 
   const handleDelete = async () => {
     if (!window.confirm('Delete your account permanently? This action cannot be undone.')) return;
+    hapticError();
     setStatus('submitting');
     setError('');
 
@@ -193,7 +195,10 @@ export default function Dashboard() {
               </button>
               <button
                 type="button"
-                onClick={logout}
+                onClick={() => {
+                  hapticError();
+                  logout();
+                }}
                 className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/70 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
                 <FiLogOut /> Sign Out
