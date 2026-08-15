@@ -88,6 +88,47 @@ async function sendToFcm({ token, title, body, data, accessToken, projectId }) {
   return { ok: response.ok, responseBody };
 }
 
+async function sendToEmail(email, { title, body, data = {} }) {
+  const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+  if (!normalizedEmail) throw new Error('A signed-in account is required.');
+
+  const result = await query(
+    "SELECT token FROM push_tokens WHERE LOWER(user_email) = $1 AND token IS NOT NULL AND token <> ''",
+    [normalizedEmail]
+  );
+  const tokens = [...new Set(result.rows.map((row) => sanitizeToken(row.token)).filter(Boolean))];
+
+  if (!tokens.length) return { sent: 0, failed: 0, removed: 0, totalTokens: 0 };
+
+  const accessToken = await getFirebaseAccessToken();
+  const { projectId } = firebaseConfig();
+  let sent = 0;
+  let failed = 0;
+  let removed = 0;
+
+  for (const token of tokens) {
+    try {
+      const resultForToken = await sendToFcm({ token, title, body, data, accessToken, projectId });
+      if (resultForToken.ok) {
+        sent += 1;
+        continue;
+      }
+
+      failed += 1;
+      const errorString = JSON.stringify(resultForToken.responseBody || {});
+      if (/UNREGISTERED|registration-token-not-registered|INVALID_ARGUMENT/i.test(errorString)) {
+        await query('DELETE FROM push_tokens WHERE token = $1', [token]);
+        removed += 1;
+      }
+    } catch (error) {
+      failed += 1;
+      console.error('[push] individual notification send failed', error);
+    }
+  }
+
+  return { sent, failed, removed, totalTokens: tokens.length };
+}
+
 // Called by the client after @capacitor/push-notifications successfully
 // registers with FCM/APNs (see client/src/native.js setUpPushNotifications).
 // Upserts on `token` so re-registering the same device (app reinstall,
@@ -112,6 +153,34 @@ export const registerToken = async (req, res) => {
   } catch (err) {
     console.error('[push] token registration failed', err);
     res.status(500).json({ error: 'Unable to register for push notifications right now.' });
+  }
+};
+
+// Sends a one-off notification to the currently signed-in account.
+// This endpoint is intentionally self-targeted: it cannot broadcast or
+// specify another user's email/token and is safe to use from the FCM test APK.
+export const sendSelfTestNotification = async (req, res) => {
+  const email = typeof req.user?.email === 'string' ? req.user.email.trim().toLowerCase() : '';
+  if (!email) return res.status(401).json({ error: 'Invalid authentication token.' });
+
+  try {
+    const result = await sendToEmail(email, {
+      title: 'BLW FCM Test',
+      body: 'Firebase Cloud Messaging is working on this device.',
+      data: { type: 'fcm_test', source: 'blw_test_apk' },
+    });
+
+    if (result.totalTokens === 0) {
+      return res.status(404).json({
+        status: 'no_token',
+        message: 'No FCM token is registered for this account yet.',
+      });
+    }
+
+    res.json({ status: 'ok', ...result });
+  } catch (err) {
+    console.error('[push] self-test failed', err);
+    res.status(503).json({ error: err.message || 'Unable to send the FCM self-test.' });
   }
 };
 
