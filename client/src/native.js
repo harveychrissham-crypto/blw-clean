@@ -91,7 +91,7 @@ export async function setUpPushNotifications() {
         id: 'blw_default',
         name: 'BLW Kenya Zone',
         description: 'BLW Kenya Zone announcements and ministry updates',
-        importance: 5,
+        importance: 4,
         visibility: 1,
         sound: 'default',
         vibration: true,
