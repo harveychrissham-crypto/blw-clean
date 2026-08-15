@@ -63,6 +63,22 @@ input, select, textarea {
   color: #fff !important;
   transition: border-color 0.15s;
 }
+
+/* App-feel pass (v9): iOS Safari/WKWebView auto-zooms the whole page when
+   a focused input's computed font-size is under 16px. Many inputs across
+   this app use Tailwind's text-sm (14px) or smaller, which triggers that
+   zoom on every focus — a strong "website form" tell, not "app". Force
+   16px on touch-primary viewports regardless of the Tailwind text-size
+   utility applied, since editing every input's className individually
+   would mean touching 25+ call sites across the codebase for one fix.
+   !important matches the existing pattern in this same input/select/
+   textarea block above. Desktop/mouse devices are untouched — this only
+   matters where WebKit's auto-zoom behavior applies. */
+@media (hover: none) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
 input:focus, select:focus, textarea:focus {
   outline: none !important;
   border-color: #EC2FA8 !important;

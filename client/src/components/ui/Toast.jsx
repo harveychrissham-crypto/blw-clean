@@ -9,6 +9,7 @@
 
 import { useEffect } from 'react';
 import { FiCheckCircle, FiAlertCircle, FiX } from 'react-icons/fi';
+import { hapticSuccess, hapticError } from '../../utils/haptics';
 
 const STYLES = {
   success: {
@@ -33,6 +34,12 @@ export function Toast({ toast, onClose, duration = 3000 }) {
     const timer = window.setTimeout(() => onClose?.(), duration);
     return () => window.clearTimeout(timer);
   }, [toast, duration, onClose]);
+
+  useEffect(() => {
+    if (!toast) return;
+    if (toast.type === 'error') hapticError();
+    else hapticSuccess();
+  }, [toast]);
 
   if (!toast) return null;
   const style = STYLES[toast.type] || STYLES.success;

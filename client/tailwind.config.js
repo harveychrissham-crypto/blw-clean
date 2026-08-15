@@ -38,11 +38,16 @@ export default {
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' }
+        },
+        sheetIn: {
+          '0%': { opacity: '0', transform: 'translateY(24px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' }
         }
       },
       animation: {
         'toast-in': 'toastIn 0.2s ease-out',
-        shimmer: 'shimmer 1.8s ease-in-out infinite'
+        shimmer: 'shimmer 1.8s ease-in-out infinite',
+        'sheet-in': 'sheetIn 0.22s ease-out'
       }
     }
   },

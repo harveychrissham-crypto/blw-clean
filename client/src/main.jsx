@@ -4,9 +4,11 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { initNative } from './native';
+import { bindGlobalTapHaptics } from './utils/haptics';
 import './index.css';
 
 initNative();
+bindGlobalTapHaptics();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

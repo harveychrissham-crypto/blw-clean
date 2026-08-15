@@ -26,8 +26,11 @@ export default function SearchPanel({ open, onClose }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-start justify-center bg-[#121321]/85 px-4 py-8 backdrop-blur">
-      <Card variant="raised" className="w-full max-w-2xl p-6 shadow-soft">
+    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-[#121321]/85 px-2 pb-2 backdrop-blur sm:items-start sm:px-4 sm:py-8">
+      <Card
+        variant="raised"
+        className="max-h-[85vh] w-full animate-sheet-in overflow-y-auto overscroll-contain p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-soft sm:max-w-2xl sm:pb-6"
+      >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-fuchsia-300">
             <FiSearch />
