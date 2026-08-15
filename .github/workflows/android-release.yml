@@ -41,6 +41,22 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Make gradlew executable
+        working-directory: client/android
+        run: chmod +x gradlew
+
+      - name: Build debug APK for FCM testing
+        working-directory: client/android
+        run: ./gradlew assembleDebug
+
+      - name: Upload debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: blw-fcm-test-apk
+          path: client/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Decode signing keystore
         working-directory: client/android
         env:
@@ -60,10 +76,6 @@ jobs:
           keyAlias=$ANDROID_KEYSTORE_KEY_ALIAS
           keyPassword=$ANDROID_KEYSTORE_KEY_PASSWORD
           EOF
-
-      - name: Make gradlew executable
-        working-directory: client/android
-        run: chmod +x gradlew
 
       - name: Build signed release APK
         working-directory: client/android
