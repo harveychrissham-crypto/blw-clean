@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { Routes, Route, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Layout from './layouts/Layout';
 import Home from './pages/Home';
@@ -32,14 +32,34 @@ const FellowshipLocationsPage = () => {
   );
 };
 
+// Mirrors BottomNav.jsx's tabs — used to tell a tab switch (fast cross-fade,
+// no sense of "depth") apart from a drill-down into a sub-page (directional
+// slide, since that reads as navigating deeper vs. going back).
+const BOTTOM_TAB_PATHS = ['/', '/events', '/checkin', '/live'];
+
 const AnimatedRoutes = () => {
   const location = useLocation();
+  const navigationType = useNavigationType(); // 'PUSH' | 'POP' | 'REPLACE'
   const { user } = useAuth();
   const route = (element) => <Layout>{element}</Layout>;
+  const prevPathRef = useRef(location.pathname);
 
   useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); }, [location.pathname]);
 
-  return <AnimatePresence mode="wait"><motion.div key={location.pathname} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}><Routes location={location}>
+  const isTabSwitch =
+    BOTTOM_TAB_PATHS.includes(location.pathname) &&
+    BOTTOM_TAB_PATHS.includes(prevPathRef.current) &&
+    location.pathname !== prevPathRef.current;
+
+  const transition = isTabSwitch
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, duration: 0.15 }
+    : navigationType === 'POP'
+      ? { initial: { opacity: 0, x: -24 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: 24 }, duration: 0.28 }
+      : { initial: { opacity: 0, x: 24 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -24 }, duration: 0.28 };
+
+  useEffect(() => { prevPathRef.current = location.pathname; });
+
+  return <AnimatePresence mode="wait"><motion.div key={location.pathname} initial={transition.initial} animate={transition.animate} exit={transition.exit} transition={{ duration: transition.duration }}><Routes location={location}>
     <Route path="/" element={route(<Home />)} />
     <Route path="/outreaches" element={route(<Outreaches />)} />
     <Route path="/events" element={route(<Events />)} />

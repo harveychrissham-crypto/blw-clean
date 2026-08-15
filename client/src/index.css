@@ -16,7 +16,7 @@
   color: #fff;
 }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overscroll-behavior-y: contain; }
 
 body {
   margin: 0;
@@ -25,6 +25,7 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
+  overscroll-behavior-y: contain;
   background:
     radial-gradient(ellipse at top left, rgba(120,20,60,0.45) 0%, transparent 45%),
     radial-gradient(ellipse at bottom right, rgba(60,20,100,0.35) 0%, transparent 45%),
@@ -32,6 +33,22 @@ body {
 }
 
 * { box-sizing: border-box; }
+
+/* App-feel pass (v6): touch devices don't have hover, so buttons/links need
+   their own tap feedback — otherwise taps feel dead and the browser's own
+   default tap-highlight box shows instead, both of which read as "website"
+   rather than "app". Scoped to touch-primary devices only so desktop/mouse
+   behavior (which already gets :hover feedback) is untouched. */
+a, button, [role="button"], input, textarea, select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: none) {
+  a:active, button:not(:disabled):active, [role="button"]:active {
+    transform: scale(0.96);
+    transition: transform 0.1s ease;
+  }
+}
 
 ::selection { background: rgba(236,47,168,0.3); color: white; }
 
