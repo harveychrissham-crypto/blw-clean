@@ -1,9 +1,10 @@
-name: Deploy Cloudflare Worker
+name: Build and Deploy BLW Kenya Zone
 
 on:
   push:
     branches: [main]
     paths:
+      - 'client/**'
       - 'worker/**'
       - 'server/**'
       - 'wrangler.jsonc'
@@ -24,8 +25,11 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install dependencies
+      - name: Install Worker dependencies
         run: npm install --no-package-lock
+
+      - name: Build client app
+        run: npm run build
 
       - name: Deploy Worker
         env:
