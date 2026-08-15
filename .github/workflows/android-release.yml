@@ -1,8 +1,12 @@
 name: Build & release Android APK
 
-# Runs on every push to main, and can also be triggered manually from the
-# Actions tab (Run workflow button) without needing a push.
-# FCM build trigger refresh: latest Worker FCM configuration is deployed separately.
+# Build one signed release APK for each relevant main-branch change.
+# A newer push cancels an older in-progress build so rapid consecutive fixes
+# do not create multiple competing APK releases.
+concurrency:
+  group: android-release-main
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main]
@@ -28,9 +32,9 @@ jobs:
         working-directory: client
         run: npm install --no-package-lock --ignore-scripts
 
-      - name: Build web assets for FCM test APK
+      - name: Build web assets
         working-directory: client
-        run: VITE_FCM_TEST_MODE=true npm run build
+        run: npm run build
 
       - name: Sync Capacitor Android project
         working-directory: client
@@ -45,18 +49,6 @@ jobs:
       - name: Make gradlew executable
         working-directory: client/android
         run: chmod +x gradlew
-
-      - name: Build debug APK for FCM testing
-        working-directory: client/android
-        run: ./gradlew assembleDebug
-
-      - name: Upload debug APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: blw-fcm-test-apk
-          path: client/android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 7
 
       - name: Decode signing keystore
         working-directory: client/android
@@ -81,8 +73,7 @@ jobs:
       - name: Build signed release APK
         working-directory: client/android
         # versionCode must always increase for updates to install cleanly
-        # over a previous version — the workflow run number is a simple,
-        # always-increasing counter that works well for this.
+        # over a previous version.
         run: |
           ./gradlew assembleRelease \
             -PappVersionCode=${{ github.run_number }} \
