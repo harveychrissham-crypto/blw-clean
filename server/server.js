@@ -21,6 +21,7 @@ import sermonRoutes from './routes/sermonRoutes.js';
 import venueRoutes from './routes/venueRoutes.js';
 import liveRoutes from './routes/liveRoutes.js';
 import fellowshipRoutes from './routes/fellowshipRoutes.js';
+import pushRoutes from './routes/pushRoutes.js';
 import { initDb } from './db/index.js';
 
 const CAPACITOR_ORIGINS = ['https://localhost','capacitor://localhost','http://localhost'];
@@ -45,6 +46,7 @@ export function createApp({ serveStatic = false } = {}) {
   app.use('/api/venues', venueRoutes);
   app.use('/api/live', liveRoutes);
   app.use('/api/fellowships', fellowshipRoutes);
+  app.use('/api/push', pushRoutes);
   app.get('/api/health', (_req,res)=>res.json({ status:'ok', message:'BLW Campus Ministry API is running' }));
   if (serveStatic) {
     const clientDist = path.join(__dirname,'..','client','dist');

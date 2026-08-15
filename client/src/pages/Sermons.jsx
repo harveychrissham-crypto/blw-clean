@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { FiAlertCircle, FiFilm, FiWifiOff, FiLock, FiUserPlus } from 'react-icons/fi';
+import { FiAlertCircle, FiFilm, FiWifiOff, FiLock, FiUserPlus, FiShare2 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { fetchSermons } from '../utils/sermons';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -10,6 +10,8 @@ import EmptyState from '../components/ui/EmptyState';
 import { Skeleton } from '../components/ui/Skeleton';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator';
+import { shareContent } from '../utils/share';
+import { hapticTap } from '../utils/haptics';
 
 function SermonPlayer({ sermon }) {
   const isOnline = useOnlineStatus();
@@ -174,7 +176,17 @@ export default function Sermons() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid gap-6 lg:grid-cols-[minmax(0,560px)_minmax(0,1fr)] lg:items-start">
           <div className="w-full lg:justify-self-start"><SermonPlayer sermon={activeSermon} /></div>
           <div className="pt-1 lg:text-left">
-            <div className="mb-3 inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-white/50">Featured Sermon</div>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-white/50">Featured Sermon</div>
+              <button
+                type="button"
+                onClick={() => { hapticTap(); shareContent({ title: activeSermon.title, text: activeSermon.speaker ? `${activeSermon.title} — ${activeSermon.speaker}` : activeSermon.title, url: `${window.location.origin}/sermons` }); }}
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/60 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                aria-label="Share this sermon"
+              >
+                <FiShare2 className="h-3.5 w-3.5" /> Share
+              </button>
+            </div>
             <h2 className="text-2xl font-extrabold leading-tight text-white sm:text-3xl" style={{ fontFamily: 'Montserrat, sans-serif' }}>{activeSermon.title}</h2>
             {activeSermon.speaker && <p className="mt-2 text-sm font-semibold" style={{ color: '#F2A31C' }}>{activeSermon.speaker}</p>}
             {activeSermon.description && <p className="mt-4 text-sm leading-7 text-white/55">{activeSermon.description}</p>}

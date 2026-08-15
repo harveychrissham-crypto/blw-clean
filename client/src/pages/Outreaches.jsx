@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { FiHeart, FiStar, FiMapPin, FiUsers, FiArrowRight, FiSend, FiCompass, FiX } from 'react-icons/fi';
+import { FiHeart, FiStar, FiMapPin, FiUsers, FiArrowRight, FiSend, FiCompass, FiX, FiShare2 } from 'react-icons/fi';
 import { fetchOutreachStories } from '../utils/outreachStories';
 import { Card, Eyebrow, StatGroup } from '../components/ui/Card';
+import { shareContent } from '../utils/share';
+import { hapticTap } from '../utils/haptics';
 
 const stats = [
   { label: 'Souls Won', value: '12k+', icon: FiStar },
@@ -46,6 +48,14 @@ function StoryModal({ story, onClose }) {
           className="absolute right-5 top-5 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white/70 transition hover:bg-black/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
         >
           <FiX />
+        </button>
+
+        <button
+          onClick={() => { hapticTap(); shareContent({ title: story.title, text: story.subtitle ? `${story.title} — ${story.subtitle}` : story.title, url: `${window.location.origin}/outreaches` }); }}
+          className="absolute right-[4.25rem] top-5 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white/70 transition hover:bg-black/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+          aria-label={`Share ${story.title}`}
+        >
+          <FiShare2 className="h-4 w-4" />
         </button>
 
         <div className="max-h-[85vh] overflow-y-auto">

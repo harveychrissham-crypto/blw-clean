@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { FiCalendar, FiChevronLeft, FiChevronRight, FiClock, FiMapPin, FiArrowRight } from 'react-icons/fi';
+import { FiCalendar, FiChevronLeft, FiChevronRight, FiClock, FiMapPin, FiArrowRight, FiShare2 } from 'react-icons/fi';
 import { fetchEvents } from '../utils/events';
 import { Card, Eyebrow } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator';
+import { shareContent } from '../utils/share';
+import { hapticTap } from '../utils/haptics';
 
 const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -148,7 +150,17 @@ export default function Events() {
 
           {selectedEvents.map((event) => (
             <Card key={event.id} as={motion.div} initial={{ opacity: 0 }} animate={{ opacity: 1 }} variant="raised" className="p-6">
-              <Eyebrow className="mb-2">{event.category}</Eyebrow>
+              <div className="mb-2 flex items-start justify-between gap-3">
+                <Eyebrow>{event.category}</Eyebrow>
+                <button
+                  type="button"
+                  onClick={() => { hapticTap(); shareContent({ title: event.title, text: [event.title, event.time, event.location].filter(Boolean).join(' — '), url: `${window.location.origin}/events` }); }}
+                  className="shrink-0 rounded-full border border-white/10 bg-white/5 p-1.5 text-white/60 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                  aria-label={`Share ${event.title}`}
+                >
+                  <FiShare2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
               <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>{event.title}</h3>
               <div className="mt-3 flex flex-wrap gap-4 text-xs text-white/45">
                 {event.time && <span className="flex items-center gap-1.5"><FiClock className="h-3 w-3" />{event.time}</span>}

@@ -177,6 +177,27 @@ export const initDb = async () => {
     CREATE UNIQUE INDEX IF NOT EXISTS live_viewers_client_id_idx
       ON live_viewers (client_id);
   `);
+
+  // Device push tokens (Capacitor @capacitor/push-notifications on Android,
+  // routed through Firebase). One row per device token; a signed-in member
+  // can have several rows (multiple devices). `token` is unique so
+  // re-registering the same device just refreshes ownership/timestamp
+  // instead of creating duplicates.
+  await query(`
+    CREATE TABLE IF NOT EXISTS push_tokens (
+      id SERIAL PRIMARY KEY,
+      user_email TEXT NOT NULL,
+      token TEXT NOT NULL UNIQUE,
+      platform TEXT NOT NULL DEFAULT 'android',
+      created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS push_tokens_user_email_idx
+      ON push_tokens (LOWER(user_email));
+  `);
 };
 
 export default pool;

@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '../config/api';
 import { setToken, clearToken, getToken } from '../utils/authToken';
+import { setUpPushNotifications } from '../native';
 
 const AuthContext = createContext(null);
 
@@ -20,6 +21,11 @@ const AuthContext = createContext(null);
  *    expired, we treat the session as gone.
  *  - /api/auth/me also issues a fresh token, so active users never get
  *    logged out due to token expiry.
+ *  - Push notification registration is requested once a session is
+ *    confirmed (fresh login or a restored session on app restart), not at
+ *    cold boot -- see native.js's setUpPushNotifications for why. It
+ *    no-ops safely on web and is a no-op on native too until a real
+ *    google-services.json is added to the Android project.
  */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -44,6 +50,7 @@ export function AuthProvider({ children }) {
       const body = await res.json();
       if (body.token) await setToken(body.token);
       setUser(body.user || null);
+      if (body.user) setUpPushNotifications();
     } catch {
       setUser(null);
     } finally {
@@ -60,6 +67,7 @@ export function AuthProvider({ children }) {
     // userData/token come straight from the login/register API response
     if (token) await setToken(token);
     setUser(userData);
+    if (userData) setUpPushNotifications();
   }, []);
 
   const logout = useCallback(async () => {
