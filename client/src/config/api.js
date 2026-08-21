@@ -16,26 +16,31 @@ export function apiUrl(path) {
 }
 
 /**
- * Drop-in replacement for fetch(). Adds the normal member token and, while a
- * leader session is open, the short-lived leader-admin token used by the
- * management tools. This keeps manager requests authenticated without adding
- * another login prompt to every individual tool.
+ * Drop-in replacement for fetch(). Member authentication is the default.
+ * A stored leader-admin token is used only when a caller explicitly opts in
+ * with `authMode: 'leader'`; otherwise opening a leader screen cannot change
+ * the identity sent by unrelated app requests.
  */
 export async function apiFetch(path, options = {}) {
   const token = await getToken();
+  const { authMode = 'member', ...fetchOptions } = options;
   let leaderToken = '';
-  try {
-    leaderToken = sessionStorage.getItem('blw_leader_admin_token') || '';
-  } catch {
-    leaderToken = '';
+
+  if (authMode === 'leader') {
+    try {
+      leaderToken = sessionStorage.getItem('blw_leader_admin_token') || '';
+    } catch {
+      leaderToken = '';
+    }
   }
 
   const headers = {
-    ...(options.headers || {}),
+    ...(fetchOptions.headers || {}),
   };
 
   if (!headers.Authorization) {
-    headers.Authorization = leaderToken ? `Bearer ${leaderToken}` : (token ? `Bearer ${token}` : '');
+    const selectedToken = authMode === 'leader' ? leaderToken : token;
+    if (selectedToken) headers.Authorization = `Bearer ${selectedToken}`;
   }
   if (!headers.Authorization) delete headers.Authorization;
 
@@ -47,7 +52,7 @@ export async function apiFetch(path, options = {}) {
   // instead of the raw browser error ("Failed to fetch", "Load failed"...).
   try {
     return await fetch(apiUrl(path), {
-      ...options,
+      ...fetchOptions,
       headers,
     });
   } catch (err) {
