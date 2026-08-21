@@ -46,11 +46,6 @@ async function setUpStatusBar() {
   }
 }
 
-/**
- * Makes the Android hardware back button behave like a browser back button
- * within the app (go back through route history) instead of Capacitor's
- * default of closing the WebView unexpectedly from a nested screen.
- */
 async function setUpBackButton() {
   try {
     const { App } = await import('@capacitor/app');
@@ -66,11 +61,6 @@ async function setUpBackButton() {
   }
 }
 
-/**
- * Requests notification permission at app launch without registering the
- * device token with the backend yet. The token is registered later, after
- * sign-in, by setUpPushNotifications().
- */
 async function requestPushPermissionOnLaunch() {
   try {
     const { PushNotifications } = await import('@capacitor/push-notifications');
@@ -93,21 +83,62 @@ async function requestPushPermissionOnLaunch() {
   }
 }
 
-// Guards against double-registering listeners if setUpPushNotifications()
-// is called more than once in a session (e.g. logout then log back in).
-let pushNotificationsInitialized = false;
+// Listener registration is one-time, but token registration can be retried.
+let pushListenersInitialized = false;
+let pushTokenRegistered = false;
+let pushRegistrationInFlight = false;
 let fcmSelfTestSent = false;
 
-/**
- * Registers the signed-in device with Firebase Cloud Messaging and associates
- * the token with the current member account through the backend.
- *
- * Permission has already been requested at app launch. Calling this function
- * after sign-in will therefore not show a second permission prompt unless the
- * user has not granted permission yet.
- */
+async function registerCurrentToken(tokenValue) {
+  if (!tokenValue || pushRegistrationInFlight) return;
+  pushRegistrationInFlight = true;
+  try {
+    const { apiFetch } = await import('./config/api');
+    const response = await apiFetch('/api/push/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token: tokenValue,
+        platform: Capacitor.getPlatform(),
+      }),
+    });
+
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '');
+      console.warn('[native] push token registration returned HTTP', response.status, detail);
+      return;
+    }
+
+    pushTokenRegistered = true;
+    console.info('[native] FCM token registered with backend');
+
+    if (!fcmSelfTestSent && import.meta.env.VITE_FCM_TEST_MODE === 'true') {
+      fcmSelfTestSent = true;
+      try {
+        const testResponse = await apiFetch('/api/push/test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const testDetail = await testResponse.text().catch(() => '');
+        if (!testResponse.ok) {
+          console.warn('[native] FCM self-test returned HTTP', testResponse.status, testDetail);
+        } else {
+          console.info('[native] FCM self-test request accepted', testDetail);
+        }
+      } catch (error) {
+        console.warn('[native] FCM self-test request failed:', error?.message || error);
+      }
+    }
+  } catch (error) {
+    console.warn('[native] push token registration with backend failed:', error?.message || error);
+  } finally {
+    pushRegistrationInFlight = false;
+  }
+}
+
 export async function setUpPushNotifications() {
-  if (!Capacitor.isNativePlatform() || pushNotificationsInitialized) return;
+  if (!Capacitor.isNativePlatform()) return;
+  if (pushTokenRegistered) return;
 
   try {
     const { PushNotifications } = await import('@capacitor/push-notifications');
@@ -121,56 +152,22 @@ export async function setUpPushNotifications() {
       return;
     }
 
-    await PushNotifications.addListener('registration', async (token) => {
-      console.info('[native] FCM registration callback received');
-      try {
-        const { apiFetch } = await import('./config/api');
-        const response = await apiFetch('/api/push/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token: token.value,
-            platform: Capacitor.getPlatform(),
-          }),
-        });
+    if (!pushListenersInitialized) {
+      await PushNotifications.addListener('registration', async (token) => {
+        console.info('[native] FCM registration callback received');
+        await registerCurrentToken(token?.value || '');
+      });
 
-        if (!response.ok) {
-          const detail = await response.text().catch(() => '');
-          console.warn('[native] push token registration returned HTTP', response.status, detail);
-          return;
-        }
+      await PushNotifications.addListener('registrationError', (error) => {
+        console.warn('[native] push registration failed:', error);
+      });
 
-        console.info('[native] FCM token registered with backend');
+      pushListenersInitialized = true;
+    }
 
-        // Enabled only for the GitHub Actions FCM test APK.
-        if (!fcmSelfTestSent && import.meta.env.VITE_FCM_TEST_MODE === 'true') {
-          fcmSelfTestSent = true;
-          try {
-            const testResponse = await apiFetch('/api/push/test', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-            });
-            const testDetail = await testResponse.text().catch(() => '');
-            if (!testResponse.ok) {
-              console.warn('[native] FCM self-test returned HTTP', testResponse.status, testDetail);
-            } else {
-              console.info('[native] FCM self-test request accepted', testDetail);
-            }
-          } catch (error) {
-            console.warn('[native] FCM self-test request failed:', error?.message || error);
-          }
-        }
-      } catch (error) {
-        console.warn('[native] push token registration with backend failed:', error?.message || error);
-      }
-    });
-
-    await PushNotifications.addListener('registrationError', (error) => {
-      console.warn('[native] push registration failed:', error);
-    });
-
+    // Do not treat register() itself as success. Firebase may fail asynchronously,
+    // and subsequent sign-in/session restores should be allowed to retry.
     await PushNotifications.register();
-    pushNotificationsInitialized = true;
     console.info('[native] FCM registration requested');
   } catch (error) {
     console.warn('[native] push notifications skipped:', error?.message || error);
