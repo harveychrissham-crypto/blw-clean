@@ -31,6 +31,21 @@ jobs:
       - name: Build client app
         run: npm run build
 
+      - name: Ensure JWT_SECRET exists on the production Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          secrets_json="$(npx wrangler secret list --name blw-kenya-zone --format json)"
+          if ! printf '%s' "$secrets_json" | grep -q '"name"[[:space:]]*:[[:space:]]*"JWT_SECRET"'; then
+            echo "JWT_SECRET is missing; creating a new production secret."
+            openssl rand -hex 32 | npx wrangler secret put JWT_SECRET --name blw-kenya-zone
+          else
+            echo "JWT_SECRET is already configured on blw-kenya-zone."
+          fi
+
       - name: Deploy Worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
