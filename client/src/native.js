@@ -7,6 +7,9 @@ import { Capacitor } from '@capacitor/core';
  * system permission prompt when the app opens, before signing in. Device-token
  * registration remains deferred until a member is signed in, because the
  * backend associates each FCM token with the signed-in account.
+ *
+ * Keep this file in the Android release workflow's client path so merged FCM
+ * fixes always produce a fresh APK for device verification.
  */
 export async function initNative() {
   if (!Capacitor.isNativePlatform()) return;
