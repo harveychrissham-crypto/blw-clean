@@ -34,6 +34,8 @@ jobs:
 
       - name: Build web assets
         working-directory: client
+        env:
+          VITE_FCM_TEST_MODE: 'true'
         run: npm run build
 
       - name: Sync Capacitor Android project
