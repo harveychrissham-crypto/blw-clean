@@ -110,8 +110,12 @@ function firebaseConfig(env) {
   const privateKey = typeof env.FIREBASE_PRIVATE_KEY === 'string'
     ? env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n').trim()
     : '';
-  if (!projectId || !clientEmail || !privateKey) {
-    throw new Error('Firebase service-account configuration is incomplete.');
+  const missing = [];
+  if (!projectId) missing.push('FIREBASE_PROJECT_ID');
+  if (!clientEmail) missing.push('FIREBASE_CLIENT_EMAIL');
+  if (!privateKey) missing.push('FIREBASE_PRIVATE_KEY');
+  if (missing.length) {
+    throw new Error(`Firebase service-account configuration is incomplete. Missing: ${missing.join(', ')}`);
   }
   return { projectId, clientEmail, privateKey };
 }
