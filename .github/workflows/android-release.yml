@@ -46,6 +46,15 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Inject Firebase Android configuration
+        working-directory: client/android
+        env:
+          FIREBASE_GOOGLE_SERVICES_JSON: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON }}
+        run: |
+          test -n "$FIREBASE_GOOGLE_SERVICES_JSON" || { echo "FIREBASE_GOOGLE_SERVICES_JSON GitHub secret is required"; exit 1; }
+          printf '%s' "$FIREBASE_GOOGLE_SERVICES_JSON" > app/google-services.json
+          test -s app/google-services.json
+
       - name: Make gradlew executable
         working-directory: client/android
         run: chmod +x gradlew
