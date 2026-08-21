@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
 
-const DEFAULT_LEADER_ACCESS_CODE = '1120363';
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', ...headers } });
 const cors = (origin) => ({ 'access-control-allow-origin': origin, 'access-control-allow-credentials': 'true', 'access-control-allow-methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS', 'access-control-allow-headers': 'Content-Type, Authorization', vary: 'Origin' });
 
@@ -14,9 +13,30 @@ async function db(env, fn) {
 const clean = (value, max = 240) => typeof value === 'string' ? value.trim().replace(/[<>]/g, '').slice(0, max) : '';
 const locationDto = (row) => ({ id: row.id, fellowshipName: row.fellowship_name || row.venue || row.chapter || '', country: row.country || '', city: row.city || '', town: row.town || '', area: row.area || '', university: row.university || '', address: row.address || row.venue || '', description: row.description || '', serviceTime: row.service_time || '', latitude: row.latitude == null ? null : Number(row.latitude), longitude: row.longitude == null ? null : Number(row.longitude), isActive: row.is_active !== false, updatedAt: row.updated_at });
 
-const leaderAccessCode = (env) => typeof env.FELLOWSHIP_ADMIN_ACCESS_CODE === 'string' && env.FELLOWSHIP_ADMIN_ACCESS_CODE.trim() ? env.FELLOWSHIP_ADMIN_ACCESS_CODE.trim() : DEFAULT_LEADER_ACCESS_CODE;
-const authSecret = (env) => (typeof env.JWT_SECRET === 'string' && env.JWT_SECRET.trim()) ? env.JWT_SECRET.trim() : `blw-leader-auth:${leaderAccessCode(env)}`;
-const validLeaderToken = (request, env) => { try { const header = request.headers.get('authorization') || ''; if (!header.startsWith('Bearer ')) return false; const token = header.slice(7).trim(); if (!token) return false; const payload = jwt.verify(token, authSecret(env)); return payload?.leaderAdmin === true; } catch { return false; } };
+const leaderAccessCode = (env) => {
+  const code = typeof env.FELLOWSHIP_ADMIN_ACCESS_CODE === 'string' ? env.FELLOWSHIP_ADMIN_ACCESS_CODE.trim() : '';
+  if (!code) throw new Error('FELLOWSHIP_ADMIN_ACCESS_CODE is not configured.');
+  return code;
+};
+
+const authSecret = (env) => {
+  const secret = typeof env.JWT_SECRET === 'string' ? env.JWT_SECRET.trim() : '';
+  if (!secret) throw new Error('JWT_SECRET is not configured.');
+  return secret;
+};
+
+const validLeaderToken = (request, env) => {
+  try {
+    const header = request.headers.get('authorization') || '';
+    if (!header.startsWith('Bearer ')) return false;
+    const token = header.slice(7).trim();
+    if (!token) return false;
+    const payload = jwt.verify(token, authSecret(env));
+    return payload?.leaderAdmin === true;
+  } catch {
+    return false;
+  }
+};
 
 const parseLocation = (body) => {
   const fellowshipName = clean(body?.fellowshipName || body?.venue || body?.chapter, 180);
@@ -50,9 +70,13 @@ async function handle(request, env, url) {
   try {
     const result = await db(env, async (client) => {
       if (url.pathname === '/api/fellowships/admin/auth' && request.method === 'POST') {
-        const body = await request.json().catch(() => null), supplied = typeof body?.accessCode === 'string' ? body.accessCode.trim() : '', expected = leaderAccessCode(env);
+        const body = await request.json().catch(() => null);
+        let expected;
+        try { expected = leaderAccessCode(env); } catch (error) { return { status: 503, body: { error: error.message } }; }
+        const supplied = typeof body?.accessCode === 'string' ? body.accessCode.trim() : '';
         if (!supplied || supplied !== expected) return { status: 401, body: { error: 'Invalid leadership access code.' } };
-        return { status: 200, body: { token: jwt.sign({ leaderAdmin: true }, authSecret(env), { expiresIn: '8h' }) } };
+        try { return { status: 200, body: { token: jwt.sign({ leaderAdmin: true }, authSecret(env), { expiresIn: '8h' }) } }; }
+        catch (error) { return { status: 503, body: { error: error.message } }; }
       }
       const adminRoute = url.pathname === '/api/fellowships/admin' || url.pathname.startsWith('/api/fellowships/admin/');
       if (request.method === 'GET' && !adminRoute) {
