@@ -3,7 +3,11 @@ import { query } from '../db/index.js';
 import { verifyPassword } from '../utils/crypto.js';
 import { findUserByEmailOrPhone, createUser, deleteUserByEmail } from '../services/userService.js';
 
-const getJwtSecret = () => process.env.JWT_SECRET || process.env.DATABASE_URL || '';
+const getJwtSecret = () => {
+  const secret = typeof process.env.JWT_SECRET === 'string' ? process.env.JWT_SECRET.trim() : '';
+  if (!secret) throw new Error('JWT_SECRET is not configured.');
+  return secret;
+};
 
 const sanitizeString = (val) => {
   if (typeof val !== 'string') return '';
@@ -16,11 +20,7 @@ const sanitizeEmail = (val) => typeof val === 'string' ? val.trim().toLowerCase(
 const TOKEN_MAX_AGE = 7 * 24 * 60 * 60;
 const COOKIE_MAX_AGE = TOKEN_MAX_AGE * 1000;
 
-const createToken = (user) => {
-  const secret = getJwtSecret();
-  if (!secret) throw new Error('JWT_SECRET is not configured.');
-  return jwt.sign({ user }, secret, { expiresIn: TOKEN_MAX_AGE });
-};
+const createToken = (user) => jwt.sign({ user }, getJwtSecret(), { expiresIn: TOKEN_MAX_AGE });
 
 const setAuthCookie = (res, token) => {
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
