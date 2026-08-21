@@ -8,6 +8,10 @@ import { Capacitor } from '@capacitor/core';
  * registration happen as one predictable post-login flow.
  */
 export async function initNative() {
+  console.info('[native] initNative called', {
+    isNative: Capacitor.isNativePlatform(),
+    platform: Capacitor.getPlatform(),
+  });
   if (!Capacitor.isNativePlatform()) return;
 
   markQrCameraSessions();
@@ -70,14 +74,29 @@ let fcmSelfTestSent = false;
  * restoration so the permission prompt and token registration happen together.
  */
 export async function setUpPushNotifications() {
-  if (!Capacitor.isNativePlatform() || pushNotificationsInitialized) return;
+  console.info('[native] setUpPushNotifications called', {
+    isNative: Capacitor.isNativePlatform(),
+    platform: Capacitor.getPlatform(),
+    initialized: pushNotificationsInitialized,
+  });
+  if (!Capacitor.isNativePlatform()) {
+    console.warn('[native] push setup skipped: not a native platform');
+    return;
+  }
+  if (pushNotificationsInitialized) {
+    console.info('[native] push setup skipped: already initialized');
+    return;
+  }
 
   try {
     const { PushNotifications } = await import('@capacitor/push-notifications');
+    console.info('[native] PushNotifications plugin loaded');
 
     let permission = await PushNotifications.checkPermissions();
+    console.info('[native] push permission state:', permission?.receive);
     if (permission.receive !== 'granted') {
       permission = await PushNotifications.requestPermissions();
+      console.info('[native] push permission result:', permission?.receive);
     }
     if (permission.receive !== 'granted') {
       console.warn('[native] push notification permission is not granted');
@@ -95,6 +114,7 @@ export async function setUpPushNotifications() {
           sound: 'default',
           vibration: true,
         });
+        console.info('[native] notification channel ready');
       } catch (error) {
         console.warn('[native] notification channel setup skipped:', error?.message || error);
       }
