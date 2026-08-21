@@ -1,5 +1,6 @@
 import app from './api-entry.js';
 import jwt from 'jsonwebtoken';
+import crypto from 'node:crypto';
 
 const json = (body, status = 200, origin = '') => new Response(JSON.stringify(body), {
   status,
@@ -48,7 +49,6 @@ async function adminStatus(request, env) {
 }
 
 async function registerPushToken(request, env, origin) {
-  const token = typeof request.body === 'string' ? request.body.trim() : '';
   const bearer = getBearerToken(request);
   if (!bearer) return json({ error: 'Authorization token missing.' }, 401, origin);
   let payload;
@@ -100,6 +100,135 @@ async function registerPushToken(request, env, origin) {
   }
 }
 
+function base64url(value) {
+  return Buffer.from(value).toString('base64url');
+}
+
+function firebaseConfig(env) {
+  const projectId = typeof env.FIREBASE_PROJECT_ID === 'string' ? env.FIREBASE_PROJECT_ID.trim() : '';
+  const clientEmail = typeof env.FIREBASE_CLIENT_EMAIL === 'string' ? env.FIREBASE_CLIENT_EMAIL.trim() : '';
+  const privateKey = typeof env.FIREBASE_PRIVATE_KEY === 'string'
+    ? env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n').trim()
+    : '';
+  if (!projectId || !clientEmail || !privateKey) {
+    throw new Error('Firebase service-account configuration is incomplete.');
+  }
+  return { projectId, clientEmail, privateKey };
+}
+
+async function getFirebaseAccessToken(env) {
+  const { clientEmail, privateKey } = firebaseConfig(env);
+  const now = Math.floor(Date.now() / 1000);
+  const header = base64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
+  const claimSet = base64url(JSON.stringify({
+    iss: clientEmail,
+    scope: 'https://www.googleapis.com/auth/firebase.messaging',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600,
+  }));
+  const unsignedToken = `${header}.${claimSet}`;
+  const signer = crypto.createSign('RSA-SHA256');
+  signer.update(unsignedToken);
+  signer.end();
+  const signature = signer.sign(privateKey, 'base64url');
+  const assertion = `${unsignedToken}.${signature}`;
+
+  const response = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion,
+    }),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || !body.access_token) {
+    throw new Error(body.error_description || body.error || 'Unable to obtain Firebase access token.');
+  }
+  return body.access_token;
+}
+
+async function sendSelfPushTest(request, env, origin) {
+  const bearer = getBearerToken(request);
+  if (!bearer) return json({ error: 'Authorization token missing.' }, 401, origin);
+  let payload;
+  try {
+    payload = jwt.verify(bearer, getJwtSecret(env));
+  } catch {
+    return json({ error: 'Invalid authentication token.' }, 401, origin);
+  }
+  const email = typeof payload?.user?.email === 'string' ? payload.user.email.trim().toLowerCase() : '';
+  if (!email) return json({ error: 'Invalid authentication token.' }, 401, origin);
+
+  const connectionString = env.HYPERDRIVE?.connectionString || env.DATABASE_URL || '';
+  if (!connectionString) return json({ error: 'Database connection is not configured.' }, 503, origin);
+
+  try {
+    const { Client } = await import('pg');
+    const client = new Client({ connectionString });
+    await client.connect();
+    let tokens;
+    try {
+      const result = await client.query(
+        "SELECT token FROM push_tokens WHERE LOWER(user_email) = $1 AND token IS NOT NULL AND token <> ''",
+        [email]
+      );
+      tokens = [...new Set(result.rows.map((row) => typeof row.token === 'string' ? row.token.trim() : '').filter(Boolean))];
+    } finally {
+      await client.end().catch(() => {});
+    }
+
+    if (!tokens.length) return json({ status: 'no_token', message: 'No FCM token is registered for this account yet.' }, 404, origin);
+
+    const { projectId } = firebaseConfig(env);
+    const accessToken = await getFirebaseAccessToken(env);
+    let sent = 0;
+    let failed = 0;
+    const failures = [];
+
+    for (const token of tokens) {
+      const response = await fetch(`https://fcm.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/messages:send`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: {
+            token,
+            notification: {
+              title: 'BLW FCM Test',
+              body: 'Firebase Cloud Messaging is working on this device.',
+            },
+            data: { type: 'fcm_test', source: 'blw_test_apk' },
+            android: {
+              priority: 'HIGH',
+              notification: {
+                channel_id: 'blw_default',
+                sound: 'default',
+              },
+            },
+          },
+        }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (response.ok) {
+        sent += 1;
+      } else {
+        failed += 1;
+        failures.push({ status: response.status, error: body?.error?.status || body?.error?.message || 'FCM send failed' });
+      }
+    }
+
+    if (sent > 0) return json({ status: 'ok', sent, failed, totalTokens: tokens.length }, 200, origin);
+    return json({ status: 'failed', sent, failed, totalTokens: tokens.length, failures }, 503, origin);
+  } catch (error) {
+    console.error('[worker] direct FCM self-test failed', { message: error?.message, code: error?.code });
+    return json({ error: error?.message || 'Unable to send the FCM self-test.' }, 503, origin);
+  }
+}
+
 function needsLeader(request, url) {
   const { pathname } = url;
   if (pathname === '/api/auth/admin-status') return false;
@@ -124,6 +253,7 @@ export default {
     if (request.method === 'OPTIONS' || !url.pathname.startsWith('/api/')) return app.fetch(request, env, ctx);
     if (url.pathname === '/api/auth/admin-status' && request.method === 'GET') return json(await adminStatus(request, env), 200, origin);
     if (url.pathname === '/api/push/register' && request.method === 'POST') return registerPushToken(request, env, origin);
+    if (url.pathname === '/api/push/test' && request.method === 'POST') return sendSelfPushTest(request, env, origin);
     if (needsLeader(request, url) && !(await adminStatus(request, env)).isAdmin) return json({ error: 'Administrator authorization is required.' }, 403, origin);
     return app.fetch(request, env, ctx);
   },
