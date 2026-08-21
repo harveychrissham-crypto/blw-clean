@@ -15,7 +15,7 @@ import Dashboard from './pages/Dashboard';
 import RecordSouls from './pages/RecordSouls';
 import LeaderAdmin from './pages/LeaderAdmin';
 import LeadersForumWithFellowship from './pages/LeadersForumWithFellowship';
-import FellowshipLocationsAdmin from './pages/FellowshipLocationsAdmin';
+import FellowshipLocationsAdminSecure from './pages/FellowshipLocationsAdminSecure';
 import NotificationCenter from './pages/NotificationCenter';
 import { useAuth } from './context/AuthContext';
 import OfflineBanner from './components/OfflineBanner';
@@ -23,41 +23,25 @@ import { startOfflineSyncListeners } from './offlineSync';
 
 const FellowshipLocationsPage = () => {
   const navigate = useNavigate();
-  return (
-    <div className="relative">
-      <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
-        <button type="button" onClick={() => navigate('/leaders-forum')} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/75 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">← Back to Leaders Forum</button>
-      </div>
-      <FellowshipLocationsAdmin />
-    </div>
-  );
+  return <div className="relative"><div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8"><button type="button" onClick={() => navigate('/leaders-forum')} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/75 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">← Back to Leaders Forum</button></div><FellowshipLocationsAdminSecure /></div>;
 };
 
-// Mirrors BottomNav.jsx's tabs — used to tell a tab switch (fast cross-fade,
-// no sense of "depth") apart from a drill-down into a sub-page (directional
-// slide, since that reads as navigating deeper vs. going back).
 const BOTTOM_TAB_PATHS = ['/', '/events', '/checkin', '/live'];
 
 const AnimatedRoutes = () => {
   const location = useLocation();
-  const navigationType = useNavigationType(); // 'PUSH' | 'POP' | 'REPLACE'
+  const navigationType = useNavigationType();
   const { user } = useAuth();
   const route = (element) => <Layout>{element}</Layout>;
   const prevPathRef = useRef(location.pathname);
 
   useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); }, [location.pathname]);
-
-  const isTabSwitch =
-    BOTTOM_TAB_PATHS.includes(location.pathname) &&
-    BOTTOM_TAB_PATHS.includes(prevPathRef.current) &&
-    location.pathname !== prevPathRef.current;
-
+  const isTabSwitch = BOTTOM_TAB_PATHS.includes(location.pathname) && BOTTOM_TAB_PATHS.includes(prevPathRef.current) && location.pathname !== prevPathRef.current;
   const transition = isTabSwitch
     ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, duration: 0.15 }
     : navigationType === 'POP'
       ? { initial: { opacity: 0, x: -24 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: 24 }, duration: 0.28 }
       : { initial: { opacity: 0, x: 24 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -24 }, duration: 0.28 };
-
   useEffect(() => { prevPathRef.current = location.pathname; });
 
   return <AnimatePresence mode="wait"><motion.div key={location.pathname} initial={transition.initial} animate={transition.animate} exit={transition.exit} transition={{ duration: transition.duration }}><Routes location={location}>
@@ -82,45 +66,24 @@ const AnimatedRoutes = () => {
 
 function App() {
   useEffect(() => startOfflineSyncListeners(), []);
-
   useEffect(() => {
-    const body = document.body;
-    const html = document.documentElement;
-    const previousBodyOverflow = body.style.overflow;
-    const previousBodyTouchAction = body.style.touchAction;
-    const previousHtmlOverflow = html.style.overflow;
-    const previousHtmlTouchAction = html.style.touchAction;
-
+    const body = document.body, html = document.documentElement;
+    const previousBodyOverflow = body.style.overflow, previousBodyTouchAction = body.style.touchAction;
+    const previousHtmlOverflow = html.style.overflow, previousHtmlTouchAction = html.style.touchAction;
     const isFullScreenOverlay = (el) => {
       if (!(el instanceof HTMLElement) || !el.classList.contains('fixed')) return false;
       const className = String(el.className);
       const fillsViewport = el.classList.contains('inset-0') || (el.classList.contains('top-0') && el.classList.contains('bottom-0'));
       if (!fillsViewport) return false;
       const text = el.textContent || '';
-      return className.includes('z-[') || /(?:^|:)z-(?:40|50|\[\d+\])/.test(className) || /backdrop|modal|overlay|dialog|Leaders tool|Leadership Tools|Member Check-In|Check Attendance|Manage (?:Events|Outreach Stories|Sermons|Service Venues|Live Stream)|Fellowship Locations/i.test(text) || el.hasAttribute('data-live-welcome-overlay') || el.getAttribute('role') === 'dialog' || el.hasAttribute('data-leadership-tools-overlay');
+      return className.includes('z-[') || /(?:^|:)z-(?:40|50|\[\d+\])/.test(className) || /backdrop|modal|overlay|dialog|Leaders tool|Leadership Tools|Member Check-In|Check Attendance|Manage (?:Events|Outreach Stories|Sermons|Service Venues|Live Stream)/i.test(text) || el.hasAttribute('data-live-welcome-overlay') || el.getAttribute('role') === 'dialog' || el.hasAttribute('data-leadership-tools-overlay');
     };
-
-    const syncBodyScrollLock = () => {
-      const locked = Array.from(document.querySelectorAll('.fixed')).some(isFullScreenOverlay);
-      body.style.overflow = locked ? 'hidden' : previousBodyOverflow;
-      body.style.touchAction = locked ? 'none' : previousBodyTouchAction;
-      html.style.overflow = locked ? 'hidden' : previousHtmlOverflow;
-      html.style.touchAction = locked ? 'none' : previousHtmlTouchAction;
-    };
-
+    const syncBodyScrollLock = () => { const locked = Array.from(document.querySelectorAll('.fixed')).some(isFullScreenOverlay); body.style.overflow = locked ? 'hidden' : previousBodyOverflow; body.style.touchAction = locked ? 'none' : previousBodyTouchAction; html.style.overflow = locked ? 'hidden' : previousHtmlOverflow; html.style.touchAction = locked ? 'none' : previousHtmlTouchAction; };
     syncBodyScrollLock();
     const observer = new MutationObserver(syncBodyScrollLock);
     observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'role', 'data-leadership-tools-overlay', 'data-live-welcome-overlay'] });
-
-    return () => {
-      observer.disconnect();
-      body.style.overflow = previousBodyOverflow;
-      body.style.touchAction = previousBodyTouchAction;
-      html.style.overflow = previousHtmlOverflow;
-      html.style.touchAction = previousHtmlTouchAction;
-    };
+    return () => { observer.disconnect(); body.style.overflow = previousBodyOverflow; body.style.touchAction = previousBodyTouchAction; html.style.overflow = previousHtmlOverflow; html.style.touchAction = previousHtmlTouchAction; };
   }, []);
-
   return <><OfflineBanner /><AnimatedRoutes /></>;
 }
 export default App;
