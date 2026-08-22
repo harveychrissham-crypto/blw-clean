@@ -2,7 +2,6 @@ import { Preferences } from '@capacitor/preferences';
 import { apiFetch } from '../config/api';
 import { getOfflineCheckinQueue, removeOfflineCheckins, queueOfflineCheckin } from './offlineCheckin';
 
-const LEADER_TOKEN_KEY = 'blw_leader_admin_token';
 const MEMBERS_CACHE_KEY = 'blw_leader_members_cache_v1';
 
 async function handle(res) {
@@ -12,28 +11,12 @@ async function handle(res) {
   return body;
 }
 
-async function leaderToken() {
-  const existing = sessionStorage.getItem(LEADER_TOKEN_KEY);
-  if (existing) return existing;
-
-  const response = await apiFetch('/api/fellowships/admin/auth', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ accessCode: '1120363' }),
-  });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok || !body.token) throw new Error(body.error || 'Leadership authorization is required.');
-  sessionStorage.setItem(LEADER_TOKEN_KEY, body.token);
-  return body.token;
-}
-
 async function leaderFetch(path, options = {}) {
-  const token = await leaderToken();
   return apiFetch(path, {
     ...options,
+    credentials: 'include',
     headers: {
       ...(options.headers || {}),
-      Authorization: `Bearer ${token}`,
     },
   });
 }
@@ -77,6 +60,7 @@ export async function searchMembers(q) {
       member.name,
       member.email,
       member.phone,
+      member.chapter,
     ].some((value) => String(value || '').toLowerCase().includes(raw)));
     return matches.slice(0, 8);
   }
