@@ -3,6 +3,7 @@ import { apiFetch } from '../config/api';
 import { getOfflineCheckinQueue, removeOfflineCheckins, queueOfflineCheckin } from './offlineCheckin';
 
 const MEMBERS_CACHE_KEY = 'blw_leader_members_cache_v1';
+const SELECTED_ATTENDANCE_EVENT_KEY = 'blw_selected_attendance_event_id';
 
 async function handle(res) {
   let body = null;
@@ -18,6 +19,25 @@ async function leaderFetch(path, options = {}) {
     headers: { ...(options.headers || {}) },
   });
 }
+
+const getSelectedAttendanceEventId = () => {
+  try {
+    return sessionStorage.getItem(SELECTED_ATTENDANCE_EVENT_KEY) || null;
+  } catch {
+    return null;
+  }
+};
+
+const setSelectedAttendanceEventId = (eventId) => {
+  try {
+    if (eventId == null || eventId === '') sessionStorage.removeItem(SELECTED_ATTENDANCE_EVENT_KEY);
+    else sessionStorage.setItem(SELECTED_ATTENDANCE_EVENT_KEY, String(eventId));
+  } catch {
+    // Session storage is optional; the explicit event argument remains authoritative.
+  }
+};
+
+const resolveEventId = (eventId = null) => eventId ?? getSelectedAttendanceEventId();
 
 const withEvent = (path, eventId) => {
   if (eventId == null || eventId === '') return path;
@@ -40,27 +60,31 @@ async function readMembersCache(eventId = null) {
 }
 
 export async function getCachedMembers(eventId = null) {
-  return readMembersCache(eventId);
+  return readMembersCache(resolveEventId(eventId));
 }
 
 export async function fetchAllMembers(eventId = null) {
-  const res = await leaderFetch(withEvent('/api/members', eventId));
+  const selectedEventId = resolveEventId(eventId);
+  setSelectedAttendanceEventId(selectedEventId);
+  if (!selectedEventId) return [];
+  const res = await leaderFetch(withEvent('/api/members', selectedEventId));
   const body = await handle(res);
   const members = body.members || [];
-  await saveMembersCache(members, eventId);
+  await saveMembersCache(members, selectedEventId);
   return members;
 }
 
 export async function searchMembers(q, eventId = null) {
+  const selectedEventId = resolveEventId(eventId);
   if (!navigator.onLine) {
     const raw = String(q || '').trim().toLowerCase();
     if (!raw) return [];
-    const cached = await readMembersCache(eventId);
+    const cached = await readMembersCache(selectedEventId);
     return cached.filter((member) => [member.membershipId, member.name, member.email, member.phone, member.chapter]
       .some((value) => String(value || '').toLowerCase().includes(raw))).slice(0, 8);
   }
 
-  const res = await leaderFetch(withEvent(`/api/members/search?q=${encodeURIComponent(q)}`, eventId));
+  const res = await leaderFetch(withEvent(`/api/members/search?q=${encodeURIComponent(q)}`, selectedEventId));
   if (res.status === 404) return [];
   const body = await handle(res);
   return body.members || [];
@@ -72,7 +96,9 @@ function localDateKey() {
 }
 
 export async function checkInMember(membershipId, memberHint = null, eventId = null) {
-  const selectedEventId = eventId ?? memberHint?.eventId ?? null;
+  const selectedEventId = resolveEventId(eventId ?? memberHint?.eventId ?? null);
+  if (!selectedEventId) throw new Error('Select an event before checking members in.');
+
   if (!navigator.onLine) {
     const now = new Date().toISOString();
     await queueOfflineCheckin({
