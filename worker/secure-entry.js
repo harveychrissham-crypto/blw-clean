@@ -2,6 +2,7 @@ import app from './api-entry.js';
 import jwt from 'jsonwebtoken';
 import crypto from 'node:crypto';
 import { corsHeaders, rateLimit } from './security.js';
+import { handleSermons } from './sermon-api.js';
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), {
   status,
@@ -133,6 +134,10 @@ export default {
       if (!rl.allowed) return json({ error: 'Too many authentication attempts. Please try again later.' }, 429, { ...headers, 'retry-after': String(rl.retryAfter) });
     }
     if (needsLeader(request, url) && !(await adminStatus(request, env)).isAdmin) return json({ error: 'Administrator authorization is required.' }, 403, headers);
+    if (url.pathname.startsWith('/api/sermons')) {
+      const response = await handleSermons(request, env, url);
+      if (response) return response;
+    }
     return app.fetch(request, env, ctx);
   },
   async scheduled(controller, env, ctx) {
