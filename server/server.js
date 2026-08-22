@@ -11,8 +11,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 import authRoutes from './routes/authRoutes.js';
-import contentRoutes from './routes/contentRoutes.js';
-import registrationRoutes from './routes/registrationRoutes.js';
 import memberRoutes from './routes/memberRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
 import outreachStoryRoutes from './routes/outreachStoryRoutes.js';
@@ -36,8 +34,6 @@ export function createApp({ serveStatic = false } = {}) {
   app.use(express.urlencoded({ extended: true, limit: '10kb' }));
   app.use((req,_res,next)=>{ console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`); next(); });
   app.use('/api/auth', authRoutes);
-  app.use('/api/content', contentRoutes);
-  app.use('/api/registration', registrationRoutes);
   app.use('/api/members', memberRoutes);
   app.use('/api/events', eventRoutes);
   app.use('/api/outreach-stories', outreachStoryRoutes);
