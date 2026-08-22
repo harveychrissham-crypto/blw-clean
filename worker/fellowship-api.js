@@ -9,13 +9,21 @@ function getJwtSecret(env) {
   return secret;
 }
 
-function bearerToken(request) {
+function authToken(request) {
   const header = request.headers.get('authorization') || request.headers.get('Authorization') || '';
-  return header.startsWith('Bearer ') ? header.slice(7).trim() : '';
+  if (header.startsWith('Bearer ')) return header.slice(7).trim();
+
+  const cookieHeader = request.headers.get('cookie') || '';
+  const tokenCookie = cookieHeader
+    .split(';')
+    .map((cookie) => cookie.trim())
+    .find((cookie) => cookie.startsWith('blw_auth_token='));
+  if (!tokenCookie) return '';
+  return decodeURIComponent(tokenCookie.split('=')[1] || '');
 }
 
 async function validAdmin(request, env) {
-  const token = bearerToken(request);
+  const token = authToken(request);
   if (!token) return false;
   try {
     const payload = jwt.verify(token, getJwtSecret(env));
