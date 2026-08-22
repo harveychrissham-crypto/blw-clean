@@ -1,39 +1,5 @@
 import { Capacitor } from '@capacitor/core';
 
-function fcmDebug(message, detail = '') {
-  try {
-    const existing = document.getElementById('blw-fcm-debug');
-    const panel = existing || (() => {
-      const el = document.createElement('pre');
-      el.id = 'blw-fcm-debug';
-      Object.assign(el.style, {
-        position: 'fixed',
-        left: '10px',
-        right: '10px',
-        bottom: '10px',
-        zIndex: '2147483647',
-        maxHeight: '42vh',
-        overflow: 'auto',
-        margin: '0',
-        padding: '12px',
-        borderRadius: '12px',
-        background: 'rgba(0,0,0,.92)',
-        color: '#fff',
-        font: '12px/1.45 monospace',
-        whiteSpace: 'pre-wrap',
-        boxShadow: '0 8px 30px rgba(0,0,0,.45)',
-      });
-      document.body.appendChild(el);
-      return el;
-    })();
-    const line = `[${new Date().toLocaleTimeString()}] ${message}${detail ? `: ${detail}` : ''}`;
-    panel.textContent = `${panel.textContent ? `${panel.textContent}\n` : ''}${line}`;
-    panel.scrollTop = panel.scrollHeight;
-  } catch {
-    // Diagnostics must never break the app.
-  }
-}
-
 /**
  * Native-only setup (status bar and Android back button).
  *
@@ -42,7 +8,6 @@ function fcmDebug(message, detail = '') {
  * registration happen as one predictable post-login flow.
  */
 export async function initNative() {
-  fcmDebug('initNative called', `${Capacitor.getPlatform()} / native=${Capacitor.isNativePlatform()}`);
   if (!Capacitor.isNativePlatform()) return;
 
   markQrCameraSessions();
@@ -103,17 +68,12 @@ async function setUpForegroundNotificationDisplay() {
   try {
     const { LocalNotifications } = await import('@capacitor/local-notifications');
     let permission = await LocalNotifications.checkPermissions();
-    fcmDebug('local notification permission', permission?.display || 'unknown');
 
     if (permission.display !== 'granted') {
       permission = await LocalNotifications.requestPermissions();
-      fcmDebug('local notification permission result', permission?.display || 'unknown');
     }
 
-    if (permission.display !== 'granted') {
-      fcmDebug('foreground notification display unavailable', 'local notification permission not granted');
-      return;
-    }
+    if (permission.display !== 'granted') return;
 
     if (Capacitor.getPlatform() === 'android') {
       try {
@@ -127,12 +87,11 @@ async function setUpForegroundNotificationDisplay() {
           vibration: true,
         });
       } catch (error) {
-        fcmDebug('local channel setup failed', error?.message || String(error));
+        console.warn('[native] local notification channel setup skipped:', error?.message || error);
       }
     }
 
     foregroundNotificationListenerRegistered = true;
-    fcmDebug('foreground notification listener ready');
 
     const { PushNotifications } = await import('@capacitor/push-notifications');
     await PushNotifications.addListener('pushNotificationReceived', async (notification) => {
@@ -142,8 +101,6 @@ async function setUpForegroundNotificationDisplay() {
       const body = typeof notification?.body === 'string' && notification.body.trim()
         ? notification.body.trim()
         : 'You have a new ministry update.';
-
-      fcmDebug('FCM notification received', `${title} / ${body}`);
 
       try {
         await LocalNotifications.schedule({
@@ -156,30 +113,19 @@ async function setUpForegroundNotificationDisplay() {
             extra: notification?.data || {},
           }],
         });
-        fcmDebug('foreground notification displayed');
       } catch (error) {
-        fcmDebug('foreground notification display failed', error?.message || String(error));
+        console.warn('[native] foreground notification display skipped:', error?.message || error);
       }
     });
   } catch (error) {
-    fcmDebug('local notification setup exception', error?.message || String(error));
+    console.warn('[native] local notification setup skipped:', error?.message || error);
   }
 }
 
 export function setUpPushNotifications() {
-  fcmDebug('setUpPushNotifications called');
-  if (!Capacitor.isNativePlatform()) {
-    fcmDebug('STOP', 'not a native platform');
-    return Promise.resolve();
-  }
-  if (pushNotificationsInitialized) {
-    fcmDebug('STOP', 'already initialized');
-    return Promise.resolve();
-  }
-  if (pushNotificationsSetupPromise) {
-    fcmDebug('STOP', 'setup already in progress');
-    return pushNotificationsSetupPromise;
-  }
+  if (!Capacitor.isNativePlatform()) return Promise.resolve();
+  if (pushNotificationsInitialized) return Promise.resolve();
+  if (pushNotificationsSetupPromise) return pushNotificationsSetupPromise;
 
   pushNotificationsSetupPromise = setUpPushNotificationsInternal().finally(() => {
     if (!pushNotificationsInitialized) pushNotificationsSetupPromise = null;
@@ -190,20 +136,13 @@ export function setUpPushNotifications() {
 
 async function setUpPushNotificationsInternal() {
   try {
-    fcmDebug('loading PushNotifications plugin');
     const { PushNotifications } = await import('@capacitor/push-notifications');
-    fcmDebug('PushNotifications plugin loaded');
 
     let permission = await PushNotifications.checkPermissions();
-    fcmDebug('permission check', permission?.receive || 'unknown');
     if (permission.receive !== 'granted') {
       permission = await PushNotifications.requestPermissions();
-      fcmDebug('permission request result', permission?.receive || 'unknown');
     }
-    if (permission.receive !== 'granted') {
-      fcmDebug('STOP', 'notification permission not granted');
-      return;
-    }
+    if (permission.receive !== 'granted') return;
 
     await setUpForegroundNotificationDisplay();
 
@@ -218,72 +157,55 @@ async function setUpPushNotificationsInternal() {
           sound: 'default',
           vibration: true,
         });
-        fcmDebug('notification channel ready');
       } catch (error) {
-        fcmDebug('channel setup failed', error?.message || String(error));
+        console.warn('[native] push channel setup skipped:', error?.message || error);
       }
     }
 
     const registrationListener = await PushNotifications.addListener('registration', async (token) => {
       const tokenValue = typeof token?.value === 'string' ? token.value.trim() : '';
-      fcmDebug('FCM registration callback received', tokenValue ? 'token received' : 'empty token');
       if (!tokenValue) return;
-      if (tokenValue === lastRegisteredFcmToken) {
-        fcmDebug('STOP', 'duplicate FCM token callback');
-        return;
-      }
+      if (tokenValue === lastRegisteredFcmToken) return;
       lastRegisteredFcmToken = tokenValue;
 
       try {
         const { apiFetch } = await import('./config/api');
-        fcmDebug('posting token to backend');
         const response = await apiFetch('/api/push/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token: tokenValue, platform: Capacitor.getPlatform() }),
         });
-        fcmDebug('/api/push/register response', String(response.status));
 
-        if (!response.ok) {
-          const detail = await response.text().catch(() => '');
-          fcmDebug('token registration failed', `${response.status} ${detail}`);
-          return;
-        }
+        if (!response.ok) return;
 
         pushNotificationsInitialized = true;
-        fcmDebug('FCM token registered with backend');
 
         if (!fcmSelfTestSent && import.meta.env.VITE_FCM_TEST_MODE === 'true') {
           fcmSelfTestSent = true;
           try {
-            const testResponse = await apiFetch('/api/push/test', {
+            await apiFetch('/api/push/test', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
             });
-            const testDetail = await testResponse.text().catch(() => '');
-            fcmDebug('/api/push/test response', `${testResponse.status} ${testDetail}`);
-          } catch (error) {
-            fcmDebug('FCM self-test request failed', error?.message || String(error));
+          } catch {
+            // Optional diagnostics self-test should never break app startup.
           }
         }
-      } catch (error) {
-        fcmDebug('backend registration exception', error?.message || String(error));
+      } catch {
+        // Push registration failures should not break app startup.
       }
     });
 
-    await PushNotifications.addListener('registrationError', (error) => {
-      fcmDebug('FCM registrationError', JSON.stringify(error));
+    await PushNotifications.addListener('registrationError', () => {
+      // Registration errors are intentionally silent in production.
     });
 
-    fcmDebug('calling PushNotifications.register()');
     try {
       await PushNotifications.register();
-      fcmDebug('PushNotifications.register() resolved');
-    } catch (error) {
+    } catch {
       await registrationListener.remove().catch(() => {});
-      fcmDebug('PushNotifications.register() threw', error?.message || String(error));
     }
-  } catch (error) {
-    fcmDebug('push setup exception', error?.message || String(error));
+  } catch {
+    // Push setup is best-effort and must never break app startup.
   }
 }
