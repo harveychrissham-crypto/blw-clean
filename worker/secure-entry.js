@@ -204,10 +204,10 @@ async function sendSelfPushTest(request, env, origin) {
           message: {
             token,
             notification: {
-              title: 'BLW FCM Test',
-              body: 'Firebase Cloud Messaging is working on this device.',
+              title: 'BLW Kenya Zone',
+              body: 'You have a new ministry update.',
             },
-            data: { type: 'fcm_test', source: 'blw_test_apk' },
+            data: { type: 'notification', source: 'blw_notification_service' },
             android: {
               priority: 'HIGH',
               notification: {
@@ -231,7 +231,7 @@ async function sendSelfPushTest(request, env, origin) {
     return json({ status: 'failed', sent, failed, totalTokens: tokens.length, failures }, 503, origin);
   } catch (error) {
     console.error('[worker] direct FCM self-test failed', { message: error?.message, code: error?.code });
-    return json({ error: error?.message || 'Unable to send the FCM self-test.' }, 503, origin);
+    return json({ error: error?.message || 'Unable to send the notification.' }, 503, origin);
   }
 }
 
