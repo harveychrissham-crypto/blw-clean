@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'node:crypto';
 import { corsHeaders, rateLimit } from './security.js';
 import { handleSermons } from './sermon-api.js';
+import { handleLive } from './live-api.js';
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), {
   status,
@@ -136,6 +137,10 @@ export default {
     if (needsLeader(request, url) && !(await adminStatus(request, env)).isAdmin) return json({ error: 'Administrator authorization is required.' }, 403, headers);
     if (url.pathname.startsWith('/api/sermons')) {
       const response = await handleSermons(request, env, url);
+      if (response) return response;
+    }
+    if (url.pathname.startsWith('/api/live')) {
+      const response = await handleLive(request, env, url);
       if (response) return response;
     }
     return app.fetch(request, env, ctx);
