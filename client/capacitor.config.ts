@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.blwcampusministry.app',
-  appName: 'BLW Campus Ministry',
+  appName: 'BLW Kenya Zone',
   webDir: 'dist',
 
   // No `server.url` here on purpose: the UI ships inside the app bundle so
