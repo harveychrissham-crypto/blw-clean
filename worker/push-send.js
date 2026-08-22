@@ -1,17 +1,20 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'node:crypto';
 
-const json = (body, status = 200, origin = '') => new Response(JSON.stringify(body), {
-  status,
-  headers: {
-    'content-type': 'application/json; charset=utf-8',
-    'access-control-allow-origin': origin,
-    'access-control-allow-credentials': 'true',
-    'access-control-allow-methods': 'GET,POST,OPTIONS',
-    'access-control-allow-headers': 'Content-Type, Authorization',
-    vary: 'Origin',
+const json = (body, status = 200, origin = '') => new Response(
+  status === 204 ? null : JSON.stringify(body),
+  {
+    status,
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'access-control-allow-origin': origin,
+      'access-control-allow-credentials': 'true',
+      'access-control-allow-methods': 'GET,POST,OPTIONS',
+      'access-control-allow-headers': 'Content-Type, Authorization',
+      vary: 'Origin',
+    },
   },
-});
+);
 
 function getBearer(request) {
   const value = request.headers.get('Authorization') || request.headers.get('authorization') || '';
