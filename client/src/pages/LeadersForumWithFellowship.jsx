@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiBell, FiCalendar, FiCheckCircle, FiClock, FiFilm, FiImage, FiMapPin, FiRadio, FiSearch, FiShield, FiLock, FiUsers, FiX, FiDownload, FiZap } from 'react-icons/fi';
+import { FiBell, FiCalendar, FiCheckCircle, FiFilm, FiImage, FiMapPin, FiRadio, FiSearch, FiShield, FiLock, FiUsers, FiX, FiDownload, FiZap } from 'react-icons/fi';
 import { MdQrCodeScanner, MdFlashlightOn } from 'react-icons/md';
 import jsQR from 'jsqr';
 import { useAuth } from '../context/AuthContext';
@@ -100,8 +100,7 @@ function QRScannerPanel({ onCheckIn, onClose, checkedInCount, pendingCount }) {
   }, []);
 
   const triggerScanFeedback = useCallback((kind) => {
-    setScanFlash(kind);
-    feedbackTone(kind === 'success' ? 'success' : 'already');
+    setScanFlash(kind); feedbackTone(kind === 'success' ? 'success' : 'already');
     window.setTimeout(() => setScanFlash(null), 180);
   }, []);
 
@@ -121,21 +120,16 @@ function QRScannerPanel({ onCheckIn, onClose, checkedInCount, pendingCount }) {
     stopCamera();
     const parsed = parseQRPayload(raw);
     if (!parsed) { setError('Invalid QR code — not a recognised BLW member badge.'); triggerScanFeedback('already'); return; }
+    triggerScanFeedback('success');
     await handleLookup(parsed.membershipId, parsed.name);
   }, [handleLookup, stopCamera, triggerScanFeedback]);
 
   const scanFrame = useCallback(() => {
-    if (!scanning || busyRef.current) {
-      if (scanning) frameRef.current = requestAnimationFrame(scanFrame);
-      return;
-    }
+    if (!scanning || busyRef.current) { if (scanning) frameRef.current = requestAnimationFrame(scanFrame); return; }
     const video = videoRef.current, canvas = canvasRef.current;
-    if (!video || !canvas || video.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA || !video.videoWidth) {
-      frameRef.current = requestAnimationFrame(scanFrame); return;
-    }
+    if (!video || !canvas || video.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA || !video.videoWidth) { frameRef.current = requestAnimationFrame(scanFrame); return; }
     canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-    const context = canvas.getContext('2d', { willReadFrequently: true });
-    if (!context) return;
+    const context = canvas.getContext('2d', { willReadFrequently: true }); if (!context) return;
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     const image = context.getImageData(0, 0, canvas.width, canvas.height);
     const code = jsQR(image.data, image.width, image.height, { inversionAttempts: 'attemptBoth' });
@@ -150,8 +144,7 @@ function QRScannerPanel({ onCheckIn, onClose, checkedInCount, pendingCount }) {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera is unavailable on this device.');
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
       streamRef.current = stream;
-      const track = stream.getVideoTracks()[0];
-      const caps = track?.getCapabilities?.() || {};
+      const track = stream.getVideoTracks()[0]; const caps = track?.getCapabilities?.() || {};
       setTorchAvailable(caps.torch === true);
       if (!videoRef.current) throw new Error('Camera view is unavailable.');
       videoRef.current.srcObject = stream; await videoRef.current.play(); setScanning(true);
@@ -171,9 +164,8 @@ function QRScannerPanel({ onCheckIn, onClose, checkedInCount, pendingCount }) {
   };
 
   const switchTab = (next) => {
-    setTab(next); setError(''); setSuggestions([]); setScanFlash(null);
-    if (next === 'manual') { stopCamera(); setManual(''); }
-    else { setManual(''); }
+    setTab(next); setError(''); setSuggestions([]); setScanFlash(null); setResult(null); setSaving(false);
+    if (next === 'manual') { stopCamera(); setManual(''); } else { setManual(''); }
   };
 
   const handleManualChange = (event) => {
@@ -181,8 +173,7 @@ function QRScannerPanel({ onCheckIn, onClose, checkedInCount, pendingCount }) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!value.trim()) { setSuggestions([]); return; }
     debounceRef.current = window.setTimeout(async () => {
-      try { setSuggestions((await searchMembers(value.trim())).slice(0, 6)); }
-      catch { setSuggestions([]); }
+      try { setSuggestions((await searchMembers(value.trim())).slice(0, 6)); } catch { setSuggestions([]); }
     }, 250);
   };
 
@@ -198,77 +189,38 @@ function QRScannerPanel({ onCheckIn, onClose, checkedInCount, pendingCount }) {
     const startedAt = Date.now();
     try {
       const updated = await onCheckIn(result.member.membershipId, result.member);
-      const elapsed = Date.now() - startedAt;
-      const wait = Math.max(0, 400 - elapsed);
+      const elapsed = Date.now() - startedAt; const wait = Math.max(0, 400 - elapsed);
       saveTimerRef.current = window.setTimeout(() => {
         const member = { ...result.member, ...(updated || {}), checkedIn: true };
-        setResult({ member, confirmed: true, already: false });
-        triggerScanFeedback('success');
-        setSaving(false);
-        if (continuous) {
-          window.setTimeout(() => { setResult(null); setManual(''); setError(''); void startCamera(); }, 420);
-        }
+        setResult({ member, confirmed: true, already: false }); triggerScanFeedback('success'); setSaving(false);
+        if (continuous) window.setTimeout(() => { setResult(null); setManual(''); setError(''); void startCamera(); }, 420);
       }, wait);
-    } catch (err) {
-      setSaving(false); setError(err.message || 'Unable to check in this member right now.'); triggerScanFeedback('already');
-    }
+    } catch (err) { setSaving(false); setError(err.message || 'Unable to check in this member right now.'); triggerScanFeedback('already'); }
   };
 
   const handleTouchStart = (event) => { closeStartYRef.current = event.touches?.[0]?.clientY ?? null; };
-  const handleTouchEnd = (event) => {
-    const startY = closeStartYRef.current; const endY = event.changedTouches?.[0]?.clientY ?? null;
-    closeStartYRef.current = null;
-    if (startY !== null && endY !== null && endY - startY > 100) onClose();
-  };
+  const handleTouchEnd = (event) => { const startY = closeStartYRef.current; const endY = event.changedTouches?.[0]?.clientY ?? null; closeStartYRef.current = null; if (startY !== null && endY !== null && endY - startY > 100) onClose(); };
 
-  useEffect(() => () => {
-    stopCamera();
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-  }, [stopCamera]);
+  useEffect(() => () => { stopCamera(); if (debounceRef.current) clearTimeout(debounceRef.current); if (saveTimerRef.current) clearTimeout(saveTimerRef.current); }, [stopCamera]);
 
   return <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#0d0c18]/95 px-3 py-4 sm:px-4 sm:py-6" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
     <Card variant="raised" className="relative w-full max-w-6xl overflow-hidden rounded-[2rem] shadow-2xl">
-      <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6">
-        <div><Eyebrow>Leaders tool</Eyebrow><h2 className="mt-1 text-xl font-bold text-white">Member Check-In</h2><p className="mt-1 text-xs text-white/40">{checkedInCount} checked in this session{pendingCount ? ` · ${pendingCount} pending sync` : ''}</p></div>
-        <button onClick={onClose} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70" aria-label="Close scanner"><FiX/></button>
-      </div>
-
+      <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6"><div><Eyebrow>Leaders tool</Eyebrow><h2 className="mt-1 text-xl font-bold text-white">Member Check-In</h2><p className="mt-1 text-xs text-white/40">{checkedInCount} checked in this session{pendingCount ? ` · ${pendingCount} pending sync` : ''}</p></div><button onClick={onClose} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70" aria-label="Close scanner"><FiX/></button></div>
       <div className="flex border-b border-white/10">
-        <button disabled={!!result} onClick={() => switchTab('scan')} className={`flex min-h-12 flex-1 items-center justify-center gap-2 text-sm font-semibold transition ${tab === 'scan' ? 'border-b-2 border-[#F2A31C] text-[#F2A31C]' : 'text-white/35'} ${result ? 'cursor-default opacity-60' : ''}`}><MdQrCodeScanner/> Scan QR</button>
-        <button disabled={!!result} onClick={() => switchTab('manual')} className={`flex min-h-12 flex-1 items-center justify-center gap-2 text-sm font-semibold transition ${tab === 'manual' ? 'border-b-2 border-[#F2A31C] text-[#F2A31C]' : 'text-white/35'} ${result ? 'cursor-default opacity-60' : ''}`}><FiSearch/> Manual</button>
+        <button onClick={() => switchTab('scan')} className={`flex min-h-12 flex-1 items-center justify-center gap-2 text-sm font-semibold transition ${tab === 'scan' ? 'border-b-2 border-[#F2A31C] text-[#F2A31C]' : 'text-white/35'} ${result ? 'opacity-60' : ''}`}><MdQrCodeScanner/> Scan QR</button>
+        <button onClick={() => switchTab('manual')} className={`flex min-h-12 flex-1 items-center justify-center gap-2 text-sm font-semibold transition ${tab === 'manual' ? 'border-b-2 border-[#F2A31C] text-[#F2A31C]' : 'text-white/35'} ${result ? 'opacity-60' : ''}`}><FiSearch/> Manual</button>
       </div>
-
       <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] lg:items-start">
         <div className="min-w-0">
           {tab === 'scan' && !result && <>
-            <div className="relative aspect-square overflow-hidden rounded-2xl bg-black/50 sm:aspect-[4/3] lg:aspect-[4/3]">
-              <video ref={videoRef} className="h-full w-full object-cover" muted playsInline/><canvas ref={canvasRef} className="hidden"/>
-              {scanning && <div className="pointer-events-none absolute inset-0 flex items-center justify-center"><div className={`relative h-52 w-52 rounded-2xl border-2 transition-all duration-150 ${scanFlash === 'success' ? 'scale-105 border-emerald-400 opacity-100' : 'border-[#F2A31C]/80 animate-pulse'}`}>{['left-0 top-0','right-0 top-0','left-0 bottom-0','right-0 bottom-0'].map((position) => <span key={position} className={`absolute h-8 w-8 border-[#F2A31C] ${position} ${position.includes('left') ? 'border-l-[4px]' : 'border-r-[4px]'} ${position.includes('top') ? 'border-t-[4px]' : 'border-b-[4px]'} rounded-sm transition-colors duration-150 ${scanFlash === 'success' ? 'border-emerald-400' : ''}`}/>)}</div></div>}
-              {!scanning && <div className="absolute inset-0 flex flex-col items-center justify-center gap-3"><MdQrCodeScanner className="h-14 w-14 text-white/25"/><p className="text-sm text-white/50">Camera inactive</p></div>}
-              {scanFlash && <div className={`pointer-events-none absolute inset-0 ${scanFlash === 'success' ? 'bg-emerald-400/25' : 'bg-amber-400/10'} animate-pulse`}/>} 
-            </div>
-            <div className="mt-4 flex gap-2">
-              <button onClick={() => void startCamera()} className="flex min-h-14 flex-1 items-center justify-center rounded-2xl bg-[#F2A31C] px-4 text-sm font-bold text-[#0d0c18]">{scanning ? 'Restart camera' : 'Start camera'}</button>
-              {scanning && <button onClick={stopCamera} className="min-h-14 rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm font-semibold text-white/80">Stop scanning</button>}
-              {scanning && torchAvailable && <button onClick={() => void toggleTorch()} className={`min-h-14 rounded-2xl border px-4 text-sm font-semibold ${torchOn ? 'border-[#F2A31C] text-[#F2A31C]' : 'border-white/10 text-white/70'}`} aria-label="Toggle flashlight"><MdFlashlightOn className="h-5 w-5"/></button>}
-            </div>
+            <div className="relative aspect-square overflow-hidden rounded-2xl bg-black/50 sm:aspect-[4/3] lg:aspect-[4/3]"><video ref={videoRef} className="h-full w-full object-cover" muted playsInline/><canvas ref={canvasRef} className="hidden"/>{scanning && <div className="pointer-events-none absolute inset-0 flex items-center justify-center"><div className={`relative h-52 w-52 rounded-2xl border-2 transition-all duration-150 ${scanFlash === 'success' ? 'scale-105 border-emerald-400 opacity-100' : 'border-[#F2A31C]/80 animate-pulse'}`}>{['left-0 top-0','right-0 top-0','left-0 bottom-0','right-0 bottom-0'].map((position) => <span key={position} className={`absolute h-8 w-8 ${position} ${position.includes('left') ? 'border-l-[4px]' : 'border-r-[4px]'} ${position.includes('top') ? 'border-t-[4px]' : 'border-b-[4px]'} rounded-sm border-[#F2A31C] transition-colors duration-150 ${scanFlash === 'success' ? 'border-emerald-400' : ''}`}/>)}</div></div>}{!scanning && <div className="absolute inset-0 flex flex-col items-center justify-center gap-3"><MdQrCodeScanner className="h-14 w-14 text-white/25"/><p className="text-sm text-white/50">Camera inactive</p></div>}{scanFlash && <div className={`pointer-events-none absolute inset-0 ${scanFlash === 'success' ? 'bg-emerald-400/25' : 'bg-amber-400/10'} animate-pulse`}/>}</div>
+            <div className="mt-4 flex gap-2"><button onClick={() => void startCamera()} className="flex min-h-14 flex-1 items-center justify-center rounded-2xl bg-[#F2A31C] px-4 text-sm font-bold text-[#0d0c18]">{scanning ? 'Restart camera' : 'Start camera'}</button>{scanning && <button onClick={stopCamera} className="min-h-14 rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm font-semibold text-white/80">Stop scanning</button>}{scanning && torchAvailable && <button onClick={() => void toggleTorch()} className={`min-h-14 rounded-2xl border px-4 text-sm font-semibold ${torchOn ? 'border-[#F2A31C] text-[#F2A31C]' : 'border-white/10 text-white/70'}`} aria-label="Toggle flashlight"><MdFlashlightOn className="h-5 w-5"/></button>}</div>
             <div className="mt-3 flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3"><span className="text-xs text-white/55">Continuous scan</span><button onClick={() => setContinuous((v) => !v)} className={`h-7 w-12 rounded-full p-1 transition ${continuous ? 'bg-emerald-500' : 'bg-white/15'}`}><span className={`block h-5 w-5 rounded-full bg-white transition ${continuous ? 'translate-x-5' : ''}`}/></button></div>
             <p className="mt-3 text-center text-xs text-white/35">Point the camera at the member's QR badge.</p>
           </>}
-
-          {tab === 'manual' && !result && <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"><label className="text-sm font-semibold text-white">Manual lookup</label><div className="mt-2 flex gap-2"><input value={manual} onChange={handleManualChange} onKeyDown={(e) => { if (e.key === 'Enter') void lookupManual(); }} placeholder="Membership ID, name, phone, or email" className="min-h-14 min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm text-white outline-none"/><button onClick={() => void lookupManual()} disabled={loading} className="min-h-14 rounded-2xl bg-[#F2A31C] px-5 text-sm font-bold text-[#0d0c18]">{loading ? 'Finding…' : 'Find'}</button></div>{suggestions.length > 0 && <div className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">{suggestions.map((member, index) => <button key={member.membershipId} onClick={() => { setResult({ member, confirmed: false, already: !!member.checkedIn }); setSuggestions([]); }} className="block w-full border-b border-white/5 px-4 py-3 text-left last:border-0 hover:bg-white/[0.05]" style={{ animation: `suggestion-in 180ms ease both`, animationDelay: `${index * 30}ms` }}><p className="text-sm font-semibold text-white">{member.name}</p><p className="text-xs text-white/40">{member.membershipId}{member.chapter ? ` · ${member.chapter}` : ''}</p></button>)}</div>}</div>}
+          {tab === 'manual' && !result && <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"><label className="text-sm font-semibold text-white">Manual lookup</label><div className="mt-2 flex gap-2"><input value={manual} onChange={handleManualChange} onKeyDown={(e) => { if (e.key === 'Enter') void lookupManual(); }} placeholder="Membership ID, name, phone, or email" className="min-h-14 min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-sm text-white outline-none"/><button onClick={() => void lookupManual()} disabled={loading} className="min-h-14 rounded-2xl bg-[#F2A31C] px-5 text-sm font-bold text-[#0d0c18]">{loading ? 'Finding…' : 'Find'}</button></div>{suggestions.length > 0 && <div className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">{suggestions.map((member, index) => <button key={member.membershipId} onClick={() => { setResult({ member, confirmed: false, already: !!member.checkedIn }); setSuggestions([]); }} className="block w-full border-b border-white/5 px-4 py-3 text-left last:border-0 hover:bg-white/[0.05]" style={{ animation: 'suggestion-in 180ms ease both', animationDelay: `${index * 30}ms` }}><p className="text-sm font-semibold text-white">{member.name}</p><p className="text-xs text-white/40">{member.membershipId}{member.chapter ? ` · ${member.chapter}` : ''}</p></button>)}</div>}</div>}
         </div>
-
-        <div className="min-w-0">
-          {error && <p className="mb-4 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
-          {result?.member && <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 sm:p-6">
-            <Eyebrow>Member found</Eyebrow><h3 className="mt-2 text-2xl font-bold text-white">{result.member.name}</h3><p className="mt-1 text-sm text-white/45">{result.member.membershipId}{result.member.chapter ? ` · ${result.member.chapter}` : ''}</p>
-            {result.already || result.member.checkedIn ? <div className="mt-5 rounded-2xl border border-amber-400/20 bg-amber-500/15 px-4 py-4 text-sm font-semibold text-amber-200"><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-400/20"><FiCheckCircle className="h-5 w-5"/></span><div><p>Already checked in</p><p className="mt-1 text-xs font-normal text-amber-100/60">Today{result.member.checkedInAt ? ` at ${new Date(result.member.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}</p></div></div></div> : result.confirmed ? <div className="mt-5 rounded-2xl border border-emerald-400/20 bg-emerald-500/15 px-4 py-4 text-sm font-semibold text-emerald-200"><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400/20"><FiCheckCircle className="h-5 w-5"/></span><div><p>Checked in successfully</p><p className="mt-1 text-xs font-normal text-emerald-100/60">Attendance recorded for today</p></div></div></div> : <button onClick={() => void confirmCheckIn()} disabled={saving} className="mt-5 w-full min-h-14 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 text-sm font-bold text-white disabled:opacity-60">{saving ? 'Checking in…' : 'Confirm Check-In'}</button>}
-            {!continuous && <button onClick={() => { setResult(null); setManual(''); setError(''); }} className="mt-3 w-full min-h-12 rounded-2xl border border-white/10 py-3 text-sm font-semibold text-white/60">Scan another member</button>}
-          </div>}
-          {!result && tab === 'scan' && <div className="mt-4 hidden rounded-2xl border border-white/10 bg-white/[0.03] p-4 lg:block"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/35">Door mode</p><p className="mt-2 text-sm text-white/55">Use continuous scan for a busy entrance. The result panel will confirm each member without leaving the camera workflow.</p></div>}
-        </div>
+        <div className="min-w-0">{error && <p className="mb-4 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}{result?.member && <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 sm:p-6"><Eyebrow>Member found</Eyebrow><h3 className="mt-2 text-2xl font-bold text-white">{result.member.name}</h3><p className="mt-1 text-sm text-white/45">{result.member.membershipId}{result.member.chapter ? ` · ${result.member.chapter}` : ''}</p>{result.already || result.member.checkedIn ? <div className="mt-5 rounded-2xl border border-amber-400/20 bg-amber-500/15 px-4 py-4 text-sm font-semibold text-amber-200"><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-400/20"><FiCheckCircle className="h-5 w-5"/></span><div><p>Already checked in</p><p className="mt-1 text-xs font-normal text-amber-100/60">Today{result.member.checkedInAt ? ` at ${new Date(result.member.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}</p></div></div></div> : result.confirmed ? <div className="mt-5 rounded-2xl border border-emerald-400/20 bg-emerald-500/15 px-4 py-4 text-sm font-semibold text-emerald-200"><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400/20"><FiCheckCircle className="h-5 w-5"/></span><div><p>Checked in successfully</p><p className="mt-1 text-xs font-normal text-emerald-100/60">Attendance recorded for today</p></div></div></div> : <button onClick={() => void confirmCheckIn()} disabled={saving} className="mt-5 w-full min-h-14 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 text-sm font-bold text-white disabled:opacity-60">{saving ? 'Checking in…' : 'Confirm Check-In'}</button>}{!continuous && <button onClick={() => { setResult(null); setManual(''); setError(''); }} className="mt-3 w-full min-h-12 rounded-2xl border border-white/10 py-3 text-sm font-semibold text-white/60">Scan another member</button>}</div>}{!result && tab === 'scan' && <div className="mt-4 hidden rounded-2xl border border-white/10 bg-white/[0.03] p-4 lg:block"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/35">Door mode</p><p className="mt-2 text-sm text-white/55">Use continuous scan for a busy entrance. The result panel confirms each member without leaving the camera workflow.</p></div>}</div>
       </div>
       <style>{`@keyframes suggestion-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}`}</style>
     </Card>
@@ -276,27 +228,11 @@ function QRScannerPanel({ onCheckIn, onClose, checkedInCount, pendingCount }) {
 }
 
 function AttendancePanel() {
-  const [members, setMembers] = useState([]);
-  const [query, setQuery] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [saving, setSaving] = useState('');
-  const [scannerOpen, setScannerOpen] = useState(false);
-  const [pendingCount, setPendingCount] = useState(0);
+  const [members, setMembers] = useState([]); const [query, setQuery] = useState(''); const [loading, setLoading] = useState(true); const [error, setError] = useState(''); const [saving, setSaving] = useState(''); const [scannerOpen, setScannerOpen] = useState(false); const [pendingCount, setPendingCount] = useState(0);
   const refreshQueue = useCallback(async () => setPendingCount((await getOfflineCheckinQueue()).length), []);
   const refreshMembers = useCallback(async () => { const list = await fetchAllMembers(); setMembers(list); return list; }, []);
-  useEffect(() => {
-    void refreshMembers().catch((e) => setError(e.message || 'Unable to load members.')).finally(() => setLoading(false));
-    void refreshQueue();
-    const onOnline = async () => { try { await syncOfflineCheckins(); await refreshMembers(); } catch {} await refreshQueue(); };
-    window.addEventListener('online', onOnline); return () => window.removeEventListener('online', onOnline);
-  }, [refreshMembers, refreshQueue]);
-  const checkIn = async (membershipId, memberHint = null) => {
-    setSaving(membershipId); setError('');
-    try { const updated = await checkInMember(membershipId, memberHint); setMembers((current) => current.map((member) => member.membershipId === membershipId ? { ...member, ...updated, checkedIn: true } : member)); await refreshQueue(); return updated; }
-    catch (e) { setError(e.message || 'Unable to check in this member.'); throw e; }
-    finally { setSaving(''); }
-  };
+  useEffect(() => { void refreshMembers().catch((e) => setError(e.message || 'Unable to load members.')).finally(() => setLoading(false)); void refreshQueue(); const onOnline = async () => { try { await syncOfflineCheckins(); await refreshMembers(); } catch {} await refreshQueue(); }; window.addEventListener('online', onOnline); return () => window.removeEventListener('online', onOnline); }, [refreshMembers, refreshQueue]);
+  const checkIn = async (membershipId, memberHint = null) => { setSaving(membershipId); setError(''); try { const updated = await checkInMember(membershipId, memberHint); setMembers((current) => current.map((member) => member.membershipId === membershipId ? { ...member, ...updated, checkedIn: true } : member)); await refreshQueue(); return updated; } catch (e) { setError(e.message || 'Unable to check in this member.'); throw e; } finally { setSaving(''); } };
   const filtered = useMemo(() => { const q = query.trim().toLowerCase(); if (!q) return members; return members.filter((member) => [member.name, member.email, member.phone, member.membershipId, member.chapter].some((value) => String(value || '').toLowerCase().includes(q))); }, [members, query]);
   const checkedInCount = members.filter((member) => member.checkedIn).length;
   return <><Card variant="raised" className="p-5"><div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div className="flex items-center gap-3"><FiUsers className="text-emerald-300"/><div><Eyebrow>Attendance</Eyebrow><h2 className="text-xl font-bold text-white">Member check-in</h2><p className="text-xs text-white/40">{checkedInCount} checked in today</p></div></div><div className="flex gap-2"><CSVDownload members={members}/><button onClick={() => { setError(''); setScannerOpen(true); }} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[#F2A31C] px-4 text-sm font-bold text-[#0d0c18]"><MdQrCodeScanner className="h-5 w-5"/> Scan QR</button></div></div>{pendingCount > 0 && <div className="mt-4 flex items-center gap-2 rounded-2xl bg-amber-500/10 px-4 py-3 text-xs font-semibold text-amber-300"><FiZap/> {pendingCount} check-in{pendingCount === 1 ? '' : 's'} pending sync{navigator.onLine ? ' — syncing when connection is ready.' : ' — device is offline.'}</div>}<input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, ID, phone, or email" className="mt-5 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none"/>{error && <p className="mt-3 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}{loading ? <p className="mt-5 text-sm text-white/50">Loading members…</p> : <div className="mt-5 divide-y divide-white/5">{filtered.map((member) => <div key={member.membershipId} className="flex items-center gap-3 py-3"><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-white">{member.name}</p><p className="truncate text-xs text-white/45">{member.membershipId} · {member.chapter}</p></div>{member.checkedIn ? <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-300">Checked in</span> : <button disabled={saving === member.membershipId} onClick={() => void checkIn(member.membershipId, member)} className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-200 disabled:opacity-50">{saving === member.membershipId ? 'Saving…' : 'Check in'}</button>}</div>)}{!filtered.length && <p className="py-8 text-center text-sm text-white/40">No members match your search.</p>}</div>}</Card>{scannerOpen && <QRScannerPanel onCheckIn={checkIn} onClose={() => setScannerOpen(false)} checkedInCount={checkedInCount} pendingCount={pendingCount}/>}</>;
