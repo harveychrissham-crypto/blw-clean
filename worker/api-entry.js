@@ -1,7 +1,7 @@
 import legacyApp from './api-entry-legacy.js';
+import { corsHeaders } from './security.js';
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', ...headers } });
-const cors = (origin) => ({ 'access-control-allow-origin': origin, 'access-control-allow-credentials': 'true', 'access-control-allow-methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS', 'access-control-allow-headers': 'Content-Type, Authorization', vary: 'Origin' });
 async function db(env, fn) { const connectionString = env.HYPERDRIVE?.connectionString || env.DATABASE_URL || ''; if (!connectionString) throw new Error('Database connection is not configured.'); const { Client } = await import('pg'); const client = new Client({ connectionString }); await client.connect(); try { return await fn(client); } finally { await client.end().catch(() => {}); } }
 const bearerToken = (request) => { const header = request.headers.get('authorization') || request.headers.get('Authorization') || ''; return header.startsWith('Bearer ') ? header.slice(7).trim() : ''; };
 const authEmail = async (request, env) => { const token = bearerToken(request); if (!token) return ''; const jwtSecret = typeof env.JWT_SECRET === 'string' && env.JWT_SECRET.trim() ? env.JWT_SECRET.trim() : ''; if (!jwtSecret) return ''; try { const { default: jwt } = await import('jsonwebtoken'); const payload = jwt.verify(token, jwtSecret); return typeof payload?.user?.email === 'string' ? payload.user.email.trim().toLowerCase() : ''; } catch { return ''; } };
@@ -17,7 +17,7 @@ async function ensureCheckins(client) {
 }
 const selectMembers = `SELECT ${memberFields},c.id AS checkin_id,c.checked_in_at AS checkin_at,c.checked_in_by AS checkin_by FROM users u LEFT JOIN checkins c ON c.membership_id=u.membership_id AND c.attendance_date=((NOW() AT TIME ZONE 'Africa/Nairobi')::date) AND c.event_id IS NULL`;
 async function handleMembers(request, env, url) {
-  if(!url.pathname.startsWith('/api/members')) return null; const headers=cors(request.headers.get('Origin')||url.origin); if(request.method==='OPTIONS') return new Response(null,{status:204,headers});
+  if(!url.pathname.startsWith('/api/members')) return null; const headers=corsHeaders(request, env); if(request.method==='OPTIONS') return new Response(null,{status:204,headers});
   try { const result=await db(env,async(client)=>{
     await ensureCheckins(client);
     if(url.pathname==='/api/members/self-checkin'&&request.method==='POST'){
