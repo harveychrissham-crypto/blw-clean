@@ -95,6 +95,76 @@ let pushNotificationsInitialized = false;
 let pushNotificationsSetupPromise = null;
 let lastRegisteredFcmToken = '';
 let fcmSelfTestSent = false;
+let foregroundNotificationListenerRegistered = false;
+
+async function setUpForegroundNotificationDisplay() {
+  if (foregroundNotificationListenerRegistered) return;
+
+  try {
+    const { LocalNotifications } = await import('@capacitor/local-notifications');
+    let permission = await LocalNotifications.checkPermissions();
+    fcmDebug('local notification permission', permission?.display || 'unknown');
+
+    if (permission.display !== 'granted') {
+      permission = await LocalNotifications.requestPermissions();
+      fcmDebug('local notification permission result', permission?.display || 'unknown');
+    }
+
+    if (permission.display !== 'granted') {
+      fcmDebug('foreground notification display unavailable', 'local notification permission not granted');
+      return;
+    }
+
+    if (Capacitor.getPlatform() === 'android') {
+      try {
+        await LocalNotifications.createChannel({
+          id: 'blw_default',
+          name: 'BLW Kenya Zone',
+          description: 'BLW Kenya Zone announcements and ministry updates',
+          importance: 4,
+          visibility: 1,
+          sound: 'default',
+          vibration: true,
+        });
+      } catch (error) {
+        fcmDebug('local channel setup failed', error?.message || String(error));
+      }
+    }
+
+    foregroundNotificationListenerRegistered = true;
+    fcmDebug('foreground notification listener ready');
+
+    const { PushNotifications } = await import('@capacitor/push-notifications');
+    await PushNotifications.addListener('pushNotificationReceived', async (notification) => {
+      const title = typeof notification?.title === 'string' && notification.title.trim()
+        ? notification.title.trim()
+        : 'BLW Kenya Zone';
+      const body = typeof notification?.body === 'string' && notification.body.trim()
+        ? notification.body.trim()
+        : 'You have a new ministry update.';
+
+      fcmDebug('FCM notification received', `${title} / ${body}`);
+
+      try {
+        await LocalNotifications.schedule({
+          notifications: [{
+            id: Math.floor(Date.now() % 2147483647),
+            title,
+            body,
+            channelId: 'blw_default',
+            schedule: { at: new Date(Date.now() + 100) },
+            extra: notification?.data || {},
+          }],
+        });
+        fcmDebug('foreground notification displayed');
+      } catch (error) {
+        fcmDebug('foreground notification display failed', error?.message || String(error));
+      }
+    });
+  } catch (error) {
+    fcmDebug('local notification setup exception', error?.message || String(error));
+  }
+}
 
 export function setUpPushNotifications() {
   fcmDebug('setUpPushNotifications called');
@@ -134,6 +204,8 @@ async function setUpPushNotificationsInternal() {
       fcmDebug('STOP', 'notification permission not granted');
       return;
     }
+
+    await setUpForegroundNotificationDisplay();
 
     if (Capacitor.getPlatform() === 'android') {
       try {
