@@ -2,6 +2,7 @@ import secureWorker from './secure-entry.js';
 import { sendPushNotification } from './push-send.js';
 import { corsHeaders } from './security.js';
 import { handleAttendance } from './attendance-api.js';
+import { handleAuth } from './auth-api.js';
 
 function normalizeResponse(request, env, response) {
   const headers = new Headers(response.headers);
@@ -66,6 +67,11 @@ export default {
     if ((url.pathname === '/api/live/viewers' && (request.method === 'POST' || request.method === 'PATCH'))) {
       const allowed = await applyRateLimit(request, env, 'LIVE_VIEWER_LIMITER', `viewer:${request.headers.get('CF-Connecting-IP') || 'unknown'}`, 60);
       if (!allowed) return rateLimitedResponse(request, env);
+    }
+
+    if (url.pathname.startsWith('/api/auth')) {
+      const response = await handleAuth(request, env, ctx);
+      if (response) return normalizeResponse(request, env, response);
     }
 
     return normalizeResponse(request, env, await secureWorker.fetch(request, env, ctx));
