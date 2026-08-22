@@ -23,6 +23,13 @@ async function authEmail(request, env) {
   }
 }
 
+async function requireAdmin(client, request, env) {
+  const email = await authEmail(request, env);
+  if (!email) return '';
+  const result = await client.query('SELECT is_admin FROM users WHERE LOWER(email)=LOWER($1) LIMIT 1', [email]);
+  return result.rows[0]?.is_admin === true ? email : '';
+}
+
 async function db(env, fn) {
   const connectionString = env.HYPERDRIVE?.connectionString || env.DATABASE_URL || '';
   if (!connectionString) throw new Error('Database connection is not configured.');
@@ -122,11 +129,12 @@ export async function handleAttendance(request, env) {
         return { status: 200, body: { member: memberDto({ ...member.rows[0], checkin_id: inserted.rows[0].id, checkin_at: inserted.rows[0].checked_in_at, checkin_by: inserted.rows[0].checked_in_by }), alreadyCheckedIn: false, message: 'You are checked in successfully.' } };
       }
 
+      const adminEmail = await requireAdmin(client, request, env);
+      if (!adminEmail) return { status: 403, body: { error: 'Administrator authorization is required.' } };
+
       if (url.pathname === '/api/members/search' && request.method === 'GET') {
         const eventId = await getEventId(request);
         if (Number.isNaN(eventId)) return { status: 400, body: { error: 'Invalid event ID.' } };
-        const email = await authEmail(request, env);
-        if (!email) return { status: 401, body: { error: 'Please sign in to search members.' } };
         if (!(await assertEvent(client, eventId))) return { status: 400, body: { error: 'Selected event was not found.' } };
         const raw = (url.searchParams.get('q') || '').trim();
         if (!raw) return { status: 400, body: { error: 'Please provide a name, member ID, email, or phone to search.' } };
@@ -151,8 +159,6 @@ export async function handleAttendance(request, env) {
       const match = url.pathname.match(/^\/api\/members\/([^/]+)\/checkin$/);
       if (match && request.method === 'POST') {
         const membershipId = decodeURIComponent(match[1]);
-        const email = await authEmail(request, env);
-        if (!email) return { status: 401, body: { error: 'Please sign in to check in members.' } };
         const body = await request.json().catch(() => ({}));
         const eventId = body?.eventId == null || body?.eventId === '' ? null : Number(body.eventId);
         if (eventId !== null && !(await assertEvent(client, eventId))) return { status: 400, body: { error: 'Selected event was not found.' } };
@@ -161,7 +167,7 @@ export async function handleAttendance(request, env) {
         const existing = await client.query(`SELECT id,checked_in_at,checked_in_by FROM checkins WHERE membership_id=$1 AND attendance_date=((NOW() AT TIME ZONE 'Africa/Nairobi')::date) AND COALESCE(event_id,0)=COALESCE($2,0) LIMIT 1`, [membershipId, eventId]);
         if (existing.rows.length) return { status: 200, body: { member: memberDto({ ...member.rows[0], checkin_id: existing.rows[0].id, checkin_at: existing.rows[0].checked_in_at, checkin_by: existing.rows[0].checked_in_by }), alreadyCheckedIn: true } };
         try {
-          const inserted = await client.query(`INSERT INTO checkins (membership_id,attendance_date,event_id,checked_in_at,checked_in_by) VALUES ($1,((NOW() AT TIME ZONE 'Africa/Nairobi')::date),$2,NOW(),$3) RETURNING id,checked_in_at,checked_in_by`, [membershipId, eventId, email]);
+          const inserted = await client.query(`INSERT INTO checkins (membership_id,attendance_date,event_id,checked_in_at,checked_in_by) VALUES ($1,((NOW() AT TIME ZONE 'Africa/Nairobi')::date),$2,NOW(),$3) RETURNING id,checked_in_at,checked_in_by`, [membershipId, eventId, adminEmail]);
           return { status: 200, body: { member: memberDto({ ...member.rows[0], checkin_id: inserted.rows[0].id, checkin_at: inserted.rows[0].checked_in_at, checkin_by: inserted.rows[0].checked_in_by }), alreadyCheckedIn: false } };
         } catch (error) {
           if (error?.code !== '23505') throw error;
