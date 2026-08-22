@@ -108,7 +108,7 @@ async function sendToken({ token, title, body, accessToken, projectId }) {
       },
     }),
   });
-  return { ok: response.ok, body: await response.json().catch(() => ({})) };
+  return { ok: response.ok, status: response.status, body: await response.json().catch(() => ({})) };
 }
 
 export async function sendPushNotification(request, env) {
@@ -154,6 +154,7 @@ export async function sendPushNotification(request, env) {
     let sent = 0;
     let failed = 0;
     let removed = 0;
+    const failures = [];
 
     for (const token of tokens) {
       const result = await sendToken({ token, title, body: message, accessToken, projectId });
@@ -163,6 +164,7 @@ export async function sendPushNotification(request, env) {
       }
       failed += 1;
       const errorString = JSON.stringify(result.body || {});
+      failures.push({ status: result.status, error: result.body?.error?.status || result.body?.error?.message || 'FCM send failed' });
       if (/UNREGISTERED|registration-token-not-registered|INVALID_ARGUMENT/i.test(errorString)) {
         const cleanup = new Client({ connectionString });
         await cleanup.connect();
@@ -175,7 +177,8 @@ export async function sendPushNotification(request, env) {
       }
     }
 
-    return json({ status: 'ok', sent, failed, removed, totalTokens: tokens.length }, 200, origin);
+    console.log('[worker] push send result', { sent, failed, removed, totalTokens: tokens.length, failures });
+    return json({ status: 'ok', sent, failed, removed, totalTokens: tokens.length, failures }, 200, origin);
   } catch (error) {
     console.error('[worker] push send failed', { message: error?.message, code: error?.code });
     return json({ error: error?.message || 'Unable to send push notifications right now.' }, 503, origin);
