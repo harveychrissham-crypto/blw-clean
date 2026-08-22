@@ -108,12 +108,13 @@ function firebaseConfig(env) {
   const projectId = typeof env.FIREBASE_PROJECT_ID === 'string' && env.FIREBASE_PROJECT_ID.trim()
     ? env.FIREBASE_PROJECT_ID.trim()
     : 'blw-campus-ministry-kenya-zone';
-  const clientEmail = typeof env.FIREBASE_CLIENT_EMAIL === 'string' ? env.FIREBASE_CLIENT_EMAIL.trim() : '';
+  const clientEmail = typeof env.FIREBASE_CLIENT_EMAIL === 'string' && env.FIREBASE_CLIENT_EMAIL.trim()
+    ? env.FIREBASE_CLIENT_EMAIL.trim()
+    : 'firebase-adminsdk-fbsvc@blw-campus-ministry-kenya-zone.iam.gserviceaccount.com';
   const privateKey = typeof env.FIREBASE_PRIVATE_KEY === 'string'
     ? env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n').trim()
     : '';
   const missing = [];
-  if (!clientEmail) missing.push('FIREBASE_CLIENT_EMAIL');
   if (!privateKey) missing.push('FIREBASE_PRIVATE_KEY');
   if (missing.length) {
     throw new Error(`Firebase service-account configuration is incomplete. Missing: ${missing.join(', ')}`);
