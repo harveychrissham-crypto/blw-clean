@@ -105,13 +105,14 @@ function base64url(value) {
 }
 
 function firebaseConfig(env) {
-  const projectId = typeof env.FIREBASE_PROJECT_ID === 'string' ? env.FIREBASE_PROJECT_ID.trim() : '';
+  const projectId = typeof env.FIREBASE_PROJECT_ID === 'string' && env.FIREBASE_PROJECT_ID.trim()
+    ? env.FIREBASE_PROJECT_ID.trim()
+    : 'blw-campus-ministry-kenya-zone';
   const clientEmail = typeof env.FIREBASE_CLIENT_EMAIL === 'string' ? env.FIREBASE_CLIENT_EMAIL.trim() : '';
   const privateKey = typeof env.FIREBASE_PRIVATE_KEY === 'string'
     ? env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n').trim()
     : '';
   const missing = [];
-  if (!projectId) missing.push('FIREBASE_PROJECT_ID');
   if (!clientEmail) missing.push('FIREBASE_CLIENT_EMAIL');
   if (!privateKey) missing.push('FIREBASE_PRIVATE_KEY');
   if (missing.length) {
