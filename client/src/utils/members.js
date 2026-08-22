@@ -15,57 +15,52 @@ async function leaderFetch(path, options = {}) {
   return apiFetch(path, {
     ...options,
     credentials: 'include',
-    headers: {
-      ...(options.headers || {}),
-    },
+    headers: { ...(options.headers || {}) },
   });
 }
 
-async function saveMembersCache(members) {
+const withEvent = (path, eventId) => {
+  if (eventId == null || eventId === '') return path;
+  return `${path}${path.includes('?') ? '&' : '?'}eventId=${encodeURIComponent(eventId)}`;
+};
+
+async function saveMembersCache(members, eventId = null) {
   try {
-    await Preferences.set({ key: MEMBERS_CACHE_KEY, value: JSON.stringify(members) });
-  } catch {
-    // Cache is an enhancement; the online API remains the source of truth.
-  }
+    await Preferences.set({ key: `${MEMBERS_CACHE_KEY}_${eventId ?? 'default'}`, value: JSON.stringify(members) });
+  } catch { /* Cache is an enhancement; the online API remains the source of truth. */ }
 }
 
-async function readMembersCache() {
+async function readMembersCache(eventId = null) {
   try {
-    const { value } = await Preferences.get({ key: MEMBERS_CACHE_KEY });
+    const { value } = await Preferences.get({ key: `${MEMBERS_CACHE_KEY}_${eventId ?? 'default'}` });
     return value ? JSON.parse(value) : [];
   } catch {
     return [];
   }
 }
 
-export async function getCachedMembers() {
-  return readMembersCache();
+export async function getCachedMembers(eventId = null) {
+  return readMembersCache(eventId);
 }
 
-export async function fetchAllMembers() {
-  const res = await leaderFetch('/api/members');
+export async function fetchAllMembers(eventId = null) {
+  const res = await leaderFetch(withEvent('/api/members', eventId));
   const body = await handle(res);
   const members = body.members || [];
-  await saveMembersCache(members);
+  await saveMembersCache(members, eventId);
   return members;
 }
 
-export async function searchMembers(q) {
+export async function searchMembers(q, eventId = null) {
   if (!navigator.onLine) {
     const raw = String(q || '').trim().toLowerCase();
     if (!raw) return [];
-    const cached = await readMembersCache();
-    const matches = cached.filter((member) => [
-      member.membershipId,
-      member.name,
-      member.email,
-      member.phone,
-      member.chapter,
-    ].some((value) => String(value || '').toLowerCase().includes(raw)));
-    return matches.slice(0, 8);
+    const cached = await readMembersCache(eventId);
+    return cached.filter((member) => [member.membershipId, member.name, member.email, member.phone, member.chapter]
+      .some((value) => String(value || '').toLowerCase().includes(raw))).slice(0, 8);
   }
 
-  const res = await leaderFetch(`/api/members/search?q=${encodeURIComponent(q)}`);
+  const res = await leaderFetch(withEvent(`/api/members/search?q=${encodeURIComponent(q)}`, eventId));
   if (res.status === 404) return [];
   const body = await handle(res);
   return body.members || [];
@@ -73,32 +68,27 @@ export async function searchMembers(q) {
 
 function localDateKey() {
   const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
-export async function checkInMember(membershipId, memberHint = null) {
+export async function checkInMember(membershipId, memberHint = null, eventId = null) {
+  const selectedEventId = eventId ?? memberHint?.eventId ?? null;
   if (!navigator.onLine) {
     const now = new Date().toISOString();
     await queueOfflineCheckin({
       membershipId,
       name: memberHint?.name || '',
+      eventId: selectedEventId,
       dateKey: localDateKey(),
       checkedInAt: now,
     });
-    return {
-      ...(memberHint || {}),
-      membershipId,
-      checkedIn: true,
-      checkedInAt: now,
-      offlineQueued: true,
-    };
+    return { ...(memberHint || {}), membershipId, eventId: selectedEventId, checkedIn: true, checkedInAt: now, offlineQueued: true };
   }
 
   const res = await leaderFetch(`/api/members/${encodeURIComponent(membershipId)}/checkin`, {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ eventId: selectedEventId }),
   });
   const body = await handle(res);
   return body.member;
@@ -106,7 +96,6 @@ export async function checkInMember(membershipId, memberHint = null) {
 
 export async function syncOfflineCheckins() {
   if (!navigator.onLine) return { synced: 0, remaining: (await getOfflineCheckinQueue()).length };
-
   const queue = await getOfflineCheckinQueue();
   if (!queue.length) return { synced: 0, remaining: 0 };
 
@@ -115,6 +104,8 @@ export async function syncOfflineCheckins() {
     try {
       await leaderFetch(`/api/members/${encodeURIComponent(item.membershipId)}/checkin`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId: item.eventId ?? null }),
       });
       syncedIds.push(item.membershipId);
     } catch (error) {
