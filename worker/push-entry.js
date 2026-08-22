@@ -3,7 +3,7 @@ import { sendPushNotification } from './push-send.js';
 import { corsHeaders } from './security.js';
 import { handleAttendance } from './attendance-api.js';
 import { handleAuth } from './auth-api.js';
-import { handleEvents } from './event-api.js';
+import { handleFellowships } from './fellowship-api.js';
 
 function normalizeResponse(request, env, response) {
   const headers = new Headers(response.headers);
@@ -75,8 +75,8 @@ export default {
       if (response) return normalizeResponse(request, env, response);
     }
 
-    if (url.pathname.startsWith('/api/events')) {
-      const response = await handleEvents(request, env);
+    if (url.pathname.startsWith('/api/fellowships') || url.pathname === '/api/geocode') {
+      const response = await handleFellowships(request, env, url);
       if (response) return normalizeResponse(request, env, response);
     }
 
