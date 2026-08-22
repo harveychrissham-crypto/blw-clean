@@ -1,8 +1,11 @@
 const normalizeOrigin = (value) => typeof value === 'string' ? value.trim().replace(/\/$/, '') : '';
 
+const CAPACITOR_ORIGINS = new Set(['https://localhost', 'capacitor://localhost', 'http://localhost']);
+
 export function allowedOrigin(request, env) {
   const origin = normalizeOrigin(request.headers.get('Origin') || '');
   if (!origin) return '';
+  if (CAPACITOR_ORIGINS.has(origin)) return origin;
   const configured = String(env.ALLOWED_ORIGIN || '')
     .split(',')
     .map(normalizeOrigin)
