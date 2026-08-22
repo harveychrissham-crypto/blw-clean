@@ -1,17 +1,14 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'node:crypto';
+import { corsHeaders } from './security.js';
 
-const json = (body, status = 200, origin = '') => new Response(
+const json = (body, status = 200, headers = {}) => new Response(
   status === 204 ? null : JSON.stringify(body),
   {
     status,
     headers: {
       'content-type': 'application/json; charset=utf-8',
-      'access-control-allow-origin': origin,
-      'access-control-allow-credentials': 'true',
-      'access-control-allow-methods': 'GET,POST,OPTIONS',
-      'access-control-allow-headers': 'Content-Type, Authorization',
-      vary: 'Origin',
+      ...headers,
     },
   },
 );
@@ -112,11 +109,11 @@ async function sendToken({ token, title, body, accessToken, projectId }) {
 }
 
 export async function sendPushNotification(request, env) {
-  const origin = request.headers.get('Origin') || new URL(request.url).origin;
-  if (request.method === 'OPTIONS') return json(null, 204, origin);
+  const headers = corsHeaders(request, env);
+  if (request.method === 'OPTIONS') return json(null, 204, headers);
 
   const admin = await verifyAdmin(request, env);
-  if (!admin.ok) return json({ error: admin.error }, admin.status, origin);
+  if (!admin.ok) return json({ error: admin.error }, admin.status, headers);
 
   const body = await request.clone().json().catch(() => ({}));
   const title = typeof body?.title === 'string' ? body.title.trim().slice(0, 120) : '';
@@ -126,11 +123,11 @@ export async function sendPushNotification(request, env) {
     ? [...new Set(body.userEmails.filter((x) => typeof x === 'string').map((x) => x.trim().toLowerCase()).filter(Boolean))]
     : [];
 
-  if (!title || !message) return json({ error: 'Notification title and body are required.' }, 400, origin);
-  if (!broadcast && !userEmails.length) return json({ error: 'Specify broadcast: true or provide at least one user email.' }, 400, origin);
+  if (!title || !message) return json({ error: 'Notification title and body are required.' }, 400, headers);
+  if (!broadcast && !userEmails.length) return json({ error: 'Specify broadcast: true or provide at least one user email.' }, 400, headers);
 
   const connectionString = env.HYPERDRIVE?.connectionString || env.DATABASE_URL || '';
-  if (!connectionString) return json({ error: 'Database connection is not configured.' }, 503, origin);
+  if (!connectionString) return json({ error: 'Database connection is not configured.' }, 503, headers);
 
   try {
     const { Client } = await import('pg');
@@ -147,7 +144,7 @@ export async function sendPushNotification(request, env) {
       await client.end().catch(() => {});
     }
 
-    if (!tokens.length) return json({ status: 'ok', sent: 0, failed: 0, removed: 0, totalTokens: 0 }, 200, origin);
+    if (!tokens.length) return json({ status: 'ok', sent: 0, failed: 0, removed: 0, totalTokens: 0 }, 200, headers);
 
     const { projectId } = firebaseConfig(env);
     const accessToken = await getFirebaseAccessToken(env);
@@ -178,9 +175,9 @@ export async function sendPushNotification(request, env) {
     }
 
     console.log('[worker] push send result', { sent, failed, removed, totalTokens: tokens.length, failures });
-    return json({ status: 'ok', sent, failed, removed, totalTokens: tokens.length, failures }, 200, origin);
+    return json({ status: 'ok', sent, failed, removed, totalTokens: tokens.length, failures }, 200, headers);
   } catch (error) {
     console.error('[worker] push send failed', { message: error?.message, code: error?.code });
-    return json({ error: error?.message || 'Unable to send push notifications right now.' }, 503, origin);
+    return json({ error: error?.message || 'Unable to send push notifications right now.' }, 503, headers);
   }
 }
