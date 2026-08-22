@@ -5,6 +5,7 @@ import { corsHeaders, rateLimit } from './security.js';
 import { handleSermons } from './sermon-api.js';
 import { handleLive } from './live-api.js';
 import { handleOutreach } from './outreach-api.js';
+import { handleUpload } from './upload-api.js';
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), {
   status,
@@ -146,6 +147,10 @@ export default {
     }
     if (url.pathname.startsWith('/api/outreach-stories')) {
       const response = await handleOutreach(request, env, url);
+      if (response) return response;
+    }
+    if (url.pathname === '/api/uploads' && request.method === 'POST') {
+      const response = await handleUpload(request, env, url);
       if (response) return response;
     }
     return app.fetch(request, env, ctx);
