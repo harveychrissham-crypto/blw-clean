@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "blw-kenya-zone",
-  "main": "worker/secure-entry.js",
+  "main": "worker/push-entry.js",
   "compatibility_date": "2026-08-11",
   "compatibility_flags": ["nodejs_compat"],
   // Website hosting is deferred until the public site is ready. Uncomment
