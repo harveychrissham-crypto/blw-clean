@@ -59,7 +59,6 @@ async function setUpBackButton() {
 let pushNotificationsInitialized = false;
 let pushNotificationsSetupPromise = null;
 let lastRegisteredFcmToken = '';
-let fcmSelfTestSent = false;
 let foregroundNotificationListenerRegistered = false;
 
 async function setUpForegroundNotificationDisplay() {
@@ -179,18 +178,6 @@ async function setUpPushNotificationsInternal() {
         if (!response.ok) return;
 
         pushNotificationsInitialized = true;
-
-        if (!fcmSelfTestSent && import.meta.env.VITE_FCM_TEST_MODE === 'true') {
-          fcmSelfTestSent = true;
-          try {
-            await apiFetch('/api/push/test', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-            });
-          } catch {
-            // Optional diagnostics self-test should never break app startup.
-          }
-        }
       } catch {
         // Push registration failures should not break app startup.
       }
