@@ -92,19 +92,33 @@ async function setUpBackButton() {
 }
 
 let pushNotificationsInitialized = false;
+let pushNotificationsSetupPromise = null;
+let lastRegisteredFcmToken = '';
 let fcmSelfTestSent = false;
 
-export async function setUpPushNotifications() {
+export function setUpPushNotifications() {
   fcmDebug('setUpPushNotifications called');
   if (!Capacitor.isNativePlatform()) {
     fcmDebug('STOP', 'not a native platform');
-    return;
+    return Promise.resolve();
   }
   if (pushNotificationsInitialized) {
     fcmDebug('STOP', 'already initialized');
-    return;
+    return Promise.resolve();
+  }
+  if (pushNotificationsSetupPromise) {
+    fcmDebug('STOP', 'setup already in progress');
+    return pushNotificationsSetupPromise;
   }
 
+  pushNotificationsSetupPromise = setUpPushNotificationsInternal().finally(() => {
+    if (!pushNotificationsInitialized) pushNotificationsSetupPromise = null;
+  });
+
+  return pushNotificationsSetupPromise;
+}
+
+async function setUpPushNotificationsInternal() {
   try {
     fcmDebug('loading PushNotifications plugin');
     const { PushNotifications } = await import('@capacitor/push-notifications');
@@ -139,14 +153,22 @@ export async function setUpPushNotifications() {
     }
 
     const registrationListener = await PushNotifications.addListener('registration', async (token) => {
-      fcmDebug('FCM registration callback received', token?.value ? 'token received' : 'empty token');
+      const tokenValue = typeof token?.value === 'string' ? token.value.trim() : '';
+      fcmDebug('FCM registration callback received', tokenValue ? 'token received' : 'empty token');
+      if (!tokenValue) return;
+      if (tokenValue === lastRegisteredFcmToken) {
+        fcmDebug('STOP', 'duplicate FCM token callback');
+        return;
+      }
+      lastRegisteredFcmToken = tokenValue;
+
       try {
         const { apiFetch } = await import('./config/api');
         fcmDebug('posting token to backend');
         const response = await apiFetch('/api/push/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: token.value, platform: Capacitor.getPlatform() }),
+          body: JSON.stringify({ token: tokenValue, platform: Capacitor.getPlatform() }),
         });
         fcmDebug('/api/push/register response', String(response.status));
 
