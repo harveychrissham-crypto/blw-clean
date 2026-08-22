@@ -65,6 +65,39 @@ export const initDb = async () => {
     description TEXT NOT NULL DEFAULT '', created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
   );`);
 
+  await query(`
+    CREATE TABLE IF NOT EXISTS checkins (
+      id SERIAL PRIMARY KEY,
+      membership_id TEXT NOT NULL REFERENCES users(membership_id) ON DELETE CASCADE,
+      attendance_date DATE NOT NULL DEFAULT ((NOW() AT TIME ZONE 'Africa/Nairobi')::date),
+      event_id INTEGER REFERENCES events(id) ON DELETE SET NULL,
+      checked_in_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+      checked_in_by TEXT,
+      created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    );
+  `);
+  await query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS checkins_member_date_event_idx
+    ON checkins (membership_id, attendance_date, COALESCE(event_id, 0));
+  `);
+  await query(`CREATE INDEX IF NOT EXISTS checkins_attendance_date_idx ON checkins (attendance_date);`);
+  await query(`CREATE INDEX IF NOT EXISTS checkins_checked_in_by_idx ON checkins (LOWER(checked_in_by));`);
+
+  // Preserve legacy attendance timestamps in the new audit table before the old
+  // user-level boolean is retired from the attendance flow.
+  await query(`
+    INSERT INTO checkins (membership_id, attendance_date, checked_in_at, checked_in_by)
+    SELECT membership_id,
+           (checked_in_at AT TIME ZONE 'Africa/Nairobi')::date,
+           checked_in_at,
+           NULL
+    FROM users
+    WHERE checked_in = TRUE
+      AND checked_in_at IS NOT NULL
+    ON CONFLICT DO NOTHING;
+  `);
+  await query(`UPDATE users SET checked_in = FALSE, checked_in_at = NULL WHERE checked_in = TRUE;`);
+
   await query(`CREATE TABLE IF NOT EXISTS outreach_stories (
     id SERIAL PRIMARY KEY, tag TEXT NOT NULL DEFAULT '', title TEXT NOT NULL,
     subtitle TEXT NOT NULL DEFAULT '', image_url TEXT NOT NULL DEFAULT '',
