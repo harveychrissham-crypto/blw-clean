@@ -13,7 +13,6 @@ import Sermons from './pages/Sermons';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import RecordSouls from './pages/RecordSouls';
-import LeaderAdmin from './pages/LeaderAdmin';
 import LeadersForumWithFellowship from './pages/LeadersForumWithFellowship';
 import FellowshipLocationsAdminSecure from './pages/FellowshipLocationsAdminSecure';
 import NotificationCenter from './pages/NotificationCenter';
@@ -24,6 +23,12 @@ import { startOfflineSyncListeners } from './offlineSync';
 const FellowshipLocationsPage = () => {
   const navigate = useNavigate();
   return <div className="relative"><div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8"><button type="button" onClick={() => navigate('/leaders-forum')} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/75 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">← Back to Leaders Forum</button></div><FellowshipLocationsAdminSecure /></div>;
+};
+
+const LegacyAdminRoute = () => {
+  const navigate = useNavigate();
+  useEffect(() => { navigate('/leaders-forum', { replace: true }); }, [navigate]);
+  return null;
 };
 
 const BOTTOM_TAB_PATHS = ['/', '/events', '/checkin', '/live'];
@@ -56,7 +61,7 @@ const AnimatedRoutes = () => {
     <Route path="/auth" element={route(<Auth />)} />
     <Route path="/dashboard" element={route(user ? <Dashboard /> : <Auth />)} />
     <Route path="/record-souls" element={route(user ? <RecordSouls /> : <Auth />)} />
-    <Route path="/admin" element={route(<LeaderAdmin />)} />
+    <Route path="/admin" element={route(<LegacyAdminRoute />)} />
     <Route path="/leaders-forum" element={route(<LeadersForumWithFellowship />)} />
     <Route path="/fellowship-locations" element={route(<FellowshipLocationsPage />)} />
     <Route path="/leaders-forum/notifications" element={route(<NotificationCenter />)} />
