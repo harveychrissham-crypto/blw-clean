@@ -1,4 +1,3 @@
-import app from './api-entry.js';
 import jwt from 'jsonwebtoken';
 import crypto from 'node:crypto';
 import { corsHeaders, rateLimit } from './security.js';
@@ -126,7 +125,7 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const headers = corsHeaders(request, env);
-    if (!url.pathname.startsWith('/api/')) return app.fetch(request, env, ctx);
+    if (!url.pathname.startsWith('/api/')) return json({ error: 'API route not found.' }, 404, headers);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
     if (url.pathname === '/api/auth/admin-status' && request.method === 'GET') return json(await adminStatus(request, env), 200, headers);
     if (url.pathname === '/api/push/register' && request.method === 'POST') return registerPushToken(request, env, headers);
@@ -153,9 +152,6 @@ export default {
       const response = await handleUpload(request, env, url);
       if (response) return response;
     }
-    return app.fetch(request, env, ctx);
-  },
-  async scheduled(controller, env, ctx) {
-    if (typeof app.scheduled === 'function') return app.scheduled(controller, env, ctx);
+    return json({ error: 'API route not found.' }, 404, headers);
   },
 };
