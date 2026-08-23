@@ -29,8 +29,7 @@ const FellowshipLocationsPage = () => {
 
 const LegacyAdminRoute = () => {
   const navigate = useNavigate();
-  useEffect(() => { navigate('/leaders-forum', { replace: true }); }, [navigate]);
-  return null;
+  return <section className="mx-auto max-w-xl px-5 py-20 text-center"><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8"><h1 className="text-2xl font-bold text-white">Content administration</h1><p className="mt-3 text-sm leading-relaxed text-white/45">The old Admin Dashboard route has been retired. Content administration is now handled through Leadership Tools.</p><button type="button" onClick={() => navigate('/leaders-forum')} className="mt-6 rounded-full bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15">Open Leadership Tools</button></div></section>;
 };
 
 const BOTTOM_TAB_PATHS = ['/', '/events', '/checkin', '/live'];
