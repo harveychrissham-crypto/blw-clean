@@ -1,4 +1,3 @@
-import legacyApp from './api-entry-legacy.js';
 import { corsHeaders } from './security.js';
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', ...headers } });
@@ -48,4 +47,4 @@ async function handleMembers(request, env, url) {
     return{status:405,body:{error:'Method not allowed.'}};
   }); return json(result.body,result.status,headers);} catch(error){console.error('[worker] members API failed',error);return json({error:'Unable to access the check-in service right now.'},503,headers);}
 }
-export default { async fetch(request,env,ctx){const url=new URL(request.url);const memberResponse=await handleMembers(request,env,url);if(memberResponse)return memberResponse;return legacyApp.fetch(request,env,ctx);}, async scheduled(controller,env,ctx){if(typeof legacyApp.scheduled==='function')return legacyApp.scheduled(controller,env,ctx);}};
+export default { async fetch(request,env,ctx){const url=new URL(request.url);const memberResponse=await handleMembers(request,env,url);if(memberResponse)return memberResponse;return json({error:'API route not found.'},404,corsHeaders(request,env));} };
