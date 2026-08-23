@@ -261,13 +261,14 @@ export default function Dashboard() {
                 </>
               )}
               <div className="mt-3">
-                <EmptyState
-                  icon={FiClock}
-                  title="3rd service isn't open yet"
-                  hint="The team hasn't opened check-in. Please try again in a moment."
-                />
+                <p className="text-sm font-semibold text-white">Ready to check in?</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-400">Open the check-in page to see the current service status and your QR badge.</p>
               </div>
-              <button className="mt-4 inline-flex items-center gap-2 rounded-full border border-pink-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-pink-600/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+              <button
+                type="button"
+                onClick={() => navigate('/checkin')}
+                className="mt-4 inline-flex items-center gap-2 rounded-full border border-pink-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-pink-600/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+              >
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 Show my QR badge
               </button>
@@ -553,7 +554,6 @@ export default function Dashboard() {
             </form>
           </div>
         </div>
-      </div>
       )}
       <Toast toast={toast} onClose={() => setToast(null)} />
     </section>
