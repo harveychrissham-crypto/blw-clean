@@ -14,7 +14,7 @@ const sanitizeString = (value) => {
 };
 const sanitizeEmail = (value) => typeof value === 'string' ? value.trim().toLowerCase() : '';
 const cookie = (token) => `blw_auth_token=${encodeURIComponent(token)}; Max-Age=604800; Path=/; HttpOnly; SameSite=Strict; Secure`;
-const clearCookie = 'blw_auth_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict';
+const clearCookie = 'blw_auth_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict; Secure';
 const bearerToken = (request) => {
   const authorization = request.headers.get('Authorization') || request.headers.get('authorization') || '';
   if (authorization.startsWith('Bearer ')) return authorization.slice(7).trim();
@@ -42,6 +42,10 @@ function signUser(user, env) {
   return jwt.sign({ user }, secret(env), { expiresIn: '7d' });
 }
 
+async function ensurePasswordChangedColumn(client) {
+  await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP WITH TIME ZONE');
+}
+
 async function authenticatedUser(request, env, client) {
   const token = bearerToken(request);
   if (!token) return { error: 'Authorization token missing.', status: 401 };
@@ -49,8 +53,11 @@ async function authenticatedUser(request, env, client) {
     const payload = jwt.verify(token, secret(env));
     const email = sanitizeEmail(payload?.user?.email);
     if (!email) return { error: 'Invalid authentication token.', status: 401 };
-    const result = await client.query('SELECT 1 FROM users WHERE LOWER(email)=LOWER($1) LIMIT 1', [email]);
+    await ensurePasswordChangedColumn(client);
+    const result = await client.query('SELECT password_changed_at FROM users WHERE LOWER(email)=LOWER($1) LIMIT 1', [email]);
     if (!result.rows.length) return { error: 'Account no longer exists.', status: 401 };
+    const passwordChangedAt = result.rows[0].password_changed_at ? new Date(result.rows[0].password_changed_at).getTime() / 1000 : 0;
+    if (passwordChangedAt && (!payload.iat || Number(payload.iat) < passwordChangedAt)) return { error: 'Your session has expired. Please sign in again.', status: 401 };
     return { user: payload.user, token };
   } catch (error) {
     if (error?.name === 'JsonWebTokenError' || error?.name === 'TokenExpiredError') return { error: 'Invalid or expired token.', status: 401 };
@@ -134,10 +141,11 @@ export async function handleAuth(request, env, ctx) {
 
         const duplicate = await client.query('SELECT 1 FROM users WHERE LOWER(email)=LOWER($1) OR phone=$2 LIMIT 1', [email, phone]);
         if (duplicate.rows.length) return { response: json({ error: 'An account with that email or phone already exists.' }, 409, headers) };
+        await ensurePasswordChangedColumn(client);
         const hashedPassword = await hashPassword(password);
         const membershipId = `M-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
         const badge = `BLW-2026-${Math.floor(100 + Math.random() * 900)}`;
-        const inserted = await client.query(`INSERT INTO users (full_name,email,password_hash,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'Verified') RETURNING email,full_name,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status`, [fullName, email, hashedPassword, phone, campusZone, chapter, country, residence, birthday || null, invitedBy, gender, membershipId, badge]);
+        const inserted = await client.query(`INSERT INTO users (full_name,email,password_hash,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status,password_changed_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'Verified',NOW()) RETURNING email,full_name,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status`, [fullName, email, hashedPassword, phone, campusZone, chapter, country, residence, birthday || null, invitedBy, gender, membershipId, badge]);
         const user = payloadUser(inserted.rows[0], false);
         const token = signUser(user, env);
         if (ctx?.waitUntil) ctx.waitUntil((async () => { try { await sendEmail(env, { to: user.email, ...welcomeEmail(user) }); } catch (error) { console.error('[email] welcome email failed', error); } })());
