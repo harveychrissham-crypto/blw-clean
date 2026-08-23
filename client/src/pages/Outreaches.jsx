@@ -5,6 +5,7 @@ import { fetchOutreachStories } from '../utils/outreachStories';
 import { Card, Eyebrow, StatGroup } from '../components/ui/Card';
 import { shareContent } from '../utils/share';
 import { hapticTap } from '../utils/haptics';
+import { useNavigate } from 'react-router-dom';
 
 const stats = [
   { label: 'Souls Won', value: '12k+', icon: FiStar },
@@ -85,6 +86,7 @@ function StoryModal({ story, onClose }) {
 }
 
 export default function Outreaches() {
+  const navigate = useNavigate();
   const [stories, setStories] = useState(DEFAULT_STORIES);
   const [activeStory, setActiveStory] = useState(null);
 
@@ -184,7 +186,11 @@ export default function Outreaches() {
           <p className="mx-auto mt-4 max-w-xl text-sm text-white/85 sm:text-base">
             Be part of the move. Sign up, show up, and let's reach a soul together.
           </p>
-          <button className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#0d0c18] px-7 py-3.5 text-sm font-bold text-white transition hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+          <button
+            type="button"
+            onClick={() => navigate('/connect')}
+            className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#0d0c18] px-7 py-3.5 text-sm font-bold text-white transition hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+          >
             Get Involved <FiArrowRight className="h-4 w-4" />
           </button>
         </Card>
