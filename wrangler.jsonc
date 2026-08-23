@@ -32,6 +32,11 @@
       "name": "LIVE_VIEWER_LIMITER",
       "namespace_id": "4103",
       "simple": { "limit": 60, "period": 60 }
+    },
+    {
+      "name": "PASSWORD_RESET_LIMITER",
+      "namespace_id": "4104",
+      "simple": { "limit": 3, "period": 60 }
     }
   ],
   "triggers": {
