@@ -3,6 +3,7 @@ import { sendPushNotification } from './push-send.js';
 import { corsHeaders } from './security.js';
 import { handleAttendance } from './attendance-api.js';
 import { handleAuth } from './auth-api.js';
+import { handleEvents } from './event-api.js';
 import { handleFellowships } from './fellowship-api.js';
 import { handleVenues } from './venue-api.js';
 import { sendWeeklyServiceReminders } from './scheduled-jobs.js';
@@ -74,6 +75,11 @@ export default {
 
     if (url.pathname.startsWith('/api/auth')) {
       const response = await handleAuth(request, env, ctx);
+      if (response) return normalizeResponse(request, env, response);
+    }
+
+    if (url.pathname.startsWith('/api/events')) {
+      const response = await handleEvents(request, env);
       if (response) return normalizeResponse(request, env, response);
     }
 
