@@ -53,6 +53,13 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
+    if (url.pathname === '/api/health' && request.method === 'GET') {
+      return normalizeResponse(request, env, new Response(JSON.stringify({ status: 'ok', message: 'BLW Campus Ministry API is running' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json; charset=utf-8' },
+      }));
+    }
+
     if (url.pathname === '/api/push/send' && (request.method === 'POST' || request.method === 'OPTIONS')) {
       return normalizeResponse(request, env, await sendPushNotification(request, env));
     }
