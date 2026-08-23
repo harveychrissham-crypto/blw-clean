@@ -3,6 +3,7 @@ import { sendPushNotification } from './push-send.js';
 import { corsHeaders } from './security.js';
 import { handleAttendance } from './attendance-api.js';
 import { handleAuth } from './auth-api.js';
+import { handlePasswordReset } from './password-reset-api.js';
 import { handleEvents } from './event-api.js';
 import { handleFellowships } from './fellowship-api.js';
 import { handleVenues } from './venue-api.js';
@@ -75,6 +76,12 @@ export default {
       if (!allowed) return rateLimitedResponse(request, env);
     }
 
+    if ((url.pathname === '/api/auth/forgot-password' || url.pathname === '/api/auth/reset-password') && request.method === 'POST') {
+      const isReset = url.pathname.endsWith('/reset-password');
+      const allowed = await applyRateLimit(request, env, 'PASSWORD_RESET_LIMITER', `${isReset ? 'reset' : 'forgot'}:${request.headers.get('CF-Connecting-IP') || 'unknown'}`, isReset ? 8 : 3);
+      if (!allowed) return rateLimitedResponse(request, env);
+    }
+
     if ((url.pathname === '/api/live/viewers' && (request.method === 'POST' || request.method === 'PATCH'))) {
       const allowed = await applyRateLimit(request, env, 'LIVE_VIEWER_LIMITER', `viewer:${request.headers.get('CF-Connecting-IP') || 'unknown'}`, 60);
       if (!allowed) return rateLimitedResponse(request, env);
@@ -83,6 +90,8 @@ export default {
     if (url.pathname.startsWith('/api/auth')) {
       const response = await handleAuth(request, env, ctx);
       if (response) return normalizeResponse(request, env, response);
+      const resetResponse = await handlePasswordReset(request, env);
+      if (resetResponse) return normalizeResponse(request, env, resetResponse);
     }
 
     if (url.pathname.startsWith('/api/events')) {
