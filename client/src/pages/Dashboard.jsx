@@ -554,7 +554,7 @@ export default function Dashboard() {
             </form>
           </div>
         </div>
-      )}
+      </div>
       <Toast toast={toast} onClose={() => setToast(null)} />
     </section>
   );
