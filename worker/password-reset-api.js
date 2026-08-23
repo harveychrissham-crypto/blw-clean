@@ -45,6 +45,7 @@ async function ensureResetTable(client) {
   `);
   await client.query('CREATE INDEX IF NOT EXISTS password_reset_tokens_user_idx ON password_reset_tokens (user_id)');
   await client.query('CREATE INDEX IF NOT EXISTS password_reset_tokens_expiry_idx ON password_reset_tokens (expires_at)');
+  await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP WITH TIME ZONE');
 }
 
 async function handleRequestReset(request, env, headers) {
@@ -98,7 +99,7 @@ async function handleReset(request, env, headers) {
       }
 
       const passwordHash = await hashPassword(password);
-      await client.query('UPDATE users SET password_hash=$1 WHERE id=$2', [passwordHash, result.rows[0].user_id]);
+      await client.query('UPDATE users SET password_hash=$1, password_changed_at=NOW() WHERE id=$2', [passwordHash, result.rows[0].user_id]);
       await client.query('UPDATE password_reset_tokens SET used_at=NOW() WHERE user_id=$1 AND used_at IS NULL', [result.rows[0].user_id]);
       await client.query('COMMIT');
     } catch (error) {
