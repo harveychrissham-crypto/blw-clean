@@ -5,6 +5,7 @@ import { handleAttendance } from './attendance-api.js';
 import { handleAuth } from './auth-api.js';
 import { handleFellowships } from './fellowship-api.js';
 import { handleVenues } from './venue-api.js';
+import { sendWeeklyServiceReminders } from './scheduled-jobs.js';
 
 function normalizeResponse(request, env, response) {
   const headers = new Headers(response.headers);
@@ -90,6 +91,10 @@ export default {
   },
 
   async scheduled(controller, env, ctx) {
+    if (controller.cron === '0 5 * * 6') {
+      ctx.waitUntil(sendWeeklyServiceReminders(env));
+      return;
+    }
     if (typeof secureWorker.scheduled === 'function') {
       return secureWorker.scheduled(controller, env, ctx);
     }
