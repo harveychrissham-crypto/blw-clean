@@ -11,6 +11,8 @@ import Connect from './pages/Connect';
 import Live from './pages/Live';
 import Sermons from './pages/Sermons';
 import Auth from './pages/Auth';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import RecordSouls from './pages/RecordSouls';
 import LeadersForumWithFellowship from './pages/LeadersForumWithFellowship';
@@ -59,6 +61,8 @@ const AnimatedRoutes = () => {
     <Route path="/give" element={route(<Give />)} />
     <Route path="/connect" element={route(<Connect />)} />
     <Route path="/auth" element={route(<Auth />)} />
+    <Route path="/forgot-password" element={route(<ForgotPassword />)} />
+    <Route path="/reset-password" element={route(<ResetPassword />)} />
     <Route path="/dashboard" element={route(user ? <Dashboard /> : <Auth />)} />
     <Route path="/record-souls" element={route(user ? <RecordSouls /> : <Auth />)} />
     <Route path="/admin" element={route(<LegacyAdminRoute />)} />
