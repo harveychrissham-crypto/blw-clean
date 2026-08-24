@@ -21,6 +21,7 @@ import NotificationCenter from './pages/NotificationCenter';
 import Notifications from './pages/Notifications';
 import { useAuth } from './context/AuthContext';
 import OfflineBanner from './components/OfflineBanner';
+import NotificationPermissionPrompt from './components/NotificationPermissionPrompt';
 import { startOfflineSyncListeners } from './offlineSync';
 
 const FellowshipLocationsPage = () => {
@@ -94,6 +95,6 @@ function App() {
     observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'role', 'data-leadership-tools-overlay', 'data-live-welcome-overlay'] });
     return () => { observer.disconnect(); body.style.overflow = previousBodyOverflow; body.style.touchAction = previousBodyTouchAction; html.style.overflow = previousHtmlOverflow; html.style.touchAction = previousHtmlTouchAction; };
   }, []);
-  return <><OfflineBanner /><AnimatedRoutes /></>;
+  return <><OfflineBanner /><AnimatedRoutes /><NotificationPermissionPrompt /></>;
 }
 export default App;
