@@ -1,12 +1,13 @@
 import { MdQrCodeScanner } from 'react-icons/md';
 import { Link, NavLink } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { FiX, FiHome, FiMic, FiCalendar, FiTarget, FiRadio, FiHeart, FiGift, FiPhone, FiSearch, FiUser, FiLogIn, FiShield } from 'react-icons/fi';
+import { FiX, FiHome, FiMic, FiCalendar, FiTarget, FiRadio, FiHeart, FiGift, FiPhone, FiSearch, FiUser, FiLogIn, FiShield, FiBell } from 'react-icons/fi';
 import AIChatWidget from '../components/AIChatWidget';
 import SearchPanel from '../components/SearchPanel';
 import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
+import { getUnreadCount, onNotificationsUpdated } from '../utils/notificationStorage';
 
 const navItems = [
   { name: 'Home', path: '/', icon: FiHome },
@@ -22,7 +23,14 @@ const navItems = [
 export default function Layout({ children }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { user } = useAuth();
+
+  useEffect(() => {
+    const refresh = () => setUnreadCount(getUnreadCount());
+    refresh();
+    return onNotificationsUpdated(refresh);
+  }, []);
 
   return (
     <div className="min-h-screen text-white" style={{ background: 'radial-gradient(ellipse at top left, rgba(120,20,60,0.45) 0%, transparent 45%), radial-gradient(ellipse at bottom right, rgba(60,20,100,0.35) 0%, transparent 45%), #0d0c18' }}>
@@ -45,6 +53,10 @@ export default function Layout({ children }) {
 
           <div className="flex shrink-0 items-center gap-2">
             <button onClick={() => setSearchOpen(true)} className="rounded-lg p-2 text-white/50 transition hover:text-white hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" aria-label="Search"><FiSearch className="h-4 w-4" /></button>
+            <Link to="/notifications" className="relative rounded-lg p-2 text-white/50 transition hover:text-white hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" aria-label="Notifications">
+              <FiBell className="h-4 w-4" />
+              {unreadCount > 0 && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#F2A31C]" aria-hidden="true" />}
+            </Link>
             {user ? <Link to="/dashboard" className="hidden sm:inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90" style={{ background: 'linear-gradient(135deg,#EC2FA8,#8A2BE2)' }}><FiUser className="h-3.5 w-3.5" />My Account</Link> : <Link to="/auth" className="hidden sm:inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90" style={{ background: 'linear-gradient(135deg,#EC2FA8,#8A2BE2)' }}><FiLogIn className="h-3.5 w-3.5" />Sign In</Link>}
           </div>
         </div>
