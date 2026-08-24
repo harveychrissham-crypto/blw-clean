@@ -25,16 +25,20 @@ function EditRow({ title, meta, onEdit, onDelete, extra }) {
   return <div className="flex flex-col gap-3 rounded-2xl border border-white/8 bg-white/[0.03] p-4 sm:flex-row sm:items-center"><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-white">{title || 'Untitled'}</p>{meta && <p className="mt-1 text-xs text-white/40">{meta}</p>}</div>{extra}<div className="flex shrink-0 gap-2">{onEdit && <button type="button" onClick={onEdit} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 hover:bg-white/10">Edit</button>}<button type="button" onClick={onDelete} className="inline-flex items-center gap-1 rounded-xl border border-red-400/15 px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-500/10"><FiTrash2/> Delete</button></div></div>;
 }
 
-export default function ContentAdminPanel() {
+export default function ContentAdminPanel({ initialTab = 'events', onClose }) {
   const { user } = useAuth();
-  const [tab, setTab] = useState('events');
+  const [tab, setTab] = useState(initialTab);
   const [data, setData] = useState({ events: [], outreach: [], sermons: [], venues: [] });
-  const [form, setForm] = useState(EMPTY.events);
+  const [form, setForm] = useState(EMPTY[initialTab] || EMPTY.events);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+
+  useEffect(() => {
+    if (TABS.some(([key]) => key === initialTab) && initialTab !== tab) setTab(initialTab);
+  }, [initialTab, tab]);
 
   const load = async (section = tab) => {
     setLoading(true); setError('');
@@ -81,7 +85,7 @@ export default function ContentAdminPanel() {
   const items = data[tab];
   const tabTitle = TABS.find(([key]) => key === tab)?.[1] || 'Content';
   return <section className="mx-auto max-w-6xl px-1 py-2">
-    <div className="mb-6"><Eyebrow>Content administration</Eyebrow><h2 className="mt-2 text-3xl font-extrabold text-white">Manage {tabTitle}</h2><p className="mt-2 text-sm text-white/45">Create, edit, and remove the content shown to members. All writes use the existing administrator-protected APIs.</p></div>
+    <div className="mb-6 flex items-start justify-between gap-4"><div><Eyebrow>Content administration</Eyebrow><h2 className="mt-2 text-3xl font-extrabold text-white">Manage {tabTitle}</h2><p className="mt-2 text-sm text-white/45">Create, edit, and remove the content shown to members. All writes use the existing administrator-protected APIs.</p></div>{onClose && <button type="button" onClick={onClose} className="rounded-full border border-white/10 p-2 text-white/50 hover:bg-white/10 hover:text-white" aria-label="Back to Leadership Tools"><FiX/></button>}</div>
     <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-4">{TABS.map(([key, label, Icon]) => <button type="button" key={key} onClick={() => setTab(key)} className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-semibold transition ${tab === key ? 'border-[#F2A31C]/40 bg-[#F2A31C]/10 text-[#F2A31C]' : 'border-white/10 bg-white/[0.03] text-white/55 hover:bg-white/[0.06] hover:text-white'}`}><Icon/> {label}</button>)}</div>
     {(error || notice) && <p className={`mb-5 rounded-2xl px-4 py-3 text-sm ${error ? 'bg-red-500/10 text-red-300' : 'bg-emerald-500/10 text-emerald-300'}`}>{error || notice}</p>}
     <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
