@@ -1,5 +1,8 @@
 import { Capacitor } from '@capacitor/core';
 
+const PUSH_PERMISSION_PROMPT_EVENT = 'blw:push-permission-prompt';
+const PUSH_PERMISSION_DENIED_EVENT = 'blw:push-permission-denied';
+
 /**
  * Native-only setup (status bar and Android back button).
  *
@@ -147,6 +150,25 @@ async function setUpForegroundNotificationDisplay() {
   }
 }
 
+export async function requestPushNotificationPermission() {
+  if (!Capacitor.isNativePlatform()) return 'granted';
+
+  try {
+    const { PushNotifications } = await import('@capacitor/push-notifications');
+    let permission = await PushNotifications.checkPermissions();
+    console.log('[native] explicit push permission check:', permission?.receive);
+
+    if (permission.receive === 'granted') return 'granted';
+
+    permission = await PushNotifications.requestPermissions();
+    console.log('[native] explicit push permission result:', permission?.receive);
+    return permission?.receive || 'denied';
+  } catch (error) {
+    console.warn('[native] explicit push permission request failed:', error?.message || error);
+    return 'denied';
+  }
+}
+
 export function setUpPushNotifications() {
   if (!Capacitor.isNativePlatform()) {
     console.log('[native] push setup skipped: web platform');
@@ -173,17 +195,17 @@ async function setUpPushNotificationsInternal() {
   try {
     const { PushNotifications } = await import('@capacitor/push-notifications');
 
-    let permission = await PushNotifications.checkPermissions();
+    const permission = await PushNotifications.checkPermissions();
     console.log('[native] push permission before request:', permission?.receive);
 
     if (permission.receive !== 'granted') {
-      console.log('[native] requesting push notification permission');
-      permission = await PushNotifications.requestPermissions();
-      console.log('[native] push permission request result:', permission?.receive);
-    }
-
-    if (permission.receive !== 'granted') {
-      console.warn('[native] push permission not granted:', permission?.receive);
+      if (permission.receive === 'prompt') {
+        console.log('[native] showing in-app notification permission explanation');
+        setTimeout(() => window.dispatchEvent(new Event(PUSH_PERMISSION_PROMPT_EVENT)), 0);
+      } else {
+        console.warn('[native] push permission already denied; showing settings guidance');
+        setTimeout(() => window.dispatchEvent(new Event(PUSH_PERMISSION_DENIED_EVENT)), 0);
+      }
       return;
     }
 
