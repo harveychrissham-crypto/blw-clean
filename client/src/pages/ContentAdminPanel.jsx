@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import { FiCalendar, FiFilm, FiImage, FiMapPin, FiPlus, FiSave, FiTrash2, FiX } from 'react-icons/fi';
+import { useEffect, useState } from 'react';
+import { FiCalendar, FiFilm, FiImage, FiMapPin, FiSave, FiTrash2, FiX, FiShield } from 'react-icons/fi';
+import { useAuth } from '../context/AuthContext';
 import { Card, Eyebrow } from '../components/ui/Card';
 import { fetchEvents, createEvent, updateEvent, deleteEvent } from '../utils/events';
 import { fetchOutreachStories, createOutreachStory, updateOutreachStory, deleteOutreachStory } from '../utils/outreachStories';
@@ -13,12 +14,7 @@ const EMPTY = {
   venues: { chapter: '', venue: '', serviceTime: '' },
 };
 
-const TABS = [
-  ['events', 'Events', FiCalendar],
-  ['outreach', 'Outreach', FiImage],
-  ['sermons', 'Sermons', FiFilm],
-  ['venues', 'Service Venues', FiMapPin],
-];
+const TABS = [['events', 'Events', FiCalendar], ['outreach', 'Outreach', FiImage], ['sermons', 'Sermons', FiFilm], ['venues', 'Service Venues', FiMapPin]];
 
 function Field({ label, value, onChange, multiline = false, type = 'text', placeholder = '' }) {
   const common = { value: value ?? '', onChange: (e) => onChange(e.target.value), placeholder, className: 'w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF]' };
@@ -30,6 +26,7 @@ function EditRow({ title, meta, onEdit, onDelete, extra }) {
 }
 
 export default function ContentAdminPanel() {
+  const { user } = useAuth();
   const [tab, setTab] = useState('events');
   const [data, setData] = useState({ events: [], outreach: [], sermons: [], venues: [] });
   const [form, setForm] = useState(EMPTY.events);
@@ -48,8 +45,7 @@ export default function ContentAdminPanel() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { setForm(EMPTY[tab]); setEditingId(null); setNotice(''); setError(''); void load(tab); }, [tab]);
-
+  useEffect(() => { if (user?.isAdmin) { setForm(EMPTY[tab]); setEditingId(null); setNotice(''); setError(''); void load(tab); } }, [tab, user?.isAdmin]);
   const setField = (name, value) => setForm((current) => ({ ...current, [name]: value }));
   const reset = () => { setForm(EMPTY[tab]); setEditingId(null); };
 
@@ -60,7 +56,7 @@ export default function ContentAdminPanel() {
       else if (tab === 'outreach') editingId ? await updateOutreachStory(editingId, form) : await createOutreachStory(form);
       else if (tab === 'sermons') editingId ? await updateSermon(editingId, form) : await createSermon(form);
       else await saveVenue(form.chapter, { venue: form.venue, serviceTime: form.serviceTime });
-      await load(tab); reset(); setNotice(editingId ? 'Changes saved.' : 'Created successfully.');
+      const wasEditing = Boolean(editingId); await load(tab); reset(); setNotice(wasEditing ? 'Changes saved.' : 'Created successfully.');
     } catch (e) { setError(e.message || 'Unable to save changes.'); }
     finally { setSaving(false); }
   };
@@ -69,10 +65,7 @@ export default function ContentAdminPanel() {
     if (!window.confirm(`Delete ${tab === 'venues' ? item.chapter : item.title || 'this item'}?`)) return;
     setError(''); setNotice('');
     try {
-      if (tab === 'events') await deleteEvent(item.id);
-      else if (tab === 'outreach') await deleteOutreachStory(item.id);
-      else if (tab === 'sermons') await deleteSermon(item.id);
-      else await deleteVenue(item.chapter);
+      if (tab === 'events') await deleteEvent(item.id); else if (tab === 'outreach') await deleteOutreachStory(item.id); else if (tab === 'sermons') await deleteSermon(item.id); else await deleteVenue(item.chapter);
       await load(tab); if (editingId === item.id || (tab === 'venues' && editingId === item.chapter)) reset(); setNotice('Deleted successfully.');
     } catch (e) { setError(e.message || 'Unable to delete item.'); }
   };
@@ -83,16 +76,16 @@ export default function ContentAdminPanel() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  if (!user?.isAdmin) return <section className="mx-auto max-w-xl px-5 py-16"><Card variant="raised" className="p-8 text-center"><FiShield className="mx-auto h-10 w-10 text-red-300"/><h2 className="mt-4 text-2xl font-bold text-white">Administrator access required</h2><p className="mt-2 text-sm text-white/45">Sign in with an authorized administrator account to manage ministry content.</p></Card></section>;
+
   const items = data[tab];
   const tabTitle = TABS.find(([key]) => key === tab)?.[1] || 'Content';
-
   return <section className="mx-auto max-w-6xl px-1 py-2">
     <div className="mb-6"><Eyebrow>Content administration</Eyebrow><h2 className="mt-2 text-3xl font-extrabold text-white">Manage {tabTitle}</h2><p className="mt-2 text-sm text-white/45">Create, edit, and remove the content shown to members. All writes use the existing administrator-protected APIs.</p></div>
     <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-4">{TABS.map(([key, label, Icon]) => <button type="button" key={key} onClick={() => setTab(key)} className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-semibold transition ${tab === key ? 'border-[#F2A31C]/40 bg-[#F2A31C]/10 text-[#F2A31C]' : 'border-white/10 bg-white/[0.03] text-white/55 hover:bg-white/[0.06] hover:text-white'}`}><Icon/> {label}</button>)}</div>
     {(error || notice) && <p className={`mb-5 rounded-2xl px-4 py-3 text-sm ${error ? 'bg-red-500/10 text-red-300' : 'bg-emerald-500/10 text-emerald-300'}`}>{error || notice}</p>}
     <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-      <Card variant="raised" className="p-5">
-        <div className="flex items-center justify-between"><div><Eyebrow>{editingId ? 'Edit' : 'Create'}</Eyebrow><h3 className="mt-1 text-xl font-bold text-white">{editingId ? `Edit ${tabTitle}` : `New ${tabTitle}`}</h3></div>{editingId && <button type="button" onClick={reset} className="rounded-full border border-white/10 p-2 text-white/50 hover:text-white"><FiX/></button>}</div>
+      <Card variant="raised" className="p-5"><div className="flex items-center justify-between"><div><Eyebrow>{editingId ? 'Edit' : 'Create'}</Eyebrow><h3 className="mt-1 text-xl font-bold text-white">{editingId ? `Edit ${tabTitle}` : `New ${tabTitle}`}</h3></div>{editingId && <button type="button" onClick={reset} className="rounded-full border border-white/10 p-2 text-white/50 hover:text-white"><FiX/></button>}</div>
         <form onSubmit={submit} className="mt-5 space-y-4">
           {tab === 'events' && <><Field label="Title" value={form.title} onChange={(v) => setField('title', v)} /><Field label="Category" value={form.category} onChange={(v) => setField('category', v)} /><div className="grid gap-4 sm:grid-cols-2"><Field label="Date" type="date" value={form.date} onChange={(v) => setField('date', v)} /><Field label="Time" type="time" value={form.time} onChange={(v) => setField('time', v)} /></div><Field label="Location" value={form.location} onChange={(v) => setField('location', v)} /><Field label="Description" multiline value={form.description} onChange={(v) => setField('description', v)} /></>}
           {tab === 'outreach' && <><Field label="Tag" value={form.tag} onChange={(v) => setField('tag', v)} /><Field label="Title" value={form.title} onChange={(v) => setField('title', v)} /><Field label="Subtitle" value={form.subtitle} onChange={(v) => setField('subtitle', v)} /><Field label="Story" multiline value={form.body} onChange={(v) => setField('body', v)} /><Field label="Image URL" value={form.imageUrl} onChange={(v) => setField('imageUrl', v)} /></>}
