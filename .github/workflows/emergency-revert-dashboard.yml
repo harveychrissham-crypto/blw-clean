@@ -1,0 +1,22 @@
+name: Emergency revert dashboard placeholder
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  revert:
+    if: github.sha == '5e59c100f933da1f4707b2868068d0f788662369'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Revert accidental placeholder commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git revert --no-edit 5e59c100f933da1f4707b2868068d0f788662369
+          git rm .github/workflows/emergency-revert-dashboard.yml
+          git commit -m "chore: remove emergency dashboard revert workflow"
+          git push origin HEAD:main
