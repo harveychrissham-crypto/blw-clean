@@ -10,6 +10,7 @@ import { getOfflineCheckinQueue } from '../utils/offlineCheckin';
 import { fetchEvents } from '../utils/events';
 import NotificationCenter from './NotificationCenter';
 import FellowshipLocationsAdminSecure from './FellowshipLocationsAdminSecure';
+import LiveStreamAdminPanel from './LiveStreamAdminPanel';
 import { Card, Eyebrow } from '../components/ui/Card';
 
 const tools = [
@@ -19,7 +20,7 @@ const tools = [
   { label: 'Manage Sermons', description: 'Open administrator content tools.', icon: FiFilm, path: 'admin' },
   { label: 'Manage Fellowship Locations', description: 'Add and update fellowship locations.', icon: FiMapPin, path: 'fellowship' },
   { label: 'Manage Service Venues', description: 'Open administrator content tools.', icon: FiMapPin, path: 'admin' },
-  { label: 'Manage Live Stream', description: 'Open administrator content tools.', icon: FiRadio, path: 'admin' },
+  { label: 'Manage Live Stream', description: 'Update the title, stream links, and live status.', icon: FiRadio, path: 'live' },
   { label: 'Push Notifications', description: 'Send announcements to registered devices.', icon: FiBell, path: 'notifications' },
 ];
 
@@ -266,12 +267,10 @@ function QRScannerPanel({ onCheckIn, onClose, checkedInCount, pendingCount, even
         <div><Eyebrow>Leaders tool</Eyebrow><h2 className="mt-1 text-xl font-bold text-white">Member Check-In</h2><p className="mt-1 text-xs text-white/40">{event?.title || 'Selected event'}{event?.date ? ` · ${event.date}` : ''} · {checkedInCount} checked in{pendingCount ? ` · ${pendingCount} pending sync` : ''}</p></div>
         <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70" aria-label="Close scanner"><FiX/></button>
       </div>
-
       <div className="flex border-b border-white/10">
         <button onClick={() => { setTab('scan'); setResult(null); setError(''); }} className={`flex flex-1 items-center justify-center gap-2 py-3 text-sm font-semibold transition ${tab === 'scan' ? 'border-b-2 border-[#F2A31C] text-[#F2A31C]' : 'text-white/45'}`}><MdQrCodeScanner/> Scan QR</button>
         <button onClick={() => { stopCamera(); setTab('manual'); setResult(null); setError(''); }} className={`flex flex-1 items-center justify-center gap-2 py-3 text-sm font-semibold transition ${tab === 'manual' ? 'border-b-2 border-[#F2A31C] text-[#F2A31C]' : 'text-white/45'}`}><FiSearch/> Manual</button>
       </div>
-
       <div className="max-h-[78vh] overflow-y-auto p-5">
         {!result && tab === 'scan' && <>
           <div className="relative aspect-square overflow-hidden rounded-2xl bg-black/50"><video ref={videoRef} className="h-full w-full object-cover" muted playsInline/><canvas ref={canvasRef} className="hidden"/>{scanning && <div className="pointer-events-none absolute inset-0 flex items-center justify-center"><div className="h-52 w-52 rounded-2xl border-2 border-[#F2A31C]/70"/></div>}{!scanning && <div className="absolute inset-0 flex flex-col items-center justify-center gap-3"><MdQrCodeScanner className="h-14 w-14 text-white/25"/><p className="text-sm text-white/50">Camera inactive</p></div>}</div>
@@ -279,9 +278,7 @@ function QRScannerPanel({ onCheckIn, onClose, checkedInCount, pendingCount, even
           <div className="mt-3 flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3"><span className="text-xs text-white/55">Continuous scan</span><button onClick={() => setContinuous((v) => !v)} className={`h-6 w-11 rounded-full p-1 transition ${continuous ? 'bg-emerald-500' : 'bg-white/15'}`}><span className={`block h-4 w-4 rounded-full bg-white transition ${continuous ? 'translate-x-5' : ''}`}/></button></div>
           <p className="mt-3 text-center text-xs text-white/35">Point the camera at the member's QR badge.</p>
         </>}
-
         {!result && tab === 'manual' && <div className="mt-5"><label className="text-sm font-semibold text-white">Manual lookup</label><div className="mt-2 flex gap-2"><input value={manual} onChange={handleManualChange} onKeyDown={(e) => { if (e.key === 'Enter') void lookupManual(); }} placeholder="Membership ID, name, phone, or email" className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none"/><button onClick={() => void lookupManual()} disabled={loading} className="rounded-2xl bg-[#F2A31C] px-4 py-3 text-sm font-bold text-[#0d0c18]">Find</button></div>{suggestions.length > 0 && <div className="mt-2 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">{suggestions.map((member) => <button key={member.membershipId} onClick={() => { setResult({ member, confirmed: false }); setSuggestions([]); }} className="block w-full border-b border-white/5 px-4 py-3 text-left last:border-0 hover:bg-white/[0.05]"><p className="text-sm font-semibold text-white">{member.name}</p><p className="text-xs text-white/40">{member.membershipId}{member.chapter ? ` · ${member.chapter}` : ''}</p></button>)}</div>}</div>}
-
         {error && <p className="mt-4 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
         {result?.member && <div className="mt-5 rounded-3xl border border-white/10 bg-white/[0.04] p-5"><Eyebrow>Member found</Eyebrow><h3 className="mt-2 text-2xl font-bold text-white">{result.member.name}</h3><p className="mt-1 text-sm text-white/45">{result.member.membershipId}{result.member.chapter ? ` · ${result.member.chapter}` : ''}</p>{result.already || result.member.checkedIn ? <div className="mt-5 rounded-2xl bg-amber-500/10 px-4 py-4 text-sm font-semibold text-amber-300">Already checked in for this event{result.member.checkedInAt ? ` at ${new Date(result.member.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}.</div> : result.confirmed ? <div className="mt-5 rounded-2xl bg-emerald-500/10 px-4 py-4 text-sm font-semibold text-emerald-300">Checked in successfully.</div> : <button onClick={() => void confirmCheckIn()} disabled={loading} className="mt-5 w-full rounded-2xl bg-emerald-500/20 py-3 text-sm font-bold text-emerald-200 disabled:opacity-50">{loading ? 'Checking in…' : 'Confirm Check-In'}</button>} {!continuous && <button onClick={() => { setResult(null); setManual(''); setError(''); }} className="mt-3 w-full rounded-2xl border border-white/10 py-3 text-sm font-semibold text-white/60">Scan another member</button>}</div>}
       </div>
@@ -300,9 +297,7 @@ function AttendancePanel() {
   const [saving, setSaving] = useState('');
   const [scannerOpen, setScannerOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
-
   const selectedEvent = useMemo(() => events.find((event) => String(event.id) === String(selectedEventId)) || null, [events, selectedEventId]);
-
   const refreshQueue = useCallback(async () => setPendingCount((await getOfflineCheckinQueue()).length), []);
   const refreshMembers = useCallback(async (eventId = selectedEventId) => {
     if (!eventId) { setMembers([]); return []; }
@@ -310,7 +305,6 @@ function AttendancePanel() {
     setMembers(list);
     return list;
   }, [selectedEventId]);
-
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -324,22 +318,17 @@ function AttendancePanel() {
           const preferred = sorted.find((event) => event.date >= today) || sorted[sorted.length - 1];
           if (preferred) setSelectedEventId(String(preferred.id));
         }
-      } catch (e) {
-        if (!cancelled) setError(e.message || 'Unable to load events.');
-      } finally {
-        if (!cancelled) setEventsLoading(false);
-      }
+      } catch (e) { if (!cancelled) setError(e.message || 'Unable to load events.'); }
+      finally { if (!cancelled) setEventsLoading(false); }
     })();
     void refreshQueue();
     return () => { cancelled = true; };
   }, [refreshQueue]);
-
   useEffect(() => {
     setLoading(true);
     setError('');
     void refreshMembers(selectedEventId).catch((e) => setError(e.message || 'Unable to load attendance.')).finally(() => setLoading(false));
   }, [refreshMembers, selectedEventId]);
-
   useEffect(() => {
     const onOnline = async () => {
       try { await syncOfflineCheckins(); await refreshMembers(selectedEventId); } catch { /* banner handles connectivity */ }
@@ -348,12 +337,8 @@ function AttendancePanel() {
     window.addEventListener('online', onOnline);
     return () => window.removeEventListener('online', onOnline);
   }, [refreshMembers, refreshQueue, selectedEventId]);
-
   const checkIn = async (membershipId, memberHint = null, eventId = selectedEventId) => {
-    if (!eventId) {
-      setError('Select an event before checking members in.');
-      throw new Error('Select an event before checking members in.');
-    }
+    if (!eventId) { setError('Select an event before checking members in.'); throw new Error('Select an event before checking members in.'); }
     setSaving(membershipId);
     setError('');
     try {
@@ -361,19 +346,15 @@ function AttendancePanel() {
       setMembers((current) => current.map((member) => member.membershipId === membershipId ? { ...member, ...updated, checkedIn: true } : member));
       await refreshQueue();
       return updated;
-    } catch (e) {
-      setError(e.message || 'Unable to check in this member.');
-      throw e;
-    } finally { setSaving(''); }
+    } catch (e) { setError(e.message || 'Unable to check in this member.'); throw e; }
+    finally { setSaving(''); }
   };
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return members;
     return members.filter((member) => [member.name, member.email, member.phone, member.membershipId, member.chapter].some((value) => String(value || '').toLowerCase().includes(q)));
   }, [members, query]);
   const checkedInCount = members.filter((member) => member.checkedIn).length;
-
   return <>
     <Card variant="raised" className="p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div className="flex items-center gap-3"><FiUsers className="text-emerald-300"/><div><Eyebrow>Attendance</Eyebrow><h2 className="text-xl font-bold text-white">Member check-in</h2><p className="text-xs text-white/40">{selectedEvent ? `${selectedEvent.title} · ${selectedEvent.date || 'No date'}` : 'Select an event'} · {checkedInCount} checked in</p></div></div><div className="flex gap-2"><CSVDownload members={members} event={selectedEvent}/><button disabled={!selectedEventId} onClick={() => { setError(''); setScannerOpen(true); }} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#F2A31C] px-4 py-3 text-sm font-bold text-[#0d0c18] disabled:cursor-not-allowed disabled:opacity-50"><MdQrCodeScanner className="h-5 w-5"/> Scan QR</button></div></div>
@@ -407,5 +388,5 @@ export default function LeadersForumWithFellowship() {
   }, []);
   if (loading || checkingRole) return <div className="mx-auto max-w-xl px-5 py-20 text-center text-sm text-white/50">Checking administrator access…</div>;
   if (!isAdmin) return <AccessDenied />;
-  return <section className="mx-auto max-w-6xl px-5 py-12"><div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><Eyebrow>Leaders Forum</Eyebrow><h1 className="mt-2 text-3xl font-extrabold text-white">Leadership Tools</h1><p className="mt-2 max-w-3xl text-sm text-white/45">Administrator-only management for attendance, content, fellowship locations, live streaming, and notifications.</p></div><button onClick={() => setView('dashboard')} className="inline-flex items-center gap-2 text-sm text-white/50 hover:text-white"><FiLock/> Admin session</button></div>{view === 'dashboard' && <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{tools.map((tool) => { const Icon = tool.icon; return <Card as="button" key={tool.label} onClick={() => setView(tool.path)} variant="raised" className="p-5 text-left transition hover:-translate-y-0.5 hover:bg-white/[0.06]"><div className="flex items-start justify-between gap-4"><div><h2 className="text-lg font-bold text-white">{tool.label}</h2><p className="mt-2 text-sm leading-relaxed text-white/45">{tool.description}</p></div><Icon className="h-6 w-6 shrink-0 text-[#D8B2FF]"/></div></Card>; })}</div>}{view === 'attendance' && <><button onClick={() => setView('dashboard')} className="mb-4 text-sm text-white/50 hover:text-white">← Back</button><AttendancePanel/></>}{view === 'fellowship' && <><button onClick={() => setView('dashboard')} className="mb-4 text-sm text-white/50 hover:text-white">← Back</button><FellowshipLocationsAdminSecure/></>}{view === 'notifications' && <><button onClick={() => setView('dashboard')} className="mb-4 text-sm text-white/50 hover:text-white">← Back</button><NotificationCenter/></>}{view === 'admin' && <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center"><FiShield className="mx-auto h-10 w-10 text-[#D8B2FF]"/><h2 className="mt-4 text-2xl font-bold text-white">Content administration</h2><p className="mt-2 text-sm text-white/45">The existing administrator dashboard remains available behind the same server-verified admin authorization.</p><button onClick={() => window.location.assign('/admin')} className="mt-5 rounded-full bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15">Open Admin Dashboard</button></div>}</section>;
+  return <section className="mx-auto max-w-6xl px-5 py-12"><div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><Eyebrow>Leaders Forum</Eyebrow><h1 className="mt-2 text-3xl font-extrabold text-white">Leadership Tools</h1><p className="mt-2 max-w-3xl text-sm text-white/45">Administrator-only management for attendance, content, fellowship locations, live streaming, and notifications.</p></div><button onClick={() => setView('dashboard')} className="inline-flex items-center gap-2 text-sm text-white/50 hover:text-white"><FiLock/> Admin session</button></div>{view === 'dashboard' && <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{tools.map((tool) => { const Icon = tool.icon; return <Card as="button" key={tool.label} onClick={() => setView(tool.path)} variant="raised" className="p-5 text-left transition hover:-translate-y-0.5 hover:bg-white/[0.06]"><div className="flex items-start justify-between gap-4"><div><h2 className="text-lg font-bold text-white">{tool.label}</h2><p className="mt-2 text-sm leading-relaxed text-white/45">{tool.description}</p></div><Icon className="h-6 w-6 shrink-0 text-[#D8B2FF]"/></div></Card>; })}</div>}{view === 'attendance' && <><button onClick={() => setView('dashboard')} className="mb-4 text-sm text-white/50 hover:text-white">← Back</button><AttendancePanel/></>}{view === 'fellowship' && <><button onClick={() => setView('dashboard')} className="mb-4 text-sm text-white/50 hover:text-white">← Back</button><FellowshipLocationsAdminSecure/></>}{view === 'notifications' && <><button onClick={() => setView('dashboard')} className="mb-4 text-sm text-white/50 hover:text-white">← Back</button><NotificationCenter/></>}{view === 'live' && <><button onClick={() => setView('dashboard')} className="mb-4 text-sm text-white/50 hover:text-white">← Back</button><LiveStreamAdminPanel/></>}{view === 'admin' && <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center"><FiShield className="mx-auto h-10 w-10 text-[#D8B2FF]"/><h2 className="mt-4 text-2xl font-bold text-white">Content administration</h2><p className="mt-2 text-sm text-white/45">This content tool is not available in Leadership Tools yet.</p><button onClick={() => setView('dashboard')} className="mt-5 rounded-full bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15">Back to Leadership Tools</button></div>}</section>;
 }
