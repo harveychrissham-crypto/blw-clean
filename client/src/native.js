@@ -61,6 +61,20 @@ let pushNotificationsSetupPromise = null;
 let lastRegisteredFcmToken = '';
 let foregroundNotificationListenerRegistered = false;
 
+async function savePushToInbox(notification) {
+  try {
+    const { addNotification } = await import('./utils/notificationStorage');
+    addNotification({
+      id: notification?.id,
+      title: notification?.title,
+      body: notification?.body,
+      data: notification?.data,
+    });
+  } catch (error) {
+    console.warn('[native] saving notification to inbox skipped:', error?.message || error);
+  }
+}
+
 async function setUpForegroundNotificationDisplay() {
   if (foregroundNotificationListenerRegistered) return;
 
@@ -101,6 +115,8 @@ async function setUpForegroundNotificationDisplay() {
         ? notification.body.trim()
         : 'You have a new ministry update.';
 
+      await savePushToInbox({ ...notification, title, body });
+
       try {
         await LocalNotifications.schedule({
           notifications: [{
@@ -115,6 +131,10 @@ async function setUpForegroundNotificationDisplay() {
       } catch (error) {
         console.warn('[native] foreground notification display skipped:', error?.message || error);
       }
+    });
+
+    await PushNotifications.addListener('pushNotificationActionPerformed', async ({ notification }) => {
+      await savePushToInbox(notification);
     });
   } catch (error) {
     console.warn('[native] local notification setup skipped:', error?.message || error);
