@@ -81,12 +81,18 @@ async function setUpForegroundNotificationDisplay() {
   try {
     const { LocalNotifications } = await import('@capacitor/local-notifications');
     let permission = await LocalNotifications.checkPermissions();
+    console.log('[native] local notification permission:', permission?.display);
 
     if (permission.display !== 'granted') {
+      console.log('[native] requesting local notification permission');
       permission = await LocalNotifications.requestPermissions();
+      console.log('[native] local notification permission result:', permission?.display);
     }
 
-    if (permission.display !== 'granted') return;
+    if (permission.display !== 'granted') {
+      console.warn('[native] local notification permission not granted:', permission?.display);
+      return;
+    }
 
     if (Capacitor.getPlatform() === 'android') {
       try {
@@ -137,15 +143,25 @@ async function setUpForegroundNotificationDisplay() {
       await savePushToInbox(notification);
     });
   } catch (error) {
-    console.warn('[native] local notification setup skipped:', error?.message || error);
+    console.warn('[native] local notification setup failed:', error?.message || error);
   }
 }
 
 export function setUpPushNotifications() {
-  if (!Capacitor.isNativePlatform()) return Promise.resolve();
-  if (pushNotificationsInitialized) return Promise.resolve();
-  if (pushNotificationsSetupPromise) return pushNotificationsSetupPromise;
+  if (!Capacitor.isNativePlatform()) {
+    console.log('[native] push setup skipped: web platform');
+    return Promise.resolve();
+  }
+  if (pushNotificationsInitialized) {
+    console.log('[native] push setup skipped: already initialized');
+    return Promise.resolve();
+  }
+  if (pushNotificationsSetupPromise) {
+    console.log('[native] push setup joined existing attempt');
+    return pushNotificationsSetupPromise;
+  }
 
+  console.log('[native] starting post-login push setup');
   pushNotificationsSetupPromise = setUpPushNotificationsInternal().finally(() => {
     if (!pushNotificationsInitialized) pushNotificationsSetupPromise = null;
   });
@@ -158,10 +174,18 @@ async function setUpPushNotificationsInternal() {
     const { PushNotifications } = await import('@capacitor/push-notifications');
 
     let permission = await PushNotifications.checkPermissions();
+    console.log('[native] push permission before request:', permission?.receive);
+
     if (permission.receive !== 'granted') {
+      console.log('[native] requesting push notification permission');
       permission = await PushNotifications.requestPermissions();
+      console.log('[native] push permission request result:', permission?.receive);
     }
-    if (permission.receive !== 'granted') return;
+
+    if (permission.receive !== 'granted') {
+      console.warn('[native] push permission not granted:', permission?.receive);
+      return;
+    }
 
     await setUpForegroundNotificationDisplay();
 
@@ -183,36 +207,51 @@ async function setUpPushNotificationsInternal() {
 
     const registrationListener = await PushNotifications.addListener('registration', async (token) => {
       const tokenValue = typeof token?.value === 'string' ? token.value.trim() : '';
+      console.log('[native] FCM registration event received:', tokenValue ? 'token received' : 'empty token');
       if (!tokenValue) return;
-      if (tokenValue === lastRegisteredFcmToken) return;
+      if (tokenValue === lastRegisteredFcmToken) {
+        console.log('[native] FCM token already handled in this session');
+        return;
+      }
       lastRegisteredFcmToken = tokenValue;
 
       try {
         const { apiFetch } = await import('./config/api');
+        console.log('[native] registering FCM token with backend');
         const response = await apiFetch('/api/push/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token: tokenValue, platform: Capacitor.getPlatform() }),
         });
 
-        if (!response.ok) return;
+        console.log('[native] /api/push/register response:', response.status);
+
+        if (!response.ok) {
+          const responseText = await response.text().catch(() => '');
+          console.warn('[native] FCM token registration rejected:', response.status, responseText.slice(0, 300));
+          return;
+        }
 
         pushNotificationsInitialized = true;
-      } catch {
-        // Push registration failures should not break app startup.
+        console.log('[native] FCM token registered successfully');
+      } catch (error) {
+        console.warn('[native] FCM token backend registration failed:', error?.message || error);
       }
     });
 
-    await PushNotifications.addListener('registrationError', () => {
-      // Registration errors are intentionally silent in production.
+    await PushNotifications.addListener('registrationError', (error) => {
+      console.warn('[native] FCM registration error:', error?.error || error?.message || error);
     });
 
+    console.log('[native] calling PushNotifications.register()');
     try {
       await PushNotifications.register();
-    } catch {
+      console.log('[native] PushNotifications.register() completed');
+    } catch (error) {
+      console.warn('[native] PushNotifications.register() failed:', error?.message || error);
       await registrationListener.remove().catch(() => {});
     }
-  } catch {
-    // Push setup is best-effort and must never break app startup.
+  } catch (error) {
+    console.warn('[native] push setup failed:', error?.message || error);
   }
 }
