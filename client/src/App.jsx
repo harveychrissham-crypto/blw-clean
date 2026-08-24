@@ -29,11 +29,6 @@ const FellowshipLocationsPage = () => {
   return <div className="relative"><div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8"><button type="button" onClick={() => navigate('/leaders-forum')} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/75 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">← Back to Leaders Forum</button></div><FellowshipLocationsAdminSecure /></div>;
 };
 
-const LegacyAdminRoute = () => {
-  const navigate = useNavigate();
-  return <section className="mx-auto max-w-xl px-5 py-20 text-center"><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8"><h1 className="text-2xl font-bold text-white">Content administration</h1><p className="mt-3 text-sm leading-relaxed text-white/45">The old Admin Dashboard route has been retired. Content administration is now handled through Leadership Tools.</p><button type="button" onClick={() => navigate('/leaders-forum')} className="mt-6 rounded-full bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15">Open Leadership Tools</button></div></section>;
-};
-
 const BOTTOM_TAB_PATHS = ['/', '/events', '/checkin', '/live'];
 
 const AnimatedRoutes = () => {
@@ -66,7 +61,6 @@ const AnimatedRoutes = () => {
     <Route path="/reset-password" element={route(<ResetPassword />)} />
     <Route path="/dashboard" element={route(user ? <Dashboard /> : <Auth />)} />
     <Route path="/record-souls" element={route(user ? <RecordSouls /> : <Auth />)} />
-    <Route path="/admin" element={route(<LegacyAdminRoute />)} />
     <Route path="/leaders-forum" element={route(<LeadersForumWithFellowship />)} />
     <Route path="/fellowship-locations" element={route(<FellowshipLocationsPage />)} />
     <Route path="/leaders-forum/notifications" element={route(<NotificationCenter />)} />
