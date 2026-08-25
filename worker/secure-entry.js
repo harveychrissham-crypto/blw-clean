@@ -89,6 +89,15 @@ async function sendSelfPushTest(request, env, headers) {
   const bearer = getBearerToken(request); if (!bearer) return json({ error: 'Authorization token missing.' }, 401, headers);
   let payload; try { payload = jwt.verify(bearer, getJwtSecret(env)); } catch { return json({ error: 'Invalid authentication token.' }, 401, headers); }
   const email = typeof payload?.user?.email === 'string' ? payload.user.email.trim().toLowerCase() : ''; if (!email) return json({ error: 'Invalid authentication token.' }, 401, headers);
+  const requestBody = await request.clone().json().catch(() => ({}));
+  const title = typeof requestBody?.title === 'string' && requestBody.title.trim() ? requestBody.title.trim().slice(0, 120) : 'BLW Kenya Zone';
+  const bodyText = typeof requestBody?.body === 'string' && requestBody.body.trim() ? requestBody.body.trim().slice(0, 500) : 'You have a new ministry update.';
+  const incomingData = requestBody?.data && typeof requestBody.data === 'object' && !Array.isArray(requestBody.data) ? requestBody.data : {};
+  const allowedTypes = new Set(['event', 'sermon', 'outreach', 'venue', 'announcement', 'notification']);
+  const type = typeof incomingData.type === 'string' && allowedTypes.has(incomingData.type) ? incomingData.type : 'notification';
+  const data = { type, source: 'leader_notification_center' };
+  if (typeof incomingData.id === 'string' && incomingData.id.trim()) data.id = incomingData.id.trim().slice(0, 200);
+  if (typeof incomingData.chapter === 'string' && incomingData.chapter.trim()) data.chapter = incomingData.chapter.trim().slice(0, 200);
   const connectionString = env.HYPERDRIVE?.connectionString || env.DATABASE_URL || ''; if (!connectionString) return json({ error: 'Database connection is not configured.' }, 503, headers);
   try {
     const { Client } = await import('pg'); const client = new Client({ connectionString }); await client.connect(); let tokens;
@@ -96,10 +105,10 @@ async function sendSelfPushTest(request, env, headers) {
     if (!tokens.length) return json({ status: 'no_token', message: 'No FCM token is registered for this account yet.' }, 404, headers);
     const { projectId } = firebaseConfig(env); const accessToken = await getFirebaseAccessToken(env); let sent = 0; let failed = 0; const failures = [];
     for (const token of tokens) {
-      const response = await fetch(`https://fcm.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/messages:send`, { method: 'POST', headers: { Authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' }, body: JSON.stringify({ message: { token, notification: { title: 'BLW Kenya Zone', body: 'You have a new ministry update.' }, data: { type: 'notification', source: 'blw_notification_service' }, android: { priority: 'HIGH', notification: { channel_id: 'blw_default', sound: 'default' } } } }) });
-      const body = await response.json().catch(() => ({})); if (response.ok) sent += 1; else { failed += 1; failures.push({ status: response.status, error: body?.error?.status || body?.error?.message || 'FCM send failed' }); }
+      const response = await fetch(`https://fcm.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/messages:send`, { method: 'POST', headers: { Authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' }, body: JSON.stringify({ message: { token, notification: { title, body: bodyText }, data, android: { priority: 'HIGH', notification: { channel_id: 'blw_default', sound: 'default' } } } }) });
+      const responseBody = await response.json().catch(() => ({})); if (response.ok) sent += 1; else { failed += 1; failures.push({ status: response.status, error: responseBody?.error?.status || responseBody?.error?.message || 'FCM send failed' }); }
     }
-    if (sent > 0) return json({ status: 'ok', sent, failed, totalTokens: tokens.length }, 200, headers);
+    if (sent > 0) return json({ status: 'ok', sent, failed, totalTokens: tokens.length, payload: { title, body: bodyText, data } }, 200, headers);
     return json({ status: 'failed', sent, failed, totalTokens: tokens.length, failures }, 503, headers);
   } catch (error) { console.error('[worker] direct FCM self-test failed', { message: error?.message, code: error?.code }); return json({ error: error?.message || 'Unable to send the notification.' }, 503, headers); }
 }
