@@ -5,7 +5,6 @@ import { fetchEvents } from '../utils/events';
 import { fetchSermons } from '../utils/sermons';
 import { fetchOutreachStories } from '../utils/outreachStories';
 import { fetchVenues } from '../utils/venues';
-import { useAuth } from '../context/AuthContext';
 
 const TARGETS = [
   ['announcement', 'General announcement'],
@@ -34,7 +33,6 @@ function readLog() {
 }
 
 export default function NotificationCenter() {
-  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [targetType, setTargetType] = useState('announcement');
@@ -102,23 +100,28 @@ export default function NotificationCenter() {
   const sendRequest = async ({ test = false } = {}) => {
     validate();
     const payload = buildPayload();
-    let recipients = [];
 
     if (test) {
-      if (!user?.email) throw new Error('Your signed-in email could not be determined.');
-      recipients = [user.email.trim().toLowerCase()];
-    } else {
-      recipients = emails.split(/[\n,]+/).map((email) => email.trim().toLowerCase()).filter(Boolean);
-      if (!broadcast && !recipients.length) throw new Error('Enter at least one member email or enable broadcast.');
+      const response = await apiFetch('/api/push/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || data.message || `Notification test failed (${response.status}).`);
+      return { data, test, target: previewTarget, title: payload.title, body: payload.body };
     }
+
+    const recipients = emails.split(/[\n,]+/).map((email) => email.trim().toLowerCase()).filter(Boolean);
+    if (!broadcast && !recipients.length) throw new Error('Enter at least one member email or enable broadcast.');
 
     const response = await apiFetch('/api/push/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...payload,
-        broadcast: test ? false : broadcast,
-        userEmails: test ? recipients : (broadcast ? [] : recipients),
+        broadcast,
+        userEmails: broadcast ? [] : recipients,
       }),
     });
     const data = await response.json().catch(() => ({}));
