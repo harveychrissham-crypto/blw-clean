@@ -59,6 +59,25 @@ export async function fetchOutreachStories() {
   }
 }
 
+export async function uploadOutreachImage(file) {
+  if (!file) throw new Error('Please choose an image first.');
+  if (!file.type?.startsWith('image/')) throw new Error('Only image files are allowed.');
+  if (file.size > 5 * 1024 * 1024) throw new Error('Image must be 5 MB or smaller.');
+
+  const formData = new FormData();
+  formData.append('photo', file);
+
+  const res = await apiFetch('/api/uploads', {
+    method: 'POST',
+    authMode: 'leader',
+    body: formData,
+  });
+
+  const body = await handle(res);
+  if (!body?.url) throw new Error('Upload completed without an image URL.');
+  return body.url;
+}
+
 export async function createOutreachStory(payload) {
   const res = await apiFetch('/api/outreach-stories', {
     method: 'POST',
