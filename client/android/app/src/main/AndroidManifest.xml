@@ -27,6 +27,18 @@
             android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- Used by Firebase/FCM to draw the status bar icon for pushes that
+             arrive while the app is backgrounded or fully closed (this is a
+             separate native code path from native.js's LocalNotifications
+             display, which covers the foreground case). Without these, FCM
+             falls back to a generic system icon instead of the branded one. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_notify" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/colorAccent" />
     </application>
 
     <!-- Permissions -->

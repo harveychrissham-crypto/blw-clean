@@ -126,6 +126,9 @@ async function setUpForegroundNotificationDisplay() {
             channelId: 'blw_default',
             schedule: { at: new Date(Date.now() + 100) },
             extra: notification?.data || {},
+            smallIcon: 'ic_stat_notify',
+            iconColor: '#F2A31C',
+            largeIcon: 'ic_notification_large',
           }],
         });
       } catch (error) {
