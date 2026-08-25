@@ -37,6 +37,17 @@ const AdminContentPage = () => {
 
 const BOTTOM_TAB_PATHS = ['/', '/events', '/checkin', '/live'];
 
+const notificationDestination = (notification) => {
+  const data = notification?.data || notification?.extra || {};
+  const type = typeof data.type === 'string' ? data.type : 'announcement';
+  const id = typeof data.id === 'string' ? data.id.trim() : '';
+  if (type === 'event') return `/events${id ? `?notificationId=${encodeURIComponent(id)}` : ''}`;
+  if (type === 'sermon') return `/sermons${id ? `?notificationId=${encodeURIComponent(id)}` : ''}`;
+  if (type === 'outreach') return `/outreaches${id ? `?notificationId=${encodeURIComponent(id)}` : ''}`;
+  if (type === 'venue') return `/fellowship-locations${id ? `?notificationId=${encodeURIComponent(id)}` : ''}`;
+  return '/notifications';
+};
+
 const AnimatedRoutes = () => {
   const location = useLocation();
   const navigationType = useNavigationType();
@@ -53,7 +64,25 @@ const AnimatedRoutes = () => {
 };
 
 function App() {
+  const navigate = useNavigate();
   useEffect(() => startOfflineSyncListeners(), []);
+  useEffect(() => {
+    let mounted = true;
+    let pushListener;
+    let localListener;
+    (async () => {
+      if (!mounted) return;
+      try {
+        const { PushNotifications } = await import('@capacitor/push-notifications');
+        pushListener = await PushNotifications.addListener('pushNotificationActionPerformed', ({ notification }) => navigate(notificationDestination(notification)));
+      } catch (error) { console.warn('[app] push notification action listener unavailable:', error?.message || error); }
+      try {
+        const { LocalNotifications } = await import('@capacitor/local-notifications');
+        localListener = await LocalNotifications.addListener('localNotificationActionPerformed', ({ notification }) => navigate(notificationDestination(notification)));
+      } catch (error) { console.warn('[app] local notification action listener unavailable:', error?.message || error); }
+    })();
+    return () => { mounted = false; pushListener?.remove?.(); localListener?.remove?.(); };
+  }, [navigate]);
   useEffect(() => {
     const body = document.body, html = document.documentElement;
     const previousBodyOverflow = body.style.overflow, previousBodyTouchAction = body.style.touchAction;
