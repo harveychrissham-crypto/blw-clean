@@ -10,6 +10,7 @@ import Give from './pages/Give';
 import Connect from './pages/Connect';
 import Live from './pages/Live';
 import Sermons from './pages/Sermons';
+import ServiceVenues from './pages/ServiceVenues';
 import Auth from './pages/Auth';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -44,7 +45,7 @@ const notificationDestination = (notification) => {
   if (type === 'event') return `/events${id ? `?notificationId=${encodeURIComponent(id)}` : ''}`;
   if (type === 'sermon') return `/sermons${id ? `?notificationId=${encodeURIComponent(id)}` : ''}`;
   if (type === 'outreach') return `/outreaches${id ? `?notificationId=${encodeURIComponent(id)}` : ''}`;
-  if (type === 'venue') return `/fellowship-locations${id ? `?notificationId=${encodeURIComponent(id)}` : ''}`;
+  if (type === 'venue') return `/venues${id ? `?chapter=${encodeURIComponent(id)}` : ''}`;
   return '/notifications';
 };
 
@@ -59,7 +60,7 @@ const AnimatedRoutes = () => {
   const transition = isTabSwitch ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, duration: 0.15 } : navigationType === 'POP' ? { initial: { opacity: 0, x: -24 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: 24 }, duration: 0.28 } : { initial: { opacity: 0, x: 24 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -24 }, duration: 0.28 };
   useEffect(() => { prevPathRef.current = location.pathname; });
   return <AnimatePresence mode="wait"><motion.div key={location.pathname} initial={transition.initial} animate={transition.animate} exit={transition.exit} transition={{ duration: transition.duration }}><Routes location={location}>
-    <Route path="/" element={route(<Home />)} /><Route path="/outreaches" element={route(<Outreaches />)} /><Route path="/events" element={route(<Events />)} /><Route path="/live" element={route(<Live />)} /><Route path="/sermons" element={route(<Sermons />)} /><Route path="/checkin" element={route(<Checkin />)} /><Route path="/give" element={route(<Give />)} /><Route path="/connect" element={route(<Connect />)} /><Route path="/auth" element={route(<Auth />)} /><Route path="/forgot-password" element={route(<ForgotPassword />)} /><Route path="/reset-password" element={route(<ResetPassword />)} /><Route path="/dashboard" element={route(user ? <Dashboard /> : <Auth />)} /><Route path="/record-souls" element={route(user ? <RecordSouls /> : <Auth />)} /><Route path="/leaders-forum" element={route(<LeadersForumWithFellowship />)} /><Route path="/fellowship-locations" element={route(<FellowshipLocationsPage />)} /><Route path="/leaders-forum/notifications" element={route(<NotificationCenter />)} /><Route path="/notifications" element={route(<Notifications />)} /><Route path="/admin" element={route(<AdminContentPage />)} /><Route path="*" element={route(<Home />)} />
+    <Route path="/" element={route(<Home />)} /><Route path="/outreaches" element={route(<Outreaches />)} /><Route path="/events" element={route(<Events />)} /><Route path="/live" element={route(<Live />)} /><Route path="/sermons" element={route(<Sermons />)} /><Route path="/venues" element={route(<ServiceVenues />)} /><Route path="/checkin" element={route(<Checkin />)} /><Route path="/give" element={route(<Give />)} /><Route path="/connect" element={route(<Connect />)} /><Route path="/auth" element={route(<Auth />)} /><Route path="/forgot-password" element={route(<ForgotPassword />)} /><Route path="/reset-password" element={route(<ResetPassword />)} /><Route path="/dashboard" element={route(user ? <Dashboard /> : <Auth />)} /><Route path="/record-souls" element={route(user ? <RecordSouls /> : <Auth />)} /><Route path="/leaders-forum" element={route(<LeadersForumWithFellowship />)} /><Route path="/fellowship-locations" element={route(<FellowshipLocationsPage />)} /><Route path="/leaders-forum/notifications" element={route(<NotificationCenter />)} /><Route path="/notifications" element={route(<Notifications />)} /><Route path="/admin" element={route(<AdminContentPage />)} /><Route path="*" element={route(<Home />)} />
   </Routes></motion.div></AnimatePresence>;
 };
 
