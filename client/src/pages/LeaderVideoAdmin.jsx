@@ -7,13 +7,75 @@ export default function LeaderVideoAdmin() {
   const { user } = useAuth();
   const [rooms, setRooms] = useState([]);
   const [broadcast, setBroadcast] = useState(null);
+  const [title, setTitle] = useState('BLW Main Service');
   const [busy, setBusy] = useState('');
   const [message, setMessage] = useState('');
-  const load = async () => { setBusy('load'); try { const res = await apiFetch('/api/video/rooms'); const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Unable to load rooms.'); setRooms(data.rooms || []); } catch (e) { setMessage(e.message); } finally { setBusy(''); } };
+
+  const load = async () => {
+    setBusy('load'); setMessage('');
+    try {
+      const [roomsRes, liveRes] = await Promise.all([apiFetch('/api/video/rooms'), fetch('/api/live')]);
+      const roomsData = await roomsRes.json();
+      if (!roomsRes.ok) throw new Error(roomsData.error || 'Unable to load rooms.');
+      setRooms(roomsData.rooms || []);
+      if (liveRes.ok) {
+        const liveData = await liveRes.json();
+        const live = liveData.live;
+        if (live?.isLive && live?.liveKitRoom && live?.liveKitEgressId) {
+          setBroadcast({ room: live.liveKitRoom, egress_id: live.liveKitEgressId, playback_url: live.hlsPlaybackUrl || '', title: live.title || 'BLW Main Service' });
+          setTitle(live.title || 'BLW Main Service');
+        } else {
+          setBroadcast(null);
+        }
+      }
+    } catch (e) { setMessage(e.message); } finally { setBusy(''); }
+  };
+
   useEffect(() => { if (user) load(); }, [user]);
-  const start = async () => { setBusy('start'); setMessage(''); try { const res = await apiFetch('/api/video/broadcast/start', { method: 'POST', body: JSON.stringify({ name: `main-service-${Date.now().toString(36)}` }) }); const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Unable to start broadcast.'); setBroadcast(data); await load(); } catch (e) { setMessage(e.message); } finally { setBusy(''); } };
-  const stop = async () => { if (!broadcast) return; setBusy('stop'); try { const res = await apiFetch('/api/video/broadcast/stop', { method: 'POST', body: JSON.stringify({ room_name: broadcast.room, egress_id: broadcast.egress_id }) }); const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Unable to stop broadcast.'); setBroadcast(null); await load(); } catch (e) { setMessage(e.message); } finally { setBusy(''); } };
-  const closeRoom = async (room) => { setBusy(`delete:${room}`); try { const res = await apiFetch(`/api/video/rooms/${encodeURIComponent(room)}`, { method: 'DELETE' }); const data = await res.json(); if (!res.ok) throw new Error(data.error || 'Unable to close room.'); await load(); } catch (e) { setMessage(e.message); } finally { setBusy(''); } };
+
+  const start = async () => {
+    setBusy('start'); setMessage('');
+    try {
+      const res = await apiFetch('/api/video/broadcast/start', { method: 'POST', body: JSON.stringify({ name: `main-service-${Date.now().toString(36)}`, title: title.trim() || 'BLW Main Service' }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to start broadcast.');
+      setBroadcast(data);
+      await load();
+    } catch (e) { setMessage(e.message); } finally { setBusy(''); }
+  };
+
+  const stop = async () => {
+    if (!broadcast) return;
+    setBusy('stop'); setMessage('');
+    try {
+      const res = await apiFetch('/api/video/broadcast/stop', { method: 'POST', body: JSON.stringify({ room_name: broadcast.room, egress_id: broadcast.egress_id }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to stop broadcast.');
+      setBroadcast(null); await load();
+    } catch (e) { setMessage(e.message); } finally { setBusy(''); }
+  };
+
+  const closeRoom = async (room) => {
+    setBusy(`delete:${room}`); setMessage('');
+    try {
+      const res = await apiFetch(`/api/video/rooms/${encodeURIComponent(room)}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to close room.');
+      await load();
+    } catch (e) { setMessage(e.message); } finally { setBusy(''); }
+  };
+
   if (!user) return <section className="mx-auto max-w-5xl px-5 py-16 text-center"><h1 className="text-3xl font-bold">Leader Video Admin</h1><p className="mt-3 text-white/60">Sign in with a leader account to continue.</p></section>;
-  return <section className="mx-auto max-w-6xl px-5 py-12 sm:py-16"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#F2A31C]">Leader Admin</p><h1 className="mt-2 text-4xl font-bold">Video & Livestream</h1><p className="mt-3 text-white/60">Start the main service broadcast and manage active fellowship rooms.</p></div><button onClick={load} disabled={busy === 'load'} className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm text-white/75"><FiRefreshCw className={busy === 'load' ? 'animate-spin' : ''}/> Refresh</button></div>{message && <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white/70">{message}</div>}<div className="mt-8 grid gap-5 lg:grid-cols-2"><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><div className="flex items-center gap-3"><FiRadio className="h-6 w-6 text-[#F2A31C]"/><h2 className="text-xl font-semibold">Main livestream</h2></div><p className="mt-2 text-sm text-white/55">Broadcast the main service room as HLS for the public Live page.</p>{broadcast ? <><div className="mt-5 rounded-2xl border border-emerald-400/20 bg-emerald-400/5 p-4"><p className="text-sm font-semibold text-emerald-200">Broadcast active</p><p className="mt-1 break-all text-xs text-white/50">{broadcast.playback_url}</p></div><button onClick={stop} disabled={busy === 'stop'} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-red-400/20 py-3 font-semibold text-red-200"><FiStopCircle/>{busy === 'stop' ? 'Stopping…' : 'Stop livestream'}</button></> : <button onClick={start} disabled={busy === 'start'} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 font-semibold">{busy === 'start' ? 'Starting…' : 'Start livestream'}</button>}</div><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><div className="flex items-center gap-3"><FiVideo className="h-6 w-6 text-[#F2A31C]"/><h2 className="text-xl font-semibold">Active rooms</h2></div><div className="mt-5 space-y-3">{rooms.length === 0 ? <p className="rounded-2xl border border-white/10 p-4 text-sm text-white/45">No active rooms.</p> : rooms.map((r) => <div key={r.room} className="rounded-2xl border border-white/10 bg-black/10 p-4"><div className="flex items-center justify-between gap-3"><div><p className="font-semibold">{r.room}</p><p className="mt-1 inline-flex items-center gap-1 text-xs text-white/45"><FiUsers/>{r.participantCount} participant{r.participantCount === 1 ? '' : 's'}</p></div><button onClick={() => closeRoom(r.room)} disabled={busy === `delete:${r.room}`} title="Force close" className="rounded-full p-2 text-red-200/70 hover:bg-red-400/10"><FiTrash2/></button></div></div>)}</div></div></div></section>;
+
+  return <section className="mx-auto max-w-6xl px-5 py-12 sm:py-16">
+    <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#F2A31C]">Leader Admin</p><h1 className="mt-2 text-4xl font-bold">Video & Livestream</h1><p className="mt-3 text-white/60">Start the main service broadcast and manage active fellowship rooms.</p></div><button onClick={load} disabled={busy === 'load'} className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm text-white/75"><FiRefreshCw className={busy === 'load' ? 'animate-spin' : ''}/> Refresh</button></div>
+    {message && <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white/70">{message}</div>}
+    <div className="mt-8 grid gap-5 lg:grid-cols-2">
+      <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><div className="flex items-center gap-3"><FiRadio className="h-6 w-6 text-[#F2A31C]"/><h2 className="text-xl font-semibold">Main livestream</h2></div><p className="mt-2 text-sm text-white/55">Broadcast the main service room as HLS for the public Live page.</p>
+        {!broadcast && <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Broadcast title" className="mt-5 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none focus:border-white/30"/>}
+        {broadcast ? <><div className="mt-5 rounded-2xl border border-emerald-400/20 bg-emerald-400/5 p-4"><p className="text-sm font-semibold text-emerald-200">Broadcast active</p><p className="mt-1 text-sm text-white/70">{broadcast.title || title}</p><p className="mt-1 break-all text-xs text-white/50">{broadcast.playback_url}</p></div><button onClick={stop} disabled={busy === 'stop'} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-red-400/20 py-3 font-semibold text-red-200"><FiStopCircle/>{busy === 'stop' ? 'Stopping…' : 'Stop livestream'}</button></> : <button onClick={start} disabled={busy === 'start'} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-3 font-semibold">{busy === 'start' ? 'Starting…' : 'Start livestream'}</button>}
+      </div>
+      <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><div className="flex items-center gap-3"><FiVideo className="h-6 w-6 text-[#F2A31C]"/><h2 className="text-xl font-semibold">Active rooms</h2></div><div className="mt-5 space-y-3">{rooms.length === 0 ? <p className="rounded-2xl border border-white/10 p-4 text-sm text-white/45">No active rooms.</p> : rooms.map((r) => <div key={r.room} className="rounded-2xl border border-white/10 bg-black/10 p-4"><div className="flex items-center justify-between gap-3"><div><p className="font-semibold">{r.room}</p><p className="mt-1 inline-flex items-center gap-1 text-xs text-white/45"><FiUsers/>{r.participantCount} participant{r.participantCount === 1 ? '' : 's'}</p></div><button onClick={() => closeRoom(r.room)} disabled={busy === `delete:${r.room}`} title="Force close" className="rounded-full p-2 text-red-200/70 hover:bg-red-400/10"><FiTrash2/></button></div></div>)}</div></div>
+    </div>
+  </section>;
 }
