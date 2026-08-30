@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FiRadio, FiStopCircle, FiUsers, FiVideo, FiRefreshCw, FiTrash2 } from 'react-icons/fi';
-import { apiFetch } from '../utils/apiFetch';
+import { apiFetch } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function LeaderVideoAdmin() {

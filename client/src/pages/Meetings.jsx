@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { FiCamera, FiCameraOff, FiMic, FiMicOff, FiMonitor, FiUsers, FiLogOut, FiCopy, FiPlus, FiPhoneOff } from 'react-icons/fi';
 import { Room, RoomEvent, Track } from 'livekit-client';
 import { useAuth } from '../context/AuthContext';
-import { apiFetch } from '../utils/apiFetch';
+import { apiFetch } from '../config/api';
 
 export default function Meetings() {
   const { user } = useAuth();
