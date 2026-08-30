@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
-import { AccessToken, LiveKitAPI, S3Upload, SegmentedFileOutput } from 'livekit-server-sdk';
+import { AccessToken, LiveKitAPI, S3Upload, SegmentedFileOutput, SegmentedFileProtocol } from 'livekit-server-sdk';
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), {
   status,
@@ -69,7 +69,7 @@ async function syncLiveState(env, values) {
     await client.query(`ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS livekit_egress_id TEXT NOT NULL DEFAULT ''`);
     await client.query(`INSERT INTO live_stream (id) VALUES (1) ON CONFLICT (id) DO NOTHING`);
     await client.query(
-      `UPDATE live_stream SET title=COALESCE($1,title),is_live=$2,hls_playback_url=$3,livekit_room=$4,livekit_egress_id=$5,updated_at=NOW() WHERE id=1`,
+      `UPDATE live_stream SET title=$1,is_live=$2,hls_playback_url=$3,livekit_room=$4,livekit_egress_id=$5,updated_at=NOW() WHERE id=1`,
       [values.title || '', !!values.isLive, values.playbackUrl || '', values.room || '', values.egressId || '']
     );
   } finally { await client.end().catch(() => {}); }
@@ -95,8 +95,7 @@ async function tokenResponse(request, env, headers) {
 async function createRoom(request, env, headers) {
   const auth = authUser(request, env);
   if (!auth) return json({ error: 'Authentication required.' }, 401, headers);
-  const email = memberEmail(auth);
-  if (!email) return json({ error: 'Authenticated member identity is missing.' }, 401, headers);
+  if (!memberEmail(auth)) return json({ error: 'Authenticated member identity is missing.' }, 401, headers);
   const body = await request.clone().json().catch(() => ({}));
   const room = safeRoom(body?.name) || `meeting-${crypto.randomUUID().slice(0, 8)}`;
   const { api } = livekit(env);
@@ -149,16 +148,30 @@ async function startBroadcast(request, env, headers) {
 
   const prefix = `live/${room}`;
   const output = new SegmentedFileOutput({
-    protocol: 1,
+    protocol: SegmentedFileProtocol.HLS_PROTOCOL,
     filenamePrefix: `${prefix}/segment`,
     playlistName: `${prefix}/index.m3u8`,
     livePlaylistName: `${prefix}/live.m3u8`,
     segmentDuration: 2,
     output: { case: 's3', value: new S3Upload({ accessKey, secret, bucket, endpoint, region, forcePathStyle: true }) },
   });
-  const egress = await api.egress.startRoomCompositeEgress(room, output, { layout: 'grid' });
+
+  let egress;
+  try {
+    egress = await api.egress.startRoomCompositeEgress(room, output, { layout: 'grid' });
+  } catch (error) {
+    await api.room.deleteRoom(room).catch(() => {});
+    throw error;
+  }
+
   const playbackUrl = `${publicUrl}/${prefix}/live.m3u8`;
-  await syncLiveState(env, { title, isLive: true, playbackUrl, room, egressId: egress.egressId });
+  try {
+    await syncLiveState(env, { title, isLive: true, playbackUrl, room, egressId: egress.egressId });
+  } catch (error) {
+    await api.egress.stopEgress(egress.egressId).catch(() => {});
+    await api.room.deleteRoom(room).catch(() => {});
+    throw error;
+  }
   return json({ room, egress_id: egress.egressId, playback_url: playbackUrl, title }, 201, headers);
 }
 
