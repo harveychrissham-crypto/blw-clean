@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiRadio, FiClock, FiPlayCircle, FiCalendar, FiUsers, FiVideo, FiLogIn } from 'react-icons/fi';
+import { FiRadio, FiClock, FiPlayCircle, FiCalendar, FiUsers, FiVideo, FiLogIn, FiExternalLink } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
-import DailyIframe from '@daily-co/daily-js';
 import { fetchLiveStream, submitLiveViewer, sendLiveHeartbeat, sendLiveHeartbeatBeacon } from '../utils/live';
 import { Card } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
@@ -18,106 +17,32 @@ const schedule = [
 
 function WelcomePopup({ onDone }) {
   const navigate = useNavigate();
-  const [name, setName] = useState('');
-  const [invitedBy, setInvitedBy] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [name, setName] = useState(''); const [invitedBy, setInvitedBy] = useState(''); const [submitting, setSubmitting] = useState(false); const [error, setError] = useState('');
+  const submit = async (e) => { e.preventDefault(); if (!name.trim()) { setError('Please enter your name to continue.'); return; } setSubmitting(true); setError(''); try { await submitLiveViewer({ name: name.trim(), invitedBy: invitedBy.trim() }); } catch {} finally { setSubmitting(false); onDone(); } };
+  return <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="fixed inset-0 z-40 flex items-center justify-center overscroll-contain bg-black/30 p-4 backdrop-blur-md"><motion.div initial={{ opacity: 0, y: 24, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 24, scale: 0.96 }} transition={{ duration: 0.35 }} className="w-full max-w-xs"><form onSubmit={submit} className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#14121f]/95 p-5 shadow-2xl"><div className="flex items-center gap-2"><FiUsers className="text-[#F2A31C]"/><p className="text-sm font-bold text-white">Watching with us?</p></div><p className="mt-1 text-xs text-white/50">Let us know who's tuned in before you continue.</p><div className="mt-4 space-y-2"><input value={name} onChange={e => setName(e.target.value)} placeholder="Your name" autoFocus className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-[#F2A31C]/50"/><input value={invitedBy} onChange={e => setInvitedBy(e.target.value)} placeholder="Invited by (optional)" className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-[#F2A31C]/50"/></div>{error && <p className="mt-2 text-xs text-red-300">{error}</p>}<button type="submit" disabled={submitting} className="mt-4 w-full rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2 text-xs font-bold text-white disabled:opacity-50">{submitting ? 'Continuing…' : 'Continue to Live'}</button><button type="button" onClick={() => navigate('/auth')} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] py-2 text-xs font-semibold text-white/80"><FiLogIn/> Sign in / Create account</button><p className="mt-2 text-center text-[10px] text-white/30">You can watch the live service without an account.</p></form></motion.div></motion.div>;
+}
 
-  const submit = async (e) => {
-    e.preventDefault();
-    if (!name.trim()) { setError('Please enter your name to continue.'); return; }
-    setSubmitting(true); setError('');
-    try { await submitLiveViewer({ name: name.trim(), invitedBy: invitedBy.trim() }); }
-    catch { /* Continue locally during temporary API outage. */ }
-    finally { setSubmitting(false); onDone(); }
-  };
-
-  return <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="fixed inset-0 z-40 flex items-center justify-center overscroll-contain bg-black/30 p-4 backdrop-blur-md">
-    <motion.div initial={{ opacity: 0, y: 24, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 24, scale: 0.96 }} transition={{ duration: 0.35 }} className="w-full max-w-xs">
-      <form onSubmit={submit} className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#14121f]/95 p-5 shadow-2xl">
-        <div className="flex items-center gap-2"><FiUsers className="text-[#F2A31C]" /><p className="text-sm font-bold text-white">Watching with us?</p></div>
-        <p className="mt-1 text-xs text-white/50">Let us know who's tuned in before you continue.</p>
-        <div className="mt-4 space-y-2"><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" autoFocus className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-[#F2A31C]/50" /><input value={invitedBy} onChange={(e) => setInvitedBy(e.target.value)} placeholder="Invited by (optional)" className="w-full rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-[#F2A31C]/50" /></div>
-        {error && <p className="mt-2 text-xs text-red-300">{error}</p>}
-        <button type="submit" disabled={submitting} className="mt-4 w-full rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-2 text-xs font-bold text-white transition hover:opacity-90 disabled:opacity-50">{submitting ? 'Continuing…' : 'Continue to Live'}</button>
-        <button type="button" onClick={() => navigate('/auth')} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] py-2 text-xs font-semibold text-white/80 transition hover:bg-white/[0.08]"><FiLogIn /> Sign in / Create account</button>
-        <p className="mt-2 text-center text-[10px] text-white/30">You can watch the live service without an account.</p>
-      </form>
-    </motion.div>
-  </motion.div>;
+function HlsPlayer({ playbackUrl }) {
+  const [failed, setFailed] = useState(false); const videoRef = useRef(null);
+  useEffect(() => { setFailed(false); const video = videoRef.current; if (!video || !playbackUrl) return undefined; let hls; let disposed = false; const setup = async () => { if (video.canPlayType('application/vnd.apple.mpegurl')) { video.src = playbackUrl; return; } try { const mod = await import('hls.js'); const Hls = mod.default; if (disposed) return; if (Hls.isSupported()) { hls = new Hls({ enableWorker: true, lowLatencyMode: true }); hls.loadSource(playbackUrl); hls.attachMedia(video); hls.on(Hls.Events.ERROR, (_event, data) => { if (data?.fatal) setFailed(true); }); } else setFailed(true); } catch { setFailed(true); } }; setup(); return () => { disposed = true; hls?.destroy(); video.removeAttribute('src'); video.load(); }; }, [playbackUrl]);
+  if (failed) return <EmptyState icon={FiRadio} title="The live stream is temporarily unavailable" hint="The broadcast may still be starting. Pull to refresh and try again."/>;
+  return <video ref={videoRef} className="h-full w-full bg-black object-contain" controls playsInline autoPlay muted onError={() => setFailed(true)} aria-label="BLW live service"/>;
 }
 
 export default function Live() {
-  const [live, setLive] = useState(null);
-  const [status, setStatus] = useState('loading');
-  const [showWelcome, setShowWelcome] = useState(true);
-  const dailyContainerRef = useRef(null);
-  const callFrameRef = useRef(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchLiveStream().then((data) => { if (!cancelled) { setLive(data); setStatus('loaded'); } }).catch(() => { if (!cancelled) setStatus('error'); });
-    return () => { cancelled = true; };
-  }, []);
-
-  const refreshLive = useCallback(async () => { try { const data = await fetchLiveStream(); setLive(data); setStatus('loaded'); } catch { /* retain last known state */ } }, []);
-
-  useEffect(() => {
-    const html = document.documentElement; const body = document.body;
-    if (!showWelcome) return undefined;
-    const previousHtmlOverflow = html.style.overflow; const previousBodyOverflow = body.style.overflow; const previousBodyTouchAction = body.style.touchAction;
-    html.style.overflow = 'hidden'; body.style.overflow = 'hidden'; body.style.touchAction = 'none';
-    return () => { html.style.overflow = previousHtmlOverflow; body.style.overflow = previousBodyOverflow; body.style.touchAction = previousBodyTouchAction; };
-  }, [showWelcome]);
-
+  const [live, setLive] = useState(null); const [status, setStatus] = useState('loading'); const [showWelcome, setShowWelcome] = useState(true);
+  useEffect(() => { let cancelled = false; fetchLiveStream().then(data => { if (!cancelled) { setLive(data); setStatus('loaded'); } }).catch(() => { if (!cancelled) setStatus('error'); }); return () => { cancelled = true; }; }, []);
+  const refreshLive = useCallback(async () => { try { const data = await fetchLiveStream(); setLive(data); setStatus('loaded'); } catch {} }, []);
+  useEffect(() => { const html = document.documentElement, body = document.body; if (!showWelcome) return; const ho = html.style.overflow, bo = body.style.overflow, bt = body.style.touchAction; html.style.overflow = 'hidden'; body.style.overflow = 'hidden'; body.style.touchAction = 'none'; return () => { html.style.overflow = ho; body.style.overflow = bo; body.style.touchAction = bt; }; }, [showWelcome]);
   const isLiveNow = status === 'loaded' && !!live?.isLive;
-  const isStreaming = isLiveNow && !!live?.youtubeId;
-  const hasMeetLink = isLiveNow && !!live?.googleMeetUrl;
-  const hasDailyRoom = isLiveNow && !!live?.dailyRoomUrl;
-  const showDailyEmbed = hasDailyRoom && !isStreaming;
-  const { pullDistance, refreshing, bind } = usePullToRefresh(refreshLive, { enabled: !showWelcome && !showDailyEmbed });
-
+  const playbackUrl = live?.hlsPlaybackUrl || live?.playbackUrl || live?.hlsUrl || '';
+  const hasHls = isLiveNow && !!playbackUrl;
+  const room = live?.liveKitRoom || live?.liveRoom || live?.roomName || '';
+  const hasRoom = isLiveNow && !!room;
+  const hasLegacyMeet = isLiveNow && !!live?.googleMeetUrl;
+  const { pullDistance, refreshing, bind } = usePullToRefresh(refreshLive, { enabled: !showWelcome });
   const pendingSecondsRef = useRef(0);
-  useEffect(() => {
-    if (showWelcome) return;
-    const tick = setInterval(() => { if (document.visibilityState === 'visible') pendingSecondsRef.current += 1; }, 1000);
-    const flush = setInterval(() => { if (pendingSecondsRef.current > 0) { sendLiveHeartbeat(pendingSecondsRef.current); pendingSecondsRef.current = 0; } }, 20000);
-    const flushOnHide = () => { if (document.visibilityState === 'hidden' && pendingSecondsRef.current > 0) { sendLiveHeartbeatBeacon(pendingSecondsRef.current); pendingSecondsRef.current = 0; } };
-    document.addEventListener('visibilitychange', flushOnHide);
-    return () => { clearInterval(tick); clearInterval(flush); document.removeEventListener('visibilitychange', flushOnHide); if (pendingSecondsRef.current > 0) { sendLiveHeartbeatBeacon(pendingSecondsRef.current); pendingSecondsRef.current = 0; } };
-  }, [showWelcome]);
-
-  useEffect(() => {
-    if (!showDailyEmbed || !dailyContainerRef.current) return;
-    callFrameRef.current = DailyIframe.createFrame(dailyContainerRef.current, { iframeStyle: { width: '100%', height: '100%', border: '0' }, showLeaveButton: false });
-    callFrameRef.current.join({ url: live.dailyRoomUrl }).catch(() => {});
-    return () => { callFrameRef.current?.destroy(); callFrameRef.current = null; };
-  }, [showDailyEmbed, live?.dailyRoomUrl]);
-
+  useEffect(() => { if (showWelcome) return; const tick = setInterval(() => { if (document.visibilityState === 'visible') pendingSecondsRef.current += 1; }, 1000); const flush = setInterval(() => { if (pendingSecondsRef.current > 0) { sendLiveHeartbeat(pendingSecondsRef.current); pendingSecondsRef.current = 0; } }, 20000); const hide = () => { if (document.visibilityState === 'hidden' && pendingSecondsRef.current > 0) { sendLiveHeartbeatBeacon(pendingSecondsRef.current); pendingSecondsRef.current = 0; } }; document.addEventListener('visibilitychange', hide); return () => { clearInterval(tick); clearInterval(flush); document.removeEventListener('visibilitychange', hide); if (pendingSecondsRef.current > 0) sendLiveHeartbeatBeacon(pendingSecondsRef.current); }; }, [showWelcome]);
   const emptyLive = status === 'loaded' && !isLiveNow;
-
-  return <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8" {...bind}>
-    <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
-    <AnimatePresence>{showWelcome && <WelcomePopup onDone={() => setShowWelcome(false)} />}</AnimatePresence>
-    <Card as={motion.div} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} variant="raised" className="p-8 shadow-soft">
-      <div className="flex flex-wrap items-center gap-3">
-        {isLiveNow ? <span className="inline-flex items-center gap-2 rounded-full bg-red-500/20 px-3 py-1 text-sm font-semibold text-red-300"><FiRadio className="animate-pulse" /> Live Now</span> : <span className="inline-flex items-center gap-2 rounded-full bg-[#A53DFF]/20 px-3 py-1 text-sm font-semibold text-[#D8B2FF]"><FiRadio /> Offline</span>}
-        <span className="text-sm text-slate-400">{isStreaming && showDailyEmbed ? 'YouTube & Live Call' : showDailyEmbed ? 'Live Call' : hasMeetLink && !isStreaming ? 'Google Meet' : 'Streaming across YouTube'}</span>
-        {hasMeetLink && !showDailyEmbed && <a href={live.googleMeetUrl} target="_blank" rel="noopener noreferrer" className="ml-auto inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-4 py-2 text-sm font-bold text-white transition hover:opacity-90"><FiVideo /> Join via Google Meet</a>}
-      </div>
-
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1.3fr_0.7fr]">
-        <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-800 to-slate-950 p-6">
-          <div className="aspect-video overflow-hidden rounded-2xl border border-white/10 bg-slate-950/70">
-            {isStreaming ? <iframe className="h-full w-full" src={`https://www.youtube-nocookie.com/embed/${live.youtubeId}?autoplay=0`} title={live.title || 'Live service'} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen /> : showDailyEmbed ? <div ref={dailyContainerRef} className="h-full w-full" /> : status === 'loading' ? <Skeleton className="h-full w-full rounded-2xl" /> : status === 'error' ? <EmptyState icon={FiRadio} title="Live service is temporarily unavailable" hint="The page is still available. Pull to refresh and try again shortly." /> : emptyLive ? <EmptyState icon={FiPlayCircle} title="We're not live right now" hint="Check the schedule below for the next broadcast." /> : <EmptyState icon={FiPlayCircle} title="We're live" hint="The stream link is being set up." />}
-          </div>
-          {isStreaming && live?.title && <p className="mt-4 text-lg font-semibold text-white">{live.title}</p>}
-        </div>
-        <div className="space-y-6">
-          <Card variant="subtle" className="p-6"><div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-400"><FiClock /> Next service</div><p className="mt-4 text-sm text-slate-400">See the schedule below for the next broadcast.</p></Card>
-          <Card variant="subtle" className="p-6"><div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-400"><FiCalendar /> Service schedule</div><div className="mt-4 space-y-3">{schedule.map((item) => <Card key={item.day} variant="subtle" className="p-3"><div className="flex items-center justify-between text-sm"><span className="font-semibold text-white">{item.day}</span><span className="text-slate-400">{item.time}</span></div><p className="mt-1 text-sm text-slate-400">{item.title}</p></Card>)}</div></Card>
-        </div>
-      </div>
-    </Card>
-  </section>;
+  return <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8" {...bind}><PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing}/><AnimatePresence>{showWelcome && <WelcomePopup onDone={() => setShowWelcome(false)}/>}</AnimatePresence><Card as={motion.div} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} variant="raised" className="p-8 shadow-soft"><div className="flex flex-wrap items-center gap-3">{isLiveNow ? <span className="inline-flex items-center gap-2 rounded-full bg-red-500/20 px-3 py-1 text-sm font-semibold text-red-300"><FiRadio className="animate-pulse"/> Live Now</span> : <span className="inline-flex items-center gap-2 rounded-full bg-[#A53DFF]/20 px-3 py-1 text-sm font-semibold text-[#D8B2FF]"><FiRadio/> Offline</span>}<span className="text-sm text-slate-400">{hasHls ? 'Live broadcast' : hasRoom ? 'Interactive live room' : 'Live service'}</span>{hasRoom && <button type="button" onClick={() => window.location.assign(`/meetings?room=${encodeURIComponent(room)}`)} className="ml-auto inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-4 py-2 text-sm font-bold text-white"><FiVideo/> Join live room</button>}{!hasRoom && hasLegacyMeet && <a href={live.googleMeetUrl} target="_blank" rel="noopener noreferrer" className="ml-auto inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm font-semibold"><FiExternalLink/> Join interactive session</a>}</div><div className="mt-8 grid gap-8 lg:grid-cols-[1.3fr_0.7fr]"><div className="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-800 to-slate-950 p-6"><div className="aspect-video overflow-hidden rounded-2xl border border-white/10 bg-slate-950/70">{hasHls ? <HlsPlayer playbackUrl={playbackUrl}/> : status === 'loading' ? <Skeleton className="h-full w-full rounded-2xl"/> : status === 'error' ? <EmptyState icon={FiRadio} title="Live service is temporarily unavailable" hint="Pull to refresh and try again shortly."/> : emptyLive ? <EmptyState icon={FiPlayCircle} title="We're not live right now" hint="Check the schedule below for the next broadcast."/> : <EmptyState icon={FiPlayCircle} title="We're live" hint="The stream link is being prepared."/>}</div>{isLiveNow && live?.title && <p className="mt-4 text-lg font-semibold text-white">{live.title}</p>}</div><div className="space-y-6"><Card variant="subtle" className="p-6"><div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-400"><FiClock/> Next service</div><p className="mt-4 text-sm text-slate-400">See the schedule below for the next broadcast.</p></Card><Card variant="subtle" className="p-6"><div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-400"><FiCalendar/> Service schedule</div><div className="mt-4 space-y-3">{schedule.map(item => <Card key={item.day} variant="subtle" className="p-3"><div className="flex items-center justify-between text-sm"><span className="font-semibold text-white">{item.day}</span><span className="text-slate-400">{item.time}</span></div><p className="mt-1 text-sm text-slate-400">{item.title}</p></Card>)}</div></Card></div></div></Card></section>;
 }
