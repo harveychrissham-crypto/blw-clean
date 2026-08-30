@@ -10,7 +10,15 @@ export function allowedOrigin(request, env) {
     .split(',')
     .map(normalizeOrigin)
     .filter(Boolean);
-  return configured.includes(origin) ? origin : '';
+  if (configured.includes(origin)) return origin;
+
+  // The native app uses bearer authentication rather than cross-origin
+  // cookies. Allow HTTPS browser origins for the API when no explicit
+  // allow-list is configured, while keeping configured origins strict.
+  // This lets the Cloudflare-hosted web app and preview deployments reach
+  // the video API without requiring a hard-coded Pages hostname.
+  if (!configured.length && /^https:\/\//i.test(origin)) return origin;
+  return '';
 }
 
 export function corsHeaders(request, env) {
