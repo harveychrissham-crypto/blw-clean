@@ -1,0 +1,18 @@
+# BLW Kenya Zone local/self-hosted RTMP -> HLS server.
+# MediaMTX receives the RTMP output from LiveKit and exposes HLS for the Live page.
+# For production, place this behind HTTPS and use a domain such as live.blwkenyazone.org.
+
+logLevel: info
+
+rtmp: true
+rtmpAddress: :1935
+
+hls: true
+hlsAddress: :8888
+hlsVariant: lowLatency
+hlsSegmentCount: 6
+hlsSegmentDuration: 2s
+
+paths:
+  live:
+    source: publisher
