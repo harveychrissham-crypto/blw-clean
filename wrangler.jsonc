@@ -18,35 +18,12 @@
     }
   ],
   "ratelimits": [
-    {
-      "name": "AUTH_LOGIN_LIMITER",
-      "namespace_id": "4101",
-      "simple": { "limit": 10, "period": 60 }
-    },
-    {
-      "name": "AUTH_REGISTER_LIMITER",
-      "namespace_id": "4102",
-      "simple": { "limit": 5, "period": 60 }
-    },
-    {
-      "name": "LIVE_VIEWER_LIMITER",
-      "namespace_id": "4103",
-      "simple": { "limit": 60, "period": 60 }
-    },
-    {
-      "name": "PASSWORD_RESET_LIMITER",
-      "namespace_id": "4104",
-      "simple": { "limit": 3, "period": 60 }
-    }
+    { "name": "AUTH_LOGIN_LIMITER", "namespace_id": "4101", "simple": { "limit": 10, "period": 60 } },
+    { "name": "AUTH_REGISTER_LIMITER", "namespace_id": "4102", "simple": { "limit": 5, "period": 60 } },
+    { "name": "LIVE_VIEWER_LIMITER", "namespace_id": "4103", "simple": { "limit": 60, "period": 60 } },
+    { "name": "PASSWORD_RESET_LIMITER", "namespace_id": "4104", "simple": { "limit": 3, "period": 60 } }
   ],
-  "triggers": {
-    "crons": ["0 5 * * 6"]
-  },
-  "vars": {
-    "SUPABASE_STORAGE_BUCKET": "outreach-photos",
-    "ALLOWED_ORIGIN": ""
-  },
-  "secrets": {
-    "required": ["JWT_SECRET"]
-  }
+  "triggers": { "crons": ["0 5 * * 6"] },
+  "vars": { "SUPABASE_STORAGE_BUCKET": "outreach-photos", "ALLOWED_ORIGIN": "" },
+  "secrets": { "required": ["JWT_SECRET", "LIVEKIT_URL", "LIVEKIT_API_KEY", "LIVEKIT_API_SECRET"] }
 }
