@@ -55,4 +55,4 @@ export default {
   },
 };
 
-// trigger: re-verify deploy after LiveKit secrets were configured
+// trigger: re-verify deploy after LiveKit secrets configured as Secret type
