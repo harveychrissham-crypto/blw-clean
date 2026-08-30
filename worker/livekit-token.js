@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
+import { AccessToken, LiveKitAPI, S3Upload, SegmentedFileOutput } from 'livekit-server-sdk';
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), {
   status,
@@ -8,74 +9,159 @@ const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(b
 
 function bearer(request) {
   const header = request.headers.get('Authorization') || request.headers.get('authorization') || '';
-  if (header.startsWith('Bearer ')) return header.slice(7).trim();
-  return '';
+  return header.startsWith('Bearer ') ? header.slice(7).trim() : '';
 }
 
-function b64(value) {
-  return Buffer.from(value).toString('base64url');
+function authUser(request, env) {
+  const token = bearer(request);
+  if (!token || !env.JWT_SECRET) return null;
+  try { return jwt.verify(token, String(env.JWT_SECRET).trim()); } catch { return null; }
 }
 
-function signLiveKitToken(apiKey, apiSecret, identity, roomName, canPublish) {
-  const now = Math.floor(Date.now() / 1000);
-  const header = b64(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const payload = b64(JSON.stringify({
-    iss: apiKey,
-    sub: identity,
-    iat: now,
-    nbf: now,
-    exp: now + 3600,
-    video: {
-      room: roomName,
-      roomJoin: true,
-      canPublish,
-      canSubscribe: true,
-      canPublishData: true,
-    },
+function memberEmail(auth) {
+  return typeof auth?.user?.email === 'string' ? auth.user.email.trim().toLowerCase() : '';
+}
+
+function identityFor(email) {
+  return `member-${crypto.createHash('sha256').update(email).digest('hex').slice(0, 24)}`;
+}
+
+function safeRoom(value) {
+  return String(value || '').trim().replace(/[^a-zA-Z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
+}
+
+function isLeader(auth) {
+  const user = auth?.user || auth || {};
+  const roles = Array.isArray(user.roles) ? user.roles : [];
+  const role = String(user.role || user.user_role || user.admin_role || '').toLowerCase();
+  return Boolean(user.is_admin || user.isAdmin || user.is_leader || user.isLeader)
+    || ['admin', 'administrator', 'leader', 'superadmin', 'super_admin'].includes(role)
+    || roles.some((item) => ['admin', 'administrator', 'leader', 'superadmin', 'super_admin'].includes(String(item).toLowerCase()));
+}
+
+function livekit(env) {
+  const host = String(env.LIVEKIT_URL || '').trim();
+  const key = String(env.LIVEKIT_API_KEY || '').trim();
+  const secret = String(env.LIVEKIT_API_SECRET || '').trim();
+  if (!host || !key || !secret) throw new Error('LiveKit is not configured. Add LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET.');
+  return { host, key, secret, api: new LiveKitAPI({ host, apiKey: key, secret }) };
+}
+
+async function tokenResponse(request, env, headers) {
+  const auth = authUser(request, env);
+  if (!auth) return json({ error: 'Invalid authentication token.' }, 401, headers);
+  const email = memberEmail(auth);
+  if (!email) return json({ error: 'Authenticated member identity is missing.' }, 401, headers);
+  const body = await request.clone().json().catch(() => ({}));
+  const room = safeRoom(body?.room_name || body?.room);
+  if (!room) return json({ error: 'A valid room name is required.' }, 400, headers);
+  const participantName = String(body?.participant_name || 'BLW Member').trim().slice(0, 80) || 'BLW Member';
+  const canPublish = body?.role !== 'viewer';
+  const { host, key, secret } = livekit(env);
+  const identity = identityFor(email);
+  const access = new AccessToken(key, secret, { identity, name: participantName, ttl: '1h' });
+  access.addGrant({ roomJoin: true, room, canPublish, canSubscribe: true, canPublishData: true });
+  return json({ server_url: host, participant_token: await access.toJwt(), participant_identity: identity, participant_name: participantName, room }, 201, headers);
+}
+
+async function createRoom(request, env, headers) {
+  const auth = authUser(request, env);
+  if (!auth) return json({ error: 'Authentication required.' }, 401, headers);
+  const email = memberEmail(auth);
+  if (!email) return json({ error: 'Authenticated member identity is missing.' }, 401, headers);
+  const body = await request.clone().json().catch(() => ({}));
+  const room = safeRoom(body?.name) || `meeting-${crypto.randomUUID().slice(0, 8)}`;
+  const { api } = livekit(env);
+  await api.room.createRoom({ name: room, emptyTimeout: 300, maxParticipants: 100 });
+  return json({ room, join_url: `/meetings?room=${encodeURIComponent(room)}` }, 201, headers);
+}
+
+async function listRooms(request, env, headers) {
+  const auth = authUser(request, env);
+  if (!auth) return json({ error: 'Authentication required.' }, 401, headers);
+  if (!isLeader(auth)) return json({ error: 'Leader access required.' }, 403, headers);
+  const { api } = livekit(env);
+  const rooms = await api.room.listRooms();
+  const result = await Promise.all(rooms.map(async (room) => {
+    const participants = await api.room.listParticipants(room.name);
+    return { room: room.name, participantCount: participants.length, participants: participants.map((p) => ({ identity: p.identity, name: p.name || 'BLW Member' })) };
   }));
-  const unsigned = `${header}.${payload}`;
-  const signature = crypto.createHmac('sha256', apiSecret).update(unsigned).digest('base64url');
-  return `${unsigned}.${signature}`;
+  return json({ rooms: result }, 200, headers);
+}
+
+async function deleteRoom(request, env, headers, room) {
+  const auth = authUser(request, env);
+  if (!auth) return json({ error: 'Authentication required.' }, 401, headers);
+  if (!isLeader(auth)) return json({ error: 'Leader access required.' }, 403, headers);
+  const { api } = livekit(env);
+  await api.room.deleteRoom(safeRoom(room));
+  return json({ ok: true }, 200, headers);
+}
+
+async function startBroadcast(request, env, headers) {
+  const auth = authUser(request, env);
+  if (!auth) return json({ error: 'Authentication required.' }, 401, headers);
+  if (!isLeader(auth)) return json({ error: 'Leader access required.' }, 403, headers);
+
+  const publicUrl = String(env.LIVEKIT_HLS_PUBLIC_URL || '').trim().replace(/\/$/, '');
+  const accessKey = String(env.LIVEKIT_HLS_S3_ACCESS_KEY || '').trim();
+  const secret = String(env.LIVEKIT_HLS_S3_SECRET || '').trim();
+  const bucket = String(env.LIVEKIT_HLS_S3_BUCKET || '').trim();
+  const endpoint = String(env.LIVEKIT_HLS_S3_ENDPOINT || '').trim();
+  const region = String(env.LIVEKIT_HLS_S3_REGION || 'auto').trim();
+  if (!publicUrl || !accessKey || !secret || !bucket || !endpoint) {
+    return json({ error: 'HLS storage is not configured. Add LIVEKIT_HLS_PUBLIC_URL and LIVEKIT_HLS_S3_* settings before starting a broadcast.' }, 503, headers);
+  }
+
+  const body = await request.clone().json().catch(() => ({}));
+  const room = safeRoom(body?.room_name || body?.name) || `live-${crypto.randomUUID().slice(0, 8)}`;
+  const { api } = livekit(env);
+  await api.room.createRoom({ name: room, emptyTimeout: 300, maxParticipants: 100 });
+
+  const prefix = `live/${room}`;
+  const output = new SegmentedFileOutput({
+    protocol: 1,
+    filenamePrefix: `${prefix}/segment`,
+    playlistName: `${prefix}/index.m3u8`,
+    livePlaylistName: `${prefix}/live.m3u8`,
+    segmentDuration: 2,
+    output: { case: 's3', value: new S3Upload({ accessKey, secret, bucket, endpoint, region, forcePathStyle: true }) },
+  });
+  const egress = await api.egress.startRoomCompositeEgress(room, output, { layout: 'grid' });
+  return json({ room, egress_id: egress.egressId, playback_url: `${publicUrl}/${prefix}/live.m3u8` }, 201, headers);
+}
+
+async function stopBroadcast(request, env, headers) {
+  const auth = authUser(request, env);
+  if (!auth) return json({ error: 'Authentication required.' }, 401, headers);
+  if (!isLeader(auth)) return json({ error: 'Leader access required.' }, 403, headers);
+  const body = await request.clone().json().catch(() => ({}));
+  const room = safeRoom(body?.room_name || body?.room);
+  const egressId = String(body?.egress_id || '').trim();
+  const { api } = livekit(env);
+  if (egressId) await api.egress.stopEgress(egressId);
+  if (room) await api.room.deleteRoom(room);
+  return json({ ok: true }, 200, headers);
 }
 
 export async function handleLiveKitToken(request, env, headers) {
   if (request.method !== 'POST') return json({ error: 'Method not allowed.' }, 405, headers);
+  return tokenResponse(request, env, headers);
+}
 
-  const authToken = bearer(request);
-  if (!authToken) return json({ error: 'Authorization token missing.' }, 401, headers);
-
-  let auth;
+export async function handleVideoApi(request, env, url, headers) {
+  if (!url.pathname.startsWith('/api/video')) return null;
   try {
-    auth = jwt.verify(authToken, typeof env.JWT_SECRET === 'string' ? env.JWT_SECRET.trim() : '');
-  } catch {
-    return json({ error: 'Invalid authentication token.' }, 401, headers);
+    if (url.pathname === '/api/video/token' && request.method === 'POST') return await tokenResponse(request, env, headers);
+    if (url.pathname === '/api/video/rooms' && request.method === 'POST') return await createRoom(request, env, headers);
+    if (url.pathname === '/api/video/rooms' && request.method === 'GET') return await listRooms(request, env, headers);
+    const roomMatch = url.pathname.match(/^\/api\/video\/rooms\/([^/]+)$/);
+    if (roomMatch && request.method === 'DELETE') return await deleteRoom(request, env, headers, decodeURIComponent(roomMatch[1]));
+    if (url.pathname === '/api/video/broadcast/start' && request.method === 'POST') return await startBroadcast(request, env, headers);
+    if (url.pathname === '/api/video/broadcast/stop' && request.method === 'POST') return await stopBroadcast(request, env, headers);
+    return json({ error: 'Not found.' }, 404, headers);
+  } catch (error) {
+    console.error('[worker] LiveKit API error', error);
+    return json({ error: error?.message || 'Video service unavailable.' }, 503, headers);
   }
-
-  const userEmail = typeof auth?.user?.email === 'string' ? auth.user.email.trim().toLowerCase() : '';
-  if (!userEmail) return json({ error: 'Authenticated member identity is missing.' }, 401, headers);
-
-  const body = await request.clone().json().catch(() => ({}));
-  const requestedRoom = typeof body?.room_name === 'string' ? body.room_name.trim() : '';
-  const participantName = typeof body?.participant_name === 'string' ? body.participant_name.trim().slice(0, 80) : 'BLW Member';
-  const roomName = requestedRoom.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80);
-  if (!roomName) return json({ error: 'A valid room_name is required.' }, 400, headers);
-
-  const livekitUrl = typeof env.LIVEKIT_URL === 'string' ? env.LIVEKIT_URL.trim() : '';
-  const apiKey = typeof env.LIVEKIT_API_KEY === 'string' ? env.LIVEKIT_API_KEY.trim() : '';
-  const apiSecret = typeof env.LIVEKIT_API_SECRET === 'string' ? env.LIVEKIT_API_SECRET.trim() : '';
-  if (!livekitUrl || !apiKey || !apiSecret) {
-    return json({ error: 'LiveKit is not configured. Add LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET to the Worker environment.' }, 503, headers);
-  }
-
-  // Use an opaque identity so email addresses never become LiveKit participant IDs.
-  const identity = `member-${crypto.createHash('sha256').update(userEmail).digest('hex').slice(0, 24)}`;
-  const canPublish = body?.role === 'viewer' ? false : true;
-  const token = signLiveKitToken(apiKey, apiSecret, identity, roomName, canPublish);
-
-  return json({
-    server_url: livekitUrl,
-    participant_token: token,
-    participant_identity: identity,
-    participant_name: participantName || 'BLW Member',
-  }, 201, headers);
 }
