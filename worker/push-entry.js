@@ -18,6 +18,10 @@ function normalizeResponse(request, env, response) {
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
+function preflightResponse(request, env) {
+  return new Response(null, { status: 204, headers: corsHeaders(request, env) });
+}
+
 async function applyRateLimit(request, env, bindingName, key, fallbackLimit) {
   const limiter = env[bindingName];
   if (limiter?.limit) { const { success } = await limiter.limit({ key }); return success; }
@@ -35,8 +39,13 @@ function rateLimitedResponse(request, env) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+
+    // Handle browser CORS preflight before any authentication or API routing.
+    // POST /api/video/* uses Authorization + JSON, which requires OPTIONS.
+    if (request.method === 'OPTIONS') return preflightResponse(request, env);
+
     if (url.pathname === '/api/health' && request.method === 'GET') return normalizeResponse(request, env, new Response(JSON.stringify({ status: 'ok', message: 'BLW Campus Ministry API is running' }), { status: 200, headers: { 'content-type': 'application/json; charset=utf-8' } }));
-    if (url.pathname === '/api/push/send' && (request.method === 'POST' || request.method === 'OPTIONS')) return normalizeResponse(request, env, await sendPushNotification(request, env));
+    if (url.pathname === '/api/push/send' && request.method === 'POST') return normalizeResponse(request, env, await sendPushNotification(request, env));
     if (url.pathname === '/api/livekit/token') return normalizeResponse(request, env, await handleLiveKitToken(request, env, corsHeaders(request, env)));
     if (url.pathname.startsWith('/api/video')) { const response = await handleVideoApi(request, env, url, corsHeaders(request, env)); if (response) return normalizeResponse(request, env, response); }
     if (url.pathname.startsWith('/api/members')) { const response = await handleAttendance(request, env); if (response) return normalizeResponse(request, env, response); }
@@ -55,4 +64,4 @@ export default {
   },
 };
 
-// trigger: re-verify deploy after LiveKit secrets configured as Secret type
+// trigger: handle CORS preflight before authenticated video routes
