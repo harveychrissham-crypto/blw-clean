@@ -54,3 +54,5 @@ export default {
     if (typeof secureWorker.scheduled === 'function') return secureWorker.scheduled(controller, env, ctx);
   },
 };
+
+// trigger: re-verify deploy after LiveKit secrets were configured
