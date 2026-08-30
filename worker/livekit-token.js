@@ -44,7 +44,7 @@ function livekit(env) {
   const key = String(env.LIVEKIT_API_KEY || '').trim();
   const secret = String(env.LIVEKIT_API_SECRET || '').trim();
   if (!host || !key || !secret) throw new Error('LiveKit is not configured. Add LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET.');
-  return { host, key, secret, api: new LiveKitAPI({ host, apiKey: key, secret }) };
+  return { host, key, secret, api: new LiveKitAPI(host, key, secret) };
 }
 
 async function syncLiveState(env, values) {
@@ -68,10 +68,7 @@ async function syncLiveState(env, values) {
     await client.query(`ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS livekit_room TEXT NOT NULL DEFAULT ''`);
     await client.query(`ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS livekit_egress_id TEXT NOT NULL DEFAULT ''`);
     await client.query(`INSERT INTO live_stream (id) VALUES (1) ON CONFLICT (id) DO NOTHING`);
-    await client.query(
-      `UPDATE live_stream SET title=$1,is_live=$2,hls_playback_url=$3,livekit_room=$4,livekit_egress_id=$5,updated_at=NOW() WHERE id=1`,
-      [values.title || '', !!values.isLive, values.playbackUrl || '', values.room || '', values.egressId || '']
-    );
+    await client.query(`UPDATE live_stream SET title=$1,is_live=$2,hls_playback_url=$3,livekit_room=$4,livekit_egress_id=$5,updated_at=NOW() WHERE id=1`, [values.title || '', !!values.isLive, values.playbackUrl || '', values.room || '', values.egressId || '']);
   } finally { await client.end().catch(() => {}); }
 }
 
@@ -129,23 +126,18 @@ async function startBroadcast(request, env, headers) {
   const auth = authUser(request, env);
   if (!auth) return json({ error: 'Authentication required.' }, 401, headers);
   if (!isLeader(auth)) return json({ error: 'Leader access required.' }, 403, headers);
-
   const publicUrl = String(env.LIVEKIT_HLS_PUBLIC_URL || '').trim().replace(/\/$/, '');
   const accessKey = String(env.LIVEKIT_HLS_S3_ACCESS_KEY || '').trim();
   const secret = String(env.LIVEKIT_HLS_S3_SECRET || '').trim();
   const bucket = String(env.LIVEKIT_HLS_S3_BUCKET || '').trim();
   const endpoint = String(env.LIVEKIT_HLS_S3_ENDPOINT || '').trim();
   const region = String(env.LIVEKIT_HLS_S3_REGION || 'auto').trim();
-  if (!publicUrl || !accessKey || !secret || !bucket || !endpoint) {
-    return json({ error: 'HLS storage is not configured. Add LIVEKIT_HLS_PUBLIC_URL and LIVEKIT_HLS_S3_* settings before starting a broadcast.' }, 503, headers);
-  }
-
+  if (!publicUrl || !accessKey || !secret || !bucket || !endpoint) return json({ error: 'HLS storage is not configured.' }, 503, headers);
   const body = await request.clone().json().catch(() => ({}));
   const room = safeRoom(body?.room_name || body?.name) || `live-${crypto.randomUUID().slice(0, 8)}`;
   const title = String(body?.title || 'BLW Live Service').trim().slice(0, 160) || 'BLW Live Service';
   const { api } = livekit(env);
   await api.room.createRoom({ name: room, emptyTimeout: 300, maxParticipants: 100 });
-
   const prefix = `live/${room}`;
   const output = new SegmentedFileOutput({
     protocol: SegmentedFileProtocol.HLS_PROTOCOL,
@@ -155,23 +147,12 @@ async function startBroadcast(request, env, headers) {
     segmentDuration: 2,
     output: { case: 's3', value: new S3Upload({ accessKey, secret, bucket, endpoint, region, forcePathStyle: true }) },
   });
-
   let egress;
-  try {
-    egress = await api.egress.startRoomCompositeEgress(room, output, { layout: 'grid' });
-  } catch (error) {
-    await api.room.deleteRoom(room).catch(() => {});
-    throw error;
-  }
-
+  try { egress = await api.egress.startRoomCompositeEgress(room, output, { layout: 'grid' }); }
+  catch (error) { await api.room.deleteRoom(room).catch(() => {}); throw error; }
   const playbackUrl = `${publicUrl}/${prefix}/live.m3u8`;
-  try {
-    await syncLiveState(env, { title, isLive: true, playbackUrl, room, egressId: egress.egressId });
-  } catch (error) {
-    await api.egress.stopEgress(egress.egressId).catch(() => {});
-    await api.room.deleteRoom(room).catch(() => {});
-    throw error;
-  }
+  try { await syncLiveState(env, { title, isLive: true, playbackUrl, room, egressId: egress.egressId }); }
+  catch (error) { await api.egress.stopEgress(egress.egressId).catch(() => {}); await api.room.deleteRoom(room).catch(() => {}); throw error; }
   return json({ room, egress_id: egress.egressId, playback_url: playbackUrl, title }, 201, headers);
 }
 
