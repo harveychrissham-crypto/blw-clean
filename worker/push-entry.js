@@ -8,7 +8,7 @@ import { handleEvents } from './event-api.js';
 import { handleFellowships } from './fellowship-api.js';
 import { handleVenues } from './venue-api.js';
 import { sendWeeklyServiceReminders } from './scheduled-jobs.js';
-import { handleLiveKitToken } from './livekit-token.js';
+import { handleLiveKitToken, handleVideoApi } from './livekit-token.js';
 
 function normalizeResponse(request, env, response) {
   const headers = new Headers(response.headers);
@@ -38,6 +38,7 @@ export default {
     if (url.pathname === '/api/health' && request.method === 'GET') return normalizeResponse(request, env, new Response(JSON.stringify({ status: 'ok', message: 'BLW Campus Ministry API is running' }), { status: 200, headers: { 'content-type': 'application/json; charset=utf-8' } }));
     if (url.pathname === '/api/push/send' && (request.method === 'POST' || request.method === 'OPTIONS')) return normalizeResponse(request, env, await sendPushNotification(request, env));
     if (url.pathname === '/api/livekit/token') return normalizeResponse(request, env, await handleLiveKitToken(request, env, corsHeaders(request, env)));
+    if (url.pathname.startsWith('/api/video')) { const response = await handleVideoApi(request, env, url, corsHeaders(request, env)); if (response) return normalizeResponse(request, env, response); }
     if (url.pathname.startsWith('/api/members')) { const response = await handleAttendance(request, env); if (response) return normalizeResponse(request, env, response); }
     if ((url.pathname === '/api/auth/login' || url.pathname === '/api/auth/register') && request.method === 'POST') { const isRegister = url.pathname.endsWith('/register'); const allowed = await applyRateLimit(request, env, isRegister ? 'AUTH_REGISTER_LIMITER' : 'AUTH_LOGIN_LIMITER', `${isRegister ? 'register' : 'login'}:${request.headers.get('CF-Connecting-IP') || 'unknown'}`, isRegister ? 5 : 10); if (!allowed) return rateLimitedResponse(request, env); }
     if ((url.pathname === '/api/auth/forgot-password' || url.pathname === '/api/auth/reset-password') && request.method === 'POST') { const isReset = url.pathname.endsWith('/reset-password'); const allowed = await applyRateLimit(request, env, 'PASSWORD_RESET_LIMITER', `${isReset ? 'reset' : 'forgot'}:${request.headers.get('CF-Connecting-IP') || 'unknown'}`, isReset ? 8 : 3); if (!allowed) return rateLimitedResponse(request, env); }
