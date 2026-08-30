@@ -2,7 +2,7 @@ import { MdQrCodeScanner } from 'react-icons/md';
 import { Link, NavLink } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
-import { FiX, FiHome, FiMic, FiCalendar, FiTarget, FiRadio, FiHeart, FiGift, FiPhone, FiSearch, FiUser, FiLogIn, FiShield, FiBell } from 'react-icons/fi';
+import { FiX, FiHome, FiMic, FiCalendar, FiTarget, FiRadio, FiHeart, FiGift, FiPhone, FiSearch, FiUser, FiLogIn, FiShield, FiBell, FiVideo } from 'react-icons/fi';
 import AIChatWidget from '../components/AIChatWidget';
 import SearchPanel from '../components/SearchPanel';
 import BottomNav from '../components/BottomNav';
@@ -15,6 +15,7 @@ const navItems = [
   { name: 'Events', path: '/events', icon: FiCalendar },
   { name: 'Outreaches', path: '/outreaches', icon: FiTarget },
   { name: 'Live', path: '/live', icon: FiRadio },
+  { name: 'Meetings', path: '/meetings', icon: FiVideo },
   { name: 'Give', path: '/give', icon: FiGift },
   { name: 'Check-In', path: '/checkin', icon: MdQrCodeScanner },
   { name: 'Leaders', path: '/leaders-forum', icon: FiShield },
@@ -71,7 +72,7 @@ export default function Layout({ children }) {
       <footer className="hidden border-t border-white/[0.07] mt-8 sm:block" style={{ background: 'rgba(10,9,20,0.8)' }}>
         <div className="mx-auto grid max-w-6xl gap-8 px-5 py-10 sm:grid-cols-3">
           <div><div className="flex items-center gap-2.5 mb-3"><img src="/logo.png" alt="BLW Logo" className="h-8 w-8 rounded-full object-cover ring-1 ring-white/10" /><span className="font-semibold text-sm" style={{fontFamily:'Montserrat, sans-serif'}}><span style={{color:'#FFFFFF'}}>Believers' LoveWorld CM</span>{' '}<span style={{color:'#F2A31C'}}>Kenya Zone</span></span></div><p className="text-xs text-white/60 leading-relaxed">Fellowship Without Borders for students and young professionals across Kenya Zone.</p></div>
-          <div><h4 className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{color:'#F2A31C'}}>Quick Links</h4><div className="flex flex-col gap-2 text-sm text-white/50"><Link to="/sermons" className="hover:text-white transition">Sermons</Link><Link to="/outreaches" className="hover:text-white transition">Outreaches</Link><Link to="/events" className="hover:text-white transition">Events</Link><Link to="/give" className="hover:text-white transition">Give</Link></div></div>
+          <div><h4 className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{color:'#F2A31C'}}>Quick Links</h4><div className="flex flex-col gap-2 text-sm text-white/50"><Link to="/sermons" className="hover:text-white transition">Sermons</Link><Link to="/outreaches" className="hover:text-white transition">Outreaches</Link><Link to="/events" className="hover:text-white transition">Events</Link><Link to="/meetings" className="hover:text-white transition">Meetings</Link><Link to="/give" className="hover:text-white transition">Give</Link></div></div>
           <div><h4 className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{color:'#F2A31C'}}>Stay Connected</h4><div className="flex items-center gap-3 text-white/50"><a href="https://wa.me/254700000000" className="rounded-xl border border-white/10 p-3 transition hover:border-white/25 hover:text-white" aria-label="WhatsApp"><FiPhone className="h-4 w-4" /></a><Link to="/connect" className="rounded-xl border border-white/10 p-3 transition hover:border-white/25 hover:text-white" aria-label="Connect"><FiHeart className="h-4 w-4" /></Link></div></div>
         </div>
         <div className="border-t border-white/[0.05] py-4 text-center text-xs text-white/25">© {new Date().getFullYear()} Believers' LoveWorld CM Kenya Zone · Kenya Zone</div>
