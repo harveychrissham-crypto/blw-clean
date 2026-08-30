@@ -15,6 +15,10 @@ const schedule = [
   { day: 'Friday', time: '6:00 PM', title: 'Campus Connect Live' },
 ];
 
+// Local development fallback for the self-hosted MediaMTX test stream.
+// Production playback should come from the admin-managed API value.
+const LOCAL_HLS_URL = 'http://localhost:8888/live/test/index.m3u8';
+
 function WelcomePopup({ onDone }) {
   const navigate = useNavigate();
   const [name, setName] = useState(''); const [invitedBy, setInvitedBy] = useState(''); const [submitting, setSubmitting] = useState(false); const [error, setError] = useState('');
@@ -35,7 +39,7 @@ export default function Live() {
   const refreshLive = useCallback(async () => { try { const data = await fetchLiveStream(); setLive(data); setStatus('loaded'); } catch {} }, []);
   useEffect(() => { const html = document.documentElement, body = document.body; if (!showWelcome) return; const ho = html.style.overflow, bo = body.style.overflow, bt = body.style.touchAction; html.style.overflow = 'hidden'; body.style.overflow = 'hidden'; body.style.touchAction = 'none'; return () => { html.style.overflow = ho; body.style.overflow = bo; body.style.touchAction = bt; }; }, [showWelcome]);
   const isLiveNow = status === 'loaded' && !!live?.isLive;
-  const playbackUrl = live?.hlsPlaybackUrl || live?.playbackUrl || live?.hlsUrl || '';
+  const playbackUrl = live?.hlsPlaybackUrl || live?.playbackUrl || live?.hlsUrl || (import.meta.env.DEV ? LOCAL_HLS_URL : '');
   const hasHls = isLiveNow && !!playbackUrl;
   const room = live?.liveKitRoom || live?.liveRoom || live?.roomName || '';
   const hasRoom = isLiveNow && !!room;
