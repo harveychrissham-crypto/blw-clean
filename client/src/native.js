@@ -234,11 +234,10 @@ async function setUpPushNotificationsInternal() {
       const tokenValue = typeof token?.value === 'string' ? token.value.trim() : '';
       console.log('[native] FCM registration event received:', tokenValue ? 'token received' : 'empty token');
       if (!tokenValue) return;
-      if (tokenValue === lastRegisteredFcmToken) {
-        console.log('[native] FCM token already handled in this session');
+      if (tokenValue === lastRegisteredFcmToken && pushNotificationsInitialized) {
+        console.log('[native] FCM token already registered successfully in this session');
         return;
       }
-      lastRegisteredFcmToken = tokenValue;
 
       try {
         const { apiFetch } = await import('./config/api');
@@ -257,6 +256,10 @@ async function setUpPushNotificationsInternal() {
           return;
         }
 
+        // Only mark the token as handled after the backend confirms success.
+        // This allows a later post-login setup attempt to retry a token whose
+        // first registration request failed because of a transient API/network error.
+        lastRegisteredFcmToken = tokenValue;
         pushNotificationsInitialized = true;
         console.log('[native] FCM token registered successfully');
       } catch (error) {
