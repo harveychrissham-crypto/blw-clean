@@ -25,6 +25,9 @@ async function ensureLiveTables(client) {
   )`);
   await client.query(`ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS google_meet_url TEXT NOT NULL DEFAULT ''`);
   await client.query(`ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS daily_room_url TEXT NOT NULL DEFAULT ''`);
+  await client.query(`ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS hls_playback_url TEXT NOT NULL DEFAULT ''`);
+  await client.query(`ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS livekit_room TEXT NOT NULL DEFAULT ''`);
+  await client.query(`ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS livekit_egress_id TEXT NOT NULL DEFAULT ''`);
   await client.query(`INSERT INTO live_stream (id) VALUES (1) ON CONFLICT (id) DO NOTHING`);
   await client.query(`CREATE TABLE IF NOT EXISTS live_viewers (
     id SERIAL PRIMARY KEY,
@@ -51,6 +54,9 @@ const liveDto = (row) => ({
   youtubeId: youtubeId(row.youtube_url),
   googleMeetUrl: row.google_meet_url || '',
   dailyRoomUrl: row.daily_room_url || '',
+  hlsPlaybackUrl: row.hls_playback_url || '',
+  liveKitRoom: row.livekit_room || '',
+  liveKitEgressId: row.livekit_egress_id || '',
   isLive: !!row.is_live,
   updatedAt: row.updated_at,
 });
