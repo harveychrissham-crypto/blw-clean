@@ -29,6 +29,7 @@
     "@livekit/components-react": "^2.9.0",
     "@livekit/components-styles": "^1.1.4",
     "framer-motion": "^11.11.9",
+    "hls.js": "^1.5.17",
     "jsqr": "^1.4.0",
     "livekit-client": "^2.22.1",
     "qrcode": "^1.5.4",
