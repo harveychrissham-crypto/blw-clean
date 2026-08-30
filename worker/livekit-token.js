@@ -47,6 +47,34 @@ function livekit(env) {
   return { host, key, secret, api: new LiveKitAPI({ host, apiKey: key, secret }) };
 }
 
+async function syncLiveState(env, values) {
+  const connectionString = env.HYPERDRIVE?.connectionString || env.DATABASE_URL || '';
+  if (!connectionString) throw new Error('Database connection is not configured.');
+  const { Client } = await import('pg');
+  const client = new Client({ connectionString });
+  await client.connect();
+  try {
+    await client.query(`CREATE TABLE IF NOT EXISTS live_stream (
+      id INTEGER PRIMARY KEY DEFAULT 1,
+      title TEXT NOT NULL DEFAULT '',
+      youtube_url TEXT NOT NULL DEFAULT '',
+      is_live BOOLEAN NOT NULL DEFAULT FALSE,
+      updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+      CONSTRAINT live_stream_singleton CHECK (id = 1)
+    )`);
+    await client.query(`ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS google_meet_url TEXT NOT NULL DEFAULT ''`);
+    await client.query(`ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS daily_room_url TEXT NOT NULL DEFAULT ''`);
+    await client.query(`ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS hls_playback_url TEXT NOT NULL DEFAULT ''`);
+    await client.query(`ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS livekit_room TEXT NOT NULL DEFAULT ''`);
+    await client.query(`ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS livekit_egress_id TEXT NOT NULL DEFAULT ''`);
+    await client.query(`INSERT INTO live_stream (id) VALUES (1) ON CONFLICT (id) DO NOTHING`);
+    await client.query(
+      `UPDATE live_stream SET title=COALESCE($1,title),is_live=$2,hls_playback_url=$3,livekit_room=$4,livekit_egress_id=$5,updated_at=NOW() WHERE id=1`,
+      [values.title || '', !!values.isLive, values.playbackUrl || '', values.room || '', values.egressId || '']
+    );
+  } finally { await client.end().catch(() => {}); }
+}
+
 async function tokenResponse(request, env, headers) {
   const auth = authUser(request, env);
   if (!auth) return json({ error: 'Invalid authentication token.' }, 401, headers);
@@ -115,6 +143,7 @@ async function startBroadcast(request, env, headers) {
 
   const body = await request.clone().json().catch(() => ({}));
   const room = safeRoom(body?.room_name || body?.name) || `live-${crypto.randomUUID().slice(0, 8)}`;
+  const title = String(body?.title || 'BLW Live Service').trim().slice(0, 160) || 'BLW Live Service';
   const { api } = livekit(env);
   await api.room.createRoom({ name: room, emptyTimeout: 300, maxParticipants: 100 });
 
@@ -128,7 +157,9 @@ async function startBroadcast(request, env, headers) {
     output: { case: 's3', value: new S3Upload({ accessKey, secret, bucket, endpoint, region, forcePathStyle: true }) },
   });
   const egress = await api.egress.startRoomCompositeEgress(room, output, { layout: 'grid' });
-  return json({ room, egress_id: egress.egressId, playback_url: `${publicUrl}/${prefix}/live.m3u8` }, 201, headers);
+  const playbackUrl = `${publicUrl}/${prefix}/live.m3u8`;
+  await syncLiveState(env, { title, isLive: true, playbackUrl, room, egressId: egress.egressId });
+  return json({ room, egress_id: egress.egressId, playback_url: playbackUrl, title }, 201, headers);
 }
 
 async function stopBroadcast(request, env, headers) {
@@ -141,6 +172,7 @@ async function stopBroadcast(request, env, headers) {
   const { api } = livekit(env);
   if (egressId) await api.egress.stopEgress(egressId);
   if (room) await api.room.deleteRoom(room);
+  await syncLiveState(env, { title: '', isLive: false, playbackUrl: '', room: '', egressId: '' });
   return json({ ok: true }, 200, headers);
 }
 
