@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { FiCamera, FiCameraOff, FiMic, FiMicOff, FiMonitor, FiUsers, FiLogOut, FiCopy, FiPlus, FiPhoneOff } from 'react-icons/fi';
-import { Room, RoomEvent, Track, VideoPresets, AudioPresets } from 'livekit-client';
+import { Room, RoomEvent, Track, VideoPresets, AudioPresets, DeviceUnsupportedError } from 'livekit-client';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
 
@@ -90,16 +90,33 @@ function CallRoom({ credentials, room: roomName, onLeave }) {
     return () => { disposed = true; liveRoom.disconnect(); roomRef.current = null; };
   }, [credentials, onLeave]);
 
+  const screenShareSupported = typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getDisplayMedia);
+
   async function toggleCamera() { try { const next = !camera; await roomRef.current?.localParticipant.setCameraEnabled(next); setCamera(next); } catch (e) { setError(e.message); } }
   async function toggleMic() { try { const next = !mic; await roomRef.current?.localParticipant.setMicrophoneEnabled(next); setMic(next); } catch (e) { setError(e.message); } }
-  async function toggleShare() { try { const next = !sharing; await roomRef.current?.localParticipant.setScreenShareEnabled(next); setSharing(next); } catch (e) { setError(e.message); } }
+  async function toggleShare() {
+    if (!screenShareSupported) { setError('Screen sharing is not supported on this device. Try from a desktop browser instead.'); return; }
+    try {
+      const next = !sharing;
+      await roomRef.current?.localParticipant.setScreenShareEnabled(next);
+      setSharing(next);
+    } catch (e) {
+      if (e instanceof DeviceUnsupportedError) setError('Screen sharing is not supported on this device. Try from a desktop browser instead.');
+      else if (e?.name === 'NotAllowedError') setError('Screen share permission was dismissed.');
+      else setError(e.message || 'Unable to start screen share.');
+    }
+  }
 
   const local = roomRef.current?.localParticipant;
   const all = local ? [local, ...participants] : participants;
-  return <section className="mx-auto max-w-7xl px-3 py-4 sm:px-5"><div className="mb-4 flex items-center justify-between gap-4"><div className="min-w-0"><p className="text-xs uppercase tracking-widest text-[#F2A31C]">Live room</p><h1 className="truncate text-2xl font-bold">{roomName}</h1><p className="text-xs text-white/40">{connected ? `${all.length} participant${all.length === 1 ? '' : 's'}` : 'Connecting…'}</p></div><button onClick={onLeave} className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm"><FiLogOut/>Leave</button></div><div className="grid min-h-[55vh] gap-3 sm:grid-cols-2 lg:grid-cols-3">{all.map((participant) => <ParticipantTile key={participant.identity} participant={participant} local={participant === local} speaking={activeSpeakers.has(participant.identity)} />)}{all.length === 0 && <div className="col-span-full grid place-items-center rounded-3xl border border-white/10 bg-black/30 text-white/45">Waiting for participants…</div>}</div><div className="sticky bottom-4 mx-auto mt-4 flex w-fit items-center gap-2 rounded-full border border-white/10 bg-[#11101d]/95 p-2 shadow-2xl backdrop-blur"><ControlButton active={camera} onClick={toggleCamera} onIcon={FiCamera} offIcon={FiCameraOff} label="Camera"/><ControlButton active={mic} onClick={toggleMic} onIcon={FiMic} offIcon={FiMicOff} label="Microphone"/><ControlButton active={sharing} onClick={toggleShare} onIcon={FiMonitor} offIcon={FiMonitor} label="Share screen"/><button onClick={onLeave} aria-label="Leave meeting" className="grid h-11 w-11 place-items-center rounded-full bg-red-500 text-white"><FiPhoneOff/></button></div>{error && <p className="mx-auto mt-4 max-w-xl rounded-2xl border border-red-400/20 bg-red-400/5 p-3 text-center text-sm text-red-200">{error}</p>}</section>;
+  const screenSharer = all.find((p) => p.getTrackPublication?.(Track.Source.ScreenShare)?.track);
+  const gridArea = screenSharer
+    ? <div className="space-y-3"><ParticipantTile participant={screenSharer} local={screenSharer === local} speaking={activeSpeakers.has(screenSharer.identity)} />{all.length > 1 && <div className="flex gap-3 overflow-x-auto pb-1">{all.filter((p) => p !== screenSharer).map((participant) => <div key={participant.identity} className="w-40 shrink-0 sm:w-48"><ParticipantTile participant={participant} local={participant === local} speaking={activeSpeakers.has(participant.identity)} /></div>)}</div>}</div>
+    : <div className="grid min-h-[55vh] gap-3 sm:grid-cols-2 lg:grid-cols-3">{all.map((participant) => <ParticipantTile key={participant.identity} participant={participant} local={participant === local} speaking={activeSpeakers.has(participant.identity)} />)}{all.length === 0 && <div className="col-span-full grid place-items-center rounded-3xl border border-white/10 bg-black/30 text-white/45">Waiting for participants…</div>}</div>;
+  return <section className="mx-auto max-w-7xl px-3 py-4 sm:px-5"><div className="mb-4 flex items-center justify-between gap-4"><div className="min-w-0"><p className="text-xs uppercase tracking-widest text-[#F2A31C]">Live room</p><h1 className="truncate text-2xl font-bold">{roomName}</h1><p className="text-xs text-white/40">{connected ? `${all.length} participant${all.length === 1 ? '' : 's'}` : 'Connecting…'}</p></div><button onClick={onLeave} className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm"><FiLogOut/>Leave</button></div>{gridArea}<div className="sticky bottom-4 mx-auto mt-4 flex w-fit items-center gap-2 rounded-full border border-white/10 bg-[#11101d]/95 p-2 shadow-2xl backdrop-blur"><ControlButton active={camera} onClick={toggleCamera} onIcon={FiCamera} offIcon={FiCameraOff} label="Camera"/><ControlButton active={mic} onClick={toggleMic} onIcon={FiMic} offIcon={FiMicOff} label="Microphone"/><ControlButton active={sharing} onClick={toggleShare} onIcon={FiMonitor} offIcon={FiMonitor} label={screenShareSupported ? 'Share screen' : 'Screen sharing is not supported on this device'} disabled={!screenShareSupported}/><button onClick={onLeave} aria-label="Leave meeting" className="grid h-11 w-11 place-items-center rounded-full bg-red-500 text-white"><FiPhoneOff/></button></div>{error && <p className="mx-auto mt-4 max-w-xl rounded-2xl border border-red-400/20 bg-red-400/5 p-3 text-center text-sm text-red-200">{error}</p>}</section>;
 }
 
-function ControlButton({ active, onClick, onIcon: OnIcon, offIcon: OffIcon, label }) { const Icon = active ? OnIcon : OffIcon; return <button onClick={onClick} aria-label={label} title={label} className={`grid h-11 w-11 place-items-center rounded-full transition ${active ? 'bg-white/15 text-white' : 'bg-white/5 text-white/60 hover:text-white'}`}><Icon/></button>; }
+function ControlButton({ active, onClick, onIcon: OnIcon, offIcon: OffIcon, label, disabled }) { const Icon = active ? OnIcon : OffIcon; return <button onClick={onClick} disabled={disabled} aria-label={label} title={label} className={`grid h-11 w-11 place-items-center rounded-full transition ${disabled ? 'cursor-not-allowed bg-white/5 text-white/25' : active ? 'bg-white/15 text-white' : 'bg-white/5 text-white/60 hover:text-white'}`}><Icon/></button>; }
 
 function ParticipantTile({ participant, local, speaking }) {
   const videoRef = useRef(null);

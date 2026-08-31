@@ -9,6 +9,7 @@ import { handleFellowships } from './fellowship-api.js';
 import { handleVenues } from './venue-api.js';
 import { sendWeeklyServiceReminders } from './scheduled-jobs.js';
 import { handleLiveKitToken, handleVideoApi } from './livekit-token.js';
+import { handleAppVersion } from './app-version-api.js';
 
 function normalizeResponse(request, env, response) {
   const headers = new Headers(response.headers);
@@ -45,6 +46,7 @@ export default {
     if (request.method === 'OPTIONS') return preflightResponse(request, env);
 
     if (url.pathname === '/api/health' && request.method === 'GET') return normalizeResponse(request, env, new Response(JSON.stringify({ status: 'ok', message: 'BLW Campus Ministry API is running' }), { status: 200, headers: { 'content-type': 'application/json; charset=utf-8' } }));
+    if (url.pathname === '/api/app/version' && request.method === 'GET') { const response = await handleAppVersion(request, env, url); if (response) return normalizeResponse(request, env, response); }
     if (url.pathname === '/api/push/send' && request.method === 'POST') return normalizeResponse(request, env, await sendPushNotification(request, env));
     if (url.pathname === '/api/livekit/token') return normalizeResponse(request, env, await handleLiveKitToken(request, env, corsHeaders(request, env)));
     if (url.pathname.startsWith('/api/video')) { const response = await handleVideoApi(request, env, url, corsHeaders(request, env)); if (response) return normalizeResponse(request, env, response); }

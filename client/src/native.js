@@ -2,6 +2,7 @@ import { Capacitor } from '@capacitor/core';
 
 const PUSH_PERMISSION_PROMPT_EVENT = 'blw:push-permission-prompt';
 const PUSH_PERMISSION_DENIED_EVENT = 'blw:push-permission-denied';
+export const UPDATE_AVAILABLE_EVENT = 'blw:update-available';
 
 /**
  * Native-only setup (status bar and Android back button).
@@ -18,7 +19,49 @@ export async function initNative() {
   await Promise.allSettled([
     setUpStatusBar(),
     setUpBackButton(),
+    checkForAppUpdate(),
   ]);
+}
+
+/**
+ * Compares dot-separated version strings numerically (e.g. "1.2.0" vs
+ * "1.10.0"), unlike a plain string/lexicographic comparison which would get
+ * "1.10.0" wrong. Returns negative if a < b, 0 if equal, positive if a > b.
+ */
+function compareVersions(a, b) {
+  const partsA = String(a).split('.').map((n) => parseInt(n, 10) || 0);
+  const partsB = String(b).split('.').map((n) => parseInt(n, 10) || 0);
+  const length = Math.max(partsA.length, partsB.length);
+  for (let i = 0; i < length; i += 1) {
+    const diff = (partsA[i] || 0) - (partsB[i] || 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+async function checkForAppUpdate() {
+  try {
+    const { App } = await import('@capacitor/app');
+    const info = await App.getInfo();
+    const currentVersion = String(info?.version || '').trim();
+    if (!currentVersion) return;
+
+    const { apiFetch } = await import('./config/api');
+    const response = await apiFetch('/api/app/version', { method: 'GET' });
+    if (!response.ok) return;
+    const data = await response.json().catch(() => ({}));
+    const latestVersion = String(data?.latest_version || '').trim();
+    const updateUrl = String(data?.update_url || '').trim();
+    if (!latestVersion || !updateUrl) return;
+
+    if (compareVersions(currentVersion, latestVersion) < 0) {
+      window.dispatchEvent(new CustomEvent(UPDATE_AVAILABLE_EVENT, {
+        detail: { currentVersion, latestVersion, updateUrl },
+      }));
+    }
+  } catch (error) {
+    console.warn('[native] update check skipped:', error?.message || error);
+  }
 }
 
 function markQrCameraSessions() {
