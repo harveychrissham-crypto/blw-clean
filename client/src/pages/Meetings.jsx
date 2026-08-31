@@ -74,10 +74,9 @@ function CallRoom({ credentials, room: roomName, onLeave }) {
       try {
         await liveRoom.connect(credentials.server_url, credentials.participant_token);
         if (disposed) return;
-        await liveRoom.localParticipant.enableCameraAndMicrophone();
-        if (disposed) return;
-        setCamera(true);
-        setMic(true);
+        // Join with mic and camera off — the participant turns them on manually.
+        setCamera(false);
+        setMic(false);
         setConnected(true);
         sync();
       } catch (e) {
@@ -140,16 +139,31 @@ function ParticipantTile({ participant, local, speaking }) {
   const hasScreenShare = Boolean(participant.getTrackPublication?.(Track.Source.ScreenShare)?.track);
   const hasVideo = hasScreenShare || Boolean(participant.getTrackPublication?.(Track.Source.Camera)?.track);
   const micOn = Boolean(participant.isMicrophoneEnabled);
+  const avatarPalette = ['#8A2BE2', '#EC2FA8', '#1a73e8', '#F2A31C', '#34D399', '#E85D75'];
+  const avatarColor = avatarPalette[String(display).split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % avatarPalette.length];
   return (
-    <div className={`group relative aspect-video overflow-hidden rounded-2xl bg-[#1b1a2b] transition-all duration-150 ${speaking ? 'ring-[3px] ring-[#34D399]' : 'ring-1 ring-white/10'}`}>
+    <div className={`group relative aspect-video overflow-hidden rounded-xl bg-[#3c4043] transition-all duration-150 ${speaking ? 'ring-[3px] ring-[#8AB4F8]' : 'ring-1 ring-black/20'}`}>
       <video ref={videoRef} autoPlay playsInline muted={local} className={`h-full w-full object-cover ${hasVideo ? '' : 'hidden'} ${local && !hasScreenShare ? 'scale-x-[-1]' : ''}`} />
       <audio ref={audioRef} autoPlay muted={local} />
-      {!hasVideo && <div className="grid h-full place-items-center"><div className={`grid h-16 w-16 place-items-center rounded-full text-xl font-bold transition-colors duration-150 ${speaking ? 'bg-[#34D399]/25 ring-2 ring-[#34D399]' : 'bg-white/10'}`}>{display.slice(0, 1).toUpperCase()}</div></div>}
-      {hasScreenShare && <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/80 backdrop-blur"><FiMonitor className="h-3 w-3" />Presenting</div>}
-      <div className="absolute bottom-2 left-2 inline-flex max-w-[calc(100%-1rem)] items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 backdrop-blur">
-        {micOn ? <FiMic className={`h-3.5 w-3.5 shrink-0 ${speaking ? 'text-[#34D399]' : 'text-white/70'}`} /> : <FiMicOff className="h-3.5 w-3.5 shrink-0 text-red-400" />}
-        <span className="truncate text-xs font-medium text-white">{display}{local ? ' · You' : ''}</span>
+      {!hasVideo && (
+        <div className="grid h-full place-items-center">
+          <div
+            className={`grid h-20 w-20 place-items-center rounded-full text-2xl font-semibold text-white shadow-lg transition-all duration-150 sm:h-24 sm:w-24 ${speaking ? 'ring-[3px] ring-[#8AB4F8] ring-offset-2 ring-offset-[#3c4043]' : ''}`}
+            style={{ backgroundColor: avatarColor }}
+          >
+            {display.slice(0, 1).toUpperCase()}
+          </div>
+        </div>
+      )}
+      {hasScreenShare && <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded bg-black/70 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/90 backdrop-blur">Presenting</div>}
+      <div className="absolute bottom-2 left-2 inline-flex max-w-[calc(100%-1rem)] items-center gap-1.5 rounded-md bg-black/55 px-2 py-1 backdrop-blur-sm">
+        <span className="truncate text-xs font-medium text-white">{display}{local ? ' (You)' : ''}</span>
       </div>
+      {!micOn && (
+        <div className="absolute bottom-2 right-2 grid h-6 w-6 place-items-center rounded-full bg-black/55 backdrop-blur-sm">
+          <FiMicOff className="h-3.5 w-3.5 text-white" />
+        </div>
+      )}
     </div>
   );
 }
