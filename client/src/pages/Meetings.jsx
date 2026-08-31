@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { FiCamera, FiCameraOff, FiMic, FiMicOff, FiMonitor, FiUsers, FiLogOut, FiCopy, FiPlus, FiPhoneOff } from 'react-icons/fi';
-import { Room, RoomEvent, Track } from 'livekit-client';
+import { Room, RoomEvent, Track, VideoPresets } from 'livekit-client';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
 
@@ -55,11 +55,31 @@ function CallRoom({ credentials, room: roomName, onLeave }) {
 
   useEffect(() => {
     let disposed = false;
-    const liveRoom = new Room();
+    const liveRoom = new Room({
+      adaptiveStream: true,
+      dynacast: true,
+      videoCaptureDefaults: VideoPresets.h720,
+    });
     roomRef.current = liveRoom;
     const sync = () => { if (!disposed) { setParticipants(Array.from(liveRoom.remoteParticipants.values())); rerender(v => v + 1); } };
     liveRoom.on(RoomEvent.ParticipantConnected, sync).on(RoomEvent.ParticipantDisconnected, sync).on(RoomEvent.TrackSubscribed, sync).on(RoomEvent.TrackUnsubscribed, sync).on(RoomEvent.LocalTrackPublished, sync).on(RoomEvent.LocalTrackUnpublished, sync).on(RoomEvent.Disconnected, () => !disposed && onLeave());
-    (async () => { try { await liveRoom.connect(credentials.server_url, credentials.participant_token); if (disposed) return; setConnected(true); sync(); } catch (e) { if (!disposed) setError(e.message || 'Unable to connect to meeting.'); } })();
+    (async () => {
+      try {
+        await liveRoom.connect(credentials.server_url, credentials.participant_token);
+        if (disposed) return;
+        await liveRoom.localParticipant.enableCameraAndMicrophone();
+        if (disposed) return;
+        setCamera(true);
+        setMic(true);
+        setConnected(true);
+        sync();
+      } catch (e) {
+        if (!disposed) {
+          if (e?.name === 'NotAllowedError' || e?.name === 'PermissionDeniedError') setError('Camera or microphone permission was denied. Allow both permissions and try again.');
+          else setError(e.message || 'Unable to connect to meeting.');
+        }
+      }
+    })();
     return () => { disposed = true; liveRoom.disconnect(); roomRef.current = null; };
   }, [credentials, onLeave]);
 
