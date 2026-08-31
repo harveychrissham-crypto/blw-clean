@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { FiCamera, FiCameraOff, FiMic, FiMicOff, FiMonitor, FiUsers, FiLogOut, FiCopy, FiPlus, FiPhoneOff } from 'react-icons/fi';
-import { Room, RoomEvent, Track, VideoPresets } from 'livekit-client';
+import { Room, RoomEvent, Track, VideoPresets, AudioPresets } from 'livekit-client';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
 
@@ -58,7 +58,12 @@ function CallRoom({ credentials, room: roomName, onLeave }) {
     const liveRoom = new Room({
       adaptiveStream: true,
       dynacast: true,
-      videoCaptureDefaults: VideoPresets.h720,
+      videoCaptureDefaults: VideoPresets.h1080,
+      publishDefaults: {
+        videoEncoding: { maxBitrate: 4_000_000, maxFramerate: 30 },
+        audioPreset: AudioPresets.music,
+        audioEncoding: { maxBitrate: 128_000 },
+      },
     });
     roomRef.current = liveRoom;
     const sync = () => { if (!disposed) { setParticipants(Array.from(liveRoom.remoteParticipants.values())); rerender(v => v + 1); } };
