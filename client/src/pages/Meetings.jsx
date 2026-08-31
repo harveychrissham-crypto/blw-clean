@@ -59,9 +59,9 @@ function CallRoom({ credentials, room: roomName, onLeave }) {
     const liveRoom = new Room({
       adaptiveStream: true,
       dynacast: true,
-      videoCaptureDefaults: VideoPresets.h1080,
+      videoCaptureDefaults: { resolution: VideoPresets.h720.resolution, facingMode: 'user' },
       publishDefaults: {
-        videoEncoding: { maxBitrate: 4_000_000, maxFramerate: 30 },
+        videoEncoding: { maxBitrate: 1_700_000, maxFramerate: 30 },
         audioPreset: AudioPresets.music,
         audioEncoding: { maxBitrate: 128_000 },
       },
@@ -107,8 +107,8 @@ function ParticipantTile({ participant, local, speaking }) {
   const [, rerender] = useState(0);
   useEffect(() => {
     const sync = () => rerender(v => v + 1);
-    participant.on?.(RoomEvent.TrackPublished, sync).on?.(RoomEvent.TrackUnpublished, sync).on?.(RoomEvent.TrackSubscribed, sync).on?.(RoomEvent.TrackUnsubscribed, sync);
-    return () => { participant.off?.(RoomEvent.TrackPublished, sync).off?.(RoomEvent.TrackUnpublished, sync).off?.(RoomEvent.TrackSubscribed, sync).off?.(RoomEvent.TrackUnsubscribed, sync); };
+    participant.on?.(RoomEvent.TrackPublished, sync).on?.(RoomEvent.TrackUnpublished, sync).on?.(RoomEvent.TrackSubscribed, sync).on?.(RoomEvent.TrackUnsubscribed, sync).on?.(RoomEvent.TrackMuted, sync).on?.(RoomEvent.TrackUnmuted, sync);
+    return () => { participant.off?.(RoomEvent.TrackPublished, sync).off?.(RoomEvent.TrackUnpublished, sync).off?.(RoomEvent.TrackSubscribed, sync).off?.(RoomEvent.TrackUnsubscribed, sync).off?.(RoomEvent.TrackMuted, sync).off?.(RoomEvent.TrackUnmuted, sync); };
   }, [participant]);
   useEffect(() => {
     const video = participant.getTrackPublication?.(Track.Source.Camera)?.track;
@@ -120,6 +120,19 @@ function ParticipantTile({ participant, local, speaking }) {
     return () => { try { track?.detach(videoRef.current); } catch {} };
   });
   const display = participant.name || participant.identity || 'Participant';
-  const hasVideo = Boolean(participant.getTrackPublication?.(Track.Source.Camera)?.track || participant.getTrackPublication?.(Track.Source.ScreenShare)?.track);
-  return <div className={`relative min-h-[220px] overflow-hidden rounded-3xl border bg-[#171624] transition-all duration-150 ${speaking ? 'border-[#34D399] shadow-[0_0_0_3px_rgba(52,211,153,0.55)]' : 'border-white/10'}`}><video ref={videoRef} autoPlay playsInline muted={local} className={`h-full min-h-[220px] w-full object-cover ${hasVideo ? '' : 'hidden'}`} /><audio ref={audioRef} autoPlay muted={local}/>{!hasVideo && <div className="grid h-full min-h-[220px] place-items-center"><div className={`grid h-16 w-16 place-items-center rounded-full text-xl font-bold transition-colors duration-150 ${speaking ? 'bg-[#34D399]/25 ring-2 ring-[#34D399]' : 'bg-white/10'}`}>{display.slice(0, 1).toUpperCase()}</div></div>}<div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 pb-3 pt-8 text-sm font-medium">{display}{local ? ' · You' : ''}{speaking && <FiMic className="ml-2 inline h-3.5 w-3.5 text-[#34D399]" />}</div></div>;
+  const hasScreenShare = Boolean(participant.getTrackPublication?.(Track.Source.ScreenShare)?.track);
+  const hasVideo = hasScreenShare || Boolean(participant.getTrackPublication?.(Track.Source.Camera)?.track);
+  const micOn = Boolean(participant.isMicrophoneEnabled);
+  return (
+    <div className={`group relative aspect-video overflow-hidden rounded-2xl bg-[#1b1a2b] transition-all duration-150 ${speaking ? 'ring-[3px] ring-[#34D399]' : 'ring-1 ring-white/10'}`}>
+      <video ref={videoRef} autoPlay playsInline muted={local} className={`h-full w-full object-cover ${hasVideo ? '' : 'hidden'} ${local && !hasScreenShare ? 'scale-x-[-1]' : ''}`} />
+      <audio ref={audioRef} autoPlay muted={local} />
+      {!hasVideo && <div className="grid h-full place-items-center"><div className={`grid h-16 w-16 place-items-center rounded-full text-xl font-bold transition-colors duration-150 ${speaking ? 'bg-[#34D399]/25 ring-2 ring-[#34D399]' : 'bg-white/10'}`}>{display.slice(0, 1).toUpperCase()}</div></div>}
+      {hasScreenShare && <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/80 backdrop-blur"><FiMonitor className="h-3 w-3" />Presenting</div>}
+      <div className="absolute bottom-2 left-2 inline-flex max-w-[calc(100%-1rem)] items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 backdrop-blur">
+        {micOn ? <FiMic className={`h-3.5 w-3.5 shrink-0 ${speaking ? 'text-[#34D399]' : 'text-white/70'}`} /> : <FiMicOff className="h-3.5 w-3.5 shrink-0 text-red-400" />}
+        <span className="truncate text-xs font-medium text-white">{display}{local ? ' · You' : ''}</span>
+      </div>
+    </div>
+  );
 }
