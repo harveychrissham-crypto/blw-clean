@@ -1,9 +1,102 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
-import { ControlBar, GridLayout, LiveKitRoom, ParticipantTile, PreJoin, RoomAudioRenderer, useRemoteParticipants, useTracks } from '@livekit/components-react';
+import { Chat, ControlBar, GridLayout, LayoutContextProvider, LiveKitRoom, ParticipantTile, PreJoin, RoomAudioRenderer, useCreateLayoutContext, useDataChannel, useLocalParticipant, useRemoteParticipants, useTracks } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import '@livekit/components-styles';
+
+const REACTION_EMOJIS = ['👍', '❤️', '😂', '🙏', '👏'];
+
+function ReactionsAndHands() {
+  const { localParticipant } = useLocalParticipant();
+  const remoteParticipants = useRemoteParticipants();
+  const [bubbles, setBubbles] = useState([]);
+  const [raisedHands, setRaisedHands] = useState({}); // identity -> name
+  const [handRaised, setHandRaised] = useState(false);
+  const bubbleId = useRef(0);
+
+  const popBubble = useCallback((emoji, name) => {
+    const id = bubbleId.current++;
+    setBubbles((prev) => [...prev, { id, emoji, name, left: 10 + Math.random() * 70 }]);
+    setTimeout(() => setBubbles((prev) => prev.filter((b) => b.id !== id)), 2600);
+  }, []);
+
+  const { send: sendReaction } = useDataChannel('reactions', (msg) => {
+    try {
+      const data = JSON.parse(new TextDecoder().decode(msg.payload));
+      popBubble(data.emoji, data.name);
+    } catch { /* ignore malformed payload */ }
+  });
+
+  const { send: sendHand } = useDataChannel('raise-hand', (msg) => {
+    try {
+      const data = JSON.parse(new TextDecoder().decode(msg.payload));
+      setRaisedHands((prev) => {
+        const next = { ...prev };
+        if (data.raised) next[msg.from?.identity || data.identity] = data.name;
+        else delete next[msg.from?.identity || data.identity];
+        return next;
+      });
+    } catch { /* ignore malformed payload */ }
+  });
+
+  // Prune raised hands for participants who have since left the call.
+  useEffect(() => {
+    const stillHere = new Set(remoteParticipants.map((p) => p.identity));
+    setRaisedHands((prev) => {
+      const next = {};
+      let changed = false;
+      for (const [identity, name] of Object.entries(prev)) {
+        if (stillHere.has(identity)) next[identity] = name;
+        else changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [remoteParticipants]);
+
+  const react = (emoji) => {
+    const name = localParticipant?.name || 'BLW Member';
+    popBubble(emoji, name);
+    sendReaction(new TextEncoder().encode(JSON.stringify({ emoji, name })), { reliable: true });
+  };
+
+  const toggleHand = () => {
+    const next = !handRaised;
+    setHandRaised(next);
+    const name = localParticipant?.name || 'BLW Member';
+    sendHand(new TextEncoder().encode(JSON.stringify({ raised: next, name, identity: localParticipant?.identity })), { reliable: true });
+  };
+
+  const raisedList = Object.values(raisedHands);
+
+  return (
+    <>
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-full overflow-hidden">
+        {bubbles.map((b) => (
+          <div key={b.id} className="reaction-bubble absolute bottom-16 text-2xl" style={{ left: `${b.left}%` }}>
+            <span>{b.emoji}</span>
+            <span className="ml-1 rounded-full bg-black/50 px-2 py-0.5 text-[10px] text-white/80 align-middle">{b.name}</span>
+          </div>
+        ))}
+      </div>
+      {raisedList.length > 0 && (
+        <div className="border-t border-white/10 bg-amber-400/10 px-4 py-2 text-xs text-amber-200">
+          ✋ {raisedList.join(', ')} raised {raisedList.length === 1 ? 'a hand' : 'hands'}
+        </div>
+      )}
+      <div className="flex items-center justify-center gap-1.5 border-t border-white/10 bg-black/20 px-2 py-1.5">
+        {REACTION_EMOJIS.map((emoji) => (
+          <button key={emoji} type="button" onClick={() => react(emoji)} className="rounded-full px-2 py-1 text-lg hover:bg-white/10">{emoji}</button>
+        ))}
+        <button type="button" onClick={toggleHand} className={`ml-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${handRaised ? 'border-amber-400/50 bg-amber-400/15 text-amber-200' : 'border-white/15 bg-white/5 text-white/70 hover:bg-white/10'}`}>✋ {handRaised ? 'Lower hand' : 'Raise hand'}</button>
+      </div>
+      <style>{`
+        @keyframes reaction-float { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-160px); opacity: 0; } }
+        .reaction-bubble { animation: reaction-float 2.5s ease-out forwards; }
+      `}</style>
+    </>
+  );
+}
 
 function HostPanel({ room, isHost, onEnded }) {
   const [open, setOpen] = useState(false);
@@ -93,14 +186,21 @@ function RoomView({ room, isHost, onLeave, onEnded }) {
     { source: Track.Source.Camera, withPlaceholder: true },
     { source: Track.Source.ScreenShare, withPlaceholder: false },
   ]);
+  const layoutContext = useCreateLayoutContext();
+  const [showChat, setShowChat] = useState(false);
+
   return (
-    <div className="flex min-h-[70vh] flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0d0c18] shadow-2xl" data-lk-theme="default">
+    <div className="relative flex min-h-[70vh] flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0d0c18] shadow-2xl" data-lk-theme="default">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <div><p className="text-sm font-semibold text-white">BLW Meeting</p><p className="text-xs text-white/45">LiveKit room</p></div>
         <button type="button" onClick={onLeave} className="rounded-full border border-red-400/30 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-200 hover:bg-red-500/20">Leave</button>
       </div>
-      <div className="min-h-0 flex-1 p-3"><GridLayout tracks={tracks} className="h-full min-h-[52vh] gap-3"><ParticipantTile /></GridLayout></div>
-      <div className="border-t border-white/10 bg-black/20 p-2"><ControlBar variation="minimal" controls={{ microphone: true, camera: true, screenShare: true, chat: false }} /></div>
+      <LayoutContextProvider value={layoutContext} onWidgetChange={(state) => setShowChat(!!state?.showChat)}>
+        <div className="min-h-0 flex-1 p-3"><GridLayout tracks={tracks} className="h-full min-h-[52vh] gap-3"><ParticipantTile /></GridLayout></div>
+        <div className="border-t border-white/10 bg-black/20 p-2"><ControlBar variation="minimal" controls={{ microphone: true, camera: true, screenShare: true, chat: true }} /></div>
+        <div style={{ display: showChat ? 'grid' : 'none' }}><Chat /></div>
+        <ReactionsAndHands />
+      </LayoutContextProvider>
       <HostPanel room={room} isHost={isHost} onEnded={onEnded} />
       <RoomAudioRenderer />
     </div>
