@@ -16,21 +16,7 @@ export default function Meetings() {
   const [choices, setChoices] = useState(null);
   const [error, setError] = useState('');
   const [creating, setCreating] = useState(false);
-  const [isHost, setIsHost] = useState(false);
   const [leaveNotice, setLeaveNotice] = useState('');
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!user) return undefined;
-    (async () => {
-      try {
-        const res = await apiFetch('/api/auth/admin-status');
-        const body = await res.json().catch(() => ({}));
-        if (!cancelled) setIsHost(res.ok && body.isAdmin === true);
-      } catch { if (!cancelled) setIsHost(false); }
-    })();
-    return () => { cancelled = true; };
-  }, [user]);
 
   async function createRoom() {
     setCreating(true); setError('');
@@ -75,7 +61,7 @@ export default function Meetings() {
   }
 
   if (stage === 'room' && credentials && choices) {
-    return <CallRoom credentials={credentials} choices={choices} room={room} isHost={isHost} onLeave={handleLeave} />;
+    return <CallRoom credentials={credentials} choices={choices} room={room} onLeave={handleLeave} />;
   }
 
   return <section className="mx-auto max-w-4xl px-5 py-12 sm:py-16"><div className="mb-10"><p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#F2A31C]">Fellowship</p><h1 className="mt-2 text-4xl font-bold">Meetings</h1><p className="mt-3 max-w-2xl text-white/60">Gather for Bible studies, fellowship meetings and leadership calls.</p></div>{leaveNotice && <p className="mb-6 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 text-sm text-amber-200">{leaveNotice}</p>}<div className="grid gap-5 sm:grid-cols-2"><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiPlus className="h-6 w-6 text-[#F2A31C]"/><h2 className="mt-4 text-xl font-semibold">Create room</h2><p className="mt-2 text-sm text-white/55">Start an instant room and share its code with your group.</p><button disabled={creating} onClick={createRoom} className="mt-6 w-full rounded-2xl bg-white py-3 font-semibold text-black disabled:opacity-50">{creating ? 'Creating…' : 'Create meeting'}</button></div><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiUsers className="h-6 w-6 text-[#F2A31C]"/><h2 className="mt-4 text-xl font-semibold">Join room</h2><p className="mt-2 text-sm text-white/55">Enter a room code from your leader or fellowship group.</p><input value={room} onChange={e => setRoom(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') goToLobby(); }} placeholder="Room code" className="mt-5 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none focus:border-white/30"/><button onClick={goToLobby} className="mt-3 w-full rounded-2xl bg-gradient-to-r from-[#EC2FA8] to-[#8A2BE2] py-3 font-semibold">Join meeting</button></div></div>{room && <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm"><span className="min-w-0 truncate text-white/60">Room: <b className="text-white">{room}</b></span><button onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/meetings?room=${encodeURIComponent(room)}`)} className="inline-flex shrink-0 items-center gap-2 text-white/70 hover:text-white"><FiCopy/>Copy link</button></div>}{error && <p className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/5 p-4 text-sm text-red-200">{error}</p>}</section>;
@@ -185,7 +171,7 @@ function Lobby({ participantName, onCancel, onJoin }) {
   );
 }
 
-function CallRoom({ credentials, choices, room: roomName, isHost, onLeave }) {
+function CallRoom({ credentials, choices, room: roomName, onLeave }) {
   const roomRef = useRef(null);
   const [connected, setConnected] = useState(false);
   const [connState, setConnState] = useState('connecting'); // connecting | connected | reconnecting
@@ -197,7 +183,24 @@ function CallRoom({ credentials, choices, room: roomName, isHost, onLeave }) {
   const [activeSpeakers, setActiveSpeakers] = useState(new Set());
   const [showChat, setShowChat] = useState(false);
   const [showHost, setShowHost] = useState(false);
+  const [isHost, setIsHost] = useState(false);
+  const [locked, setLocked] = useState(false);
   const [, rerender] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiFetch(`/api/video/rooms/${encodeURIComponent(roomName)}/status`);
+        const body = await res.json().catch(() => ({}));
+        if (!cancelled && res.ok) { setIsHost(body.isHost === true); setLocked(body.locked === true); }
+      } catch { /* leave defaults — host controls just stay hidden */ }
+    })();
+    return () => { cancelled = true; };
+  }, [roomName]);
+
+  const openChat = () => setShowChat((v) => { const next = !v; if (next) setShowHost(false); return next; });
+  const openHost = () => setShowHost((v) => { const next = !v; if (next) setShowChat(false); return next; });
 
   useEffect(() => {
     let disposed = false;
@@ -296,13 +299,13 @@ function CallRoom({ credentials, choices, room: roomName, isHost, onLeave }) {
         <ControlButton active={camera} onClick={toggleCamera} onIcon={FiCamera} offIcon={FiCameraOff} label="Camera"/>
         <ControlButton active={mic} onClick={toggleMic} onIcon={FiMic} offIcon={FiMicOff} label="Microphone"/>
         <ControlButton active={sharing} onClick={toggleShare} onIcon={FiMonitor} offIcon={FiMonitor} label={screenShareSupported ? 'Share screen' : 'Screen sharing is not supported on this device'} disabled={!screenShareSupported}/>
-        <ControlButton active={showChat} onClick={() => setShowChat((v) => !v)} onIcon={FiMessageSquare} offIcon={FiMessageSquare} label="Chat"/>
-        {isHost && <ControlButton active={showHost} onClick={() => setShowHost((v) => !v)} onIcon={FiUsers} offIcon={FiUsers} label="Host controls"/>}
+        <ControlButton active={showChat} onClick={openChat} onIcon={FiMessageSquare} offIcon={FiMessageSquare} label="Chat"/>
+        {isHost && <ControlButton active={showHost} onClick={openHost} onIcon={FiUsers} offIcon={FiUsers} label="Host controls"/>}
         <button onClick={leaveVoluntarily} aria-label="Leave meeting" className="grid h-11 w-11 place-items-center rounded-full bg-red-500 text-white"><FiPhoneOff/></button>
       </div>
       {error && <p className="mx-auto mt-4 max-w-xl rounded-2xl border border-red-400/20 bg-red-400/5 p-3 text-center text-sm text-red-200">{error}</p>}
       <ChatPanel liveRoom={roomRef.current} open={showChat} onClose={() => setShowChat(false)} />
-      {isHost && <HostPanel roomName={roomName} open={showHost} onClose={() => setShowHost(false)} participants={participants} onEnded={() => onLeave('ended')} />}
+      {isHost && <HostPanel roomName={roomName} open={showHost} onClose={() => setShowHost(false)} participants={participants} locked={locked} setLocked={setLocked} onEnded={() => onLeave('ended')} />}
     </section>
   );
 }
@@ -457,6 +460,19 @@ function ReactionsBar({ liveRoom, localParticipant, participants }) {
     });
   }, [participants]);
 
+  useEffect(() => {
+    if (!liveRoom) return undefined;
+    // If I already have my hand up, let anyone who joins after me know,
+    // so latecomers (including a host opening the panel late) see it.
+    const handler = (participant) => {
+      if (!handRaised) return;
+      const name = localParticipant?.name || 'BLW Member';
+      localParticipant?.publishData(new TextEncoder().encode(JSON.stringify({ raised: true, name, identity: localParticipant?.identity })), { reliable: true, topic: 'raise-hand', destinationIdentities: [participant.identity] });
+    };
+    liveRoom.on(RoomEvent.ParticipantConnected, handler);
+    return () => liveRoom.off(RoomEvent.ParticipantConnected, handler);
+  }, [liveRoom, handRaised, localParticipant]);
+
   const react = (emoji) => {
     const name = localParticipant?.name || 'BLW Member';
     popBubble(emoji, name);
@@ -498,8 +514,7 @@ function ReactionsBar({ liveRoom, localParticipant, participants }) {
   );
 }
 
-function HostPanel({ roomName, open, onClose, participants, onEnded }) {
-  const [locked, setLocked] = useState(false);
+function HostPanel({ roomName, open, onClose, participants, locked, setLocked, onEnded }) {
   const [busy, setBusy] = useState('');
   const [notice, setNotice] = useState('');
 
