@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { FiCamera, FiCameraOff, FiMic, FiMicOff, FiMonitor, FiUsers, FiLogOut, FiCopy, FiPlus, FiPhoneOff, FiMessageSquare, FiLock, FiUnlock, FiUserX, FiSend, FiWifi, FiWifiOff, FiX } from 'react-icons/fi';
+import { FiCamera, FiCameraOff, FiMic, FiMicOff, FiMonitor, FiUsers, FiLogOut, FiCopy, FiPlus, FiPhoneOff, FiMessageSquare, FiLock, FiUnlock, FiUserX, FiSend, FiWifi, FiWifiOff, FiX, FiMaximize2, FiMinimize2, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { Room, RoomEvent, ParticipantEvent, Track, VideoPresets, AudioPresets, DeviceUnsupportedError, DisconnectReason, ConnectionQuality } from 'livekit-client';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
@@ -185,6 +185,8 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
   const [showHost, setShowHost] = useState(false);
   const [isHost, setIsHost] = useState(false);
   const [locked, setLocked] = useState(false);
+  const [pinnedId, setPinnedId] = useState(null);
+  const [page, setPage] = useState(0);
   const [, rerender] = useState(0);
 
   useEffect(() => {
@@ -201,6 +203,13 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
 
   const openChat = () => setShowChat((v) => { const next = !v; if (next) setShowHost(false); return next; });
   const openHost = () => setShowHost((v) => { const next = !v; if (next) setShowChat(false); return next; });
+
+  useEffect(() => {
+    if (!pinnedId) return;
+    const localId = roomRef.current?.localParticipant?.identity;
+    const stillHere = pinnedId === localId || participants.some((p) => p.identity === pinnedId);
+    if (!stillHere) setPinnedId(null);
+  }, [participants, pinnedId]);
 
   useEffect(() => {
     let disposed = false;
@@ -274,9 +283,33 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
   const local = roomRef.current?.localParticipant;
   const all = local ? [local, ...participants] : participants;
   const screenSharer = all.find((p) => p.getTrackPublication?.(Track.Source.ScreenShare)?.track);
-  const gridArea = screenSharer
-    ? <div className="space-y-3"><ParticipantTile participant={screenSharer} local={screenSharer === local} speaking={activeSpeakers.has(screenSharer.identity)} />{all.length > 1 && <div className="flex gap-3 overflow-x-auto pb-1">{all.filter((p) => p !== screenSharer).map((participant) => <div key={participant.identity} className="w-40 shrink-0 sm:w-48"><ParticipantTile participant={participant} local={participant === local} speaking={activeSpeakers.has(participant.identity)} /></div>)}</div>}</div>
-    : <div className="grid min-h-[55vh] gap-3 sm:grid-cols-2 lg:grid-cols-3">{all.map((participant) => <ParticipantTile key={participant.identity} participant={participant} local={participant === local} speaking={activeSpeakers.has(participant.identity)} />)}{all.length === 1 && <div className="col-span-full grid place-items-center rounded-3xl border border-white/10 bg-black/30 px-6 py-10 text-center text-white/45"><FiUsers className="mx-auto mb-2 h-6 w-6" /><p className="font-medium text-white/60">You're the only one here</p><p className="mt-1 text-xs">Share the room code and others will show up as soon as they join.</p></div>}</div>;
+  const pinnedParticipant = pinnedId ? all.find((p) => p.identity === pinnedId) : null;
+  const focus = screenSharer || pinnedParticipant;
+
+  const PAGE_SIZE = 9;
+  const pageCount = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+  const clampedPage = Math.min(page, pageCount - 1);
+  const pageStart = clampedPage * PAGE_SIZE;
+  const pageParticipants = all.slice(pageStart, pageStart + PAGE_SIZE);
+
+  const gridArea = focus
+    ? <div className="space-y-3">
+        <ParticipantTile participant={focus} local={focus === local} speaking={activeSpeakers.has(focus.identity)} pinned={focus === pinnedParticipant} onTogglePin={() => setPinnedId((id) => (id === focus.identity ? null : focus.identity))} big />
+        {all.length > 1 && <div className="flex gap-3 overflow-x-auto pb-1">{all.filter((p) => p !== focus).map((participant) => <div key={participant.identity} className="w-40 shrink-0 sm:w-48"><ParticipantTile participant={participant} local={participant === local} speaking={activeSpeakers.has(participant.identity)} pinned={false} onTogglePin={() => setPinnedId(participant.identity)} /></div>)}</div>}
+      </div>
+    : <div>
+        <div className="grid min-h-[55vh] gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {pageParticipants.map((participant) => <ParticipantTile key={participant.identity} participant={participant} local={participant === local} speaking={activeSpeakers.has(participant.identity)} pinned={false} onTogglePin={() => setPinnedId(participant.identity)} />)}
+          {all.length === 1 && <div className="col-span-full grid place-items-center rounded-3xl border border-white/10 bg-black/30 px-6 py-10 text-center text-white/45"><FiUsers className="mx-auto mb-2 h-6 w-6" /><p className="font-medium text-white/60">You're the only one here</p><p className="mt-1 text-xs">Share the room code and others will show up as soon as they join.</p></div>}
+        </div>
+        {pageCount > 1 && (
+          <div className="mt-3 flex items-center justify-center gap-3 text-sm text-white/60">
+            <button type="button" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={clampedPage === 0} aria-label="Previous page" className="grid h-8 w-8 place-items-center rounded-full bg-white/5 disabled:opacity-30"><FiChevronLeft/></button>
+            <span>Page {clampedPage + 1} of {pageCount}</span>
+            <button type="button" onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))} disabled={clampedPage === pageCount - 1} aria-label="Next page" className="grid h-8 w-8 place-items-center rounded-full bg-white/5 disabled:opacity-30"><FiChevronRight/></button>
+          </div>
+        )}
+      </div>;
 
   return (
     <section className="mx-auto max-w-7xl px-3 py-4 sm:px-5">
@@ -318,7 +351,7 @@ function ConnectionQualityIcon({ quality }) {
   return null;
 }
 
-function ParticipantTile({ participant, local, speaking }) {
+function ParticipantTile({ participant, local, speaking, pinned, onTogglePin, big }) {
   const videoRef = useRef(null);
   const audioRef = useRef(null);
   const [, rerender] = useState(0);
@@ -343,13 +376,13 @@ function ParticipantTile({ participant, local, speaking }) {
   const avatarPalette = ['#8A2BE2', '#EC2FA8', '#1a73e8', '#F2A31C', '#34D399', '#E85D75'];
   const avatarColor = avatarPalette[String(display).split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % avatarPalette.length];
   return (
-    <div className={`group relative aspect-video overflow-hidden rounded-xl bg-[#3c4043] transition-all duration-150 ${speaking ? 'ring-[3px] ring-[#8AB4F8]' : 'ring-1 ring-black/20'}`}>
+    <div className={`group relative overflow-hidden rounded-xl bg-[#3c4043] transition-all duration-150 ${big ? 'aspect-video sm:aspect-[16/8]' : 'aspect-video'} ${speaking ? 'ring-[3px] ring-[#8AB4F8]' : 'ring-1 ring-black/20'}`}>
       <video ref={videoRef} autoPlay playsInline muted={local} className={`h-full w-full object-cover ${hasVideo ? '' : 'hidden'} ${local && !hasScreenShare ? 'scale-x-[-1]' : ''}`} />
       <audio ref={audioRef} autoPlay muted={local} />
       {!hasVideo && (
         <div className="grid h-full place-items-center">
           <div
-            className={`grid h-20 w-20 place-items-center rounded-full text-2xl font-semibold text-white shadow-lg transition-all duration-150 sm:h-24 sm:w-24 ${speaking ? 'ring-[3px] ring-[#8AB4F8] ring-offset-2 ring-offset-[#3c4043]' : ''}`}
+            className={`grid place-items-center rounded-full font-semibold text-white shadow-lg transition-all duration-150 ${big ? 'h-28 w-28 text-4xl sm:h-36 sm:w-36' : 'h-20 w-20 text-2xl sm:h-24 sm:w-24'} ${speaking ? 'ring-[3px] ring-[#8AB4F8] ring-offset-2 ring-offset-[#3c4043]' : ''}`}
             style={{ backgroundColor: avatarColor }}
           >
             {display.slice(0, 1).toUpperCase()}
@@ -357,6 +390,17 @@ function ParticipantTile({ participant, local, speaking }) {
         </div>
       )}
       {hasScreenShare && <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded bg-black/70 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/90 backdrop-blur">Presenting</div>}
+      {onTogglePin && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onTogglePin(); }}
+          aria-label={pinned ? 'Unpin from spotlight' : 'Pin to spotlight'}
+          title={pinned ? 'Unpin from spotlight' : 'Pin to spotlight'}
+          className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-black/55 text-white/80 opacity-70 backdrop-blur-sm transition-opacity hover:opacity-100"
+        >
+          {pinned ? <FiMinimize2 className="h-3.5 w-3.5" /> : <FiMaximize2 className="h-3.5 w-3.5" />}
+        </button>
+      )}
       <div className="absolute bottom-2 left-2 inline-flex max-w-[calc(100%-1rem)] items-center gap-1.5 rounded-md bg-black/55 px-2 py-1 backdrop-blur-sm">
         <ConnectionQualityIcon quality={participant.connectionQuality} />
         <span className="truncate text-xs font-medium text-white">{display}{local ? ' (You)' : ''}</span>
