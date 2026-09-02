@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { FiCamera, FiCameraOff, FiMic, FiMicOff, FiMonitor, FiUsers, FiLogOut, FiCopy, FiPlus, FiPhoneOff, FiMessageSquare, FiLock, FiUnlock, FiUserX, FiSend, FiWifi, FiWifiOff, FiX, FiMaximize2, FiMinimize2, FiChevronLeft, FiChevronRight, FiDroplet } from 'react-icons/fi';
+import { FiCamera, FiCameraOff, FiMic, FiMicOff, FiMonitor, FiUsers, FiLogOut, FiCopy, FiPlus, FiPhoneOff, FiMessageSquare, FiLock, FiUnlock, FiUserX, FiSend, FiWifi, FiWifiOff, FiX, FiMaximize2, FiMinimize2, FiChevronLeft, FiChevronRight, FiDroplet, FiMoreHorizontal, FiCheck } from 'react-icons/fi';
 import { Room, RoomEvent, ParticipantEvent, Track, VideoPresets, AudioPresets, DeviceUnsupportedError, DisconnectReason, ConnectionQuality } from 'livekit-client';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
@@ -183,6 +183,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
   const [activeSpeakers, setActiveSpeakers] = useState(new Set());
   const [showChat, setShowChat] = useState(false);
   const [showHost, setShowHost] = useState(false);
+  const [showMore, setShowMore] = useState(false);
   const [isHost, setIsHost] = useState(false);
   const [locked, setLocked] = useState(false);
   const [pinnedId, setPinnedId] = useState(null);
@@ -204,8 +205,9 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
     return () => { cancelled = true; };
   }, [roomName]);
 
-  const openChat = () => setShowChat((v) => { const next = !v; if (next) setShowHost(false); return next; });
-  const openHost = () => setShowHost((v) => { const next = !v; if (next) setShowChat(false); return next; });
+  const openChat = () => setShowChat((v) => { const next = !v; if (next) { setShowHost(false); setShowMore(false); } return next; });
+  const openHost = () => setShowHost((v) => { const next = !v; if (next) { setShowChat(false); setShowMore(false); } return next; });
+  const openMore = () => setShowMore((v) => { const next = !v; if (next) { setShowChat(false); setShowHost(false); } return next; });
 
   useEffect(() => {
     if (!pinnedId) return;
@@ -356,8 +358,26 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
       <div className="sticky bottom-4 mx-auto mt-4 flex w-fit flex-wrap items-center justify-center gap-2 rounded-full border border-white/10 bg-[#11101d]/95 p-2 shadow-2xl backdrop-blur">
         <ControlButton active={camera} onClick={toggleCamera} onIcon={FiCamera} offIcon={FiCameraOff} label="Camera"/>
         <ControlButton active={mic} onClick={toggleMic} onIcon={FiMic} offIcon={FiMicOff} label="Microphone"/>
-        <ControlButton active={sharing} onClick={toggleShare} onIcon={FiMonitor} offIcon={FiMonitor} label={screenShareSupported ? 'Share screen' : 'Screen sharing is not supported on this device'} disabled={!screenShareSupported}/>
-        <ControlButton active={blurOn} onClick={toggleBlur} onIcon={FiDroplet} offIcon={FiDroplet} label={blurBusy ? 'Loading background blur…' : camera ? 'Blur my background' : 'Turn your camera on to blur your background'} disabled={blurBusy || !camera}/>
+        <div className="relative">
+          <ControlButton active={showMore || sharing || blurOn} onClick={openMore} onIcon={FiMoreHorizontal} offIcon={FiMoreHorizontal} label="More options"/>
+          {showMore && (
+            <>
+              <button type="button" aria-label="Close menu" onClick={() => setShowMore(false)} className="fixed inset-0 z-30 cursor-default" />
+              <div className="absolute bottom-full left-1/2 z-40 mb-3 w-56 -translate-x-1/2 overflow-hidden rounded-2xl border border-white/10 bg-[#1a1926] shadow-2xl">
+                <button type="button" onClick={() => { toggleShare(); setShowMore(false); }} disabled={!screenShareSupported} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30">
+                  <FiMonitor className="h-4 w-4 shrink-0" />
+                  <span className="flex-1">{screenShareSupported ? 'Share screen' : 'Screen sharing not supported'}</span>
+                  {sharing && <FiCheck className="h-4 w-4 shrink-0 text-amber-300" />}
+                </button>
+                <button type="button" onClick={() => { toggleBlur(); setShowMore(false); }} disabled={blurBusy || !camera} className="flex w-full items-center gap-3 border-t border-white/5 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30">
+                  <FiDroplet className="h-4 w-4 shrink-0" />
+                  <span className="flex-1">{blurBusy ? 'Loading blur…' : camera ? 'Blur my background' : 'Turn camera on to blur'}</span>
+                  {blurOn && <FiCheck className="h-4 w-4 shrink-0 text-amber-300" />}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
         <ControlButton active={showChat} onClick={openChat} onIcon={FiMessageSquare} offIcon={FiMessageSquare} label="Chat"/>
         {isHost && <ControlButton active={showHost} onClick={openHost} onIcon={FiUsers} offIcon={FiUsers} label="Host controls"/>}
         <button onClick={leaveVoluntarily} aria-label="Leave meeting" className="grid h-11 w-11 place-items-center rounded-full bg-red-500 text-white"><FiPhoneOff/></button>
