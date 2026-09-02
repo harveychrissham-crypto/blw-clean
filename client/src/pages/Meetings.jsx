@@ -1,11 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { FiCamera, FiCameraOff, FiMic, FiMicOff, FiMonitor, FiUsers, FiLogOut, FiCopy, FiPlus, FiPhoneOff, FiMessageSquare, FiLock, FiUnlock, FiUserX, FiSend, FiWifi, FiWifiOff, FiX, FiMaximize2, FiMinimize2, FiChevronLeft, FiChevronRight, FiDroplet, FiMoreHorizontal, FiCheck } from 'react-icons/fi';
+import { FiCamera, FiCameraOff, FiMic, FiMicOff, FiMonitor, FiUsers, FiLogOut, FiCopy, FiPlus, FiPhoneOff, FiMessageSquare, FiLock, FiUnlock, FiUserX, FiSend, FiWifi, FiWifiOff, FiX, FiMaximize2, FiMinimize2, FiChevronLeft, FiChevronRight, FiDroplet, FiMoreHorizontal, FiCheck, FiUserPlus, FiUserCheck, FiVideo, FiClock } from 'react-icons/fi';
 import { Room, RoomEvent, ParticipantEvent, Track, VideoPresets, AudioPresets, DeviceUnsupportedError, DisconnectReason, ConnectionQuality } from 'livekit-client';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
 
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '🙏', '👏'];
+const DEVICE_PREFS_KEY = 'blw-meet-device-prefs';
+
+function loadDevicePrefs() {
+  try { return JSON.parse(localStorage.getItem(DEVICE_PREFS_KEY) || '{}') || {}; } catch { return {}; }
+}
+function saveDevicePrefs(prefs) {
+  try { localStorage.setItem(DEVICE_PREFS_KEY, JSON.stringify(prefs)); } catch { /* storage may be unavailable (private browsing) — not critical */ }
+}
+function isPendingParticipant(p) {
+  try { return JSON.parse(p?.metadata || '{}')?.pending === true; } catch { return false; }
+}
 
 export default function Meetings() {
   const { user } = useAuth();
@@ -70,12 +81,13 @@ export default function Meetings() {
 function Lobby({ participantName, onCancel, onJoin }) {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const savedPrefs = useRef(loadDevicePrefs()).current;
   const [devices, setDevices] = useState({ cams: [], mics: [], speakers: [] });
-  const [camId, setCamId] = useState('');
-  const [micId, setMicId] = useState('');
-  const [speakerId, setSpeakerId] = useState('');
-  const [camOn, setCamOn] = useState(true);
-  const [micOn, setMicOn] = useState(true);
+  const [camId, setCamId] = useState(savedPrefs.camId || '');
+  const [micId, setMicId] = useState(savedPrefs.micId || '');
+  const [speakerId, setSpeakerId] = useState(savedPrefs.speakerId || '');
+  const [camOn, setCamOn] = useState(savedPrefs.camOn ?? true);
+  const [micOn, setMicOn] = useState(savedPrefs.micOn ?? true);
   const [error, setError] = useState('');
   const [ready, setReady] = useState(false);
 
@@ -108,7 +120,13 @@ function Lobby({ participantName, onCancel, onJoin }) {
   }, [camOn, micOn, stopStream]);
 
   useEffect(() => {
-    startPreview({ video: true, audio: true });
+    // Use the remembered device as a soft preference (ideal, not exact) so a
+    // no-longer-connected device from a previous session falls back to the
+    // default instead of throwing OverconstrainedError.
+    startPreview({
+      video: savedPrefs.camId ? { deviceId: { ideal: savedPrefs.camId } } : true,
+      audio: savedPrefs.micId ? { deviceId: { ideal: savedPrefs.micId } } : true,
+    });
     return () => stopStream();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -126,7 +144,9 @@ function Lobby({ participantName, onCancel, onJoin }) {
 
   const join = () => {
     stopStream();
-    onJoin({ videoEnabled: camOn, audioEnabled: micOn, videoDeviceId: camId, audioDeviceId: micId, audioOutputDeviceId: speakerId });
+    const values = { videoEnabled: camOn, audioEnabled: micOn, videoDeviceId: camId, audioDeviceId: micId, audioOutputDeviceId: speakerId };
+    saveDevicePrefs({ camId, micId, speakerId, camOn, micOn });
+    onJoin(values);
   };
 
   return (
@@ -186,6 +206,9 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
   const [showMore, setShowMore] = useState(false);
   const [isHost, setIsHost] = useState(false);
   const [locked, setLocked] = useState(false);
+  const [waitingRoomEnabled, setWaitingRoomEnabled] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [pending, setPending] = useState(Boolean(credentials?.pending));
   const [pinnedId, setPinnedId] = useState(null);
   const [page, setPage] = useState(0);
   const [blurOn, setBlurOn] = useState(false);
@@ -199,7 +222,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
       try {
         const res = await apiFetch(`/api/video/rooms/${encodeURIComponent(roomName)}/status`);
         const body = await res.json().catch(() => ({}));
-        if (!cancelled && res.ok) { setIsHost(body.isHost === true); setLocked(body.locked === true); }
+        if (!cancelled && res.ok) { setIsHost(body.isHost === true); setLocked(body.locked === true); setWaitingRoomEnabled(body.waitingRoom === true); setRecording(body.recording === true); }
       } catch { /* leave defaults — host controls just stay hidden */ }
     })();
     return () => { cancelled = true; };
@@ -210,6 +233,13 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
   const openMore = () => setShowMore((v) => { const next = !v; if (next) { setShowChat(false); setShowHost(false); } return next; });
 
   useEffect(() => {
+    if (!showChat && !showHost && !showMore) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') { setShowChat(false); setShowHost(false); setShowMore(false); } };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showChat, showHost, showMore]);
+
+  useEffect(() => {
     if (!pinnedId) return;
     const localId = roomRef.current?.localParticipant?.identity;
     const stillHere = pinnedId === localId || participants.some((p) => p.identity === pinnedId);
@@ -218,6 +248,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
 
   useEffect(() => {
     let disposed = false;
+    let isPending = false; // internal flag mirroring `pending` state, kept outside React state to avoid stale closures in the event handlers below
     const liveRoom = new Room({
       adaptiveStream: true,
       dynacast: true,
@@ -230,7 +261,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
     });
     roomRef.current = liveRoom;
     const sync = () => { if (!disposed) { setParticipants(Array.from(liveRoom.remoteParticipants.values())); rerender(v => v + 1); } };
-    liveRoom.on(RoomEvent.ParticipantConnected, sync).on(RoomEvent.ParticipantDisconnected, sync).on(RoomEvent.TrackSubscribed, sync).on(RoomEvent.TrackUnsubscribed, sync).on(RoomEvent.LocalTrackPublished, sync).on(RoomEvent.LocalTrackUnpublished, sync);
+    liveRoom.on(RoomEvent.ParticipantConnected, sync).on(RoomEvent.ParticipantDisconnected, sync).on(RoomEvent.TrackSubscribed, sync).on(RoomEvent.TrackUnsubscribed, sync).on(RoomEvent.LocalTrackPublished, sync).on(RoomEvent.LocalTrackUnpublished, sync).on(RoomEvent.ParticipantMetadataChanged, sync);
     liveRoom.on(RoomEvent.Disconnected, (reason) => {
       if (disposed) return;
       let mapped = '';
@@ -243,16 +274,36 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
     liveRoom.on(RoomEvent.SignalReconnecting, () => !disposed && setConnState('reconnecting'));
     liveRoom.on(RoomEvent.Reconnected, () => !disposed && setConnState('connected'));
     liveRoom.on(RoomEvent.ActiveSpeakersChanged, (speakers) => { if (!disposed) setActiveSpeakers(new Set(speakers.map((p) => p.identity))); });
+    liveRoom.on(RoomEvent.DataReceived, (payload, _participant, _kind, topic) => {
+      if (disposed || topic !== 'recording') return;
+      try { const data = JSON.parse(new TextDecoder().decode(payload)); setRecording(Boolean(data.recording)); } catch { /* ignore malformed payload */ }
+    });
+    const applyChoices = async () => {
+      if (choices?.videoEnabled) await liveRoom.localParticipant.setCameraEnabled(true, choices.videoDeviceId ? { deviceId: choices.videoDeviceId } : undefined).catch(() => {});
+      if (choices?.audioEnabled) await liveRoom.localParticipant.setMicrophoneEnabled(true, choices.audioDeviceId ? { deviceId: choices.audioDeviceId } : undefined).catch(() => {});
+      if (choices?.audioOutputDeviceId) await liveRoom.switchActiveDevice('audiooutput', choices.audioOutputDeviceId).catch(() => {});
+      setCamera(!!choices?.videoEnabled);
+      setMic(!!choices?.audioEnabled);
+    };
+    const admissionCheck = async (participant) => {
+      if (disposed || !isPending || participant !== liveRoom.localParticipant) return;
+      let stillPending = true;
+      try { stillPending = JSON.parse(liveRoom.localParticipant.metadata || '{}')?.pending === true; } catch { /* treat unparsable metadata as no longer pending */ stillPending = false; }
+      if (stillPending) return;
+      isPending = false;
+      setPending(false);
+      try { await applyChoices(); } catch (e) { setError(e?.message || 'Admitted, but unable to start your camera/mic automatically — use the controls below.'); }
+    };
+    liveRoom.on(RoomEvent.ParticipantPermissionsChanged, (_prev, participant) => admissionCheck(participant));
+    liveRoom.on(RoomEvent.ParticipantMetadataChanged, (_metadata, participant) => admissionCheck(participant));
     (async () => {
       try {
         await liveRoom.connect(credentials.server_url, credentials.participant_token);
         if (disposed) return;
-        if (choices?.videoEnabled) await liveRoom.localParticipant.setCameraEnabled(true, choices.videoDeviceId ? { deviceId: choices.videoDeviceId } : undefined).catch(() => {});
-        if (choices?.audioEnabled) await liveRoom.localParticipant.setMicrophoneEnabled(true, choices.audioDeviceId ? { deviceId: choices.audioDeviceId } : undefined).catch(() => {});
-        if (choices?.audioOutputDeviceId) await liveRoom.switchActiveDevice('audiooutput', choices.audioOutputDeviceId).catch(() => {});
+        try { isPending = JSON.parse(liveRoom.localParticipant.metadata || '{}')?.pending === true; } catch { isPending = false; }
+        setPending(isPending);
+        if (!isPending) await applyChoices();
         if (disposed) return;
-        setCamera(!!choices?.videoEnabled);
-        setMic(!!choices?.audioEnabled);
         setConnected(true);
         setConnState('connected');
         sync();
@@ -285,6 +336,11 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
   }
   function leaveVoluntarily() { onLeave(''); }
 
+  const changeRecording = (next) => {
+    setRecording(next);
+    try { roomRef.current?.localParticipant.publishData(new TextEncoder().encode(JSON.stringify({ recording: next })), { reliable: true, topic: 'recording' }); } catch { /* best-effort broadcast */ }
+  };
+
   async function toggleBlur() {
     const track = roomRef.current?.localParticipant.getTrackPublication(Track.Source.Camera)?.track;
     if (!track) { setError('Turn your camera on first, then enable background blur.'); return; }
@@ -308,7 +364,8 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
   }
 
   const local = roomRef.current?.localParticipant;
-  const all = local ? [local, ...participants] : participants;
+  const activeParticipants = participants.filter((p) => !isPendingParticipant(p));
+  const all = local ? [local, ...activeParticipants] : activeParticipants;
   const screenSharer = all.find((p) => p.getTrackPublication?.(Track.Source.ScreenShare)?.track);
   const pinnedParticipant = pinnedId ? all.find((p) => p.identity === pinnedId) : null;
   const focus = screenSharer || pinnedParticipant;
@@ -338,11 +395,22 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
         )}
       </div>;
 
+  if (pending) {
+    return (
+      <section className="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center px-5 text-center" role="status" aria-live="polite">
+        <div className="mb-5 h-12 w-12 animate-spin rounded-full border-2 border-white/20 border-t-white/70" aria-hidden="true" />
+        <h1 className="text-xl font-semibold text-white">Waiting for the host to let you in…</h1>
+        <p className="mt-2 text-sm text-white/50">This meeting has a waiting room. You'll join automatically as soon as a host admits you.</p>
+        <button type="button" onClick={leaveVoluntarily} className="mt-6 rounded-full border border-white/10 px-5 py-2.5 text-sm text-white/70 hover:text-white">Cancel</button>
+      </section>
+    );
+  }
+
   return (
     <section className="mx-auto max-w-7xl px-3 py-4 sm:px-5">
       <div className="mb-4 flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs uppercase tracking-widest text-[#F2A31C]">Live room</p>
+          <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#F2A31C]">Live room{recording && <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-red-300"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" aria-hidden="true" />Recording</span>}</p>
           <h1 className="truncate text-2xl font-bold">{roomName}</h1>
           <p className="text-xs text-white/40">{connState === 'reconnecting' ? 'Reconnecting…' : connected ? `${all.length} participant${all.length === 1 ? '' : 's'}` : 'Connecting…'}</p>
         </div>
@@ -384,7 +452,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
       </div>
       {error && <p className="mx-auto mt-4 max-w-xl rounded-2xl border border-red-400/20 bg-red-400/5 p-3 text-center text-sm text-red-200">{error}</p>}
       <ChatPanel liveRoom={roomRef.current} open={showChat} onClose={() => setShowChat(false)} />
-      {isHost && <HostPanel roomName={roomName} open={showHost} onClose={() => setShowHost(false)} participants={participants} locked={locked} setLocked={setLocked} onEnded={() => onLeave('ended')} />}
+      {isHost && <HostPanel roomName={roomName} open={showHost} onClose={() => setShowHost(false)} participants={participants} locked={locked} setLocked={setLocked} waitingRoomEnabled={waitingRoomEnabled} setWaitingRoomEnabled={setWaitingRoomEnabled} recording={recording} onRecordingChange={changeRecording} onEnded={() => onLeave('ended')} />}
     </section>
   );
 }
@@ -604,11 +672,28 @@ function ReactionsBar({ liveRoom, localParticipant, participants }) {
   );
 }
 
-function HostPanel({ roomName, open, onClose, participants, locked, setLocked, onEnded }) {
+function HostPanel({ roomName, open, onClose, participants, locked, setLocked, waitingRoomEnabled, setWaitingRoomEnabled, recording, onRecordingChange, onEnded }) {
   const [busy, setBusy] = useState('');
   const [notice, setNotice] = useState('');
+  const [log, setLog] = useState([]);
+  const closeButtonRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    closeButtonRef.current?.focus();
+    (async () => {
+      try {
+        const res = await apiFetch(`/api/video/rooms/${encodeURIComponent(roomName)}/status`);
+        const body = await res.json().catch(() => ({}));
+        if (res.ok) setLog(Array.isArray(body.log) ? body.log : []);
+      } catch { /* the activity log is a nice-to-have; ignore failures */ }
+    })();
+  }, [open, roomName]);
 
   if (!open) return null;
+
+  const waitingParticipants = participants.filter(isPendingParticipant);
+  const activeParticipants = participants.filter((p) => !isPendingParticipant(p));
 
   const call = async (path, options) => {
     const response = await apiFetch(path, { method: 'POST', ...options });
@@ -638,10 +723,40 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, o
     finally { setBusy(''); }
   };
 
+  const admit = async (identity) => {
+    setBusy(identity); setNotice('');
+    try { await call(`/api/video/rooms/${encodeURIComponent(roomName)}/participants/${encodeURIComponent(identity)}/admit`); }
+    catch (err) { setNotice(err?.message || 'Unable to admit that participant.'); }
+    finally { setBusy(''); }
+  };
+
+  const deny = async (identity) => {
+    setBusy(identity); setNotice('');
+    try { await call(`/api/video/rooms/${encodeURIComponent(roomName)}/participants/${encodeURIComponent(identity)}/deny`); }
+    catch { setNotice('Unable to deny that participant.'); }
+    finally { setBusy(''); }
+  };
+
   const toggleLock = async () => {
     setBusy('lock'); setNotice('');
     try { const next = !locked; await call(`/api/video/rooms/${encodeURIComponent(roomName)}/lock`, { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ locked: next }) }); setLocked(next); setNotice(next ? 'Room locked — no new participants can join.' : 'Room unlocked.'); }
     catch (err) { setNotice(err?.message || 'Unable to change the lock.'); }
+    finally { setBusy(''); }
+  };
+
+  const toggleWaitingRoom = async () => {
+    setBusy('waiting-room'); setNotice('');
+    try { const next = !waitingRoomEnabled; await call(`/api/video/rooms/${encodeURIComponent(roomName)}/waiting-room`, { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: next }) }); setWaitingRoomEnabled(next); setNotice(next ? 'Waiting room on — new joiners need your approval.' : 'Waiting room off.'); }
+    catch (err) { setNotice(err?.message || 'Unable to change the waiting room.'); }
+    finally { setBusy(''); }
+  };
+
+  const toggleRecording = async () => {
+    setBusy('recording'); setNotice('');
+    try {
+      if (recording) { await call(`/api/video/rooms/${encodeURIComponent(roomName)}/recording/stop`); onRecordingChange(false); setNotice('Recording stopped.'); }
+      else { await call(`/api/video/rooms/${encodeURIComponent(roomName)}/recording/start`); onRecordingChange(true); setNotice('Recording started — everyone in the call now sees a recording badge.'); }
+    } catch (err) { setNotice(err?.message || 'Unable to change recording.'); }
     finally { setBusy(''); }
   };
 
@@ -653,34 +768,63 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, o
   };
 
   return (
-    <div className="fixed inset-x-3 bottom-24 top-24 z-30 flex flex-col rounded-3xl border border-white/10 bg-[#11101d]/98 shadow-2xl backdrop-blur sm:inset-x-auto sm:left-4 sm:top-28 sm:h-[28rem] sm:w-80">
+    <div role="dialog" aria-modal="true" aria-label="Host controls" className="fixed inset-x-3 bottom-24 top-24 z-30 flex flex-col rounded-3xl border border-white/10 bg-[#11101d]/98 shadow-2xl backdrop-blur sm:inset-x-auto sm:left-4 sm:top-28 sm:h-[30rem] sm:w-80">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <p className="text-sm font-semibold text-white">Host controls</p>
-        <button onClick={onClose} className="text-white/50 hover:text-white"><FiX/></button>
+        <button ref={closeButtonRef} onClick={onClose} aria-label="Close host controls" className="text-white/50 hover:text-white"><FiX/></button>
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-3">
         <div className="flex flex-wrap gap-2">
           <button type="button" disabled={busy === 'mute-all'} onClick={muteAll} className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 disabled:opacity-50">{busy === 'mute-all' ? 'Muting…' : 'Mute all'}</button>
           <button type="button" disabled={busy === 'lock'} onClick={toggleLock} className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold disabled:opacity-50 ${locked ? 'border-amber-400/40 bg-amber-400/10 text-amber-200' : 'border-white/15 bg-white/5 text-white/80 hover:bg-white/10'}`}>{locked ? <FiLock className="h-3 w-3" /> : <FiUnlock className="h-3 w-3" />} {busy === 'lock' ? 'Updating…' : locked ? 'Locked' : 'Lock room'}</button>
+          <button type="button" disabled={busy === 'waiting-room'} onClick={toggleWaitingRoom} className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold disabled:opacity-50 ${waitingRoomEnabled ? 'border-amber-400/40 bg-amber-400/10 text-amber-200' : 'border-white/15 bg-white/5 text-white/80 hover:bg-white/10'}`}><FiUserPlus className="h-3 w-3" /> {busy === 'waiting-room' ? 'Updating…' : waitingRoomEnabled ? 'Waiting room on' : 'Waiting room off'}</button>
+          <button type="button" disabled={busy === 'recording'} onClick={toggleRecording} className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold disabled:opacity-50 ${recording ? 'border-red-400/40 bg-red-500/10 text-red-300' : 'border-white/15 bg-white/5 text-white/80 hover:bg-white/10'}`}><FiVideo className="h-3 w-3" /> {busy === 'recording' ? 'Updating…' : recording ? 'Stop recording' : 'Record meeting'}</button>
         </div>
-        {notice && <p className="mt-2 text-xs text-white/60">{notice}</p>}
+        {notice && <p aria-live="polite" className="mt-2 text-xs text-white/60">{notice}</p>}
+
+        {waitingParticipants.length > 0 && (
+          <div className="mt-4">
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-300/80">Waiting to join ({waitingParticipants.length})</p>
+            <ul className="space-y-1.5">
+              {waitingParticipants.map((p) => (
+                <li key={p.identity} className="flex items-center justify-between gap-3 rounded-xl border border-amber-400/15 bg-amber-400/5 px-3 py-2">
+                  <span className="truncate text-xs text-white/80">{p.name || 'BLW Member'}</span>
+                  <span className="flex shrink-0 gap-2">
+                    <button type="button" disabled={busy === p.identity} onClick={() => admit(p.identity)} aria-label={`Admit ${p.name || 'participant'}`} className="rounded-full border border-emerald-400/30 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-50"><FiUserCheck className="h-3 w-3" /></button>
+                    <button type="button" disabled={busy === p.identity} onClick={() => deny(p.identity)} aria-label={`Deny ${p.name || 'participant'}`} className="rounded-full border border-red-400/25 px-2.5 py-1 text-[11px] font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-50"><FiX className="h-3 w-3" /></button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="mt-4">
-          {participants.length === 0 ? (
+          {activeParticipants.length === 0 ? (
             <p className="text-xs text-white/40">No one else has joined yet.</p>
           ) : (
             <ul className="space-y-1.5">
-              {participants.map((p) => (
+              {activeParticipants.map((p) => (
                 <li key={p.identity} className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] px-3 py-2">
                   <span className="truncate text-xs text-white/75">{p.name || 'BLW Member'}</span>
                   <span className="flex shrink-0 gap-2">
-                    <button type="button" disabled={busy === p.identity} onClick={() => muteOne(p.identity)} className="rounded-full border border-white/15 px-2.5 py-1 text-[11px] font-semibold text-white/70 hover:bg-white/10 disabled:opacity-50"><FiMicOff className="h-3 w-3" /></button>
-                    <button type="button" disabled={busy === p.identity} onClick={() => removeOne(p.identity)} className="rounded-full border border-red-400/25 px-2.5 py-1 text-[11px] font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-50"><FiUserX className="h-3 w-3" /></button>
+                    <button type="button" disabled={busy === p.identity} onClick={() => muteOne(p.identity)} aria-label={`Mute ${p.name || 'participant'}`} className="rounded-full border border-white/15 px-2.5 py-1 text-[11px] font-semibold text-white/70 hover:bg-white/10 disabled:opacity-50"><FiMicOff className="h-3 w-3" /></button>
+                    <button type="button" disabled={busy === p.identity} onClick={() => removeOne(p.identity)} aria-label={`Remove ${p.name || 'participant'}`} className="rounded-full border border-red-400/25 px-2.5 py-1 text-[11px] font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-50"><FiUserX className="h-3 w-3" /></button>
                   </span>
                 </li>
               ))}
             </ul>
           )}
         </div>
+
+        {log.length > 0 && (
+          <details className="mt-4">
+            <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wide text-white/40">Recent activity</summary>
+            <ul className="mt-2 space-y-1 text-[11px] text-white/45">
+              {log.map((entry, i) => <li key={i} className="flex items-start gap-1.5"><FiClock className="mt-0.5 h-3 w-3 shrink-0" /><span>{entry.by || 'A host'} · {entry.type}{entry.target ? ` · ${entry.target.slice(0, 14)}…` : ''}</span></li>)}
+            </ul>
+          </details>
+        )}
       </div>
       <div className="border-t border-white/10 p-3">
         <button type="button" disabled={busy === 'end'} onClick={endForEveryone} className="w-full rounded-2xl border border-red-400/30 bg-red-500/10 py-2.5 text-sm font-semibold text-red-200 hover:bg-red-500/20 disabled:opacity-50">{busy === 'end' ? 'Ending…' : 'End for everyone'}</button>
