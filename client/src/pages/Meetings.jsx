@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { FiCamera, FiCameraOff, FiMic, FiMicOff, FiMonitor, FiUsers, FiLogOut, FiCopy, FiPlus, FiPhoneOff, FiMessageSquare, FiLock, FiUnlock, FiUserX, FiSend, FiWifi, FiWifiOff, FiX, FiMaximize2, FiMinimize2, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiCamera, FiCameraOff, FiMic, FiMicOff, FiMonitor, FiUsers, FiLogOut, FiCopy, FiPlus, FiPhoneOff, FiMessageSquare, FiLock, FiUnlock, FiUserX, FiSend, FiWifi, FiWifiOff, FiX, FiMaximize2, FiMinimize2, FiChevronLeft, FiChevronRight, FiDroplet } from 'react-icons/fi';
 import { Room, RoomEvent, ParticipantEvent, Track, VideoPresets, AudioPresets, DeviceUnsupportedError, DisconnectReason, ConnectionQuality } from 'livekit-client';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
@@ -187,6 +187,9 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
   const [locked, setLocked] = useState(false);
   const [pinnedId, setPinnedId] = useState(null);
   const [page, setPage] = useState(0);
+  const [blurOn, setBlurOn] = useState(false);
+  const [blurBusy, setBlurBusy] = useState(false);
+  const blurProcessorRef = useRef(null);
   const [, rerender] = useState(0);
 
   useEffect(() => {
@@ -264,7 +267,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
 
   const screenShareSupported = typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getDisplayMedia);
 
-  async function toggleCamera() { try { const next = !camera; await roomRef.current?.localParticipant.setCameraEnabled(next); setCamera(next); } catch (e) { setError(e.message); } }
+  async function toggleCamera() { try { const next = !camera; await roomRef.current?.localParticipant.setCameraEnabled(next); setCamera(next); if (!next) setBlurOn(false); } catch (e) { setError(e.message); } }
   async function toggleMic() { try { const next = !mic; await roomRef.current?.localParticipant.setMicrophoneEnabled(next); setMic(next); } catch (e) { setError(e.message); } }
   async function toggleShare() {
     if (!screenShareSupported) { setError('Screen sharing is not supported on this device. Try from a desktop browser instead.'); return; }
@@ -279,6 +282,28 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
     }
   }
   function leaveVoluntarily() { onLeave(''); }
+
+  async function toggleBlur() {
+    const track = roomRef.current?.localParticipant.getTrackPublication(Track.Source.Camera)?.track;
+    if (!track) { setError('Turn your camera on first, then enable background blur.'); return; }
+    setBlurBusy(true); setError('');
+    try {
+      if (blurOn) {
+        await track.stopProcessor();
+        setBlurOn(false);
+      } else {
+        const { BackgroundProcessor, supportsBackgroundProcessors } = await import('@livekit/track-processors');
+        if (!supportsBackgroundProcessors()) { setError("Background blur isn't supported on this browser or device."); return; }
+        if (!blurProcessorRef.current) blurProcessorRef.current = BackgroundProcessor({ mode: 'background-blur', blurRadius: 10 });
+        await track.setProcessor(blurProcessorRef.current);
+        setBlurOn(true);
+      }
+    } catch (e) {
+      setError(e?.message || 'Unable to change background blur. Your device may not support it.');
+    } finally {
+      setBlurBusy(false);
+    }
+  }
 
   const local = roomRef.current?.localParticipant;
   const all = local ? [local, ...participants] : participants;
@@ -332,6 +357,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
         <ControlButton active={camera} onClick={toggleCamera} onIcon={FiCamera} offIcon={FiCameraOff} label="Camera"/>
         <ControlButton active={mic} onClick={toggleMic} onIcon={FiMic} offIcon={FiMicOff} label="Microphone"/>
         <ControlButton active={sharing} onClick={toggleShare} onIcon={FiMonitor} offIcon={FiMonitor} label={screenShareSupported ? 'Share screen' : 'Screen sharing is not supported on this device'} disabled={!screenShareSupported}/>
+        <ControlButton active={blurOn} onClick={toggleBlur} onIcon={FiDroplet} offIcon={FiDroplet} label={blurBusy ? 'Loading background blur…' : camera ? 'Blur my background' : 'Turn your camera on to blur your background'} disabled={blurBusy || !camera}/>
         <ControlButton active={showChat} onClick={openChat} onIcon={FiMessageSquare} offIcon={FiMessageSquare} label="Chat"/>
         {isHost && <ControlButton active={showHost} onClick={openHost} onIcon={FiUsers} offIcon={FiUsers} label="Host controls"/>}
         <button onClick={leaveVoluntarily} aria-label="Leave meeting" className="grid h-11 w-11 place-items-center rounded-full bg-red-500 text-white"><FiPhoneOff/></button>

@@ -26,6 +26,7 @@
     "@capacitor/splash-screen": "^6.0.4",
     "@capacitor/status-bar": "^6.0.2",
     "@daily-co/daily-js": "^0.83.1",
+    "@livekit/track-processors": "^0.7.2",
     "framer-motion": "^11.11.9",
     "hls.js": "^1.5.17",
     "jsqr": "^1.4.0",
