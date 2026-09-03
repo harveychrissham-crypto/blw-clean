@@ -18,6 +18,11 @@ LIVEKIT_RECORDING_S3_SECRET=replace-me
 LIVEKIT_RECORDING_S3_BUCKET=replace-me
 LIVEKIT_RECORDING_S3_ENDPOINT=https://YOUR-S3-ENDPOINT.example
 LIVEKIT_RECORDING_S3_REGION=auto
+# Optional: base URL to construct a direct link to a finished recording
+# (e.g. a CDN in front of the bucket, or the bucket's public URL if you've
+# made the recordings/ prefix public). Leave unset and the host panel will
+# just show the storage path instead of a clickable link.
+LIVEKIT_RECORDING_PUBLIC_URL=
 # Optional HLS output storage for Live -> Watch livestream.
 LIVEKIT_HLS_PUBLIC_URL=https://YOUR-HLS-PUBLIC-DOMAIN.example
 LIVEKIT_HLS_S3_ACCESS_KEY=replace-me

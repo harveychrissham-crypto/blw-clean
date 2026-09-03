@@ -12,6 +12,45 @@ function isLeader(auth) { const user = auth?.user || auth || {}; const roles = A
 function livekit(env) { const host = String(env.LIVEKIT_URL || '').trim(); const key = String(env.LIVEKIT_API_KEY || '').trim(); const secret = String(env.LIVEKIT_API_SECRET || '').trim(); if (!host || !key || !secret) throw new Error('LiveKit is not configured. Add LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET.'); return { host, key, secret, api: new LiveKitAPI(host, key, secret) }; }
 async function syncLiveState(env, values) { const connectionString = env.HYPERDRIVE?.connectionString || env.DATABASE_URL || ''; if (!connectionString) throw new Error('Database connection is not configured.'); const { Client } = await import('pg'); const client = new Client({ connectionString }); await client.connect(); try { await client.query(`CREATE TABLE IF NOT EXISTS live_stream (id INTEGER PRIMARY KEY DEFAULT 1,title TEXT NOT NULL DEFAULT '',youtube_url TEXT NOT NULL DEFAULT '',is_live BOOLEAN NOT NULL DEFAULT FALSE,updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),CONSTRAINT live_stream_singleton CHECK (id = 1))`); await client.query(`ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS hls_playback_url TEXT NOT NULL DEFAULT ''`); await client.query(`ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS livekit_room TEXT NOT NULL DEFAULT ''`); await client.query(`ALTER TABLE live_stream ADD COLUMN IF NOT EXISTS livekit_egress_id TEXT NOT NULL DEFAULT ''`); await client.query(`INSERT INTO live_stream (id) VALUES (1) ON CONFLICT (id) DO NOTHING`); await client.query(`UPDATE live_stream SET title=$1,is_live=$2,hls_playback_url=$3,livekit_room=$4,livekit_egress_id=$5,updated_at=NOW() WHERE id=1`, [values.title || '', !!values.isLive, values.playbackUrl || '', values.room || '', values.egressId || '']); } finally { await client.end().catch(() => {}); } }
 
+// --- Meeting history ---------------------------------------------------
+// A tiny table tracking which rooms a member has joined, so they can find
+// and rejoin a meeting later without needing to remember or re-type the
+// room code. Best-effort: if no database is configured, both functions
+// below just no-op rather than blocking joins or breaking the page.
+async function dbClient(env) {
+  const connectionString = env.HYPERDRIVE?.connectionString || env.DATABASE_URL || '';
+  if (!connectionString) return null;
+  const { Client } = await import('pg');
+  const client = new Client({ connectionString });
+  await client.connect();
+  return client;
+}
+async function recordRoomVisit(env, room, email) {
+  const client = await dbClient(env).catch(() => null);
+  if (!client) return;
+  try {
+    await client.query(`CREATE TABLE IF NOT EXISTS meeting_room_visits (room_name TEXT NOT NULL, member_email TEXT NOT NULL, last_visited_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY (room_name, member_email))`);
+    await client.query(`INSERT INTO meeting_room_visits (room_name, member_email) VALUES ($1,$2) ON CONFLICT (room_name, member_email) DO UPDATE SET last_visited_at = NOW()`, [room, email]);
+  } finally { await client.end().catch(() => {}); }
+}
+async function recentRooms(request, env, headers) {
+  const auth = authUser(request, env); if (!auth) return json({ error: 'Authentication required.' }, 401, headers);
+  const email = memberEmail(auth); if (!email) return json({ error: 'Authenticated member identity is missing.' }, 401, headers);
+  const client = await dbClient(env).catch(() => null);
+  if (!client) return json({ rooms: [] }, 200, headers); // no DB configured — feature quietly no-ops rather than erroring
+  let rows = [];
+  try {
+    await client.query(`CREATE TABLE IF NOT EXISTS meeting_room_visits (room_name TEXT NOT NULL, member_email TEXT NOT NULL, last_visited_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY (room_name, member_email))`);
+    const result = await client.query(`SELECT room_name, last_visited_at FROM meeting_room_visits WHERE member_email = $1 ORDER BY last_visited_at DESC LIMIT 10`, [email]);
+    rows = result.rows;
+  } finally { await client.end().catch(() => {}); }
+  let liveNames = new Set();
+  if (rows.length) {
+    try { const { api } = livekit(env); const liveRooms = await api.room.listRooms(rows.map((r) => r.room_name)); liveNames = new Set(liveRooms.map((r) => r.name)); } catch { /* if LiveKit lookup fails, just report nothing as confirmed-active */ }
+  }
+  return json({ rooms: rows.map((r) => ({ room: r.room_name, lastVisitedAt: r.last_visited_at, active: liveNames.has(r.room_name) })) }, 200, headers);
+}
+
 // --- Room metadata helpers -------------------------------------------------
 // Room metadata is a single JSON blob LiveKit stores per-room. We use it to
 // hold lightweight, ephemeral coordination state (lock flag, waiting-room
@@ -51,6 +90,7 @@ async function tokenResponse(request, env, headers) {
   }
   const access = new AccessToken(key, secret, { identity, name: participantName, ttl: '1h', metadata: waitingRoom ? JSON.stringify({ pending: true }) : undefined });
   access.addGrant({ roomJoin: true, room, canPublish: waitingRoom ? false : body?.role !== 'viewer', canSubscribe: !waitingRoom, canPublishData: !waitingRoom });
+  await recordRoomVisit(env, room, email).catch(() => {}); // best-effort — never block a join over a history-tracking write
   return json({ server_url: host, participant_token: await access.toJwt(), participant_identity: identity, participant_name: participantName, room, pending: waitingRoom }, 201, headers);
 }
 
@@ -194,6 +234,31 @@ async function stopRecording(request, env, headers, room) {
   return json({ ok: true }, 200, headers);
 }
 
+async function listRecordings(request, env, headers, room) {
+  const auth = authUser(request, env); if (!auth) return json({ error: 'Authentication required.' }, 401, headers);
+  if (!isLeader(auth)) return json({ error: 'Leader access required.' }, 403, headers);
+  const { api } = livekit(env); const safe = safeRoom(room);
+  const publicBase = String(env.LIVEKIT_RECORDING_PUBLIC_URL || '').trim().replace(/\/$/, '');
+  let egresses = [];
+  try { egresses = await api.egress.listEgress({ roomName: safe }); } catch (error) { return json({ error: error?.message || 'Unable to list recordings.' }, 502, headers); }
+  const recordings = egresses
+    .filter((e) => e.fileResults?.length)
+    .map((e) => {
+      const file = e.fileResults[0];
+      const path = String(file?.location || file?.filename || '').replace(/^\/+/, '');
+      return {
+        egressId: e.egressId,
+        status: e.status === 3 ? 'complete' : e.status === 4 ? 'failed' : e.status === 5 ? 'aborted' : 'in-progress',
+        startedAt: e.startedAt ? Number(e.startedAt) / 1e6 : null,
+        durationSeconds: file?.duration ? Number(file.duration) / 1e9 : null,
+        path,
+        downloadUrl: publicBase && path ? `${publicBase}/${path}` : null,
+      };
+    })
+    .sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0));
+  return json({ recordings }, 200, headers);
+}
+
 async function startBroadcast(request, env, headers) { const auth = authUser(request, env); if (!auth) return json({ error: 'Authentication required.' }, 401, headers); if (!isLeader(auth)) return json({ error: 'Leader access required.' }, 403, headers); const rtmpUrl = String(env.LIVEKIT_RTMP_URL || '').trim(); const playbackUrl = String(env.LIVEKIT_PUBLIC_PLAYBACK_URL || '').trim(); if (!rtmpUrl || !playbackUrl) return json({ error: 'Livestream output is not configured. Add LIVEKIT_RTMP_URL and LIVEKIT_PUBLIC_PLAYBACK_URL.' }, 503, headers); const body = await request.clone().json().catch(() => ({})); const room = safeRoom(body?.room_name || body?.name) || `live-${crypto.randomUUID().slice(0, 8)}`; const title = String(body?.title || 'BLW Live Service').trim().slice(0, 160) || 'BLW Live Service'; const { api } = livekit(env); await api.room.createRoom({ name: room, emptyTimeout: 300, maxParticipants: 100 }); let egress; try { const output = new StreamOutput({ protocol: 'rtmp', urls: [rtmpUrl] }); egress = await api.egress.startRoomCompositeEgress(room, output, { layout: 'grid' }); } catch (error) { await api.room.deleteRoom(room).catch(() => {}); throw error; } try { await syncLiveState(env, { title, isLive: true, playbackUrl, room, egressId: egress.egressId }); } catch (error) { await api.egress.stopEgress(egress.egressId).catch(() => {}); await api.room.deleteRoom(room).catch(() => {}); throw error; } return json({ room, egress_id: egress.egressId, playback_url: playbackUrl, title }, 201, headers); }
 async function stopBroadcast(request, env, headers) { const auth = authUser(request, env); if (!auth) return json({ error: 'Authentication required.' }, 401, headers); if (!isLeader(auth)) return json({ error: 'Leader access required.' }, 403, headers); const body = await request.clone().json().catch(() => ({})); const room = safeRoom(body?.room_name || body?.room); const egressId = String(body?.egress_id || '').trim(); const { api } = livekit(env); if (egressId) await api.egress.stopEgress(egressId); if (room) await api.room.deleteRoom(room); await syncLiveState(env, { title: '', isLive: false, playbackUrl: '', room: '', egressId: '' }); return json({ ok: true }, 200, headers); }
 
@@ -205,6 +270,7 @@ export async function handleVideoApi(request, env, url, headers) {
     if (url.pathname === '/api/video/token' && request.method === 'POST') return await tokenResponse(request, env, headers);
     if (url.pathname === '/api/video/rooms' && request.method === 'POST') return await createRoom(request, env, headers);
     if (url.pathname === '/api/video/rooms' && request.method === 'GET') return await listRooms(request, env, headers);
+    if (url.pathname === '/api/video/rooms/recent' && request.method === 'GET') return await recentRooms(request, env, headers);
     const roomMatch = url.pathname.match(/^\/api\/video\/rooms\/([^/]+)$/);
     if (roomMatch && request.method === 'DELETE') return await deleteRoom(request, env, headers, decodeURIComponent(roomMatch[1]));
     const lockMatch = url.pathname.match(/^\/api\/video\/rooms\/([^/]+)\/lock$/);
@@ -215,6 +281,8 @@ export async function handleVideoApi(request, env, url, headers) {
     if (statusMatch && request.method === 'GET') return await roomStatus(request, env, headers, decodeURIComponent(statusMatch[1]));
     const muteAllMatch = url.pathname.match(/^\/api\/video\/rooms\/([^/]+)\/mute-all$/);
     if (muteAllMatch && request.method === 'POST') return await muteAllParticipants(request, env, headers, decodeURIComponent(muteAllMatch[1]));
+    const recordingsMatch = url.pathname.match(/^\/api\/video\/rooms\/([^/]+)\/recordings$/);
+    if (recordingsMatch && request.method === 'GET') return await listRecordings(request, env, headers, decodeURIComponent(recordingsMatch[1]));
     const recordingStartMatch = url.pathname.match(/^\/api\/video\/rooms\/([^/]+)\/recording\/start$/);
     if (recordingStartMatch && request.method === 'POST') return await startRecording(request, env, headers, decodeURIComponent(recordingStartMatch[1]));
     const recordingStopMatch = url.pathname.match(/^\/api\/video\/rooms\/([^/]+)\/recording\/stop$/);

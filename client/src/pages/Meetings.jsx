@@ -28,6 +28,20 @@ export default function Meetings() {
   const [error, setError] = useState('');
   const [creating, setCreating] = useState(false);
   const [leaveNotice, setLeaveNotice] = useState('');
+  const [recentRooms, setRecentRooms] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!user) return undefined;
+    (async () => {
+      try {
+        const res = await apiFetch('/api/video/rooms/recent');
+        const body = await res.json().catch(() => ({}));
+        if (!cancelled && res.ok) setRecentRooms(Array.isArray(body.rooms) ? body.rooms : []);
+      } catch { /* recent-meetings list is a nice-to-have; ignore failures */ }
+    })();
+    return () => { cancelled = true; };
+  }, [user, stage]);
 
   async function createRoom() {
     setCreating(true); setError('');
@@ -40,9 +54,10 @@ export default function Meetings() {
     } catch (e) { setError(e.message); } finally { setCreating(false); }
   }
 
-  async function goToLobby() {
-    const value = room.trim();
+  async function goToLobby(roomOverride) {
+    const value = (roomOverride ?? room).trim();
     if (!value) return setError('Enter a room code.');
+    setRoom(value);
     setError(''); setLeaveNotice('');
     try {
       const res = await apiFetch('/api/video/token', { method: 'POST', body: JSON.stringify({ room_name: value, participant_name: user?.name || user?.email || 'BLW Member' }) });
@@ -75,7 +90,7 @@ export default function Meetings() {
     return <CallRoom credentials={credentials} choices={choices} room={room} onLeave={handleLeave} />;
   }
 
-  return <section className="mx-auto max-w-4xl px-5 py-12 sm:py-16"><div className="mb-10"><p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#F2A31C]">Fellowship</p><h1 className="mt-2 text-4xl font-bold">Meetings</h1><p className="mt-3 max-w-2xl text-white/60">Gather for Bible studies, fellowship meetings and leadership calls.</p></div>{leaveNotice && <p className="mb-6 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 text-sm text-amber-200">{leaveNotice}</p>}<div className="grid gap-5 sm:grid-cols-2"><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiPlus className="h-6 w-6 text-[#F2A31C]"/><h2 className="mt-4 text-xl font-semibold">Create room</h2><p className="mt-2 text-sm text-white/55">Start an instant room and share its code with your group.</p><button disabled={creating} onClick={createRoom} className="mt-6 w-full rounded-2xl bg-white py-3 font-semibold text-black disabled:opacity-50">{creating ? 'Creating…' : 'Create meeting'}</button></div><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiUsers className="h-6 w-6 text-[#F2A31C]"/><h2 className="mt-4 text-xl font-semibold">Join room</h2><p className="mt-2 text-sm text-white/55">Enter a room code from your leader or fellowship group.</p><input value={room} onChange={e => setRoom(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') goToLobby(); }} placeholder="Room code" className="mt-5 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none focus:border-white/30"/><button onClick={goToLobby} className="mt-3 w-full rounded-2xl bg-gradient-to-r from-[#EC2FA8] to-[#8A2BE2] py-3 font-semibold">Join meeting</button></div></div>{room && <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm"><span className="min-w-0 truncate text-white/60">Room: <b className="text-white">{room}</b></span><button onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/meetings?room=${encodeURIComponent(room)}`)} className="inline-flex shrink-0 items-center gap-2 text-white/70 hover:text-white"><FiCopy/>Copy link</button></div>}{error && <p className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/5 p-4 text-sm text-red-200">{error}</p>}</section>;
+  return <section className="mx-auto max-w-4xl px-5 py-12 sm:py-16"><div className="mb-10"><p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#F2A31C]">Fellowship</p><h1 className="mt-2 text-4xl font-bold">Meetings</h1><p className="mt-3 max-w-2xl text-white/60">Gather for Bible studies, fellowship meetings and leadership calls.</p></div>{leaveNotice && <p className="mb-6 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 text-sm text-amber-200">{leaveNotice}</p>}<div className="grid gap-5 sm:grid-cols-2"><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiPlus className="h-6 w-6 text-[#F2A31C]"/><h2 className="mt-4 text-xl font-semibold">Create room</h2><p className="mt-2 text-sm text-white/55">Start an instant room and share its code with your group.</p><button disabled={creating} onClick={createRoom} className="mt-6 w-full rounded-2xl bg-white py-3 font-semibold text-black disabled:opacity-50">{creating ? 'Creating…' : 'Create meeting'}</button></div><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiUsers className="h-6 w-6 text-[#F2A31C]"/><h2 className="mt-4 text-xl font-semibold">Join room</h2><p className="mt-2 text-sm text-white/55">Enter a room code from your leader or fellowship group.</p><input value={room} onChange={e => setRoom(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') goToLobby(); }} placeholder="Room code" className="mt-5 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none focus:border-white/30"/><button onClick={() => goToLobby()} className="mt-3 w-full rounded-2xl bg-gradient-to-r from-[#EC2FA8] to-[#8A2BE2] py-3 font-semibold">Join meeting</button></div></div>{room && <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm"><span className="min-w-0 truncate text-white/60">Room: <b className="text-white">{room}</b></span><button onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/meetings?room=${encodeURIComponent(room)}`)} className="inline-flex shrink-0 items-center gap-2 text-white/70 hover:text-white"><FiCopy/>Copy link</button></div>}{error && <p className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/5 p-4 text-sm text-red-200">{error}</p>}{recentRooms.length > 0 && <div className="mt-10"><h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/50">Your recent meetings</h2><ul className="space-y-2">{recentRooms.map((r) => <li key={r.room} className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4"><div className="min-w-0"><p className="truncate text-sm font-medium text-white">{r.room}</p><p className="mt-0.5 flex items-center gap-1.5 text-xs text-white/40">{r.active && <span className="inline-flex items-center gap-1 text-emerald-300"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />Active now</span>}{r.active && ' · '}Last visited {new Date(r.lastVisitedAt).toLocaleDateString()}</p></div><button onClick={() => goToLobby(r.room)} className="shrink-0 rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-white/80 hover:bg-white/10">Rejoin</button></li>)}</ul></div>}</section>;
 }
 
 function Lobby({ participantName, onCancel, onJoin }) {
@@ -187,6 +202,23 @@ function Lobby({ participantName, onCancel, onJoin }) {
         <button type="button" onClick={() => { stopStream(); onCancel(); }} className="text-sm text-white/50 hover:text-white">← Back</button>
         <button type="button" disabled={!ready} onClick={join} className="rounded-2xl bg-gradient-to-r from-[#EC2FA8] to-[#8A2BE2] px-6 py-3 font-semibold text-white disabled:opacity-50">Join meeting</button>
       </div>
+    </section>
+  );
+}
+
+function WaitingScreen({ onCancel }) {
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setSlow(true), 3 * 60 * 1000);
+    return () => clearTimeout(timer);
+  }, []);
+  return (
+    <section className="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center px-5 text-center" role="status" aria-live="polite">
+      <div className="mb-5 h-12 w-12 animate-spin rounded-full border-2 border-white/20 border-t-white/70" aria-hidden="true" />
+      <h1 className="text-xl font-semibold text-white">Waiting for the host to let you in…</h1>
+      <p className="mt-2 text-sm text-white/50">This meeting has a waiting room. You'll join automatically as soon as a host admits you.</p>
+      {slow && <p className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-xs text-amber-200">This is taking a while — the host may not have joined yet. You can keep waiting, or leave and try again later.</p>}
+      <button type="button" onClick={onCancel} className="mt-6 rounded-full border border-white/10 px-5 py-2.5 text-sm text-white/70 hover:text-white">Cancel</button>
     </section>
   );
 }
@@ -396,14 +428,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
       </div>;
 
   if (pending) {
-    return (
-      <section className="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center px-5 text-center" role="status" aria-live="polite">
-        <div className="mb-5 h-12 w-12 animate-spin rounded-full border-2 border-white/20 border-t-white/70" aria-hidden="true" />
-        <h1 className="text-xl font-semibold text-white">Waiting for the host to let you in…</h1>
-        <p className="mt-2 text-sm text-white/50">This meeting has a waiting room. You'll join automatically as soon as a host admits you.</p>
-        <button type="button" onClick={leaveVoluntarily} className="mt-6 rounded-full border border-white/10 px-5 py-2.5 text-sm text-white/70 hover:text-white">Cancel</button>
-      </section>
-    );
+    return <WaitingScreen onCancel={leaveVoluntarily} />;
   }
 
   return (
@@ -676,6 +701,7 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
   const [busy, setBusy] = useState('');
   const [notice, setNotice] = useState('');
   const [log, setLog] = useState([]);
+  const [recordings, setRecordings] = useState([]);
   const closeButtonRef = useRef(null);
 
   useEffect(() => {
@@ -687,6 +713,11 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
         const body = await res.json().catch(() => ({}));
         if (res.ok) setLog(Array.isArray(body.log) ? body.log : []);
       } catch { /* the activity log is a nice-to-have; ignore failures */ }
+      try {
+        const res = await apiFetch(`/api/video/rooms/${encodeURIComponent(roomName)}/recordings`);
+        const body = await res.json().catch(() => ({}));
+        if (res.ok) setRecordings(Array.isArray(body.recordings) ? body.recordings : []);
+      } catch { /* recordings list is a nice-to-have; ignore failures */ }
     })();
   }, [open, roomName]);
 
@@ -822,6 +853,28 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
             <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wide text-white/40">Recent activity</summary>
             <ul className="mt-2 space-y-1 text-[11px] text-white/45">
               {log.map((entry, i) => <li key={i} className="flex items-start gap-1.5"><FiClock className="mt-0.5 h-3 w-3 shrink-0" /><span>{entry.by || 'A host'} · {entry.type}{entry.target ? ` · ${entry.target.slice(0, 14)}…` : ''}</span></li>)}
+            </ul>
+          </details>
+        )}
+
+        {recordings.length > 0 && (
+          <details className="mt-3">
+            <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wide text-white/40">Past recordings ({recordings.length})</summary>
+            <ul className="mt-2 space-y-2">
+              {recordings.map((rec) => (
+                <li key={rec.egressId} className="rounded-xl bg-white/[0.03] px-3 py-2 text-[11px] text-white/60">
+                  <div className="flex items-center justify-between gap-2">
+                    <span>{rec.startedAt ? new Date(rec.startedAt).toLocaleString() : 'Unknown time'}</span>
+                    <span className={rec.status === 'complete' ? 'text-emerald-300' : rec.status === 'failed' || rec.status === 'aborted' ? 'text-red-300' : 'text-amber-300'}>{rec.status}</span>
+                  </div>
+                  {rec.durationSeconds != null && <p className="mt-0.5 text-white/40">{Math.round(rec.durationSeconds / 60)} min</p>}
+                  {rec.downloadUrl ? (
+                    <a href={rec.downloadUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-amber-300 hover:underline">Open recording</a>
+                  ) : rec.path ? (
+                    <p className="mt-1 break-all text-white/35">{rec.path}</p>
+                  ) : null}
+                </li>
+              ))}
             </ul>
           </details>
         )}
