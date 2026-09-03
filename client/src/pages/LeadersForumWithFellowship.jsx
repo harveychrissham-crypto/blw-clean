@@ -6,6 +6,7 @@ import jsQR from 'jsqr';
 import { useAuth } from '../context/AuthContext';
 import { useIsAdmin } from '../hooks/useIsAdmin';
 import { apiFetch } from '../config/api';
+import { IconButton } from '../components/ui/Button';
 import { fetchAllMembers, searchMembers, checkInMember, syncOfflineCheckins } from '../utils/members';
 import { getOfflineCheckinQueue } from '../utils/offlineCheckin';
 import { fetchEvents } from '../utils/events';
@@ -267,7 +268,7 @@ function QRScannerPanel({ onCheckIn, onClose, checkedInCount, pendingCount, even
     <Card variant="raised" className="relative w-full max-w-lg rounded-[2rem] shadow-2xl">
       <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
         <div><Eyebrow>Leaders tool</Eyebrow><h2 className="mt-1 text-xl font-bold text-white">Member Check-In</h2><p className="mt-1 text-xs text-white/40">{event?.title || 'Selected event'}{event?.date ? ` · ${event.date}` : ''} · {checkedInCount} checked in{pendingCount ? ` · ${pendingCount} pending sync` : ''}</p></div>
-        <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70" aria-label="Close scanner"><FiX/></button>
+        <IconButton onClick={onClose} aria-label="Close scanner"><FiX/></IconButton>
       </div>
       <div className="flex border-b border-white/10">
         <button onClick={() => { setTab('scan'); setResult(null); setError(''); }} className={`flex flex-1 items-center justify-center gap-2 py-3 text-sm font-semibold transition ${tab === 'scan' ? 'border-b-2 border-gold-500 text-gold-500' : 'text-white/45'}`}><MdQrCodeScanner/> Scan QR</button>

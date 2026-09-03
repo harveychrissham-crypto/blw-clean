@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { FiRadio, FiSave, FiCheckCircle } from 'react-icons/fi';
 import { fetchLiveStream, updateLiveStream } from '../utils/live';
 import { Card, Eyebrow } from '../components/ui/Card';
+import Button from '../components/ui/Button';
 
 const emptyForm = {
   title: '',
@@ -118,9 +119,9 @@ export default function LiveStreamAdminPanel() {
           {error && <p className="rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
           {saved && <p className="flex items-center gap-2 rounded-xl bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-300"><FiCheckCircle /> Live stream settings saved.</p>}
 
-          <button type="submit" disabled={saving} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gold-500 px-5 py-3 text-sm font-bold text-ink-900 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
+          <Button type="submit" disabled={saving} className="w-full inline-flex items-center justify-center gap-2">
             <FiSave /> {saving ? 'Saving…' : 'Save Live Stream'}
-          </button>
+          </Button>
         </form>
       )}
     </Card>

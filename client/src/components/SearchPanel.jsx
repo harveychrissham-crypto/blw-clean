@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { FiSearch, FiX } from 'react-icons/fi';
 import { Card } from './ui/Card';
+import { IconButton } from './ui/Button';
 
 const content = [
   { title: 'Home', path: '/', description: 'Welcome to Believers\' LoveWorld Campus Ministry Kenya Zone Region and our vision for fellowship.' },
@@ -36,9 +37,7 @@ export default function SearchPanel({ open, onClose }) {
             <FiSearch />
             <span className="text-sm font-semibold uppercase tracking-[0.2em]">Search</span>
           </div>
-          <button onClick={onClose} aria-label="Close search" className="rounded-full border border-white/10 p-2 text-slate-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
-            <FiX />
-          </button>
+          <IconButton onClick={onClose} aria-label="Close search"><FiX /></IconButton>
         </div>
         <Card variant="subtle" className="mt-4 flex items-center gap-2 px-4 py-3">
           <FiSearch className="text-slate-400" />
