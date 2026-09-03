@@ -135,7 +135,7 @@ export default function RecordSouls() {
                   value={form.name}
                   onChange={handleChange('name')}
                   placeholder="Jane Doe"
-                  className="w-full rounded-3xl border border-white/10 bg-slate-900/75 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                  className="w-full rounded-3xl border border-white/10 bg-slate-900/75 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                 />
               </label>
               <label className="space-y-2">
@@ -144,7 +144,7 @@ export default function RecordSouls() {
                   value={form.contact}
                   onChange={handleChange('contact')}
                   placeholder="Phone or email"
-                  className="w-full rounded-3xl border border-white/10 bg-slate-900/75 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                  className="w-full rounded-3xl border border-white/10 bg-slate-900/75 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                 />
               </label>
             </div>
@@ -155,7 +155,7 @@ export default function RecordSouls() {
                 <select
                   value={form.service}
                   onChange={handleChange('service')}
-                  className="w-full rounded-3xl border border-white/10 bg-slate-900/75 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                  className="w-full rounded-3xl border border-white/10 bg-slate-900/75 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                 >
                   <option>3rd Service (11 AM – 1 PM)</option>
                   <option>2nd Service (9 AM – 11 AM)</option>
@@ -167,7 +167,7 @@ export default function RecordSouls() {
                 <select
                   value={form.followUp}
                   onChange={handleChange('followUp')}
-                  className="w-full rounded-3xl border border-white/10 bg-slate-900/75 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                  className="w-full rounded-3xl border border-white/10 bg-slate-900/75 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                 >
                   <option>Call back in 3 days</option>
                   <option>Send encouragement message</option>
@@ -184,13 +184,13 @@ export default function RecordSouls() {
                 onChange={handleChange('notes')}
                 rows={4}
                 placeholder="Where they met you, needs, or prayer requests"
-                className="w-full rounded-[1.75rem] border border-white/10 bg-slate-900/75 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                className="w-full rounded-[1.75rem] border border-white/10 bg-slate-900/75 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
               />
             </label>
 
             {error && <p className="text-sm text-red-300">{error}</p>}
 
-            <button type="submit" className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+            <button type="submit" className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
               Record soul
             </button>
           </form>
@@ -255,7 +255,7 @@ export default function RecordSouls() {
             <div className="mt-5 grid gap-3">
               <Card variant="subtle" className="p-4 text-sm text-slate-300">
                 <div className="flex items-center gap-2 font-semibold text-white">
-                  <FiUsers className="h-4 w-4 text-[#FF4F9A]" /> Record first-timers
+                  <FiUsers className="h-4 w-4 text-pink-500" /> Record first-timers
                 </div>
                 <p className="mt-1">Keep a log of every invite, prayer request, and contact detail.</p>
               </Card>

@@ -5,7 +5,7 @@ import { apiFetch } from '../config/api';
 import { Card } from '../components/ui/Card';
 import { Toast } from '../components/ui/Toast';
 
-const inputClass = 'w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-[#A53DFF]';
+const inputClass = 'w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-purple-400';
 const sectionLabelClass = 'text-xs font-semibold uppercase tracking-[0.3em] text-white/40';
 const AUTH_LOGIN_URL = '/api/auth/login';
 const AUTH_REGISTER_URL = '/api/auth/register';
@@ -94,7 +94,7 @@ export default function Auth() {
           <div className="h-72 overflow-hidden bg-slate-950/40 lg:h-auto lg:w-1/2"><img src="/illustration.png" alt="BLW registration illustration" className="h-full w-full object-cover" /></div>
           <div className="flex w-full flex-col justify-center bg-slate-950/90 p-8 sm:p-10 lg:w-1/2">
             <div className="max-w-md">
-              {mode === 'login' ? <><p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D8B2FF]">Welcome back</p><h2 className="mt-3 text-3xl font-semibold text-white">Sign In</h2><p className="mt-3 text-sm text-slate-400">Continue your journey with BLW.</p></> : <><p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D8B2FF]">New here?</p><h2 className="mt-3 text-3xl font-semibold text-white">Create account</h2><p className="mt-3 text-sm text-slate-400">Register and join the family — it's free.</p></>}
+              {mode === 'login' ? <><p className="text-sm font-semibold uppercase tracking-[0.2em] text-purple-300">Welcome back</p><h2 className="mt-3 text-3xl font-semibold text-white">Sign In</h2><p className="mt-3 text-sm text-slate-400">Continue your journey with BLW.</p></> : <><p className="text-sm font-semibold uppercase tracking-[0.2em] text-purple-300">New here?</p><h2 className="mt-3 text-3xl font-semibold text-white">Create account</h2><p className="mt-3 text-sm text-slate-400">Register and join the family — it's free.</p></>}
 
               <form onSubmit={handleSubmit} className="mt-8 space-y-4">
                 {mode === 'login' && <><input className={inputClass} type="email" placeholder="EMAIL ADDRESS" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required /><input className={inputClass} type="password" placeholder="Password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required /></>}
@@ -111,12 +111,12 @@ export default function Auth() {
                   <div className="space-y-3 border-t border-white/[0.06] pt-4"><p className={sectionLabelClass}>Address</p><select className={inputClass} value={form.country} onChange={(event) => setForm({ ...form, country: event.target.value })} required><option value="">COUNTRY *</option><option value="KENYA">KENYA</option><option value="UGANDA">UGANDA</option><option value="TANZANIA">TANZANIA</option><option value="SOMALIA">SOMALIA</option><option value="RWANDA">RWANDA</option><option value="BURUNDI">BURUNDI</option></select><input className={inputClass} placeholder="RESIDENCE *" value={form.residence} onChange={(event) => setForm({ ...form, residence: event.target.value })} required /></div>
                 </>}
 
-                <button type="submit" className="inline-flex w-full justify-center rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-5 py-3 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" disabled={status === 'submitting'}>{status === 'submitting' ? 'Submitting…' : mode === 'register' ? 'Create Account' : 'Sign In'}</button>
+                <button type="submit" className="inline-flex w-full justify-center rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-5 py-3 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" disabled={status === 'submitting'}>{status === 'submitting' ? 'Submitting…' : mode === 'register' ? 'Create Account' : 'Sign In'}</button>
               </form>
 
-              {mode === 'login' && <div className="mt-4 flex items-center justify-between text-sm text-slate-400"><button type="button" className="text-[#D8B2FF] hover:text-[#EC9EFF]" onClick={() => navigate('/forgot-password')}>Forgot password?</button><button type="button" className="text-[#D8B2FF] hover:text-[#EC9EFF]" onClick={() => setMode('register')}>Don’t have an account? Register</button></div>}
-              {mode === 'register' && <div className="mt-4 flex items-center justify-center text-sm text-slate-400"><span>Already have an account?</span><button type="button" className="ml-2 text-[#D8B2FF] hover:text-[#EC9EFF]" onClick={() => setMode('login')}>Sign in</button></div>}
-              {status === 'submitted' && <div className="mt-6 rounded-2xl border border-[#A53DFF]/30 bg-[#A53DFF]/10 p-4 text-sm text-[#D8B2FF]">{lastMode === 'login' ? 'Signed in successfully.' : 'Your account has been created and signed in successfully.'}</div>}
+              {mode === 'login' && <div className="mt-4 flex items-center justify-between text-sm text-slate-400"><button type="button" className="text-purple-300 hover:text-[#EC9EFF]" onClick={() => navigate('/forgot-password')}>Forgot password?</button><button type="button" className="text-purple-300 hover:text-[#EC9EFF]" onClick={() => setMode('register')}>Don’t have an account? Register</button></div>}
+              {mode === 'register' && <div className="mt-4 flex items-center justify-center text-sm text-slate-400"><span>Already have an account?</span><button type="button" className="ml-2 text-purple-300 hover:text-[#EC9EFF]" onClick={() => setMode('login')}>Sign in</button></div>}
+              {status === 'submitted' && <div className="mt-6 rounded-2xl border border-purple-400/30 bg-purple-400/10 p-4 text-sm text-purple-300">{lastMode === 'login' ? 'Signed in successfully.' : 'Your account has been created and signed in successfully.'}</div>}
               {status === 'error' && error && <div className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">{error}</div>}
             </div>
           </div>

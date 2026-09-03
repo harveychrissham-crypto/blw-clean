@@ -6,7 +6,7 @@ export default function EmptyState({ icon: Icon, title, hint, action }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-6 py-8 text-center">
       {Icon && (
-        <div className="mb-1 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-[#FF4F9A]/20 via-[#A53DFF]/20 to-[#3D5AFE]/20 text-[#FF9CEA]">
+        <div className="mb-1 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-pink-500/20 via-purple-400/20 to-indigo-500/20 text-[#FF9CEA]">
           <Icon className="h-5 w-5" />
         </div>
       )}

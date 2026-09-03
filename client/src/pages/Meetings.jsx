@@ -90,7 +90,7 @@ export default function Meetings() {
     return <CallRoom credentials={credentials} choices={choices} room={room} onLeave={handleLeave} />;
   }
 
-  return <section className="mx-auto max-w-4xl px-5 py-12 sm:py-16"><div className="mb-10"><p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#F2A31C]">Fellowship</p><h1 className="mt-2 text-4xl font-bold">Meetings</h1><p className="mt-3 max-w-2xl text-white/60">Gather for Bible studies, fellowship meetings and leadership calls.</p></div>{leaveNotice && <p className="mb-6 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 text-sm text-amber-200">{leaveNotice}</p>}<div className="grid gap-5 sm:grid-cols-2"><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiPlus className="h-6 w-6 text-[#F2A31C]"/><h2 className="mt-4 text-xl font-semibold">Create room</h2><p className="mt-2 text-sm text-white/55">Start an instant room and share its code with your group.</p><button disabled={creating} onClick={createRoom} className="mt-6 w-full rounded-2xl bg-white py-3 font-semibold text-black disabled:opacity-50">{creating ? 'Creating…' : 'Create meeting'}</button></div><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiUsers className="h-6 w-6 text-[#F2A31C]"/><h2 className="mt-4 text-xl font-semibold">Join room</h2><p className="mt-2 text-sm text-white/55">Enter a room code from your leader or fellowship group.</p><input value={room} onChange={e => setRoom(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') goToLobby(); }} placeholder="Room code" className="mt-5 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none focus:border-white/30"/><button onClick={() => goToLobby()} className="mt-3 w-full rounded-2xl bg-gradient-to-r from-[#EC2FA8] to-[#8A2BE2] py-3 font-semibold">Join meeting</button></div></div>{room && <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm"><span className="min-w-0 truncate text-white/60">Room: <b className="text-white">{room}</b></span><button onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/meetings?room=${encodeURIComponent(room)}`)} className="inline-flex shrink-0 items-center gap-2 text-white/70 hover:text-white"><FiCopy/>Copy link</button></div>}{error && <p className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/5 p-4 text-sm text-red-200">{error}</p>}{recentRooms.length > 0 && <div className="mt-10"><h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/50">Your recent meetings</h2><ul className="space-y-2">{recentRooms.map((r) => <li key={r.room} className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4"><div className="min-w-0"><p className="truncate text-sm font-medium text-white">{r.room}</p><p className="mt-0.5 flex items-center gap-1.5 text-xs text-white/40">{r.active && <span className="inline-flex items-center gap-1 text-emerald-300"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />Active now</span>}{r.active && ' · '}Last visited {new Date(r.lastVisitedAt).toLocaleDateString()}</p></div><button onClick={() => goToLobby(r.room)} className="shrink-0 rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-white/80 hover:bg-white/10">Rejoin</button></li>)}</ul></div>}</section>;
+  return <section className="mx-auto max-w-4xl px-5 py-12 sm:py-16"><div className="mb-10"><p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-500">Fellowship</p><h1 className="mt-2 text-4xl font-bold">Meetings</h1><p className="mt-3 max-w-2xl text-white/60">Gather for Bible studies, fellowship meetings and leadership calls.</p></div>{leaveNotice && <p className="mb-6 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 text-sm text-amber-200">{leaveNotice}</p>}<div className="grid gap-5 sm:grid-cols-2"><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiPlus className="h-6 w-6 text-gold-500"/><h2 className="mt-4 text-xl font-semibold">Create room</h2><p className="mt-2 text-sm text-white/55">Start an instant room and share its code with your group.</p><button disabled={creating} onClick={createRoom} className="mt-6 w-full rounded-2xl bg-white py-3 font-semibold text-black disabled:opacity-50">{creating ? 'Creating…' : 'Create meeting'}</button></div><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiUsers className="h-6 w-6 text-gold-500"/><h2 className="mt-4 text-xl font-semibold">Join room</h2><p className="mt-2 text-sm text-white/55">Enter a room code from your leader or fellowship group.</p><input value={room} onChange={e => setRoom(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') goToLobby(); }} placeholder="Room code" className="mt-5 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none focus:border-white/30"/><button onClick={() => goToLobby()} className="mt-3 w-full rounded-2xl bg-gradient-to-r from-pink-600 to-purple-500 py-3 font-semibold">Join meeting</button></div></div>{room && <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm"><span className="min-w-0 truncate text-white/60">Room: <b className="text-white">{room}</b></span><button onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/meetings?room=${encodeURIComponent(room)}`)} className="inline-flex shrink-0 items-center gap-2 text-white/70 hover:text-white"><FiCopy/>Copy link</button></div>}{error && <p className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/5 p-4 text-sm text-red-200">{error}</p>}{recentRooms.length > 0 && <div className="mt-10"><h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/50">Your recent meetings</h2><ul className="space-y-2">{recentRooms.map((r) => <li key={r.room} className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4"><div className="min-w-0"><p className="truncate text-sm font-medium text-white">{r.room}</p><p className="mt-0.5 flex items-center gap-1.5 text-xs text-white/40">{r.active && <span className="inline-flex items-center gap-1 text-emerald-300"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />Active now</span>}{r.active && ' · '}Last visited {new Date(r.lastVisitedAt).toLocaleDateString()}</p></div><button onClick={() => goToLobby(r.room)} className="shrink-0 rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-white/80 hover:bg-white/10">Rejoin</button></li>)}</ul></div>}</section>;
 }
 
 function Lobby({ participantName, onCancel, onJoin }) {
@@ -167,7 +167,7 @@ function Lobby({ participantName, onCancel, onJoin }) {
   return (
     <section className="mx-auto max-w-2xl px-5 py-10 sm:py-14">
       <h1 className="mb-5 text-2xl font-bold text-white">Check your camera and mic</h1>
-      <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#0d0c18]">
+      <div className="overflow-hidden rounded-3xl border border-white/10 bg-ink-900">
         <div className="relative aspect-video bg-[#3c4043]">
           <video ref={videoRef} autoPlay playsInline muted className={`h-full w-full scale-x-[-1] object-cover ${camOn ? '' : 'hidden'}`} />
           {!camOn && <div className="grid h-full place-items-center text-white/40"><FiCameraOff className="h-10 w-10" /></div>}
@@ -200,7 +200,7 @@ function Lobby({ participantName, onCancel, onJoin }) {
       {error && <p className="mt-3 rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
       <div className="mt-5 flex items-center justify-between">
         <button type="button" onClick={() => { stopStream(); onCancel(); }} className="text-sm text-white/50 hover:text-white">← Back</button>
-        <button type="button" disabled={!ready} onClick={join} className="rounded-2xl bg-gradient-to-r from-[#EC2FA8] to-[#8A2BE2] px-6 py-3 font-semibold text-white disabled:opacity-50">Join meeting</button>
+        <button type="button" disabled={!ready} onClick={join} className="rounded-2xl bg-gradient-to-r from-pink-600 to-purple-500 px-6 py-3 font-semibold text-white disabled:opacity-50">Join meeting</button>
       </div>
     </section>
   );
@@ -435,7 +435,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
     <section className="mx-auto max-w-7xl px-3 py-4 sm:px-5">
       <div className="mb-4 flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#F2A31C]">Live room{recording && <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-red-300"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" aria-hidden="true" />Recording</span>}</p>
+          <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-gold-500">Live room{recording && <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-red-300"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" aria-hidden="true" />Recording</span>}</p>
           <h1 className="truncate text-2xl font-bold">{roomName}</h1>
           <p className="text-xs text-white/40">{connState === 'reconnecting' ? 'Reconnecting…' : connected ? `${all.length} participant${all.length === 1 ? '' : 's'}` : 'Connecting…'}</p>
         </div>
@@ -582,12 +582,12 @@ function ChatPanel({ liveRoom, open, onClose }) {
     <div className="fixed inset-x-3 bottom-24 top-24 z-30 flex flex-col rounded-3xl border border-white/10 bg-[#11101d]/98 shadow-2xl backdrop-blur sm:inset-x-auto sm:right-4 sm:top-28 sm:h-[28rem] sm:w-80">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <p className="text-sm font-semibold text-white">In-call chat</p>
-        <button onClick={onClose} className="text-white/50 hover:text-white"><FiX/></button>
+        <button onClick={onClose} aria-label="Close chat" className="text-white/50 hover:text-white"><FiX/></button>
       </div>
       <div ref={listRef} className="flex-1 space-y-2 overflow-y-auto px-4 py-3">
         {messages.length === 0 && <p className="text-xs text-white/40">No messages yet. Say hello!</p>}
         {messages.map((m) => (
-          <div key={m.id} className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${m.isLocal ? 'ml-auto bg-[#8A2BE2]/40 text-white' : 'bg-white/[0.06] text-white/85'}`}>
+          <div key={m.id} className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${m.isLocal ? 'ml-auto bg-purple-500/40 text-white' : 'bg-white/[0.06] text-white/85'}`}>
             {!m.isLocal && <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/40">{m.name}</p>}
             <p>{m.text}</p>
           </div>
@@ -595,7 +595,7 @@ function ChatPanel({ liveRoom, open, onClose }) {
       </div>
       <div className="flex items-center gap-2 border-t border-white/10 p-3">
         <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') send(); }} placeholder="Message everyone" className="min-w-0 flex-1 rounded-full border border-white/10 bg-black/20 px-4 py-2 text-sm text-white outline-none placeholder:text-white/30" />
-        <button onClick={send} className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#8A2BE2] text-white"><FiSend className="h-4 w-4"/></button>
+        <button onClick={send} aria-label="Send message" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-purple-500 text-white"><FiSend className="h-4 w-4"/></button>
       </div>
     </div>
   );

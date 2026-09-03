@@ -45,16 +45,16 @@ export default function ServiceVenues() {
           {ordered.map((venue) => {
             const highlighted = venue.chapter === targetChapter;
             return (
-              <Card key={venue.chapter} variant="raised" className={`p-5 transition ${highlighted ? 'ring-2 ring-[#F2A31C]/60' : ''}`}>
+              <Card key={venue.chapter} variant="raised" className={`p-5 transition ${highlighted ? 'ring-2 ring-gold-500/60' : ''}`}>
                 <div className="flex items-start gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-[#D8B2FF]"><FiMapPin /></div>
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-purple-300"><FiMapPin /></div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold uppercase tracking-widest text-white/35">{venue.chapter}</p>
                     <h2 className="mt-1 text-lg font-bold text-white">{venue.venue || 'Service venue'}</h2>
                     {venue.serviceTime && <p className="mt-2 flex items-center gap-2 text-sm text-white/50"><FiClock className="h-3.5 w-3.5" />{venue.serviceTime}</p>}
                   </div>
                 </div>
-                {highlighted && <p className="mt-4 rounded-xl bg-[#F2A31C]/10 px-3 py-2 text-xs font-semibold text-[#F2A31C]">This is the venue from your notification.</p>}
+                {highlighted && <p className="mt-4 rounded-xl bg-gold-500/10 px-3 py-2 text-xs font-semibold text-gold-500">This is the venue from your notification.</p>}
               </Card>
             );
           })}

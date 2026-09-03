@@ -175,7 +175,7 @@ export default function Dashboard() {
         <Card variant="raised" className="p-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-[#FF4F9A] via-[#A53DFF] to-[#3D5AFE] text-2xl font-black text-white shadow-xl shadow-[#A53DFF]/20">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-pink-500 via-purple-400 to-indigo-500 text-2xl font-black text-white shadow-xl shadow-purple-400/20">
                 {displayName.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0">
@@ -189,7 +189,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={openEdit}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-4 py-2 text-sm font-semibold text-white shadow-[0_20px_40px_rgba(236,47,168,0.18)] transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_20px_40px_rgba(236,47,168,0.18)] transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
                 <FiEdit2 /> Edit Profile
               </button>
@@ -209,10 +209,10 @@ export default function Dashboard() {
           <div className="mt-4">
             <div className="flex items-center justify-between gap-3">
               <p className="text-[11px] font-medium text-slate-400">Profile completion</p>
-              <span className="text-[11px] font-semibold text-[#FF4F9A]">60%</span>
+              <span className="text-[11px] font-semibold text-pink-500">60%</span>
             </div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-950">
-              <div className="h-full w-[60%] rounded-full bg-gradient-to-r from-[#FF4F9A] via-[#A53DFF] to-[#3D5AFE] shadow-[0_0_20px_rgba(163,77,255,0.45)]" />
+              <div className="h-full w-[60%] rounded-full bg-gradient-to-r from-pink-500 via-purple-400 to-indigo-500 shadow-[0_0_20px_rgba(163,77,255,0.45)]" />
             </div>
           </div>
         </Card>
@@ -238,7 +238,7 @@ export default function Dashboard() {
         {/* Sunday check-in */}
         <Card variant="raised" className="p-5">
           <div className="flex items-start gap-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FF4F9A] via-[#A53DFF] to-[#3D5AFE] text-white">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-500 via-purple-400 to-indigo-500 text-white">
               <FiClock className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
@@ -298,7 +298,7 @@ export default function Dashboard() {
 
           <Card variant="raised" className="p-5">
             <div className="flex items-start gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FF8B5C] via-[#FF4F9A] to-[#A53DFF] text-white">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FF8B5C] via-pink-500 to-purple-400 text-white">
                 <FiCalendar className="h-5 w-5" />
               </div>
               <div className="min-w-0 flex-1">
@@ -372,7 +372,7 @@ export default function Dashboard() {
                     value={editForm.title}
                     onChange={handleEditChange('title')}
                     placeholder="Brother"
-                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                   />
                 </label>
                 <label className="space-y-2">
@@ -381,7 +381,7 @@ export default function Dashboard() {
                     value={editForm.fullName}
                     onChange={handleEditChange('fullName')}
                     placeholder="Enter your full name"
-                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                   />
                 </label>
               </div>
@@ -395,7 +395,7 @@ export default function Dashboard() {
                     value={editForm.phone}
                     onChange={handleEditChange('phone')}
                     placeholder="+254 700 000 000"
-                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                   />
                 </label>
                 <label className="space-y-2">
@@ -403,7 +403,7 @@ export default function Dashboard() {
                   <select
                     value={editForm.campusZone}
                     onChange={handleEditChange('campusZone')}
-                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                   >
                     <option value="">Select your zone</option>
                     <option value="KENYA_ZONE_A">Kenya Zone A</option>
@@ -419,7 +419,7 @@ export default function Dashboard() {
                   <select
                     value={editForm.gender}
                     onChange={handleEditChange('gender')}
-                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                   >
                     <option value="">Select your gender</option>
                     <option value="Male">Male</option>
@@ -432,7 +432,7 @@ export default function Dashboard() {
                   <select
                     value={editForm.status}
                     onChange={handleEditChange('status')}
-                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                   >
                     <option value="">Marital status</option>
                     <option value="Single">Single</option>
@@ -452,7 +452,7 @@ export default function Dashboard() {
                     value={editForm.church}
                     onChange={handleEditChange('church')}
                     placeholder="Believers' LoveWorld CM Kenya Zone"
-                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                   />
                 </label>
                 <label className="space-y-2">
@@ -461,7 +461,7 @@ export default function Dashboard() {
                     value={editForm.chapter}
                     onChange={handleEditChange('chapter')}
                     placeholder="Pick your fellowship..."
-                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                   />
                 </label>
               </div>
@@ -476,7 +476,7 @@ export default function Dashboard() {
                     value={editForm.residence}
                     onChange={handleEditChange('residence')}
                     placeholder="Street, area"
-                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                   />
                 </label>
                 <label className="space-y-2">
@@ -485,7 +485,7 @@ export default function Dashboard() {
                     value={editForm.city}
                     onChange={handleEditChange('city')}
                     placeholder="Accra"
-                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                   />
                 </label>
               </div>
@@ -497,7 +497,7 @@ export default function Dashboard() {
                     value={editForm.country}
                     onChange={handleEditChange('country')}
                     placeholder="Ghana"
-                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                   />
                 </label>
                 <label className="space-y-2">
@@ -506,7 +506,7 @@ export default function Dashboard() {
                     type="date"
                     value={editForm.birthday}
                     onChange={handleEditChange('birthday')}
-                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                    className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                   />
                 </label>
               </div>
@@ -518,7 +518,7 @@ export default function Dashboard() {
                   value={editForm.invitedBy}
                   onChange={handleEditChange('invitedBy')}
                   placeholder="Who invited you?"
-                  className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                  className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                 />
               </label>
 
@@ -529,7 +529,7 @@ export default function Dashboard() {
                   value={editForm.about}
                   onChange={handleEditChange('about')}
                   placeholder="Share a bit about your walk with God..."
-                  className="w-full rounded-[1.75rem] border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF] focus:ring-2 focus:ring-[#A53DFF]/20"
+                  className="w-full rounded-[1.75rem] border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                 />
               </label>
 
@@ -546,7 +546,7 @@ export default function Dashboard() {
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                  className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                 >
                   Save Changes
                 </button>

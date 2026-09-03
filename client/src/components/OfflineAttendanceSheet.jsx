@@ -98,11 +98,11 @@ export default function OfflineAttendanceSheet({ members = [], onClose, onBackTo
   const pending = rows.filter((member) => pendingIds.has(member.membershipId)).length;
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-start justify-center overscroll-contain bg-[#0d0c18]/95 px-3 py-6 sm:items-center">
+    <div className="fixed inset-0 z-[120] flex items-start justify-center overscroll-contain bg-ink-900/95 px-3 py-6 sm:items-center">
       <div className="relative flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#12111d] shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
           <div className="min-w-0">
-            <p className="text-[9px] font-semibold uppercase tracking-[0.35em] text-[#F2A31C]">Leaders tool</p>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.35em] text-gold-500">Leaders tool</p>
             <h2 className="mt-0.5 text-sm font-bold text-white">Check Attendance</h2>
             <p className="mt-0.5 text-[10px] leading-snug text-white/50">Works offline. Syncs automatically.</p>
           </div>
@@ -115,7 +115,7 @@ export default function OfflineAttendanceSheet({ members = [], onClose, onBackTo
                 Back
               </button>
             )}
-            <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+            <button onClick={onClose} aria-label="Close" className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/70 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
               <FiX className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -139,7 +139,7 @@ export default function OfflineAttendanceSheet({ members = [], onClose, onBackTo
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search name, ID, or PCF…"
-              className="w-full rounded-xl border border-white/10 bg-white/[0.05] py-2 pl-8 pr-3 text-xs text-white placeholder-white/20 outline-none focus:border-[#F2A31C]/50"
+              className="w-full rounded-xl border border-white/10 bg-white/[0.05] py-2 pl-8 pr-3 text-xs text-white placeholder-white/20 outline-none focus:border-gold-500/50"
             />
           </div>
 
@@ -156,7 +156,7 @@ export default function OfflineAttendanceSheet({ members = [], onClose, onBackTo
                   const isChecked = !!member.checkedIn;
                   return (
                     <div key={member.membershipId} className="flex items-center gap-2.5 px-3 py-2">
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] text-[11px] font-black text-white">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-pink-600 via-purple-500 to-indigo-500 text-[11px] font-black text-white">
                         {String(member.name || '?').charAt(0)}
                       </div>
                       <div className="min-w-0 flex-1">

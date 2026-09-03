@@ -58,11 +58,11 @@ export default function NotificationPermissionPrompt() {
           <FiX className="h-4 w-4" />
         </button>
 
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F2A31C]/15 text-[#F2A31C]">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gold-500/15 text-gold-500">
           <FiBell className="h-7 w-7" />
         </div>
 
-        <p className="mt-6 text-xs font-bold uppercase tracking-[0.25em] text-[#F2A31C]">Stay updated</p>
+        <p className="mt-6 text-xs font-bold uppercase tracking-[0.25em] text-gold-500">Stay updated</p>
         <h2 id="notification-permission-title" className="mt-2 text-2xl font-extrabold text-white">
           Stay updated with BLW
         </h2>
@@ -85,7 +85,7 @@ export default function NotificationPermissionPrompt() {
               type="button"
               disabled={busy}
               onClick={handleAllow}
-              className="flex-1 rounded-full bg-gradient-to-r from-[#F2A31C] to-[#FF8B5C] px-5 py-3 text-sm font-bold text-slate-950 transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+              className="flex-1 rounded-full bg-gradient-to-r from-gold-500 to-[#FF8B5C] px-5 py-3 text-sm font-bold text-slate-950 transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
               {busy ? 'Requesting…' : 'Allow Notifications'}
             </button>

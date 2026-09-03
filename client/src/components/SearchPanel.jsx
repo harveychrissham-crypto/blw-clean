@@ -36,7 +36,7 @@ export default function SearchPanel({ open, onClose }) {
             <FiSearch />
             <span className="text-sm font-semibold uppercase tracking-[0.2em]">Search</span>
           </div>
-          <button onClick={onClose} className="rounded-full border border-white/10 p-2 text-slate-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+          <button onClick={onClose} aria-label="Close search" className="rounded-full border border-white/10 p-2 text-slate-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
             <FiX />
           </button>
         </div>
@@ -55,7 +55,7 @@ export default function SearchPanel({ open, onClose }) {
             <Card variant="subtle" className="p-4 text-sm text-slate-400">No matching pages found yet.</Card>
           ) : (
             results.map((item) => (
-              <Card key={item.path} as="a" href={item.path} onClick={onClose} variant="subtle" className="block p-4 transition hover:border-[#A53DFF]/40 hover:bg-[#8A2BE2]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+              <Card key={item.path} as="a" href={item.path} onClick={onClose} variant="subtle" className="block p-4 transition hover:border-purple-400/40 hover:bg-purple-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
                 <div className="font-semibold text-white">{item.title}</div>
                 <div className="mt-1 text-sm text-slate-400">{item.description}</div>
               </Card>

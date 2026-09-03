@@ -126,7 +126,7 @@ function NearbyMap({ center, userLocation, fellowships, onError }) {
     return (
       <div className="flex h-64 items-center justify-center bg-slate-950/70 px-6 text-center">
         <div>
-          <FiAlertCircle className="mx-auto h-7 w-7 text-[#F2A31C]" />
+          <FiAlertCircle className="mx-auto h-7 w-7 text-gold-500" />
           <p className="mt-3 text-sm font-semibold text-white">Map unavailable</p>
           <p className="mt-1 text-xs text-white/45">{mapError}</p>
         </div>
@@ -325,7 +325,7 @@ export default function Connect() {
 
             <Card variant="subtle" className="mt-7 p-4 sm:p-5">
               <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#8A2BE2]/15 text-[#D8B2FF]"><FiSearch className="h-5 w-5" /></div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-purple-500/15 text-purple-300"><FiSearch className="h-5 w-5" /></div>
                 <div>
                   <p className="text-sm font-bold text-white">Find your nearest fellowship</p>
                   <p className="text-xs text-white/60">Search a place or use your current location.</p>
@@ -342,7 +342,7 @@ export default function Connect() {
                       if (event.target.value !== 'Where I am') setUserLocation(null);
                     }}
                     onKeyDown={handleKeyDown}
-                    className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3.5 text-sm text-white outline-none placeholder:text-white/30 transition focus:border-[#A53DFF]/70 focus:bg-slate-950"
+                    className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3.5 text-sm text-white outline-none placeholder:text-white/30 transition focus:border-purple-400/70 focus:bg-slate-950"
                     placeholder="Try Juja, Thika, Ruiru or JKUAT"
                     autoComplete="off"
                   />
@@ -351,7 +351,7 @@ export default function Connect() {
                     <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-30 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
                       {suggestions.map((location) => (
                         <button key={location.id} type="button" onClick={() => chooseSuggestion(location)} className="flex w-full items-start gap-3 border-b border-white/5 px-4 py-3.5 text-left transition last:border-b-0 hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
-                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#8A2BE2]/15 text-[#D8B2FF]"><FiMapPin className="h-4 w-4" /></span>
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-purple-500/15 text-purple-300"><FiMapPin className="h-4 w-4" /></span>
                           <span className="min-w-0">
                             <span className="block truncate text-sm font-semibold text-white">{location.fellowshipName}</span>
                             <span className="mt-1 block truncate text-xs text-white/60">{[location.town || location.city, location.area, location.university, location.country].filter(Boolean).join(' • ')}</span>
@@ -361,8 +361,8 @@ export default function Connect() {
                     </div>
                   )}
                 </div>
-                <button type="button" onClick={searchPlace} disabled={searching || campusSearch.trim().length < 2} className="inline-flex min-w-[110px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-6 py-3.5 text-sm font-bold text-white shadow-[0_12px_28px_rgba(138,43,226,0.2)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">{searching ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiSearch className="h-4 w-4" />} Search</button>
-                <button type="button" onClick={useMyLocation} disabled={locating} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#8A2BE2]/30 bg-[#8A2BE2]/10 px-5 py-3.5 text-sm font-bold text-white transition hover:border-[#8A2BE2]/50 hover:bg-[#8A2BE2]/15 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">{locating ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiNavigation className="h-4 w-4" />} Where I am</button>
+                <button type="button" onClick={searchPlace} disabled={searching || campusSearch.trim().length < 2} className="inline-flex min-w-[110px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-6 py-3.5 text-sm font-bold text-white shadow-[0_12px_28px_rgba(138,43,226,0.2)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">{searching ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiSearch className="h-4 w-4" />} Search</button>
+                <button type="button" onClick={useMyLocation} disabled={locating} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-purple-500/30 bg-purple-500/10 px-5 py-3.5 text-sm font-bold text-white transition hover:border-purple-500/50 hover:bg-purple-500/15 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">{locating ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiNavigation className="h-4 w-4" />} Where I am</button>
               </div>
 
               <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/50">
@@ -384,7 +384,7 @@ export default function Connect() {
                             <p className="truncate text-sm font-semibold text-white">{location.fellowshipName}</p>
                             <p className="truncate text-xs text-white/60">{[location.town || location.city, location.area, location.university].filter(Boolean).join(' • ')}</p>
                           </div>
-                          <span className="shrink-0 text-xs font-semibold text-[#D8B2FF]">{location.distanceKm.toFixed(1)} km</span>
+                          <span className="shrink-0 text-xs font-semibold text-purple-300">{location.distanceKm.toFixed(1)} km</span>
                         </Card>
                       ))}
                     </div>
@@ -400,7 +400,7 @@ export default function Connect() {
         </Card>
 
         <Card variant="subtle" className="p-6">
-          <div className="flex items-center gap-2 text-[#D8B2FF]"><FiMapPin /> Connect globally</div>
+          <div className="flex items-center gap-2 text-purple-300"><FiMapPin /> Connect globally</div>
           <p className="mt-4 text-sm leading-relaxed text-slate-400">Search any town, area, university or fellowship, or use “Where I am” to see nearby fellowship locations on the map.</p>
         </Card>
       </div>

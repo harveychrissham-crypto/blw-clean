@@ -72,7 +72,7 @@ export default function LiveStreamAdminPanel() {
   return (
     <Card variant="raised" className="p-5 sm:p-7">
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#F2A31C]/10 text-[#F2A31C]">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gold-500/10 text-gold-500">
           <FiRadio className="h-6 w-6" />
         </div>
         <div>
@@ -88,22 +88,22 @@ export default function LiveStreamAdminPanel() {
         <form onSubmit={save} className="mt-7 space-y-5">
           <label className="block">
             <span className="text-xs font-semibold uppercase tracking-wider text-white/40">Stream title</span>
-            <input value={form.title} onChange={(e) => update('title', e.target.value)} placeholder="Sunday Service" className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-[#F2A31C]/50" />
+            <input value={form.title} onChange={(e) => update('title', e.target.value)} placeholder="Sunday Service" className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-gold-500/50" />
           </label>
 
           <label className="block">
             <span className="text-xs font-semibold uppercase tracking-wider text-white/40">YouTube URL</span>
-            <input type="url" value={form.youtubeUrl} onChange={(e) => update('youtubeUrl', e.target.value)} placeholder="https://www.youtube.com/watch?v=…" className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-[#F2A31C]/50" />
+            <input type="url" value={form.youtubeUrl} onChange={(e) => update('youtubeUrl', e.target.value)} placeholder="https://www.youtube.com/watch?v=…" className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-gold-500/50" />
           </label>
 
           <div className="grid gap-5 md:grid-cols-2">
             <label className="block">
               <span className="text-xs font-semibold uppercase tracking-wider text-white/40">Google Meet URL</span>
-              <input type="url" value={form.googleMeetUrl} onChange={(e) => update('googleMeetUrl', e.target.value)} placeholder="https://meet.google.com/…" className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-[#F2A31C]/50" />
+              <input type="url" value={form.googleMeetUrl} onChange={(e) => update('googleMeetUrl', e.target.value)} placeholder="https://meet.google.com/…" className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-gold-500/50" />
             </label>
             <label className="block">
               <span className="text-xs font-semibold uppercase tracking-wider text-white/40">Daily room URL</span>
-              <input type="url" value={form.dailyRoomUrl} onChange={(e) => update('dailyRoomUrl', e.target.value)} placeholder="https://…daily.co/…" className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-[#F2A31C]/50" />
+              <input type="url" value={form.dailyRoomUrl} onChange={(e) => update('dailyRoomUrl', e.target.value)} placeholder="https://…daily.co/…" className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-gold-500/50" />
             </label>
           </div>
 
@@ -118,7 +118,7 @@ export default function LiveStreamAdminPanel() {
           {error && <p className="rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
           {saved && <p className="flex items-center gap-2 rounded-xl bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-300"><FiCheckCircle /> Live stream settings saved.</p>}
 
-          <button type="submit" disabled={saving} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#F2A31C] px-5 py-3 text-sm font-bold text-[#0d0c18] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
+          <button type="submit" disabled={saving} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gold-500 px-5 py-3 text-sm font-bold text-ink-900 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
             <FiSave /> {saving ? 'Saving…' : 'Save Live Stream'}
           </button>
         </form>

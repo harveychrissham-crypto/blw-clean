@@ -102,7 +102,7 @@ function MemberQRCode({ member }) {
           {member.joinDate && <p className="text-xs text-slate-400">Joined: {member.joinDate}</p>}
         </div>
       </div>
-      <button type="button" onClick={handleDownload} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+      <button type="button" onClick={handleDownload} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
         <FiDownload /> Download QR Badge
       </button>
     </div>
@@ -180,7 +180,7 @@ export default function Checkin() {
       {!found ? (
         <div className="mb-12 grid items-start gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
-            <div className="flex items-center gap-2"><MdQrCodeScanner className="text-xl text-[#D8B2FF]" /><Eyebrow color="#D8B2FF">Member Check-In</Eyebrow></div>
+            <div className="flex items-center gap-2"><MdQrCodeScanner className="text-xl text-purple-300" /><Eyebrow color="#D8B2FF">Member Check-In</Eyebrow></div>
             <h1 className="mt-4 text-3xl font-semibold text-white sm:text-4xl">Find your profile and complete attendance instantly.</h1>
             <p className="mt-4 max-w-2xl text-lg text-slate-300">Enter the phone number or email you registered with. Signed-in members can then mark themselves present.</p>
             <Card variant="raised" className="mt-8 p-8">
@@ -189,7 +189,7 @@ export default function Checkin() {
                   <label className="block text-sm font-medium text-slate-400">Phone number or email</label>
                   <input value={query} onChange={(e) => setQuery(e.target.value)} className="mt-2 w-full bg-transparent text-white outline-none placeholder:text-slate-500" placeholder="0712345678 or name@example.com" />
                 </div>
-                <button type="submit" disabled={isLoading} className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+                <button type="submit" disabled={isLoading} className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
                   <FiSearch /> {isLoading ? 'Searching...' : 'Find me'}
                 </button>
               </form>
@@ -199,7 +199,7 @@ export default function Checkin() {
           </div>
           <div className="space-y-6">
             <Card variant="raised" className="p-6">
-              <div className="flex items-center gap-3 text-[#D8B2FF]"><MdQrCodeScanner className="text-xl" /><span className="text-sm font-semibold uppercase tracking-[0.3em]">Quick check-in</span></div>
+              <div className="flex items-center gap-3 text-purple-300"><MdQrCodeScanner className="text-xl" /><span className="text-sm font-semibold uppercase tracking-[0.3em]">Quick check-in</span></div>
               <div className="mt-6 space-y-4 text-slate-300">
                 <div><p className="text-sm font-semibold text-white">Find your profile</p><p className="mt-2 text-sm">Use the phone number or email on your registration.</p></div>
                 <div><p className="text-sm font-semibold text-white">Check yourself in</p><p className="mt-2 text-sm">You must be signed in with the same member account for the attendance action.</p></div>
@@ -224,7 +224,7 @@ export default function Checkin() {
           <Card variant="raised" className="p-4">
             <div className="flex flex-col gap-6 rounded-3xl border border-white/10 bg-[#121321]/80 p-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] text-2xl font-black text-white shadow-xl shadow-[#A53DFF]/20">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-pink-600 via-purple-500 to-indigo-500 text-2xl font-black text-white shadow-xl shadow-purple-400/20">
                   {foundProfile.name?.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
@@ -235,7 +235,7 @@ export default function Checkin() {
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="w-fit rounded-full border border-[#A53DFF]/30 bg-[#A53DFF]/10 px-4 py-2 text-xs font-semibold text-[#D8B2FF]">{foundProfile.membershipId}</span>
+                <span className="w-fit rounded-full border border-purple-400/30 bg-purple-400/10 px-4 py-2 text-xs font-semibold text-purple-300">{foundProfile.membershipId}</span>
                 <span className="w-fit rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-300">{foundProfile.checkedIn ? 'Checked in' : foundProfile.status}</span>
               </div>
             </div>
@@ -260,7 +260,7 @@ export default function Checkin() {
                 {foundProfile.checkedIn ? (
                   <div className="flex items-center gap-3 rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-300"><FiCheckCircle className="h-5 w-5" /> You are already checked in for today.</div>
                 ) : (
-                  <button type="button" onClick={handleSelfCheckIn} disabled={isCheckingIn} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] py-4 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+                  <button type="button" onClick={handleSelfCheckIn} disabled={isCheckingIn} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 py-4 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
                     <FiCheckCircle /> {isCheckingIn ? 'Checking in...' : user?.email ? 'Check In Now' : 'Sign In to Check In'}
                   </button>
                 )}

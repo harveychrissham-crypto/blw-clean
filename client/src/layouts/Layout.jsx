@@ -56,7 +56,7 @@ export default function Layout({ children }) {
             <button onClick={() => setSearchOpen(true)} className="rounded-lg p-2 text-white/50 transition hover:text-white hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" aria-label="Search"><FiSearch className="h-4 w-4" /></button>
             <Link to="/notifications" className="relative rounded-lg p-2 text-white/50 transition hover:text-white hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" aria-label="Notifications">
               <FiBell className="h-4 w-4" />
-              {unreadCount > 0 && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#F2A31C]" aria-hidden="true" />}
+              {unreadCount > 0 && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-gold-500" aria-hidden="true" />}
             </Link>
             {user ? <Link to="/dashboard" className="hidden sm:inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90" style={{ background: 'linear-gradient(135deg,#EC2FA8,#8A2BE2)' }}><FiUser className="h-3.5 w-3.5" />My Account</Link> : <Link to="/auth" className="hidden sm:inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90" style={{ background: 'linear-gradient(135deg,#EC2FA8,#8A2BE2)' }}><FiLogIn className="h-3.5 w-3.5" />Sign In</Link>}
           </div>

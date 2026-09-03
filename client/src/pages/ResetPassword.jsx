@@ -4,7 +4,7 @@ import { Card } from '../components/ui/Card';
 import { Toast } from '../components/ui/Toast';
 import { apiFetch } from '../config/api';
 
-const inputClass = 'w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none focus:border-[#A53DFF]';
+const inputClass = 'w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none focus:border-purple-400';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -56,20 +56,20 @@ export default function ResetPassword() {
     <section className="min-h-screen w-full bg-slate-950">
       <div className="mx-auto flex min-h-screen w-full max-w-xl items-center px-4 py-20 sm:px-6">
         <Card variant="raised" className="w-full p-8 sm:p-10">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#D8B2FF]">Account recovery</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-purple-300">Account recovery</p>
           <h1 className="mt-3 text-3xl font-semibold text-white">Create a new password</h1>
           <p className="mt-3 text-sm leading-relaxed text-slate-400">Choose a password you haven’t used before. Your reset link can only be used once.</p>
 
           {status === 'submitted' ? (
             <div className="mt-8 space-y-4">
               <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-200">Your password has been reset successfully.</div>
-              <button type="button" onClick={() => navigate('/auth')} className="inline-flex w-full justify-center rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-5 py-3 font-semibold text-white">Back to sign in</button>
+              <button type="button" onClick={() => navigate('/auth')} className="inline-flex w-full justify-center rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-5 py-3 font-semibold text-white">Back to sign in</button>
             </div>
           ) : (
             <form onSubmit={submit} className="mt-8 space-y-4">
               <input className={inputClass} type="password" autoComplete="new-password" placeholder="NEW PASSWORD" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} />
               <input className={inputClass} type="password" autoComplete="new-password" placeholder="CONFIRM NEW PASSWORD" value={confirm} onChange={(event) => setConfirm(event.target.value)} required minLength={8} />
-              <button type="submit" disabled={status === 'submitting' || !token} className="inline-flex w-full justify-center rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] px-5 py-3 font-semibold text-white disabled:opacity-50">
+              <button type="submit" disabled={status === 'submitting' || !token} className="inline-flex w-full justify-center rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-5 py-3 font-semibold text-white disabled:opacity-50">
                 {status === 'submitting' ? 'Resetting…' : 'Reset password'}
               </button>
             </form>

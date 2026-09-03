@@ -34,7 +34,7 @@ export default function Notifications() {
     <section className="mx-auto max-w-2xl px-5 py-12">
       <div className="mb-8 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.08] text-[#F2A31C]"><FiBell className="h-7 w-7" /></div>
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.08] text-gold-500"><FiBell className="h-7 w-7" /></div>
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-white/40">Inbox</p>
             <h1 className="text-3xl font-extrabold text-white">Notifications</h1>
@@ -49,13 +49,13 @@ export default function Notifications() {
       ) : (
         <div className="space-y-3">
           {notifications.map((notification) => (
-            <button key={notification.id} type="button" onClick={() => markAsRead(notification.id)} className={`w-full rounded-2xl border p-4 text-left transition ${notification.read ? 'border-white/8 bg-white/[0.03]' : 'border-[#F2A31C]/25 bg-[#F2A31C]/8'}`}>
+            <button key={notification.id} type="button" onClick={() => markAsRead(notification.id)} className={`w-full rounded-2xl border p-4 text-left transition ${notification.read ? 'border-white/8 bg-white/[0.03]' : 'border-gold-500/25 bg-gold-500/8'}`}>
               <div className="flex items-start gap-3">
                 <img src="/logo.png" alt="BLW Campus Ministry" className={`h-11 w-11 shrink-0 rounded-2xl object-cover transition ${notification.read ? 'opacity-45 grayscale' : 'opacity-100'}`} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className={`truncate text-sm ${notification.read ? 'font-medium text-white/80' : 'font-bold text-white'}`}>{notification.title}</h3>
-                    {!notification.read && <span className="h-2 w-2 shrink-0 rounded-full bg-[#F2A31C]" aria-hidden="true" />}
+                    {!notification.read && <span className="h-2 w-2 shrink-0 rounded-full bg-gold-500" aria-hidden="true" />}
                   </div>
                   <p className="mt-1 text-sm leading-relaxed text-white/55">{notification.body}</p>
                   <p className="mt-2 text-xs text-white/30">{formatTimestamp(notification.receivedAt)}</p>

@@ -21,10 +21,17 @@ export default {
         },
         pink: {
           300: '#FF9CEA',
-          500: '#FF4F9A'
+          500: '#FF4F9A',
+          600: '#EC2FA8'
         },
         indigo: {
           500: '#3D5AFE'
+        },
+        gold: {
+          500: '#F2A31C'
+        },
+        ink: {
+          900: '#0d0c18'
         }
       },
       boxShadow: {

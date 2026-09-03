@@ -7,7 +7,7 @@
 //   - "subtle"  : quiet/secondary info nested inside a raised card.
 
 const VARIANTS = {
-  filled: 'bg-gradient-to-r from-[#FF8B5C] via-[#FF4F9A] to-[#A53DFF] border border-white/10 shadow-[0_20px_50px_rgba(163,77,255,0.25)]',
+  filled: 'bg-gradient-to-r from-[#FF8B5C] via-pink-500 to-purple-400 border border-white/10 shadow-[0_20px_50px_rgba(163,77,255,0.25)]',
   raised: 'bg-slate-900 border border-slate-700 shadow-sm',
   subtle: 'bg-white/[0.07] border border-white/[0.12]',
 };
@@ -94,7 +94,7 @@ export function InfoTile({ label, value, icon: Icon }) {
   return (
     <Card variant="subtle" className="p-3">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-950/60 border border-white/[0.06] text-[#FF4F9A]">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-950/60 border border-white/[0.06] text-pink-500">
           {Icon && <Icon className="h-4 w-4" />}
         </div>
         <div className="min-w-0">

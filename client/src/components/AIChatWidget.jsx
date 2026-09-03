@@ -54,7 +54,7 @@ export default function AIChatWidget() {
           </div>
           <div className="mt-4 space-y-2">
             {suggestions.map((item) => (
-              <button key={item.key} onClick={() => setAnswer(answers[item.key])} className={`w-full rounded-2xl border px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${selectedKey === item.key ? 'border-[#A53DFF]/40 bg-[#8A2BE2]/10 text-fuchsia-300' : 'border-white/10 bg-white/5 text-slate-300'}`}>
+              <button key={item.key} onClick={() => setAnswer(answers[item.key])} className={`w-full rounded-2xl border px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${selectedKey === item.key ? 'border-purple-400/40 bg-purple-500/10 text-fuchsia-300' : 'border-white/10 bg-white/5 text-slate-300'}`}>
                 {item.label}
               </button>
             ))}
@@ -65,13 +65,13 @@ export default function AIChatWidget() {
           </Card>
           <form onSubmit={submit} className="mt-4 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
             <input value={question} onChange={(event) => setQuestion(event.target.value)} className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none" placeholder="Ask a ministry question" aria-label="Ask a ministry question" />
-            <button type="submit" disabled={!question.trim()} className="rounded-full bg-gradient-to-r from-[#EC2FA8] via-[#8A2BE2] to-[#3D5AFE] p-2 text-white disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" aria-label="Send question">
+            <button type="submit" disabled={!question.trim()} className="rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 p-2 text-white disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" aria-label="Send question">
               <FiSend />
             </button>
           </form>
         </Card>
       ) : (
-        <button onClick={() => setOpen(true)} className="flex items-center gap-2 rounded-full border border-[#A53DFF]/40 bg-[#A53DFF]/15 px-4 py-3 text-sm font-semibold text-fuchsia-300 backdrop-blur focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+        <button onClick={() => setOpen(true)} className="flex items-center gap-2 rounded-full border border-purple-400/40 bg-purple-400/15 px-4 py-3 text-sm font-semibold text-fuchsia-300 backdrop-blur focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
           <FiCpu /> Ministry Assistant
         </button>
       )}

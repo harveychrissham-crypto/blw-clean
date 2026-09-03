@@ -25,11 +25,11 @@ export default function UpdateAvailablePrompt() {
           <FiX className="h-4 w-4" />
         </button>
 
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F2A31C]/15 text-[#F2A31C]">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gold-500/15 text-gold-500">
           <FiDownload className="h-7 w-7" />
         </div>
 
-        <p className="mt-6 text-xs font-bold uppercase tracking-[0.25em] text-[#F2A31C]">Update available</p>
+        <p className="mt-6 text-xs font-bold uppercase tracking-[0.25em] text-gold-500">Update available</p>
         <h2 id="update-available-title" className="mt-2 text-2xl font-extrabold text-white">
           A new version is ready
         </h2>
@@ -49,7 +49,7 @@ export default function UpdateAvailablePrompt() {
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => setDetails(null)}
-            className="flex-1 rounded-full bg-gradient-to-r from-[#F2A31C] to-[#FF8B5C] px-5 py-3 text-center text-sm font-bold text-slate-950 transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+            className="flex-1 rounded-full bg-gradient-to-r from-gold-500 to-[#FF8B5C] px-5 py-3 text-center text-sm font-bold text-slate-950 transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           >
             Update Now
           </a>
