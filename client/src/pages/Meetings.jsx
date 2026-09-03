@@ -5,7 +5,7 @@ import { Room, RoomEvent, ParticipantEvent, Track, VideoPresets, AudioPresets, D
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
 
-const REACTION_EMOJIS = ['👍', '❤️', '😂', '🙏', '👏'];
+const REACTION_EMOJIS = ['👍', '❤️', '🎉', '👏', '😂', '😮', '🙏'];
 const DEVICE_PREFS_KEY = 'blw-meet-device-prefs';
 
 function loadDevicePrefs() {
@@ -683,9 +683,9 @@ function ReactionsBar({ liveRoom, localParticipant, participants }) {
       {raisedList.length > 0 && (
         <div className="mx-auto mt-3 w-fit rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-1.5 text-xs text-amber-200">✋ {raisedList.join(', ')} raised {raisedList.length === 1 ? 'a hand' : 'hands'}</div>
       )}
-      <div className="mx-auto mt-3 flex w-fit items-center gap-1.5 rounded-full border border-white/10 bg-black/30 px-2 py-1.5">
+      <div className="mx-auto mt-3 flex max-w-[22rem] flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-black/30 px-2 py-1.5 sm:w-fit sm:max-w-none sm:rounded-full">
         {REACTION_EMOJIS.map((emoji) => (
-          <button key={emoji} type="button" onClick={() => react(emoji)} className="rounded-full px-2 py-1 text-lg hover:bg-white/10">{emoji}</button>
+          <button key={emoji} type="button" onClick={() => react(emoji)} aria-label={`React with ${emoji}`} className="rounded-full px-2 py-1 text-lg hover:bg-white/10">{emoji}</button>
         ))}
         <button type="button" onClick={toggleHand} className={`ml-1 rounded-full border px-3 py-1.5 text-xs font-semibold ${handRaised ? 'border-amber-400/50 bg-amber-400/15 text-amber-200' : 'border-white/15 bg-white/5 text-white/70 hover:bg-white/10'}`}>✋ {handRaised ? 'Lower hand' : 'Raise hand'}</button>
       </div>
