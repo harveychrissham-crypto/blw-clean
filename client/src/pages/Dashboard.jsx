@@ -24,6 +24,7 @@ import { Card, Eyebrow, StatGroup, ActionBanner, InfoTile } from '../components/
 import EmptyState from '../components/ui/EmptyState';
 import { Toast } from '../components/ui/Toast';
 import { Skeleton } from '../components/ui/Skeleton';
+import Button from '../components/ui/Button';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -186,14 +187,14 @@ export default function Dashboard() {
             </div>
 
             <div className="flex flex-wrap gap-2.5">
-              <button
+              <Button variant="custom" size="none"
                 type="button"
                 onClick={openEdit}
                 className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_20px_40px_rgba(236,47,168,0.18)] transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
                 <FiEdit2 /> Edit Profile
-              </button>
-              <button
+              </Button>
+              <Button variant="custom" size="none"
                 type="button"
                 onClick={() => {
                   hapticError();
@@ -202,7 +203,7 @@ export default function Dashboard() {
                 className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/70 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
                 <FiLogOut /> Sign Out
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -264,14 +265,14 @@ export default function Dashboard() {
                 <p className="text-sm font-semibold text-white">Ready to check in?</p>
                 <p className="mt-1 text-xs leading-relaxed text-slate-400">Open the check-in page to see the current service status and your QR badge.</p>
               </div>
-              <button
+              <Button variant="custom" size="none"
                 type="button"
                 onClick={() => navigate('/checkin')}
                 className="mt-4 inline-flex items-center gap-2 rounded-full border border-pink-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-pink-600/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 Show my QR badge
-              </button>
+              </Button>
             </div>
           </div>
         </Card>
@@ -338,26 +339,26 @@ export default function Dashboard() {
           <p className="mt-3 text-sm text-red-200/90">Deleting your account removes your profile and all saved ministry records. This action cannot be undone.</p>
           {error && <p className="mt-3 text-sm text-red-100">{error}</p>}
           {status === 'success' && <p className="mt-3 text-sm text-emerald-200">Your account has been deleted successfully.</p>}
-          <button
+          <Button variant="custom" size="none"
             type="button"
             onClick={handleDelete}
             className="mt-4 inline-flex items-center gap-2 rounded-full border border-red-500 bg-red-500/10 px-5 py-2.5 text-sm font-semibold text-red-100 transition hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           >
             Delete my account
-          </button>
+          </Button>
         </Card>
       </div>
 
       {isEditing && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/90 px-4 pt-10 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
           <div className="relative w-full max-w-3xl overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 shadow-2xl">
-            <button
+            <Button variant="custom" size="none"
               type="button"
               onClick={() => setIsEditing(false)}
               className="absolute right-5 top-5 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-slate-900/80 text-slate-200 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
               ✕
-            </button>
+            </Button>
             <div className="max-h-[90vh] overflow-hidden">
               <div className="border-b border-white/10 px-6 py-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#F7C948]">Edit your profile</p>
@@ -537,19 +538,19 @@ export default function Dashboard() {
               {editStatus === 'success' && <p className="text-sm text-emerald-300">Profile updated successfully.</p>}
 
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-                <button
+                <Button variant="custom" size="none"
                   type="button"
                   onClick={() => setIsEditing(false)}
                   className="inline-flex items-center justify-center rounded-full border border-white/10 bg-slate-900/80 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button variant="custom" size="none"
                   type="submit"
                   className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                 >
                   Save Changes
-                </button>
+                </Button>
               </div>
             </form>
           </div>

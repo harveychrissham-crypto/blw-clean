@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { Card, Eyebrow, InfoTile } from '../components/ui/Card';
 import { Toast } from '../components/ui/Toast';
 import { SkeletonRow } from '../components/ui/Skeleton';
+import Button from '../components/ui/Button';
 
 const MEMBER_SEARCH_URL = '/api/members/search';
 const SELF_CHECKIN_URL = '/api/members/self-checkin';
@@ -102,9 +103,9 @@ function MemberQRCode({ member }) {
           {member.joinDate && <p className="text-xs text-slate-400">Joined: {member.joinDate}</p>}
         </div>
       </div>
-      <button type="button" onClick={handleDownload} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+      <Button variant="custom" size="none" type="button" onClick={handleDownload} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
         <FiDownload /> Download QR Badge
-      </button>
+      </Button>
     </div>
   );
 }
@@ -189,9 +190,9 @@ export default function Checkin() {
                   <label className="block text-sm font-medium text-slate-400">Phone number or email</label>
                   <input value={query} onChange={(e) => setQuery(e.target.value)} className="mt-2 w-full bg-transparent text-white outline-none placeholder:text-slate-500" placeholder="0712345678 or name@example.com" />
                 </div>
-                <button type="submit" disabled={isLoading} className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+                <Button variant="custom" size="none" type="submit" disabled={isLoading} className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
                   <FiSearch /> {isLoading ? 'Searching...' : 'Find me'}
-                </button>
+                </Button>
               </form>
               <p className="mt-4 text-sm text-slate-400">{message}</p>
               {isLoading && <div className="mt-4"><SkeletonRow /></div>}
@@ -260,9 +261,9 @@ export default function Checkin() {
                 {foundProfile.checkedIn ? (
                   <div className="flex items-center gap-3 rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-300"><FiCheckCircle className="h-5 w-5" /> You are already checked in for today.</div>
                 ) : (
-                  <button type="button" onClick={handleSelfCheckIn} disabled={isCheckingIn} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 py-4 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+                  <Button variant="custom" size="none" type="button" onClick={handleSelfCheckIn} disabled={isCheckingIn} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 py-4 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
                     <FiCheckCircle /> {isCheckingIn ? 'Checking in...' : user?.email ? 'Check In Now' : 'Sign In to Check In'}
-                  </button>
+                  </Button>
                 )}
                 {!user?.email && !foundProfile.checkedIn && <p className="mt-3 text-center text-xs text-slate-500">Sign in to the same member account before checking in.</p>}
               </Card>
@@ -270,7 +271,7 @@ export default function Checkin() {
 
             <div className="space-y-4">
               <MemberQRCode member={foundProfile} />
-              <button type="button" onClick={resetSearch} className="w-full rounded-full border border-white/10 bg-slate-950/80 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">Search again</button>
+              <Button variant="custom" size="none" type="button" onClick={resetSearch} className="w-full rounded-full border border-white/10 bg-slate-950/80 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">Search again</Button>
             </div>
           </div>
         </div>
