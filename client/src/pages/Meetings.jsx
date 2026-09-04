@@ -166,7 +166,8 @@ function Lobby({ participantName, onCancel, onJoin }) {
 
   return (
     <section className="mx-auto max-w-2xl px-5 py-10 sm:py-14">
-      <h1 className="mb-5 text-2xl font-bold text-white">Check your camera and mic</h1>
+      <h1 className="mb-1 text-2xl font-bold text-white">Check your camera and mic</h1>
+      <p className="mb-5 text-sm text-white/50">Joining as <span className="text-white/80">{participantName}</span></p>
       <div className="overflow-hidden rounded-3xl border border-white/10 bg-ink-900">
         <div className="relative aspect-video bg-[#3c4043]">
           <video ref={videoRef} autoPlay playsInline muted className={`h-full w-full scale-x-[-1] object-cover ${camOn ? '' : 'hidden'}`} />

@@ -135,7 +135,7 @@ export default function Dashboard() {
       campusZone: user?.campusZone || '',
       residence: user?.residence || '',
       city: user?.city || '',
-      country: user?.country || 'Ghana',
+      country: user?.country || 'Kenya',
       invitedBy: user?.invitedBy || '',
       about: user?.about || '',
     });
@@ -496,7 +496,7 @@ export default function Dashboard() {
                   <input
                     value={editForm.country}
                     onChange={handleEditChange('country')}
-                    placeholder="Ghana"
+                    placeholder="Kenya"
                     className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                   />
                 </label>

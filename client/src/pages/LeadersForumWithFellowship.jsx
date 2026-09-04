@@ -5,7 +5,6 @@ import { MdQrCodeScanner, MdFlashlightOn } from 'react-icons/md';
 import jsQR from 'jsqr';
 import { useAuth } from '../context/AuthContext';
 import { useIsAdmin } from '../hooks/useIsAdmin';
-import { apiFetch } from '../config/api';
 import { IconButton } from '../components/ui/Button';
 import { fetchAllMembers, searchMembers, checkInMember, syncOfflineCheckins } from '../utils/members';
 import { getOfflineCheckinQueue } from '../utils/offlineCheckin';
