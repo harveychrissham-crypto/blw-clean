@@ -7,15 +7,20 @@
 //   - "subtle"  : quiet/secondary info nested inside a raised card.
 
 const VARIANTS = {
-  filled: 'bg-gradient-to-r from-[#FF8B5C] via-pink-500 to-purple-400 border border-white/10 shadow-[0_20px_50px_rgba(163,77,255,0.25)]',
-  raised: 'bg-slate-900 border border-slate-700 shadow-sm',
-  subtle: 'bg-white/[0.07] border border-white/[0.12]',
+  filled: 'rounded-[1.5rem] overflow-hidden bg-gradient-to-r from-[#FF8B5C] via-pink-500 to-purple-400 border border-white/10 shadow-[0_20px_50px_rgba(163,77,255,0.25)]',
+  raised: 'rounded-[1.5rem] overflow-hidden bg-slate-900 border border-slate-700 shadow-sm',
+  subtle: 'rounded-[1.5rem] overflow-hidden bg-white/[0.07] border border-white/[0.12]',
+  // Escape hatch for wrapping markup that doesn't match one of the three
+  // deliberate looks above (e.g. an existing card-like block with its own
+  // background/radius already tuned for its context) — contributes no
+  // styling of its own, so nothing about how it currently looks changes.
+  custom: '',
 };
 
 export function Card({ variant = 'raised', className = '', children, as: Comp = 'div', ...props }) {
   return (
     <Comp
-      className={`rounded-[1.5rem] overflow-hidden ${VARIANTS[variant] || VARIANTS.raised} ${className}`}
+      className={`${VARIANTS[variant] || VARIANTS.raised} ${className}`}
       {...props}
     >
       {children}
