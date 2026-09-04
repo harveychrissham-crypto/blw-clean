@@ -165,7 +165,7 @@ export default function NotificationCenter() {
         <div><p className="text-xs font-bold uppercase tracking-[0.25em] text-white/40">Leaders tool</p><h1 className="text-3xl font-extrabold text-white">Push Notifications</h1><p className="mt-1 text-sm text-white/50">Send an announcement to registered BLW Android devices.</p></div>
       </div>
 
-      <Card as="form" onSubmit={handleSend} variant="custom" className="space-y-4 rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
+      <Card as="form" onSubmit={handleSend} variant="custom" className="space-y-4 rounded-3xl border border-white/10 bg-white/[0.04] p-6">
         <div><label className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-white/40">Title</label><input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} placeholder="e.g. Sunday Service Reminder" className="w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-white outline-none focus:border-gold-500" /></div>
         <div><label className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-white/40">Message</label><textarea value={body} onChange={(e) => setBody(e.target.value)} maxLength={500} rows={5} placeholder="Write the message members should receive…" className="w-full resize-y rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-white outline-none focus:border-gold-500" /></div>
 
@@ -189,7 +189,7 @@ export default function NotificationCenter() {
         {status && <div className="flex items-start gap-2 rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300"><FiCheckCircle className="mt-0.5" />{status}</div>}
       </Card>
 
-      <Card variant="custom" className="mt-8 rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
+      <Card variant="custom" className="mt-8 rounded-3xl border border-white/10 bg-white/[0.04] p-6">
         <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">Recent activity</p><h2 className="mt-1 text-xl font-bold text-white">Delivery Log</h2></div><FiClock className="text-white/30" /></div>
         {!deliveryLog.length ? <Card as="p" variant="custom" className="rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-5 text-sm text-white/35">No notifications have been sent from this device yet.</Card> : <div className="space-y-2">{deliveryLog.map((entry, index) => <Card key={`${entry.timestamp}-${index}`} variant="custom" className="rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${entry.mode === 'test' ? 'bg-gold-500/10 text-gold-500' : 'bg-white/10 text-white/50'}`}>{entry.mode === 'test' ? 'Test' : 'Broadcast'}</span><span className="truncate text-sm font-semibold text-white">{entry.target}</span></div><p className="mt-1 text-xs text-white/35">{new Date(entry.timestamp).toLocaleString()}</p></div><span className={`shrink-0 text-xs font-bold ${entry.status === 'sent' ? 'text-emerald-300' : 'text-gold-500'}`}>{entry.status === 'sent' ? `✓ ${entry.sent}/${entry.total}` : '⚠ No devices'}</span></div></Card>)}</div>}
       </Card>
