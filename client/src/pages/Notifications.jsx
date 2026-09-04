@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { FiBell, FiCheck } from 'react-icons/fi';
 import { loadNotifications, markAsRead, markAllAsRead, onNotificationsUpdated } from '../utils/notificationStorage';
 import Button from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
 
 const formatTimestamp = (iso) => {
   try {
@@ -46,7 +47,7 @@ export default function Notifications() {
       </div>
 
       {notifications.length === 0 ? (
-        <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-10 text-center"><FiBell className="mx-auto h-8 w-8 text-white/25" /><p className="mt-4 text-sm text-white/45">Nothing here yet. Ministry updates and announcements will show up as they arrive.</p></div>
+        <Card variant="custom" className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-10 text-center"><FiBell className="mx-auto h-8 w-8 text-white/25" /><p className="mt-4 text-sm text-white/45">Nothing here yet. Ministry updates and announcements will show up as they arrive.</p></Card>
       ) : (
         <div className="space-y-3">
           {notifications.map((notification) => (
