@@ -5,6 +5,7 @@ import { fetchEvents } from '../utils/events';
 import { fetchSermons } from '../utils/sermons';
 import { fetchOutreachStories } from '../utils/outreachStories';
 import { fetchVenues } from '../utils/venues';
+import Button from '../components/ui/Button';
 
 const TARGETS = [
   ['announcement', 'General announcement'],
@@ -168,7 +169,7 @@ export default function NotificationCenter() {
         <div><label className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-white/40">Message</label><textarea value={body} onChange={(e) => setBody(e.target.value)} maxLength={500} rows={5} placeholder="Write the message members should receive…" className="w-full resize-y rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-white outline-none focus:border-gold-500" /></div>
 
         <div className="rounded-2xl border border-white/10 bg-white/[0.025] p-4">
-          <div className="mb-3 flex items-center justify-between gap-3"><label className="block text-xs font-semibold uppercase tracking-[0.2em] text-white/40">Open when tapped</label><button type="button" onClick={loadTargets} disabled={loadingTargets || busy} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-white/50 hover:bg-white/5 disabled:opacity-50"><FiRefreshCw className={loadingTargets ? 'animate-spin' : ''} />Refresh</button></div>
+          <div className="mb-3 flex items-center justify-between gap-3"><label className="block text-xs font-semibold uppercase tracking-[0.2em] text-white/40">Open when tapped</label><Button variant="custom" size="none" type="button" onClick={loadTargets} disabled={loadingTargets || busy} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-white/50 hover:bg-white/5 disabled:opacity-50"><FiRefreshCw className={loadingTargets ? 'animate-spin' : ''} />Refresh</Button></div>
           <select value={targetType} onChange={(e) => { setTargetType(e.target.value); setTargetId(''); setError(''); }} className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-gold-500">{TARGETS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
           {targetType !== 'announcement' && <div className="mt-3"><label className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-white/40">Select content</label><select value={targetId} onChange={(e) => setTargetId(e.target.value)} disabled={loadingTargets || busy} className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-gold-500 disabled:opacity-60"><option value="">{loadingTargets ? 'Loading content…' : `Choose ${targetLabel.toLowerCase()}`}</option>{(targetData[targetType] || []).map((item) => { const id = getItemId(item, targetType); return <option key={id} value={id}>{getItemTitle(item, targetType)}</option>; })}</select><p className="mt-1.5 text-xs text-white/30">Choose an existing item so the notification always points to a valid destination.</p></div>}
         </div>
@@ -179,8 +180,8 @@ export default function NotificationCenter() {
         {!broadcast && <div><label className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-white/40">Member emails</label><textarea value={emails} onChange={(e) => setEmails(e.target.value)} rows={4} placeholder="member@example.com, another@example.com" className="w-full resize-y rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-white outline-none focus:border-gold-500" /></div>}
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <button type="button" onClick={handleSelfTest} disabled={busy || loadingTargets || (targetType !== 'announcement' && !selectedTarget) || !title.trim() || !body.trim()} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-gold-500/30 bg-gold-500/10 py-3 font-bold text-gold-500 disabled:opacity-50"><FiUserCheck /> {busy ? 'Sending…' : 'Send Test to Me'}</button>
-          <button type="submit" disabled={busy || loadingTargets || (targetType !== 'announcement' && !selectedTarget)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 py-3 font-bold text-white disabled:opacity-50"><FiSend /> {busy ? 'Sending…' : 'Send Notification'}</button>
+          <Button variant="custom" size="none" type="button" onClick={handleSelfTest} disabled={busy || loadingTargets || (targetType !== 'announcement' && !selectedTarget) || !title.trim() || !body.trim()} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-gold-500/30 bg-gold-500/10 py-3 font-bold text-gold-500 disabled:opacity-50"><FiUserCheck /> {busy ? 'Sending…' : 'Send Test to Me'}</Button>
+          <Button variant="custom" size="none" type="submit" disabled={busy || loadingTargets || (targetType !== 'announcement' && !selectedTarget)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 py-3 font-bold text-white disabled:opacity-50"><FiSend /> {busy ? 'Sending…' : 'Send Notification'}</Button>
         </div>
 
         {error && <div className="flex items-start gap-2 rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-300"><FiAlertCircle className="mt-0.5" />{error}</div>}

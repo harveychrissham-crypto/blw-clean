@@ -6,6 +6,7 @@ import { fetchOutreachStories } from '../utils/outreachStories';
 import { Card, Eyebrow, StatGroup } from '../components/ui/Card';
 import { shareContent } from '../utils/share';
 import { hapticTap } from '../utils/haptics';
+import Button from '../components/ui/Button';
 
 const stats = [
   { label: 'Souls Won', value: '12k+', icon: FiStar },
@@ -25,8 +26,8 @@ const DEFAULT_STORIES = [
 function StoryModal({ story, onClose }) {
   return <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/95 px-4 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom))]" onClick={onClose}>
     <div className="relative max-h-[85vh] w-full max-w-lg overflow-hidden rounded-[2rem] border border-white/10 bg-[#15131f] shadow-2xl" onClick={(e) => e.stopPropagation()}>
-      <button onClick={onClose} aria-label="Close story" className="absolute right-5 top-5 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white/70 transition hover:bg-black/60"><FiX /></button>
-      <button onClick={() => { hapticTap(); shareContent({ title: story.title, text: story.subtitle ? `${story.title} — ${story.subtitle}` : story.title, url: `${window.location.origin}/outreaches` }); }} className="absolute right-[4.25rem] top-5 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white/70 transition hover:bg-black/60" aria-label={`Share ${story.title}`}><FiShare2 className="h-4 w-4" /></button>
+      <Button variant="custom" size="none" onClick={onClose} aria-label="Close story" className="absolute right-5 top-5 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white/70 transition hover:bg-black/60"><FiX /></Button>
+      <Button variant="custom" size="none" onClick={() => { hapticTap(); shareContent({ title: story.title, text: story.subtitle ? `${story.title} — ${story.subtitle}` : story.title, url: `${window.location.origin}/outreaches` }); }} className="absolute right-[4.25rem] top-5 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white/70 transition hover:bg-black/60" aria-label={`Share ${story.title}`}><FiShare2 className="h-4 w-4" /></Button>
       <div className="max-h-[85vh] overflow-y-auto">
         {story.imageUrl ? <img src={story.imageUrl} alt={story.title} className="h-56 w-full object-cover" /> : <div className="flex h-40 items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(236,47,168,0.18), rgba(138,43,226,0.18), rgba(61,90,254,0.12))' }}><FiHeart className="h-10 w-10 text-white/30" /></div>}
         <div className="p-6 sm:p-8">{story.tag && <Eyebrow className="mb-2">{story.tag}</Eyebrow>}<h2 className="text-2xl font-extrabold text-white">{story.title}</h2>{story.subtitle && <p className="mt-2 text-sm text-white/50">{story.subtitle}</p>}<p className="mt-5 whitespace-pre-line text-sm leading-relaxed text-white/75">{story.body || "The full story for this update hasn't been added yet — check back soon."}</p></div>
@@ -69,7 +70,7 @@ export default function Outreaches() {
         <div className="p-5"><h3 className="text-base font-bold text-white">{story.title}</h3><p className="mt-1 text-sm text-white/50">{story.subtitle}</p><Eyebrow className="mt-3">Read story →</Eyebrow></div>
       </Card>; })}</div>
     </div>
-    <div className="mx-auto mt-16 max-w-6xl"><Card as={motion.div} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} variant="filled" className="px-6 py-16 text-center sm:px-12"><h2 className="text-3xl font-extrabold text-white sm:text-4xl">Join the next outreach</h2><p className="mx-auto mt-4 max-w-xl text-sm text-white/85 sm:text-base">Be part of the move. Sign up, show up, and let's reach a soul together.</p><button type="button" onClick={() => navigate('/connect')} className="mt-7 inline-flex items-center gap-2 rounded-full bg-ink-900 px-7 py-3.5 text-sm font-bold text-white transition hover:bg-black"><span>Get Involved</span><FiArrowRight className="h-4 w-4" /></button></Card></div>
+    <div className="mx-auto mt-16 max-w-6xl"><Card as={motion.div} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} variant="filled" className="px-6 py-16 text-center sm:px-12"><h2 className="text-3xl font-extrabold text-white sm:text-4xl">Join the next outreach</h2><p className="mx-auto mt-4 max-w-xl text-sm text-white/85 sm:text-base">Be part of the move. Sign up, show up, and let's reach a soul together.</p><Button variant="custom" size="none" type="button" onClick={() => navigate('/connect')} className="mt-7 inline-flex items-center gap-2 rounded-full bg-ink-900 px-7 py-3.5 text-sm font-bold text-white transition hover:bg-black"><span>Get Involved</span><FiArrowRight className="h-4 w-4" /></Button></Card></div>
     {activeStory && <StoryModal story={activeStory} onClose={() => setActiveStory(null)} />}
   </section>;
 }

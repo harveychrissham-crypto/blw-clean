@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FiBell, FiCheck } from 'react-icons/fi';
 import { loadNotifications, markAsRead, markAllAsRead, onNotificationsUpdated } from '../utils/notificationStorage';
+import Button from '../components/ui/Button';
 
 const formatTimestamp = (iso) => {
   try {
@@ -41,7 +42,7 @@ export default function Notifications() {
             {unreadCount > 0 && <p className="mt-1 text-sm text-white/50">{unreadCount} unread</p>}
           </div>
         </div>
-        {unreadCount > 0 && <button type="button" onClick={markAllAsRead} className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/10 hover:text-white"><FiCheck className="h-3.5 w-3.5" /> Mark all as read</button>}
+        {unreadCount > 0 && <Button variant="custom" size="none" type="button" onClick={markAllAsRead} className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/10 hover:text-white"><FiCheck className="h-3.5 w-3.5" /> Mark all as read</Button>}
       </div>
 
       {notifications.length === 0 ? (
@@ -49,7 +50,7 @@ export default function Notifications() {
       ) : (
         <div className="space-y-3">
           {notifications.map((notification) => (
-            <button key={notification.id} type="button" onClick={() => markAsRead(notification.id)} className={`w-full rounded-2xl border p-4 text-left transition ${notification.read ? 'border-white/8 bg-white/[0.03]' : 'border-gold-500/25 bg-gold-500/8'}`}>
+            <Button variant="custom" size="none" key={notification.id} type="button" onClick={() => markAsRead(notification.id)} className={`w-full rounded-2xl border p-4 text-left transition ${notification.read ? 'border-white/8 bg-white/[0.03]' : 'border-gold-500/25 bg-gold-500/8'}`}>
               <div className="flex items-start gap-3">
                 <img src="/logo.png" alt="BLW Campus Ministry" className={`h-11 w-11 shrink-0 rounded-2xl object-cover transition ${notification.read ? 'opacity-45 grayscale' : 'opacity-100'}`} />
                 <div className="min-w-0 flex-1">
@@ -61,7 +62,7 @@ export default function Notifications() {
                   <p className="mt-2 text-xs text-white/30">{formatTimestamp(notification.receivedAt)}</p>
                 </div>
               </div>
-            </button>
+            </Button>
           ))}
         </div>
       )}

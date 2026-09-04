@@ -11,6 +11,7 @@ import { loadSoulEntries, saveSoulEntries } from '../utils/soulStorage';
 import { Card, Eyebrow, StatGroup } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
 import { Toast } from '../components/ui/Toast';
+import Button from '../components/ui/Button';
 
 export default function RecordSouls() {
   const [entries, setEntries] = useState([]);
@@ -190,9 +191,9 @@ export default function RecordSouls() {
 
             {error && <p className="text-sm text-red-300">{error}</p>}
 
-            <button type="submit" className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+            <Button variant="custom" size="none" type="submit" className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
               Record soul
-            </button>
+            </Button>
           </form>
         </Card>
 
@@ -220,13 +221,13 @@ export default function RecordSouls() {
                         <p className="text-sm font-semibold text-white truncate">{entry.name}</p>
                         <p className="mt-1 text-sm text-slate-400 truncate">{entry.contact}</p>
                       </div>
-                      <button
+                      <Button variant="custom" size="none"
                         type="button"
                         onClick={() => handleDeleteEntry(entry.id)}
                         className="shrink-0 text-xs font-semibold text-slate-400 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                       >
                         Remove
-                      </button>
+                      </Button>
                     </div>
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
                       <div className="rounded-2xl bg-slate-950/50 p-2.5 text-xs text-slate-300">
