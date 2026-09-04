@@ -4,6 +4,7 @@ import { FiNavigation, FiLoader, FiSearch, FiMapPin, FiAlertCircle } from 'react
 import { apiFetch } from '../config/api';
 import { Card, Eyebrow } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
+import Button from '../components/ui/Button';
 
 const LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
 const LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
@@ -361,8 +362,8 @@ export default function Connect() {
                     </div>
                   )}
                 </div>
-                <button type="button" onClick={searchPlace} disabled={searching || campusSearch.trim().length < 2} className="inline-flex min-w-[110px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-6 py-3.5 text-sm font-bold text-white shadow-[0_12px_28px_rgba(138,43,226,0.2)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">{searching ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiSearch className="h-4 w-4" />} Search</button>
-                <button type="button" onClick={useMyLocation} disabled={locating} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-purple-500/30 bg-purple-500/10 px-5 py-3.5 text-sm font-bold text-white transition hover:border-purple-500/50 hover:bg-purple-500/15 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">{locating ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiNavigation className="h-4 w-4" />} Where I am</button>
+                <Button type="button" onClick={searchPlace} disabled={searching || campusSearch.trim().length < 2} variant="gradient" size="none" className="inline-flex min-w-[110px] items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm shadow-[0_12px_28px_rgba(138,43,226,0.2)] hover:opacity-95">{searching ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiSearch className="h-4 w-4" />} Search</Button>
+                <Button type="button" onClick={useMyLocation} disabled={locating} variant="custom" size="none" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-purple-500/30 bg-purple-500/10 px-5 py-3.5 text-sm font-bold text-white hover:border-purple-500/50 hover:bg-purple-500/15 disabled:opacity-60">{locating ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiNavigation className="h-4 w-4" />} Where I am</Button>
               </div>
 
               <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/50">
