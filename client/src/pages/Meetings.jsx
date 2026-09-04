@@ -5,6 +5,7 @@ import { Room, RoomEvent, ParticipantEvent, Track, VideoPresets, AudioPresets, D
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
 import Button from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
 
 const REACTION_EMOJIS = ['👍', '❤️', '🎉', '👏', '😂', '😮', '🙏'];
 const DEVICE_PREFS_KEY = 'blw-meet-device-prefs';
@@ -91,7 +92,7 @@ export default function Meetings() {
     return <CallRoom credentials={credentials} choices={choices} room={room} onLeave={handleLeave} />;
   }
 
-  return <section className="mx-auto max-w-4xl px-5 py-12 sm:py-16"><div className="mb-10"><p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-500">Fellowship</p><h1 className="mt-2 text-4xl font-bold">Meetings</h1><p className="mt-3 max-w-2xl text-white/60">Gather for Bible studies, fellowship meetings and leadership calls.</p></div>{leaveNotice && <p className="mb-6 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 text-sm text-amber-200">{leaveNotice}</p>}<div className="grid gap-5 sm:grid-cols-2"><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiPlus className="h-6 w-6 text-gold-500"/><h2 className="mt-4 text-xl font-semibold">Create room</h2><p className="mt-2 text-sm text-white/55">Start an instant room and share its code with your group.</p><Button variant="custom" size="none" disabled={creating} onClick={createRoom} className="mt-6 w-full rounded-2xl bg-white py-3 font-semibold text-black disabled:opacity-50">{creating ? 'Creating…' : 'Create meeting'}</Button></div><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiUsers className="h-6 w-6 text-gold-500"/><h2 className="mt-4 text-xl font-semibold">Join room</h2><p className="mt-2 text-sm text-white/55">Enter a room code from your leader or fellowship group.</p><input value={room} onChange={e => setRoom(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') goToLobby(); }} placeholder="Room code" className="mt-5 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none focus:border-white/30"/><Button variant="custom" size="none" onClick={() => goToLobby()} className="mt-3 w-full rounded-2xl bg-gradient-to-r from-pink-600 to-purple-500 py-3 font-semibold">Join meeting</Button></div></div>{room && <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm"><span className="min-w-0 truncate text-white/60">Room: <b className="text-white">{room}</b></span><Button variant="custom" size="none" onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/meetings?room=${encodeURIComponent(room)}`)} className="inline-flex shrink-0 items-center gap-2 text-white/70 hover:text-white"><FiCopy/>Copy link</Button></div>}{error && <p className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/5 p-4 text-sm text-red-200">{error}</p>}{recentRooms.length > 0 && <div className="mt-10"><h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/50">Your recent meetings</h2><ul className="space-y-2">{recentRooms.map((r) => <li key={r.room} className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4"><div className="min-w-0"><p className="truncate text-sm font-medium text-white">{r.room}</p><p className="mt-0.5 flex items-center gap-1.5 text-xs text-white/40">{r.active && <span className="inline-flex items-center gap-1 text-emerald-300"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />Active now</span>}{r.active && ' · '}Last visited {new Date(r.lastVisitedAt).toLocaleDateString()}</p></div><Button variant="custom" size="none" onClick={() => goToLobby(r.room)} className="shrink-0 rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-white/80 hover:bg-white/10">Rejoin</Button></li>)}</ul></div>}</section>;
+  return <section className="mx-auto max-w-4xl px-5 py-12 sm:py-16"><div className="mb-10"><p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-500">Fellowship</p><h1 className="mt-2 text-4xl font-bold">Meetings</h1><p className="mt-3 max-w-2xl text-white/60">Gather for Bible studies, fellowship meetings and leadership calls.</p></div>{leaveNotice && <p className="mb-6 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 text-sm text-amber-200">{leaveNotice}</p>}<div className="grid gap-5 sm:grid-cols-2"><Card variant="custom" className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiPlus className="h-6 w-6 text-gold-500"/><h2 className="mt-4 text-xl font-semibold">Create room</h2><p className="mt-2 text-sm text-white/55">Start an instant room and share its code with your group.</p><Button variant="custom" size="none" disabled={creating} onClick={createRoom} className="mt-6 w-full rounded-2xl bg-white py-3 font-semibold text-black disabled:opacity-50">{creating ? 'Creating…' : 'Create meeting'}</Button></Card><Card variant="custom" className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiUsers className="h-6 w-6 text-gold-500"/><h2 className="mt-4 text-xl font-semibold">Join room</h2><p className="mt-2 text-sm text-white/55">Enter a room code from your leader or fellowship group.</p><input value={room} onChange={e => setRoom(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') goToLobby(); }} placeholder="Room code" className="mt-5 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none focus:border-white/30"/><Button variant="custom" size="none" onClick={() => goToLobby()} className="mt-3 w-full rounded-2xl bg-gradient-to-r from-pink-600 to-purple-500 py-3 font-semibold">Join meeting</Button></Card></div>{room && <Card variant="custom" className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm"><span className="min-w-0 truncate text-white/60">Room: <b className="text-white">{room}</b></span><Button variant="custom" size="none" onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/meetings?room=${encodeURIComponent(room)}`)} className="inline-flex shrink-0 items-center gap-2 text-white/70 hover:text-white"><FiCopy/>Copy link</Button></Card>}{error && <p className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/5 p-4 text-sm text-red-200">{error}</p>}{recentRooms.length > 0 && <div className="mt-10"><h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/50">Your recent meetings</h2><ul className="space-y-2">{recentRooms.map((r) => <Card as="li" key={r.room} variant="custom" className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4"><div className="min-w-0"><p className="truncate text-sm font-medium text-white">{r.room}</p><p className="mt-0.5 flex items-center gap-1.5 text-xs text-white/40">{r.active && <span className="inline-flex items-center gap-1 text-emerald-300"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />Active now</span>}{r.active && ' · '}Last visited {new Date(r.lastVisitedAt).toLocaleDateString()}</p></div><Button variant="custom" size="none" onClick={() => goToLobby(r.room)} className="shrink-0 rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-white/80 hover:bg-white/10">Rejoin</Button></Card>)}</ul></div>}</section>;
 }
 
 function Lobby({ participantName, onCancel, onJoin }) {
@@ -169,7 +170,7 @@ function Lobby({ participantName, onCancel, onJoin }) {
     <section className="mx-auto max-w-2xl px-5 py-10 sm:py-14">
       <h1 className="mb-1 text-2xl font-bold text-white">Check your camera and mic</h1>
       <p className="mb-5 text-sm text-white/50">Joining as <span className="text-white/80">{participantName}</span></p>
-      <div className="overflow-hidden rounded-3xl border border-white/10 bg-ink-900">
+      <Card variant="custom" className="overflow-hidden rounded-3xl border border-white/10 bg-ink-900">
         <div className="relative aspect-video bg-[#3c4043]">
           <video ref={videoRef} autoPlay playsInline muted className={`h-full w-full scale-x-[-1] object-cover ${camOn ? '' : 'hidden'}`} />
           {!camOn && <div className="grid h-full place-items-center text-white/40"><FiCameraOff className="h-10 w-10" /></div>}
@@ -198,7 +199,7 @@ function Lobby({ participantName, onCancel, onJoin }) {
             </select>
           </label>
         </div>
-      </div>
+      </Card>
       {error && <p className="mt-3 rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
       <div className="mt-5 flex items-center justify-between">
         <Button variant="custom" size="none" type="button" onClick={() => { stopStream(); onCancel(); }} className="text-sm text-white/50 hover:text-white">← Back</Button>
@@ -418,7 +419,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
     : <div>
         <div className="grid min-h-[55vh] gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {pageParticipants.map((participant) => <ParticipantTile key={participant.identity} participant={participant} local={participant === local} speaking={activeSpeakers.has(participant.identity)} pinned={false} onTogglePin={() => setPinnedId(participant.identity)} />)}
-          {all.length === 1 && <div className="col-span-full grid place-items-center rounded-3xl border border-white/10 bg-black/30 px-6 py-10 text-center text-white/45"><FiUsers className="mx-auto mb-2 h-6 w-6" /><p className="font-medium text-white/60">You're the only one here</p><p className="mt-1 text-xs">Share the room code and others will show up as soon as they join.</p></div>}
+          {all.length === 1 && <Card variant="custom" className="col-span-full grid place-items-center rounded-3xl border border-white/10 bg-black/30 px-6 py-10 text-center text-white/45"><FiUsers className="mx-auto mb-2 h-6 w-6" /><p className="font-medium text-white/60">You're the only one here</p><p className="mt-1 text-xs">Share the room code and others will show up as soon as they join.</p></Card>}
         </div>
         {pageCount > 1 && (
           <div className="mt-3 flex items-center justify-center gap-3 text-sm text-white/60">
@@ -458,7 +459,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
           {showMore && (
             <>
               <Button variant="custom" size="none" type="button" aria-label="Close menu" onClick={() => setShowMore(false)} className="fixed inset-0 z-30 cursor-default" />
-              <div className="absolute bottom-full left-1/2 z-40 mb-3 w-56 -translate-x-1/2 overflow-hidden rounded-2xl border border-white/10 bg-[#1a1926] shadow-2xl">
+              <Card variant="custom" className="absolute bottom-full left-1/2 z-40 mb-3 w-56 -translate-x-1/2 overflow-hidden rounded-2xl border border-white/10 bg-[#1a1926] shadow-2xl">
                 <Button variant="custom" size="none" type="button" onClick={() => { toggleShare(); setShowMore(false); }} disabled={!screenShareSupported} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30">
                   <FiMonitor className="h-4 w-4 shrink-0" />
                   <span className="flex-1">{screenShareSupported ? 'Share screen' : 'Screen sharing not supported'}</span>
@@ -469,7 +470,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
                   <span className="flex-1">{blurBusy ? 'Loading blur…' : camera ? 'Blur my background' : 'Turn camera on to blur'}</span>
                   {blurOn && <FiCheck className="h-4 w-4 shrink-0 text-amber-300" />}
                 </Button>
-              </div>
+              </Card>
             </>
           )}
         </div>
@@ -581,7 +582,7 @@ function ChatPanel({ liveRoom, open, onClose }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-x-3 bottom-24 top-24 z-30 flex flex-col rounded-3xl border border-white/10 bg-[#11101d]/98 shadow-2xl backdrop-blur sm:inset-x-auto sm:right-4 sm:top-28 sm:h-[28rem] sm:w-80">
+    <Card variant="custom" className="fixed inset-x-3 bottom-24 top-24 z-30 flex flex-col rounded-3xl border border-white/10 bg-[#11101d]/98 shadow-2xl backdrop-blur sm:inset-x-auto sm:right-4 sm:top-28 sm:h-[28rem] sm:w-80">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <p className="text-sm font-semibold text-white">In-call chat</p>
         <Button variant="custom" size="none" onClick={onClose} aria-label="Close chat" className="text-white/50 hover:text-white"><FiX/></Button>
@@ -599,7 +600,7 @@ function ChatPanel({ liveRoom, open, onClose }) {
         <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') send(); }} placeholder="Message everyone" className="min-w-0 flex-1 rounded-full border border-white/10 bg-black/20 px-4 py-2 text-sm text-white outline-none placeholder:text-white/30" />
         <Button variant="custom" size="none" onClick={send} aria-label="Send message" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-purple-500 text-white"><FiSend className="h-4 w-4"/></Button>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -685,12 +686,12 @@ function ReactionsBar({ liveRoom, localParticipant, participants }) {
       {raisedList.length > 0 && (
         <div className="mx-auto mt-3 w-fit rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-1.5 text-xs text-amber-200">✋ {raisedList.join(', ')} raised {raisedList.length === 1 ? 'a hand' : 'hands'}</div>
       )}
-      <div className="mx-auto mt-3 flex max-w-[22rem] flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-black/30 px-2 py-1.5 sm:w-fit sm:max-w-none sm:rounded-full">
+      <Card variant="custom" className="mx-auto mt-3 flex max-w-[22rem] flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-black/30 px-2 py-1.5 sm:w-fit sm:max-w-none sm:rounded-full">
         {REACTION_EMOJIS.map((emoji) => (
           <Button variant="custom" size="none" key={emoji} type="button" onClick={() => react(emoji)} aria-label={`React with ${emoji}`} className="rounded-full px-2 py-1 text-lg hover:bg-white/10">{emoji}</Button>
         ))}
         <Button variant="custom" size="none" type="button" onClick={toggleHand} className={`ml-1 rounded-full border px-3 py-1.5 text-xs font-semibold ${handRaised ? 'border-amber-400/50 bg-amber-400/15 text-amber-200' : 'border-white/15 bg-white/5 text-white/70 hover:bg-white/10'}`}>✋ {handRaised ? 'Lower hand' : 'Raise hand'}</Button>
-      </div>
+      </Card>
       <style>{`
         @keyframes reaction-float { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-140px); opacity: 0; } }
         .reaction-bubble { animation: reaction-float 2.5s ease-out forwards; }
@@ -801,7 +802,7 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
   };
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Host controls" className="fixed inset-x-3 bottom-24 top-24 z-30 flex flex-col rounded-3xl border border-white/10 bg-[#11101d]/98 shadow-2xl backdrop-blur sm:inset-x-auto sm:left-4 sm:top-28 sm:h-[30rem] sm:w-80">
+    <Card as="div" role="dialog" aria-modal="true" aria-label="Host controls" variant="custom" className="fixed inset-x-3 bottom-24 top-24 z-30 flex flex-col rounded-3xl border border-white/10 bg-[#11101d]/98 shadow-2xl backdrop-blur sm:inset-x-auto sm:left-4 sm:top-28 sm:h-[30rem] sm:w-80">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <p className="text-sm font-semibold text-white">Host controls</p>
         <Button variant="custom" size="none" ref={closeButtonRef} onClick={onClose} aria-label="Close host controls" className="text-white/50 hover:text-white"><FiX/></Button>
@@ -820,13 +821,13 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
             <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-300/80">Waiting to join ({waitingParticipants.length})</p>
             <ul className="space-y-1.5">
               {waitingParticipants.map((p) => (
-                <li key={p.identity} className="flex items-center justify-between gap-3 rounded-xl border border-amber-400/15 bg-amber-400/5 px-3 py-2">
+                <Card as="li" key={p.identity} variant="custom" className="flex items-center justify-between gap-3 rounded-xl border border-amber-400/15 bg-amber-400/5 px-3 py-2">
                   <span className="truncate text-xs text-white/80">{p.name || 'BLW Member'}</span>
                   <span className="flex shrink-0 gap-2">
                     <Button variant="custom" size="none" type="button" disabled={busy === p.identity} onClick={() => admit(p.identity)} aria-label={`Admit ${p.name || 'participant'}`} className="rounded-full border border-emerald-400/30 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-50"><FiUserCheck className="h-3 w-3" /></Button>
                     <Button variant="custom" size="none" type="button" disabled={busy === p.identity} onClick={() => deny(p.identity)} aria-label={`Deny ${p.name || 'participant'}`} className="rounded-full border border-red-400/25 px-2.5 py-1 text-[11px] font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-50"><FiX className="h-3 w-3" /></Button>
                   </span>
-                </li>
+                </Card>
               ))}
             </ul>
           </div>
@@ -838,13 +839,13 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
           ) : (
             <ul className="space-y-1.5">
               {activeParticipants.map((p) => (
-                <li key={p.identity} className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] px-3 py-2">
+                <Card as="li" key={p.identity} variant="custom" className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] px-3 py-2">
                   <span className="truncate text-xs text-white/75">{p.name || 'BLW Member'}</span>
                   <span className="flex shrink-0 gap-2">
                     <Button variant="custom" size="none" type="button" disabled={busy === p.identity} onClick={() => muteOne(p.identity)} aria-label={`Mute ${p.name || 'participant'}`} className="rounded-full border border-white/15 px-2.5 py-1 text-[11px] font-semibold text-white/70 hover:bg-white/10 disabled:opacity-50"><FiMicOff className="h-3 w-3" /></Button>
                     <Button variant="custom" size="none" type="button" disabled={busy === p.identity} onClick={() => removeOne(p.identity)} aria-label={`Remove ${p.name || 'participant'}`} className="rounded-full border border-red-400/25 px-2.5 py-1 text-[11px] font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-50"><FiUserX className="h-3 w-3" /></Button>
                   </span>
-                </li>
+                </Card>
               ))}
             </ul>
           )}
@@ -864,7 +865,7 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
             <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wide text-white/40">Past recordings ({recordings.length})</summary>
             <ul className="mt-2 space-y-2">
               {recordings.map((rec) => (
-                <li key={rec.egressId} className="rounded-xl bg-white/[0.03] px-3 py-2 text-[11px] text-white/60">
+                <Card as="li" key={rec.egressId} variant="custom" className="rounded-xl bg-white/[0.03] px-3 py-2 text-[11px] text-white/60">
                   <div className="flex items-center justify-between gap-2">
                     <span>{rec.startedAt ? new Date(rec.startedAt).toLocaleString() : 'Unknown time'}</span>
                     <span className={rec.status === 'complete' ? 'text-emerald-300' : rec.status === 'failed' || rec.status === 'aborted' ? 'text-red-300' : 'text-amber-300'}>{rec.status}</span>
@@ -875,7 +876,7 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
                   ) : rec.path ? (
                     <p className="mt-1 break-all text-white/35">{rec.path}</p>
                   ) : null}
-                </li>
+                </Card>
               ))}
             </ul>
           </details>
@@ -884,6 +885,6 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
       <div className="border-t border-white/10 p-3">
         <Button variant="custom" size="none" type="button" disabled={busy === 'end'} onClick={endForEveryone} className="w-full rounded-2xl border border-red-400/30 bg-red-500/10 py-2.5 text-sm font-semibold text-red-200 hover:bg-red-500/20 disabled:opacity-50">{busy === 'end' ? 'Ending…' : 'End for everyone'}</Button>
       </div>
-    </div>
+    </Card>
   );
 }
