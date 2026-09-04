@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Toast } from '../components/ui/Toast';
+import Button from '../components/ui/Button';
 import { apiFetch } from '../config/api';
 
 const inputClass = 'w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white outline-none focus:border-purple-400';
@@ -63,15 +64,15 @@ export default function ResetPassword() {
           {status === 'submitted' ? (
             <div className="mt-8 space-y-4">
               <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-200">Your password has been reset successfully.</div>
-              <button type="button" onClick={() => navigate('/auth')} className="inline-flex w-full justify-center rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-5 py-3 font-semibold text-white">Back to sign in</button>
+              <Button onClick={() => navigate('/auth')} variant="gradient" className="inline-flex w-full justify-center">Back to sign in</Button>
             </div>
           ) : (
             <form onSubmit={submit} className="mt-8 space-y-4">
               <input className={inputClass} type="password" autoComplete="new-password" placeholder="NEW PASSWORD" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} />
               <input className={inputClass} type="password" autoComplete="new-password" placeholder="CONFIRM NEW PASSWORD" value={confirm} onChange={(event) => setConfirm(event.target.value)} required minLength={8} />
-              <button type="submit" disabled={status === 'submitting' || !token} className="inline-flex w-full justify-center rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-5 py-3 font-semibold text-white disabled:opacity-50">
+              <Button type="submit" variant="gradient" disabled={status === 'submitting' || !token} className="inline-flex w-full justify-center">
                 {status === 'submitting' ? 'Resetting…' : 'Reset password'}
-              </button>
+              </Button>
             </form>
           )}
 

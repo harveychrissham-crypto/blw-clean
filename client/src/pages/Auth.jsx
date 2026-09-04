@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
 import { Card } from '../components/ui/Card';
 import { Toast } from '../components/ui/Toast';
+import Button from '../components/ui/Button';
 
 const inputClass = 'w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-purple-400';
 const sectionLabelClass = 'text-xs font-semibold uppercase tracking-[0.3em] text-white/40';
@@ -111,11 +112,11 @@ export default function Auth() {
                   <div className="space-y-3 border-t border-white/[0.06] pt-4"><p className={sectionLabelClass}>Address</p><select className={inputClass} value={form.country} onChange={(event) => setForm({ ...form, country: event.target.value })} required><option value="">COUNTRY *</option><option value="KENYA">KENYA</option><option value="UGANDA">UGANDA</option><option value="TANZANIA">TANZANIA</option><option value="SOMALIA">SOMALIA</option><option value="RWANDA">RWANDA</option><option value="BURUNDI">BURUNDI</option></select><input className={inputClass} placeholder="RESIDENCE *" value={form.residence} onChange={(event) => setForm({ ...form, residence: event.target.value })} required /></div>
                 </>}
 
-                <button type="submit" className="inline-flex w-full justify-center rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-5 py-3 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" disabled={status === 'submitting'}>{status === 'submitting' ? 'Submitting…' : mode === 'register' ? 'Create Account' : 'Sign In'}</button>
+                <Button type="submit" variant="gradient" className="inline-flex w-full justify-center" disabled={status === 'submitting'}>{status === 'submitting' ? 'Submitting…' : mode === 'register' ? 'Create Account' : 'Sign In'}</Button>
               </form>
 
-              {mode === 'login' && <div className="mt-4 flex items-center justify-between text-sm text-slate-400"><button type="button" className="text-purple-300 hover:text-[#EC9EFF]" onClick={() => navigate('/forgot-password')}>Forgot password?</button><button type="button" className="text-purple-300 hover:text-[#EC9EFF]" onClick={() => setMode('register')}>Don’t have an account? Register</button></div>}
-              {mode === 'register' && <div className="mt-4 flex items-center justify-center text-sm text-slate-400"><span>Already have an account?</span><button type="button" className="ml-2 text-purple-300 hover:text-[#EC9EFF]" onClick={() => setMode('login')}>Sign in</button></div>}
+              {mode === 'login' && <div className="mt-4 flex items-center justify-between text-sm text-slate-400"><Button variant="link" size="none" className="text-purple-300 hover:text-[#EC9EFF]" onClick={() => navigate('/forgot-password')}>Forgot password?</Button><Button variant="link" size="none" className="text-purple-300 hover:text-[#EC9EFF]" onClick={() => setMode('register')}>Don’t have an account? Register</Button></div>}
+              {mode === 'register' && <div className="mt-4 flex items-center justify-center text-sm text-slate-400"><span>Already have an account?</span><Button variant="link" size="none" className="ml-2 text-purple-300 hover:text-[#EC9EFF]" onClick={() => setMode('login')}>Sign in</Button></div>}
               {status === 'submitted' && <div className="mt-6 rounded-2xl border border-purple-400/30 bg-purple-400/10 p-4 text-sm text-purple-300">{lastMode === 'login' ? 'Signed in successfully.' : 'Your account has been created and signed in successfully.'}</div>}
               {status === 'error' && error && <div className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">{error}</div>}
             </div>

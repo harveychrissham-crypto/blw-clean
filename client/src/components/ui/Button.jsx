@@ -12,11 +12,14 @@ const VARIANTS = {
   secondary: 'border border-white/10 bg-white/5 text-white font-semibold hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50',
   ghost: 'border border-white/15 text-white/80 font-semibold hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50',
   danger: 'border border-red-400/30 bg-red-500/10 text-red-200 font-semibold hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50',
+  gradient: 'bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 text-white font-semibold hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40',
+  link: 'font-medium',
 };
 
 const SIZES = {
   md: 'rounded-2xl px-5 py-3 text-sm',
   sm: 'rounded-full px-4 py-2 text-xs',
+  none: '',
 };
 
 export default function Button({ variant = 'primary', size = 'md', className = '', type = 'button', ...props }) {
