@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { FiCpu, FiSend, FiX } from 'react-icons/fi';
 import { Card } from './ui/Card';
+import Button from './ui/Button';
 
 const answers = {
   region: "Believers' LoveWorld Campus Ministry Kenya Zone Region is a Christ-centered ministry focused on discipleship, worship, outreach, leadership, and fellowship across Kenya Zone.",
@@ -48,15 +49,15 @@ export default function AIChatWidget() {
               <p className="text-sm font-semibold text-white">Ministry Assistant</p>
               <p className="text-xs text-slate-400">Guidance for ministry information, verses, outreach, and support.</p>
             </div>
-            <button onClick={() => setOpen(false)} className="rounded-full border border-white/10 p-2 text-slate-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" aria-label="Close assistant">
+            <Button variant="custom" size="none" onClick={() => setOpen(false)} className="rounded-full border border-white/10 p-2 text-slate-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" aria-label="Close assistant">
               <FiX />
-            </button>
+            </Button>
           </div>
           <div className="mt-4 space-y-2">
             {suggestions.map((item) => (
-              <button key={item.key} onClick={() => setAnswer(answers[item.key])} className={`w-full rounded-2xl border px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${selectedKey === item.key ? 'border-purple-400/40 bg-purple-500/10 text-fuchsia-300' : 'border-white/10 bg-white/5 text-slate-300'}`}>
+              <Button variant="custom" size="none" key={item.key} onClick={() => setAnswer(answers[item.key])} className={`w-full rounded-2xl border px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${selectedKey === item.key ? 'border-purple-400/40 bg-purple-500/10 text-fuchsia-300' : 'border-white/10 bg-white/5 text-slate-300'}`}>
                 {item.label}
-              </button>
+              </Button>
             ))}
           </div>
           <Card variant="subtle" className="mt-4 p-3 text-sm text-slate-300">
@@ -65,15 +66,15 @@ export default function AIChatWidget() {
           </Card>
           <form onSubmit={submit} className="mt-4 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
             <input value={question} onChange={(event) => setQuestion(event.target.value)} className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none" placeholder="Ask a ministry question" aria-label="Ask a ministry question" />
-            <button type="submit" disabled={!question.trim()} className="rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 p-2 text-white disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" aria-label="Send question">
+            <Button variant="custom" size="none" type="submit" disabled={!question.trim()} className="rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 p-2 text-white disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" aria-label="Send question">
               <FiSend />
-            </button>
+            </Button>
           </form>
         </Card>
       ) : (
-        <button onClick={() => setOpen(true)} className="flex items-center gap-2 rounded-full border border-purple-400/40 bg-purple-400/15 px-4 py-3 text-sm font-semibold text-fuchsia-300 backdrop-blur focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+        <Button variant="custom" size="none" onClick={() => setOpen(true)} className="flex items-center gap-2 rounded-full border border-purple-400/40 bg-purple-400/15 px-4 py-3 text-sm font-semibold text-fuchsia-300 backdrop-blur focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
           <FiCpu /> Ministry Assistant
-        </button>
+        </Button>
       )}
     </div>
   );

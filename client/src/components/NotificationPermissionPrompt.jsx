@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FiBell, FiX } from 'react-icons/fi';
 import { requestPushNotificationPermission, setUpPushNotifications } from '../native';
+import Button from './ui/Button';
 
 const PROMPT_EVENT = 'blw:push-permission-prompt';
 const DENIED_EVENT = 'blw:push-permission-denied';
@@ -49,14 +50,14 @@ export default function NotificationPermissionPrompt() {
   return (
     <div className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/85 px-5 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="notification-permission-title">
       <div className="relative w-full max-w-md rounded-[2rem] border border-white/10 bg-[#151322] p-6 shadow-2xl">
-        <button
+        <Button variant="custom" size="none"
           type="button"
           onClick={() => setVisible(false)}
           className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-white/50 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           aria-label="Close"
         >
           <FiX className="h-4 w-4" />
-        </button>
+        </Button>
 
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gold-500/15 text-gold-500">
           <FiBell className="h-7 w-7" />
@@ -81,22 +82,22 @@ export default function NotificationPermissionPrompt() {
 
         <div className="mt-6 flex gap-3">
           {!denied && (
-            <button
+            <Button variant="custom" size="none"
               type="button"
               disabled={busy}
               onClick={handleAllow}
               className="flex-1 rounded-full bg-gradient-to-r from-gold-500 to-[#FF8B5C] px-5 py-3 text-sm font-bold text-slate-950 transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             >
               {busy ? 'Requesting…' : 'Allow Notifications'}
-            </button>
+            </Button>
           )}
-          <button
+          <Button variant="custom" size="none"
             type="button"
             onClick={() => setVisible(false)}
             className="rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white/70 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
           >
             {denied ? 'Close' : 'Not now'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

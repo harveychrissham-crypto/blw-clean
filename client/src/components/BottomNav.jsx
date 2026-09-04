@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { FiHome, FiCalendar, FiRadio, FiMenu } from 'react-icons/fi';
 import { MdQrCodeScanner } from 'react-icons/md';
+import Button from './ui/Button';
 
 // The five items people reach for most, one thumb-tap away, always visible.
 // Everything else lives in the "More" drawer (opened via onMoreClick) so we
@@ -53,7 +54,7 @@ export default function BottomNav({ onMoreClick, moreActive }) {
           );
         })}
 
-        <button
+        <Button variant="custom" size="none"
           type="button"
           onClick={onMoreClick}
           className={`flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
@@ -64,7 +65,7 @@ export default function BottomNav({ onMoreClick, moreActive }) {
             <FiMenu className="h-[18px] w-[18px]" />
           </span>
           More
-        </button>
+        </Button>
       </div>
     </nav>
   );
