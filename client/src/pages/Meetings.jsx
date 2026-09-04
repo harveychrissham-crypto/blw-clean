@@ -821,7 +821,7 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
             <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-300/80">Waiting to join ({waitingParticipants.length})</p>
             <ul className="space-y-1.5">
               {waitingParticipants.map((p) => (
-                <Card as="li" key={p.identity} variant="custom" className="flex items-center justify-between gap-3 rounded-xl border border-amber-400/15 bg-amber-400/5 px-3 py-2">
+                <Card as="li" key={p.identity} variant="custom" className="flex items-center justify-between gap-3 rounded-2xl border border-amber-400/15 bg-amber-400/5 px-3 py-2">
                   <span className="truncate text-xs text-white/80">{p.name || 'BLW Member'}</span>
                   <span className="flex shrink-0 gap-2">
                     <Button variant="custom" size="none" type="button" disabled={busy === p.identity} onClick={() => admit(p.identity)} aria-label={`Admit ${p.name || 'participant'}`} className="rounded-full border border-emerald-400/30 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-50"><FiUserCheck className="h-3 w-3" /></Button>
@@ -839,7 +839,7 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
           ) : (
             <ul className="space-y-1.5">
               {activeParticipants.map((p) => (
-                <Card as="li" key={p.identity} variant="custom" className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] px-3 py-2">
+                <Card as="li" key={p.identity} variant="custom" className="flex items-center justify-between gap-3 rounded-2xl bg-white/[0.03] px-3 py-2">
                   <span className="truncate text-xs text-white/75">{p.name || 'BLW Member'}</span>
                   <span className="flex shrink-0 gap-2">
                     <Button variant="custom" size="none" type="button" disabled={busy === p.identity} onClick={() => muteOne(p.identity)} aria-label={`Mute ${p.name || 'participant'}`} className="rounded-full border border-white/15 px-2.5 py-1 text-[11px] font-semibold text-white/70 hover:bg-white/10 disabled:opacity-50"><FiMicOff className="h-3 w-3" /></Button>
@@ -865,7 +865,7 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
             <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wide text-white/40">Past recordings ({recordings.length})</summary>
             <ul className="mt-2 space-y-2">
               {recordings.map((rec) => (
-                <Card as="li" key={rec.egressId} variant="custom" className="rounded-xl bg-white/[0.03] px-3 py-2 text-[11px] text-white/60">
+                <Card as="li" key={rec.egressId} variant="custom" className="rounded-2xl bg-white/[0.03] px-3 py-2 text-[11px] text-white/60">
                   <div className="flex items-center justify-between gap-2">
                     <span>{rec.startedAt ? new Date(rec.startedAt).toLocaleString() : 'Unknown time'}</span>
                     <span className={rec.status === 'complete' ? 'text-emerald-300' : rec.status === 'failed' || rec.status === 'aborted' ? 'text-red-300' : 'text-amber-300'}>{rec.status}</span>
