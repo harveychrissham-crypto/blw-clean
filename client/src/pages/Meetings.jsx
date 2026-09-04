@@ -4,6 +4,7 @@ import { FiCamera, FiCameraOff, FiMic, FiMicOff, FiMonitor, FiUsers, FiLogOut, F
 import { Room, RoomEvent, ParticipantEvent, Track, VideoPresets, AudioPresets, DeviceUnsupportedError, DisconnectReason, ConnectionQuality } from 'livekit-client';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
+import Button from '../components/ui/Button';
 
 const REACTION_EMOJIS = ['👍', '❤️', '🎉', '👏', '😂', '😮', '🙏'];
 const DEVICE_PREFS_KEY = 'blw-meet-device-prefs';
@@ -90,7 +91,7 @@ export default function Meetings() {
     return <CallRoom credentials={credentials} choices={choices} room={room} onLeave={handleLeave} />;
   }
 
-  return <section className="mx-auto max-w-4xl px-5 py-12 sm:py-16"><div className="mb-10"><p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-500">Fellowship</p><h1 className="mt-2 text-4xl font-bold">Meetings</h1><p className="mt-3 max-w-2xl text-white/60">Gather for Bible studies, fellowship meetings and leadership calls.</p></div>{leaveNotice && <p className="mb-6 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 text-sm text-amber-200">{leaveNotice}</p>}<div className="grid gap-5 sm:grid-cols-2"><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiPlus className="h-6 w-6 text-gold-500"/><h2 className="mt-4 text-xl font-semibold">Create room</h2><p className="mt-2 text-sm text-white/55">Start an instant room and share its code with your group.</p><button disabled={creating} onClick={createRoom} className="mt-6 w-full rounded-2xl bg-white py-3 font-semibold text-black disabled:opacity-50">{creating ? 'Creating…' : 'Create meeting'}</button></div><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiUsers className="h-6 w-6 text-gold-500"/><h2 className="mt-4 text-xl font-semibold">Join room</h2><p className="mt-2 text-sm text-white/55">Enter a room code from your leader or fellowship group.</p><input value={room} onChange={e => setRoom(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') goToLobby(); }} placeholder="Room code" className="mt-5 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none focus:border-white/30"/><button onClick={() => goToLobby()} className="mt-3 w-full rounded-2xl bg-gradient-to-r from-pink-600 to-purple-500 py-3 font-semibold">Join meeting</button></div></div>{room && <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm"><span className="min-w-0 truncate text-white/60">Room: <b className="text-white">{room}</b></span><button onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/meetings?room=${encodeURIComponent(room)}`)} className="inline-flex shrink-0 items-center gap-2 text-white/70 hover:text-white"><FiCopy/>Copy link</button></div>}{error && <p className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/5 p-4 text-sm text-red-200">{error}</p>}{recentRooms.length > 0 && <div className="mt-10"><h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/50">Your recent meetings</h2><ul className="space-y-2">{recentRooms.map((r) => <li key={r.room} className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4"><div className="min-w-0"><p className="truncate text-sm font-medium text-white">{r.room}</p><p className="mt-0.5 flex items-center gap-1.5 text-xs text-white/40">{r.active && <span className="inline-flex items-center gap-1 text-emerald-300"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />Active now</span>}{r.active && ' · '}Last visited {new Date(r.lastVisitedAt).toLocaleDateString()}</p></div><button onClick={() => goToLobby(r.room)} className="shrink-0 rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-white/80 hover:bg-white/10">Rejoin</button></li>)}</ul></div>}</section>;
+  return <section className="mx-auto max-w-4xl px-5 py-12 sm:py-16"><div className="mb-10"><p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-500">Fellowship</p><h1 className="mt-2 text-4xl font-bold">Meetings</h1><p className="mt-3 max-w-2xl text-white/60">Gather for Bible studies, fellowship meetings and leadership calls.</p></div>{leaveNotice && <p className="mb-6 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 text-sm text-amber-200">{leaveNotice}</p>}<div className="grid gap-5 sm:grid-cols-2"><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiPlus className="h-6 w-6 text-gold-500"/><h2 className="mt-4 text-xl font-semibold">Create room</h2><p className="mt-2 text-sm text-white/55">Start an instant room and share its code with your group.</p><Button variant="custom" size="none" disabled={creating} onClick={createRoom} className="mt-6 w-full rounded-2xl bg-white py-3 font-semibold text-black disabled:opacity-50">{creating ? 'Creating…' : 'Create meeting'}</Button></div><div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiUsers className="h-6 w-6 text-gold-500"/><h2 className="mt-4 text-xl font-semibold">Join room</h2><p className="mt-2 text-sm text-white/55">Enter a room code from your leader or fellowship group.</p><input value={room} onChange={e => setRoom(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') goToLobby(); }} placeholder="Room code" className="mt-5 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none focus:border-white/30"/><Button variant="custom" size="none" onClick={() => goToLobby()} className="mt-3 w-full rounded-2xl bg-gradient-to-r from-pink-600 to-purple-500 py-3 font-semibold">Join meeting</Button></div></div>{room && <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm"><span className="min-w-0 truncate text-white/60">Room: <b className="text-white">{room}</b></span><Button variant="custom" size="none" onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/meetings?room=${encodeURIComponent(room)}`)} className="inline-flex shrink-0 items-center gap-2 text-white/70 hover:text-white"><FiCopy/>Copy link</Button></div>}{error && <p className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/5 p-4 text-sm text-red-200">{error}</p>}{recentRooms.length > 0 && <div className="mt-10"><h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/50">Your recent meetings</h2><ul className="space-y-2">{recentRooms.map((r) => <li key={r.room} className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4"><div className="min-w-0"><p className="truncate text-sm font-medium text-white">{r.room}</p><p className="mt-0.5 flex items-center gap-1.5 text-xs text-white/40">{r.active && <span className="inline-flex items-center gap-1 text-emerald-300"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />Active now</span>}{r.active && ' · '}Last visited {new Date(r.lastVisitedAt).toLocaleDateString()}</p></div><Button variant="custom" size="none" onClick={() => goToLobby(r.room)} className="shrink-0 rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-white/80 hover:bg-white/10">Rejoin</Button></li>)}</ul></div>}</section>;
 }
 
 function Lobby({ participantName, onCancel, onJoin }) {
@@ -173,8 +174,8 @@ function Lobby({ participantName, onCancel, onJoin }) {
           <video ref={videoRef} autoPlay playsInline muted className={`h-full w-full scale-x-[-1] object-cover ${camOn ? '' : 'hidden'}`} />
           {!camOn && <div className="grid h-full place-items-center text-white/40"><FiCameraOff className="h-10 w-10" /></div>}
           <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2">
-            <button type="button" onClick={toggleMic} className={`grid h-11 w-11 place-items-center rounded-full ${micOn ? 'bg-white/15 text-white' : 'bg-red-500 text-white'}`}>{micOn ? <FiMic /> : <FiMicOff />}</button>
-            <button type="button" onClick={toggleCam} className={`grid h-11 w-11 place-items-center rounded-full ${camOn ? 'bg-white/15 text-white' : 'bg-red-500 text-white'}`}>{camOn ? <FiCamera /> : <FiCameraOff />}</button>
+            <Button variant="custom" size="none" type="button" onClick={toggleMic} className={`grid h-11 w-11 place-items-center rounded-full ${micOn ? 'bg-white/15 text-white' : 'bg-red-500 text-white'}`}>{micOn ? <FiMic /> : <FiMicOff />}</Button>
+            <Button variant="custom" size="none" type="button" onClick={toggleCam} className={`grid h-11 w-11 place-items-center rounded-full ${camOn ? 'bg-white/15 text-white' : 'bg-red-500 text-white'}`}>{camOn ? <FiCamera /> : <FiCameraOff />}</Button>
           </div>
         </div>
         <div className="grid gap-3 p-4 sm:grid-cols-3">
@@ -200,8 +201,8 @@ function Lobby({ participantName, onCancel, onJoin }) {
       </div>
       {error && <p className="mt-3 rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
       <div className="mt-5 flex items-center justify-between">
-        <button type="button" onClick={() => { stopStream(); onCancel(); }} className="text-sm text-white/50 hover:text-white">← Back</button>
-        <button type="button" disabled={!ready} onClick={join} className="rounded-2xl bg-gradient-to-r from-pink-600 to-purple-500 px-6 py-3 font-semibold text-white disabled:opacity-50">Join meeting</button>
+        <Button variant="custom" size="none" type="button" onClick={() => { stopStream(); onCancel(); }} className="text-sm text-white/50 hover:text-white">← Back</Button>
+        <Button variant="custom" size="none" type="button" disabled={!ready} onClick={join} className="rounded-2xl bg-gradient-to-r from-pink-600 to-purple-500 px-6 py-3 font-semibold text-white disabled:opacity-50">Join meeting</Button>
       </div>
     </section>
   );
@@ -219,7 +220,7 @@ function WaitingScreen({ onCancel }) {
       <h1 className="text-xl font-semibold text-white">Waiting for the host to let you in…</h1>
       <p className="mt-2 text-sm text-white/50">This meeting has a waiting room. You'll join automatically as soon as a host admits you.</p>
       {slow && <p className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-xs text-amber-200">This is taking a while — the host may not have joined yet. You can keep waiting, or leave and try again later.</p>}
-      <button type="button" onClick={onCancel} className="mt-6 rounded-full border border-white/10 px-5 py-2.5 text-sm text-white/70 hover:text-white">Cancel</button>
+      <Button variant="custom" size="none" type="button" onClick={onCancel} className="mt-6 rounded-full border border-white/10 px-5 py-2.5 text-sm text-white/70 hover:text-white">Cancel</Button>
     </section>
   );
 }
@@ -421,9 +422,9 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
         </div>
         {pageCount > 1 && (
           <div className="mt-3 flex items-center justify-center gap-3 text-sm text-white/60">
-            <button type="button" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={clampedPage === 0} aria-label="Previous page" className="grid h-8 w-8 place-items-center rounded-full bg-white/5 disabled:opacity-30"><FiChevronLeft/></button>
+            <Button variant="custom" size="none" type="button" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={clampedPage === 0} aria-label="Previous page" className="grid h-8 w-8 place-items-center rounded-full bg-white/5 disabled:opacity-30"><FiChevronLeft/></Button>
             <span>Page {clampedPage + 1} of {pageCount}</span>
-            <button type="button" onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))} disabled={clampedPage === pageCount - 1} aria-label="Next page" className="grid h-8 w-8 place-items-center rounded-full bg-white/5 disabled:opacity-30"><FiChevronRight/></button>
+            <Button variant="custom" size="none" type="button" onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))} disabled={clampedPage === pageCount - 1} aria-label="Next page" className="grid h-8 w-8 place-items-center rounded-full bg-white/5 disabled:opacity-30"><FiChevronRight/></Button>
           </div>
         )}
       </div>;
@@ -440,7 +441,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
           <h1 className="truncate text-2xl font-bold">{roomName}</h1>
           <p className="text-xs text-white/40">{connState === 'reconnecting' ? 'Reconnecting…' : connected ? `${all.length} participant${all.length === 1 ? '' : 's'}` : 'Connecting…'}</p>
         </div>
-        <button onClick={leaveVoluntarily} className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm"><FiLogOut/>Leave</button>
+        <Button variant="custom" size="none" onClick={leaveVoluntarily} className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm"><FiLogOut/>Leave</Button>
       </div>
       {connState === 'reconnecting' && (
         <div className="mb-3 flex items-center gap-2 rounded-2xl border border-amber-400/20 bg-amber-400/5 px-4 py-2.5 text-sm text-amber-200">
@@ -456,25 +457,25 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
           <ControlButton active={showMore || sharing || blurOn} onClick={openMore} onIcon={FiMoreHorizontal} offIcon={FiMoreHorizontal} label="More options"/>
           {showMore && (
             <>
-              <button type="button" aria-label="Close menu" onClick={() => setShowMore(false)} className="fixed inset-0 z-30 cursor-default" />
+              <Button variant="custom" size="none" type="button" aria-label="Close menu" onClick={() => setShowMore(false)} className="fixed inset-0 z-30 cursor-default" />
               <div className="absolute bottom-full left-1/2 z-40 mb-3 w-56 -translate-x-1/2 overflow-hidden rounded-2xl border border-white/10 bg-[#1a1926] shadow-2xl">
-                <button type="button" onClick={() => { toggleShare(); setShowMore(false); }} disabled={!screenShareSupported} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30">
+                <Button variant="custom" size="none" type="button" onClick={() => { toggleShare(); setShowMore(false); }} disabled={!screenShareSupported} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30">
                   <FiMonitor className="h-4 w-4 shrink-0" />
                   <span className="flex-1">{screenShareSupported ? 'Share screen' : 'Screen sharing not supported'}</span>
                   {sharing && <FiCheck className="h-4 w-4 shrink-0 text-amber-300" />}
-                </button>
-                <button type="button" onClick={() => { toggleBlur(); setShowMore(false); }} disabled={blurBusy || !camera} className="flex w-full items-center gap-3 border-t border-white/5 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30">
+                </Button>
+                <Button variant="custom" size="none" type="button" onClick={() => { toggleBlur(); setShowMore(false); }} disabled={blurBusy || !camera} className="flex w-full items-center gap-3 border-t border-white/5 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30">
                   <FiDroplet className="h-4 w-4 shrink-0" />
                   <span className="flex-1">{blurBusy ? 'Loading blur…' : camera ? 'Blur my background' : 'Turn camera on to blur'}</span>
                   {blurOn && <FiCheck className="h-4 w-4 shrink-0 text-amber-300" />}
-                </button>
+                </Button>
               </div>
             </>
           )}
         </div>
         <ControlButton active={showChat} onClick={openChat} onIcon={FiMessageSquare} offIcon={FiMessageSquare} label="Chat"/>
         {isHost && <ControlButton active={showHost} onClick={openHost} onIcon={FiUsers} offIcon={FiUsers} label="Host controls"/>}
-        <button onClick={leaveVoluntarily} aria-label="Leave meeting" className="grid h-11 w-11 place-items-center rounded-full bg-red-500 text-white"><FiPhoneOff/></button>
+        <Button variant="custom" size="none" onClick={leaveVoluntarily} aria-label="Leave meeting" className="grid h-11 w-11 place-items-center rounded-full bg-red-500 text-white"><FiPhoneOff/></Button>
       </div>
       {error && <p className="mx-auto mt-4 max-w-xl rounded-2xl border border-red-400/20 bg-red-400/5 p-3 text-center text-sm text-red-200">{error}</p>}
       <ChatPanel liveRoom={roomRef.current} open={showChat} onClose={() => setShowChat(false)} />
@@ -483,7 +484,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
   );
 }
 
-function ControlButton({ active, onClick, onIcon: OnIcon, offIcon: OffIcon, label, disabled }) { const Icon = active ? OnIcon : OffIcon; return <button onClick={onClick} disabled={disabled} aria-label={label} title={label} className={`grid h-11 w-11 place-items-center rounded-full transition ${disabled ? 'cursor-not-allowed bg-white/5 text-white/25' : active ? 'bg-white/15 text-white' : 'bg-white/5 text-white/60 hover:text-white'}`}><Icon/></button>; }
+function ControlButton({ active, onClick, onIcon: OnIcon, offIcon: OffIcon, label, disabled }) { const Icon = active ? OnIcon : OffIcon; return <Button variant="custom" size="none" onClick={onClick} disabled={disabled} aria-label={label} title={label} className={`grid h-11 w-11 place-items-center rounded-full transition ${disabled ? 'cursor-not-allowed bg-white/5 text-white/25' : active ? 'bg-white/15 text-white' : 'bg-white/5 text-white/60 hover:text-white'}`}><Icon/></Button>; }
 
 function ConnectionQualityIcon({ quality }) {
   if (quality === ConnectionQuality.Poor) return <FiWifi className="h-3 w-3 text-amber-400" />;
@@ -531,7 +532,7 @@ function ParticipantTile({ participant, local, speaking, pinned, onTogglePin, bi
       )}
       {hasScreenShare && <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded bg-black/70 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/90 backdrop-blur">Presenting</div>}
       {onTogglePin && (
-        <button
+        <Button variant="custom" size="none"
           type="button"
           onClick={(e) => { e.stopPropagation(); onTogglePin(); }}
           aria-label={pinned ? 'Unpin from spotlight' : 'Pin to spotlight'}
@@ -539,7 +540,7 @@ function ParticipantTile({ participant, local, speaking, pinned, onTogglePin, bi
           className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-black/55 text-white/80 opacity-70 backdrop-blur-sm transition-opacity hover:opacity-100"
         >
           {pinned ? <FiMinimize2 className="h-3.5 w-3.5" /> : <FiMaximize2 className="h-3.5 w-3.5" />}
-        </button>
+        </Button>
       )}
       <div className="absolute bottom-2 left-2 inline-flex max-w-[calc(100%-1rem)] items-center gap-1.5 rounded-md bg-black/55 px-2 py-1 backdrop-blur-sm">
         <ConnectionQualityIcon quality={participant.connectionQuality} />
@@ -583,7 +584,7 @@ function ChatPanel({ liveRoom, open, onClose }) {
     <div className="fixed inset-x-3 bottom-24 top-24 z-30 flex flex-col rounded-3xl border border-white/10 bg-[#11101d]/98 shadow-2xl backdrop-blur sm:inset-x-auto sm:right-4 sm:top-28 sm:h-[28rem] sm:w-80">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <p className="text-sm font-semibold text-white">In-call chat</p>
-        <button onClick={onClose} aria-label="Close chat" className="text-white/50 hover:text-white"><FiX/></button>
+        <Button variant="custom" size="none" onClick={onClose} aria-label="Close chat" className="text-white/50 hover:text-white"><FiX/></Button>
       </div>
       <div ref={listRef} className="flex-1 space-y-2 overflow-y-auto px-4 py-3">
         {messages.length === 0 && <p className="text-xs text-white/40">No messages yet. Say hello!</p>}
@@ -596,7 +597,7 @@ function ChatPanel({ liveRoom, open, onClose }) {
       </div>
       <div className="flex items-center gap-2 border-t border-white/10 p-3">
         <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') send(); }} placeholder="Message everyone" className="min-w-0 flex-1 rounded-full border border-white/10 bg-black/20 px-4 py-2 text-sm text-white outline-none placeholder:text-white/30" />
-        <button onClick={send} aria-label="Send message" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-purple-500 text-white"><FiSend className="h-4 w-4"/></button>
+        <Button variant="custom" size="none" onClick={send} aria-label="Send message" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-purple-500 text-white"><FiSend className="h-4 w-4"/></Button>
       </div>
     </div>
   );
@@ -686,9 +687,9 @@ function ReactionsBar({ liveRoom, localParticipant, participants }) {
       )}
       <div className="mx-auto mt-3 flex max-w-[22rem] flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-black/30 px-2 py-1.5 sm:w-fit sm:max-w-none sm:rounded-full">
         {REACTION_EMOJIS.map((emoji) => (
-          <button key={emoji} type="button" onClick={() => react(emoji)} aria-label={`React with ${emoji}`} className="rounded-full px-2 py-1 text-lg hover:bg-white/10">{emoji}</button>
+          <Button variant="custom" size="none" key={emoji} type="button" onClick={() => react(emoji)} aria-label={`React with ${emoji}`} className="rounded-full px-2 py-1 text-lg hover:bg-white/10">{emoji}</Button>
         ))}
-        <button type="button" onClick={toggleHand} className={`ml-1 rounded-full border px-3 py-1.5 text-xs font-semibold ${handRaised ? 'border-amber-400/50 bg-amber-400/15 text-amber-200' : 'border-white/15 bg-white/5 text-white/70 hover:bg-white/10'}`}>✋ {handRaised ? 'Lower hand' : 'Raise hand'}</button>
+        <Button variant="custom" size="none" type="button" onClick={toggleHand} className={`ml-1 rounded-full border px-3 py-1.5 text-xs font-semibold ${handRaised ? 'border-amber-400/50 bg-amber-400/15 text-amber-200' : 'border-white/15 bg-white/5 text-white/70 hover:bg-white/10'}`}>✋ {handRaised ? 'Lower hand' : 'Raise hand'}</Button>
       </div>
       <style>{`
         @keyframes reaction-float { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-140px); opacity: 0; } }
@@ -803,14 +804,14 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
     <div role="dialog" aria-modal="true" aria-label="Host controls" className="fixed inset-x-3 bottom-24 top-24 z-30 flex flex-col rounded-3xl border border-white/10 bg-[#11101d]/98 shadow-2xl backdrop-blur sm:inset-x-auto sm:left-4 sm:top-28 sm:h-[30rem] sm:w-80">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <p className="text-sm font-semibold text-white">Host controls</p>
-        <button ref={closeButtonRef} onClick={onClose} aria-label="Close host controls" className="text-white/50 hover:text-white"><FiX/></button>
+        <Button variant="custom" size="none" ref={closeButtonRef} onClick={onClose} aria-label="Close host controls" className="text-white/50 hover:text-white"><FiX/></Button>
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-3">
         <div className="flex flex-wrap gap-2">
-          <button type="button" disabled={busy === 'mute-all'} onClick={muteAll} className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 disabled:opacity-50">{busy === 'mute-all' ? 'Muting…' : 'Mute all'}</button>
-          <button type="button" disabled={busy === 'lock'} onClick={toggleLock} className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold disabled:opacity-50 ${locked ? 'border-amber-400/40 bg-amber-400/10 text-amber-200' : 'border-white/15 bg-white/5 text-white/80 hover:bg-white/10'}`}>{locked ? <FiLock className="h-3 w-3" /> : <FiUnlock className="h-3 w-3" />} {busy === 'lock' ? 'Updating…' : locked ? 'Locked' : 'Lock room'}</button>
-          <button type="button" disabled={busy === 'waiting-room'} onClick={toggleWaitingRoom} className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold disabled:opacity-50 ${waitingRoomEnabled ? 'border-amber-400/40 bg-amber-400/10 text-amber-200' : 'border-white/15 bg-white/5 text-white/80 hover:bg-white/10'}`}><FiUserPlus className="h-3 w-3" /> {busy === 'waiting-room' ? 'Updating…' : waitingRoomEnabled ? 'Waiting room on' : 'Waiting room off'}</button>
-          <button type="button" disabled={busy === 'recording'} onClick={toggleRecording} className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold disabled:opacity-50 ${recording ? 'border-red-400/40 bg-red-500/10 text-red-300' : 'border-white/15 bg-white/5 text-white/80 hover:bg-white/10'}`}><FiVideo className="h-3 w-3" /> {busy === 'recording' ? 'Updating…' : recording ? 'Stop recording' : 'Record meeting'}</button>
+          <Button variant="custom" size="none" type="button" disabled={busy === 'mute-all'} onClick={muteAll} className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 disabled:opacity-50">{busy === 'mute-all' ? 'Muting…' : 'Mute all'}</Button>
+          <Button variant="custom" size="none" type="button" disabled={busy === 'lock'} onClick={toggleLock} className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold disabled:opacity-50 ${locked ? 'border-amber-400/40 bg-amber-400/10 text-amber-200' : 'border-white/15 bg-white/5 text-white/80 hover:bg-white/10'}`}>{locked ? <FiLock className="h-3 w-3" /> : <FiUnlock className="h-3 w-3" />} {busy === 'lock' ? 'Updating…' : locked ? 'Locked' : 'Lock room'}</Button>
+          <Button variant="custom" size="none" type="button" disabled={busy === 'waiting-room'} onClick={toggleWaitingRoom} className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold disabled:opacity-50 ${waitingRoomEnabled ? 'border-amber-400/40 bg-amber-400/10 text-amber-200' : 'border-white/15 bg-white/5 text-white/80 hover:bg-white/10'}`}><FiUserPlus className="h-3 w-3" /> {busy === 'waiting-room' ? 'Updating…' : waitingRoomEnabled ? 'Waiting room on' : 'Waiting room off'}</Button>
+          <Button variant="custom" size="none" type="button" disabled={busy === 'recording'} onClick={toggleRecording} className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold disabled:opacity-50 ${recording ? 'border-red-400/40 bg-red-500/10 text-red-300' : 'border-white/15 bg-white/5 text-white/80 hover:bg-white/10'}`}><FiVideo className="h-3 w-3" /> {busy === 'recording' ? 'Updating…' : recording ? 'Stop recording' : 'Record meeting'}</Button>
         </div>
         {notice && <p aria-live="polite" className="mt-2 text-xs text-white/60">{notice}</p>}
 
@@ -822,8 +823,8 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
                 <li key={p.identity} className="flex items-center justify-between gap-3 rounded-xl border border-amber-400/15 bg-amber-400/5 px-3 py-2">
                   <span className="truncate text-xs text-white/80">{p.name || 'BLW Member'}</span>
                   <span className="flex shrink-0 gap-2">
-                    <button type="button" disabled={busy === p.identity} onClick={() => admit(p.identity)} aria-label={`Admit ${p.name || 'participant'}`} className="rounded-full border border-emerald-400/30 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-50"><FiUserCheck className="h-3 w-3" /></button>
-                    <button type="button" disabled={busy === p.identity} onClick={() => deny(p.identity)} aria-label={`Deny ${p.name || 'participant'}`} className="rounded-full border border-red-400/25 px-2.5 py-1 text-[11px] font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-50"><FiX className="h-3 w-3" /></button>
+                    <Button variant="custom" size="none" type="button" disabled={busy === p.identity} onClick={() => admit(p.identity)} aria-label={`Admit ${p.name || 'participant'}`} className="rounded-full border border-emerald-400/30 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-50"><FiUserCheck className="h-3 w-3" /></Button>
+                    <Button variant="custom" size="none" type="button" disabled={busy === p.identity} onClick={() => deny(p.identity)} aria-label={`Deny ${p.name || 'participant'}`} className="rounded-full border border-red-400/25 px-2.5 py-1 text-[11px] font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-50"><FiX className="h-3 w-3" /></Button>
                   </span>
                 </li>
               ))}
@@ -840,8 +841,8 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
                 <li key={p.identity} className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.03] px-3 py-2">
                   <span className="truncate text-xs text-white/75">{p.name || 'BLW Member'}</span>
                   <span className="flex shrink-0 gap-2">
-                    <button type="button" disabled={busy === p.identity} onClick={() => muteOne(p.identity)} aria-label={`Mute ${p.name || 'participant'}`} className="rounded-full border border-white/15 px-2.5 py-1 text-[11px] font-semibold text-white/70 hover:bg-white/10 disabled:opacity-50"><FiMicOff className="h-3 w-3" /></button>
-                    <button type="button" disabled={busy === p.identity} onClick={() => removeOne(p.identity)} aria-label={`Remove ${p.name || 'participant'}`} className="rounded-full border border-red-400/25 px-2.5 py-1 text-[11px] font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-50"><FiUserX className="h-3 w-3" /></button>
+                    <Button variant="custom" size="none" type="button" disabled={busy === p.identity} onClick={() => muteOne(p.identity)} aria-label={`Mute ${p.name || 'participant'}`} className="rounded-full border border-white/15 px-2.5 py-1 text-[11px] font-semibold text-white/70 hover:bg-white/10 disabled:opacity-50"><FiMicOff className="h-3 w-3" /></Button>
+                    <Button variant="custom" size="none" type="button" disabled={busy === p.identity} onClick={() => removeOne(p.identity)} aria-label={`Remove ${p.name || 'participant'}`} className="rounded-full border border-red-400/25 px-2.5 py-1 text-[11px] font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-50"><FiUserX className="h-3 w-3" /></Button>
                   </span>
                 </li>
               ))}
@@ -881,7 +882,7 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
         )}
       </div>
       <div className="border-t border-white/10 p-3">
-        <button type="button" disabled={busy === 'end'} onClick={endForEveryone} className="w-full rounded-2xl border border-red-400/30 bg-red-500/10 py-2.5 text-sm font-semibold text-red-200 hover:bg-red-500/20 disabled:opacity-50">{busy === 'end' ? 'Ending…' : 'End for everyone'}</button>
+        <Button variant="custom" size="none" type="button" disabled={busy === 'end'} onClick={endForEveryone} className="w-full rounded-2xl border border-red-400/30 bg-red-500/10 py-2.5 text-sm font-semibold text-red-200 hover:bg-red-500/20 disabled:opacity-50">{busy === 'end' ? 'Ending…' : 'End for everyone'}</Button>
       </div>
     </div>
   );
