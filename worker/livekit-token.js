@@ -25,6 +25,17 @@ async function dbClient(env) {
   await client.connect();
   return client;
 }
+async function avatarUrlFor(env, email) {
+  const client = await dbClient(env).catch(() => null);
+  if (!client) return null;
+  try {
+    await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT');
+    const result = await client.query('SELECT avatar_url FROM users WHERE LOWER(email)=LOWER($1) LIMIT 1', [email]);
+    return result.rows[0]?.avatar_url || null;
+  } catch {
+    return null; // never block a meeting join over an avatar lookup
+  } finally { await client.end().catch(() => {}); }
+}
 async function recordRoomVisit(env, room, email) {
   const client = await dbClient(env).catch(() => null);
   if (!client) return;
@@ -88,7 +99,9 @@ async function tokenResponse(request, env, headers) {
     }
     waitingRoom = Boolean(meta?.waitingRoom);
   }
-  const access = new AccessToken(key, secret, { identity, name: participantName, ttl: '1h', metadata: waitingRoom ? JSON.stringify({ pending: true }) : undefined });
+  const avatarUrl = await avatarUrlFor(env, email);
+  const metadata = { ...(waitingRoom ? { pending: true } : {}), ...(avatarUrl ? { avatarUrl } : {}) };
+  const access = new AccessToken(key, secret, { identity, name: participantName, ttl: '1h', metadata: Object.keys(metadata).length ? JSON.stringify(metadata) : undefined });
   access.addGrant({ roomJoin: true, room, canPublish: waitingRoom ? false : body?.role !== 'viewer', canSubscribe: !waitingRoom, canPublishData: !waitingRoom });
   await recordRoomVisit(env, room, email).catch(() => {}); // best-effort — never block a join over a history-tracking write
   return json({ server_url: host, participant_token: await access.toJwt(), participant_identity: identity, participant_name: participantName, room, pending: waitingRoom }, 201, headers);

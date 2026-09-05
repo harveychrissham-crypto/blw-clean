@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { hashPassword, verifyPassword } from '../server/utils/crypto.js';
 import { corsHeaders } from './security.js';
 import { sendEmail, welcomeEmail } from './email.js';
+import { uploadImageToStorage } from './upload-api.js';
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), {
   status,
@@ -46,6 +47,10 @@ async function ensurePasswordChangedColumn(client) {
   await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP WITH TIME ZONE');
 }
 
+async function ensureAvatarColumn(client) {
+  await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT');
+}
+
 async function authenticatedUser(request, env, client) {
   const token = bearerToken(request);
   if (!token) return { error: 'Authorization token missing.', status: 401 };
@@ -80,6 +85,7 @@ function payloadUser(row, isAdmin = false) {
     membershipId: row.membership_id,
     badge: row.badge,
     status: row.status,
+    avatarUrl: row.avatar_url || null,
     isAdmin,
   };
 }
@@ -116,6 +122,29 @@ export async function handleAuth(request, env, ctx) {
         const deleted = await client.query('DELETE FROM users WHERE LOWER(email)=LOWER($1) RETURNING email', [sanitizeEmail(auth.user.email)]);
         if (!deleted.rows.length) return { response: json({ error: 'Account not found.' }, 404, headers) };
         return { response: json({ status: 'ok', message: 'Account deleted successfully.' }, 200, { ...headers, 'set-cookie': clearCookie }) };
+      }
+
+      if (url.pathname === '/api/auth/avatar') {
+        if (request.method !== 'POST' && request.method !== 'DELETE') return { response: json({ error: 'Method not allowed.' }, 405, headers) };
+        const auth = await authenticatedUser(request, env, client);
+        if (auth.error) return { response: json({ error: auth.error }, auth.status, headers) };
+        const email = sanitizeEmail(auth.user.email);
+        await ensureAvatarColumn(client);
+
+        let avatarUrl = null;
+        if (request.method === 'POST') {
+          const bucket = typeof env.SUPABASE_AVATARS_BUCKET === 'string' && env.SUPABASE_AVATARS_BUCKET.trim() ? env.SUPABASE_AVATARS_BUCKET.trim() : 'avatars';
+          const uploaded = await uploadImageToStorage(request, env, { bucket, fieldName: 'photo' });
+          if (uploaded.error) return { response: json({ error: uploaded.error }, uploaded.status, headers) };
+          avatarUrl = uploaded.url;
+        }
+
+        const updated = await client.query('UPDATE users SET avatar_url=$1 WHERE LOWER(email)=LOWER($2) RETURNING full_name,email,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status,is_admin,avatar_url', [avatarUrl, email]);
+        if (!updated.rows.length) return { response: json({ error: 'Account not found.' }, 404, headers) };
+        const row = updated.rows[0];
+        const user = payloadUser(row, !!row.is_admin);
+        const token = signUser(user, env);
+        return { response: json({ user, token }, 200, { ...headers, 'set-cookie': cookie(token) }) };
       }
 
       if (url.pathname !== '/api/auth/register' && url.pathname !== '/api/auth/login') return null;
@@ -156,7 +185,8 @@ export async function handleAuth(request, env, ctx) {
       const password = body.password;
       if (!email || !password) return { response: json({ error: 'Email and password are required.' }, 400, headers) };
       if (!/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(email)) return { response: json({ error: 'Invalid email format.' }, 400, headers) };
-      const result = await client.query(`SELECT full_name,email,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status,password_hash,is_admin FROM users WHERE LOWER(email)=LOWER($1) LIMIT 1`, [email]);
+      await ensureAvatarColumn(client);
+      const result = await client.query(`SELECT full_name,email,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status,password_hash,is_admin,avatar_url FROM users WHERE LOWER(email)=LOWER($1) LIMIT 1`, [email]);
       if (!result.rows.length) return { response: json({ error: 'Invalid email or password.' }, 401, headers) };
       const row = result.rows[0];
       if (!(await verifyPassword(password, row.password_hash))) return { response: json({ error: 'Invalid email or password.' }, 401, headers) };

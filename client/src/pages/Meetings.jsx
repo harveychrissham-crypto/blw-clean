@@ -497,6 +497,7 @@ function ParticipantTile({ participant, local, speaking, pinned, onTogglePin, bi
   const videoRef = useRef(null);
   const audioRef = useRef(null);
   const [, rerender] = useState(0);
+  const [avatarFailed, setAvatarFailed] = useState(false);
   useEffect(() => {
     const sync = () => rerender(v => v + 1);
     participant.on?.(RoomEvent.TrackPublished, sync).on?.(RoomEvent.TrackUnpublished, sync).on?.(RoomEvent.TrackSubscribed, sync).on?.(RoomEvent.TrackUnsubscribed, sync).on?.(RoomEvent.TrackMuted, sync).on?.(RoomEvent.TrackUnmuted, sync).on?.(ParticipantEvent.ConnectionQualityChanged, sync);
@@ -520,18 +521,24 @@ function ParticipantTile({ participant, local, speaking, pinned, onTogglePin, bi
   const micOn = Boolean(participant.isMicrophoneEnabled);
   const avatarPalette = ['#8A2BE2', '#EC2FA8', '#1a73e8', '#F2A31C', '#34D399', '#E85D75'];
   const avatarColor = avatarPalette[String(display).split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % avatarPalette.length];
+  let avatarUrl = null;
+  try { avatarUrl = JSON.parse(participant.metadata || '{}')?.avatarUrl || null; } catch { /* malformed metadata — fall back to initial */ }
   return (
     <div className={`group relative overflow-hidden rounded-xl bg-[#3c4043] transition-all duration-150 ${big ? 'aspect-video sm:aspect-[16/8]' : 'aspect-video'} ${speaking ? 'ring-[3px] ring-[#8AB4F8]' : 'ring-1 ring-black/20'}`}>
       <video ref={videoRef} autoPlay playsInline muted={local} className={`h-full w-full object-cover ${hasVideo ? '' : 'hidden'} ${local && !hasScreenShare ? 'scale-x-[-1]' : ''}`} />
       <audio ref={audioRef} autoPlay muted={local} />
       {!hasVideo && (
         <div className="grid h-full place-items-center">
-          <div
-            className={`grid place-items-center rounded-full font-semibold text-white shadow-lg transition-all duration-150 ${big ? 'h-28 w-28 text-4xl sm:h-36 sm:w-36' : 'h-20 w-20 text-2xl sm:h-24 sm:w-24'} ${speaking ? 'ring-[3px] ring-[#8AB4F8] ring-offset-2 ring-offset-[#3c4043]' : ''}`}
-            style={{ backgroundColor: avatarColor }}
-          >
-            {display.slice(0, 1).toUpperCase()}
-          </div>
+          {avatarUrl && !avatarFailed ? (
+            <img src={avatarUrl} alt="" onError={() => setAvatarFailed(true)} className={`rounded-full object-cover shadow-lg transition-all duration-150 ${big ? 'h-28 w-28 sm:h-36 sm:w-36' : 'h-20 w-20 sm:h-24 sm:w-24'} ${speaking ? 'ring-[3px] ring-[#8AB4F8] ring-offset-2 ring-offset-[#3c4043]' : ''}`} />
+          ) : (
+            <div
+              className={`grid place-items-center rounded-full font-semibold text-white shadow-lg transition-all duration-150 ${big ? 'h-28 w-28 text-4xl sm:h-36 sm:w-36' : 'h-20 w-20 text-2xl sm:h-24 sm:w-24'} ${speaking ? 'ring-[3px] ring-[#8AB4F8] ring-offset-2 ring-offset-[#3c4043]' : ''}`}
+              style={{ backgroundColor: avatarColor }}
+            >
+              {display.slice(0, 1).toUpperCase()}
+            </div>
+          )}
         </div>
       )}
       {hasScreenShare && <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded bg-black/70 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/90 backdrop-blur">Presenting</div>}

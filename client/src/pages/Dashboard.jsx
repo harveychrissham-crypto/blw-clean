@@ -19,6 +19,9 @@ import {
   FiCalendar,
   FiFileText,
   FiClock,
+  FiCamera,
+  FiX,
+  FiLoader,
 } from 'react-icons/fi';
 import { Card, Eyebrow, StatGroup, ActionBanner, InfoTile } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
@@ -35,6 +38,49 @@ export default function Dashboard() {
   const [isEditing, setIsEditing] = useState(false);
   const [venue, setVenue] = useState(null);
   const [venueStatus, setVenueStatus] = useState('idle'); // idle | loading | loaded | none | error
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-selecting the same file later
+    if (!file) return;
+    if (!file.type?.startsWith('image/')) { setAvatarError('Only image files are allowed.'); return; }
+    if (file.size > 5 * 1024 * 1024) { setAvatarError('Image must be 5 MB or smaller.'); return; }
+    setAvatarBusy(true);
+    setAvatarError('');
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      const res = await apiFetch('/api/auth/avatar', { method: 'POST', body: formData });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.error || 'Unable to upload photo.');
+      await login(body.user, body.token);
+      setToast({ type: 'success', message: 'Profile photo updated.' });
+    } catch (err) {
+      setAvatarError(err?.message || 'Unable to upload photo.');
+      setToast({ type: 'error', message: err?.message || 'Unable to upload photo.' });
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
+  const handleAvatarRemove = async () => {
+    setAvatarBusy(true);
+    setAvatarError('');
+    try {
+      const res = await apiFetch('/api/auth/avatar', { method: 'DELETE' });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.error || 'Unable to remove photo.');
+      await login(body.user, body.token);
+      setToast({ type: 'success', message: 'Profile photo removed.' });
+    } catch (err) {
+      setAvatarError(err?.message || 'Unable to remove photo.');
+      setToast({ type: 'error', message: err?.message || 'Unable to remove photo.' });
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
 
   useEffect(() => {
     if (!user?.chapter) {
@@ -176,13 +222,31 @@ export default function Dashboard() {
         <Card variant="raised" className="p-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-pink-500 via-purple-400 to-indigo-500 text-2xl font-black text-white shadow-xl shadow-purple-400/20">
-                {displayName.charAt(0).toUpperCase()}
+              <div className="relative shrink-0">
+                <label className="group relative block h-16 w-16 cursor-pointer overflow-hidden rounded-3xl shadow-xl shadow-purple-400/20">
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-pink-500 via-purple-400 to-indigo-500 text-2xl font-black text-white">
+                      {displayName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className={`absolute inset-0 flex items-center justify-center bg-black/50 transition ${avatarBusy ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                    {avatarBusy ? <FiLoader className="h-4 w-4 animate-spin text-white" /> : <FiCamera className="h-5 w-5 text-white" />}
+                  </div>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} disabled={avatarBusy} />
+                </label>
+                {user?.avatarUrl && (
+                  <Button variant="custom" size="none" type="button" onClick={handleAvatarRemove} disabled={avatarBusy} aria-label="Remove profile photo" className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-ink-900 text-white/70 ring-2 ring-ink-900 hover:text-white disabled:opacity-50">
+                    <FiX className="h-3 w-3" />
+                  </Button>
+                )}
               </div>
               <div className="min-w-0">
                 <Eyebrow>Member dashboard</Eyebrow>
                 <h1 className="mt-1 text-2xl font-semibold text-white truncate">Brother {displayName}</h1>
                 <p className="mt-1 text-[11px] text-slate-400 truncate">{email}</p>
+                {avatarError && <p className="mt-1 text-[11px] text-red-300">{avatarError}</p>}
               </div>
             </div>
 
