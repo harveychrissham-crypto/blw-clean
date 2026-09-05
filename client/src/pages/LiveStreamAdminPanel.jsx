@@ -88,22 +88,22 @@ export default function LiveStreamAdminPanel() {
       ) : (
         <form onSubmit={save} className="mt-7 space-y-5">
           <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-wider text-white/40">Stream title</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-white/50">Stream title</span>
             <input value={form.title} onChange={(e) => update('title', e.target.value)} placeholder="Sunday Service" className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-gold-500/50" />
           </label>
 
           <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-wider text-white/40">YouTube URL</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-white/50">YouTube URL</span>
             <input type="url" value={form.youtubeUrl} onChange={(e) => update('youtubeUrl', e.target.value)} placeholder="https://www.youtube.com/watch?v=…" className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-gold-500/50" />
           </label>
 
           <div className="grid gap-5 md:grid-cols-2">
             <label className="block">
-              <span className="text-xs font-semibold uppercase tracking-wider text-white/40">Google Meet URL</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-white/50">Google Meet URL</span>
               <input type="url" value={form.googleMeetUrl} onChange={(e) => update('googleMeetUrl', e.target.value)} placeholder="https://meet.google.com/…" className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-gold-500/50" />
             </label>
             <label className="block">
-              <span className="text-xs font-semibold uppercase tracking-wider text-white/40">Daily room URL</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-white/50">Daily room URL</span>
               <input type="url" value={form.dailyRoomUrl} onChange={(e) => update('dailyRoomUrl', e.target.value)} placeholder="https://…daily.co/…" className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-gold-500/50" />
             </label>
           </div>
@@ -111,7 +111,7 @@ export default function LiveStreamAdminPanel() {
           <Button variant="custom" size="none" onClick={() => update('isLive', !form.isLive)} className={`flex w-full items-center justify-between rounded-2xl border px-4 py-4 text-left transition ${form.isLive ? 'border-emerald-400/30 bg-emerald-400/10' : 'border-white/10 bg-white/[0.03]'}`} aria-pressed={form.isLive}>
             <span>
               <span className={`block text-sm font-bold ${form.isLive ? 'text-emerald-300' : 'text-white'}`}>{form.isLive ? 'Live now' : 'Stream is offline'}</span>
-              <span className="mt-1 block text-xs text-white/40">{form.isLive ? 'Members will see this session as live.' : 'The public Live page will treat the session as offline.'}</span>
+              <span className="mt-1 block text-xs text-white/50">{form.isLive ? 'Members will see this session as live.' : 'The public Live page will treat the session as offline.'}</span>
             </span>
             <span className={`relative h-7 w-12 rounded-full p-1 transition ${form.isLive ? 'bg-emerald-500' : 'bg-white/15'}`}><span className={`block h-5 w-5 rounded-full bg-white transition ${form.isLive ? 'translate-x-5' : ''}`} /></span>
           </Button>

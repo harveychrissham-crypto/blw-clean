@@ -92,7 +92,7 @@ export default function Meetings() {
     return <CallRoom credentials={credentials} choices={choices} room={room} onLeave={handleLeave} />;
   }
 
-  return <section className="mx-auto max-w-4xl px-5 py-12 sm:py-16"><div className="mb-10"><p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-500">Fellowship</p><h1 className="mt-2 text-4xl font-bold">Meetings</h1><p className="mt-3 max-w-2xl text-white/60">Gather for Bible studies, fellowship meetings and leadership calls.</p></div>{leaveNotice && <p className="mb-6 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 text-sm text-amber-200">{leaveNotice}</p>}<div className="grid gap-5 sm:grid-cols-2"><Card variant="custom" className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiPlus className="h-6 w-6 text-gold-500"/><h2 className="mt-4 text-xl font-semibold">Create room</h2><p className="mt-2 text-sm text-white/55">Start an instant room and share its code with your group.</p><Button variant="custom" size="none" disabled={creating} onClick={createRoom} className="mt-6 w-full rounded-2xl bg-white py-3 font-semibold text-black disabled:opacity-50">{creating ? 'Creating…' : 'Create meeting'}</Button></Card><Card variant="custom" className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiUsers className="h-6 w-6 text-gold-500"/><h2 className="mt-4 text-xl font-semibold">Join room</h2><p className="mt-2 text-sm text-white/55">Enter a room code from your leader or fellowship group.</p><input value={room} onChange={e => setRoom(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') goToLobby(); }} placeholder="Room code" className="mt-5 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none focus:border-white/30"/><Button variant="custom" size="none" onClick={() => goToLobby()} className="mt-3 w-full rounded-2xl bg-gradient-to-r from-pink-600 to-purple-500 py-3 font-semibold">Join meeting</Button></Card></div>{room && <Card variant="custom" className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm"><span className="min-w-0 truncate text-white/60">Room: <b className="text-white">{room}</b></span><Button variant="custom" size="none" onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/meetings?room=${encodeURIComponent(room)}`)} className="inline-flex shrink-0 items-center gap-2 text-white/70 hover:text-white"><FiCopy/>Copy link</Button></Card>}{error && <p className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/5 p-4 text-sm text-red-200">{error}</p>}{recentRooms.length > 0 && <div className="mt-10"><h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/50">Your recent meetings</h2><ul className="space-y-2">{recentRooms.map((r) => <Card as="li" key={r.room} variant="custom" className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4"><div className="min-w-0"><p className="truncate text-sm font-medium text-white">{r.room}</p><p className="mt-0.5 flex items-center gap-1.5 text-xs text-white/40">{r.active && <span className="inline-flex items-center gap-1 text-emerald-300"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />Active now</span>}{r.active && ' · '}Last visited {new Date(r.lastVisitedAt).toLocaleDateString()}</p></div><Button variant="custom" size="none" onClick={() => goToLobby(r.room)} className="shrink-0 rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-white/80 hover:bg-white/10">Rejoin</Button></Card>)}</ul></div>}</section>;
+  return <section className="mx-auto max-w-4xl px-5 py-12 sm:py-16"><div className="mb-10"><p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-500">Fellowship</p><h1 className="mt-2 text-4xl font-bold">Meetings</h1><p className="mt-3 max-w-2xl text-white/60">Gather for Bible studies, fellowship meetings and leadership calls.</p></div>{leaveNotice && <p className="mb-6 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 text-sm text-amber-200">{leaveNotice}</p>}<div className="grid gap-5 sm:grid-cols-2"><Card variant="custom" className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiPlus className="h-6 w-6 text-gold-500"/><h2 className="mt-4 text-xl font-semibold">Create room</h2><p className="mt-2 text-sm text-white/55">Start an instant room and share its code with your group.</p><Button variant="custom" size="none" disabled={creating} onClick={createRoom} className="mt-6 w-full rounded-2xl bg-white py-3 font-semibold text-black disabled:opacity-50">{creating ? 'Creating…' : 'Create meeting'}</Button></Card><Card variant="custom" className="rounded-3xl border border-white/10 bg-white/[0.04] p-6"><FiUsers className="h-6 w-6 text-gold-500"/><h2 className="mt-4 text-xl font-semibold">Join room</h2><p className="mt-2 text-sm text-white/55">Enter a room code from your leader or fellowship group.</p><input value={room} onChange={e => setRoom(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') goToLobby(); }} placeholder="Room code" className="mt-5 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none focus:border-white/30"/><Button variant="custom" size="none" onClick={() => goToLobby()} className="mt-3 w-full rounded-2xl bg-gradient-to-r from-pink-600 to-purple-500 py-3 font-semibold">Join meeting</Button></Card></div>{room && <Card variant="custom" className="mt-5 flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm"><span className="min-w-0 truncate text-white/60">Room: <b className="text-white">{room}</b></span><Button variant="custom" size="none" onClick={() => navigator.clipboard?.writeText(`${window.location.origin}/meetings?room=${encodeURIComponent(room)}`)} className="inline-flex shrink-0 items-center gap-2 text-white/70 hover:text-white"><FiCopy/>Copy link</Button></Card>}{error && <p className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/5 p-4 text-sm text-red-200">{error}</p>}{recentRooms.length > 0 && <div className="mt-10"><h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/50">Your recent meetings</h2><ul className="space-y-2">{recentRooms.map((r) => <Card as="li" key={r.room} variant="custom" className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4"><div className="min-w-0"><p className="truncate text-sm font-medium text-white">{r.room}</p><p className="mt-0.5 flex items-center gap-1.5 text-xs text-white/50">{r.active && <span className="inline-flex items-center gap-1 text-emerald-300"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />Active now</span>}{r.active && ' · '}Last visited {new Date(r.lastVisitedAt).toLocaleDateString()}</p></div><Button variant="custom" size="none" onClick={() => goToLobby(r.room)} className="shrink-0 rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-white/80 hover:bg-white/10">Rejoin</Button></Card>)}</ul></div>}</section>;
 }
 
 function Lobby({ participantName, onCancel, onJoin }) {
@@ -440,7 +440,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-gold-500">Live room{recording && <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-red-300"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" aria-hidden="true" />Recording</span>}</p>
           <h1 className="truncate text-2xl font-bold">{roomName}</h1>
-          <p className="text-xs text-white/40">{connState === 'reconnecting' ? 'Reconnecting…' : connected ? `${all.length} participant${all.length === 1 ? '' : 's'}` : 'Connecting…'}</p>
+          <p className="text-xs text-white/50">{connState === 'reconnecting' ? 'Reconnecting…' : connected ? `${all.length} participant${all.length === 1 ? '' : 's'}` : 'Connecting…'}</p>
         </div>
         <Button variant="custom" size="none" onClick={leaveVoluntarily} className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm"><FiLogOut/>Leave</Button>
       </div>
@@ -588,10 +588,10 @@ function ChatPanel({ liveRoom, open, onClose }) {
         <Button variant="custom" size="none" onClick={onClose} aria-label="Close chat" className="text-white/50 hover:text-white"><FiX/></Button>
       </div>
       <div ref={listRef} className="flex-1 space-y-2 overflow-y-auto px-4 py-3">
-        {messages.length === 0 && <p className="text-xs text-white/40">No messages yet. Say hello!</p>}
+        {messages.length === 0 && <p className="text-xs text-white/50">No messages yet. Say hello!</p>}
         {messages.map((m) => (
           <div key={m.id} className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${m.isLocal ? 'ml-auto bg-purple-500/40 text-white' : 'bg-white/[0.06] text-white/85'}`}>
-            {!m.isLocal && <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/40">{m.name}</p>}
+            {!m.isLocal && <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/50">{m.name}</p>}
             <p>{m.text}</p>
           </div>
         ))}
@@ -835,7 +835,7 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
 
         <div className="mt-4">
           {activeParticipants.length === 0 ? (
-            <p className="text-xs text-white/40">No one else has joined yet.</p>
+            <p className="text-xs text-white/50">No one else has joined yet.</p>
           ) : (
             <ul className="space-y-1.5">
               {activeParticipants.map((p) => (
@@ -853,7 +853,7 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
 
         {log.length > 0 && (
           <details className="mt-4">
-            <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wide text-white/40">Recent activity</summary>
+            <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wide text-white/50">Recent activity</summary>
             <ul className="mt-2 space-y-1 text-[11px] text-white/45">
               {log.map((entry, i) => <li key={i} className="flex items-start gap-1.5"><FiClock className="mt-0.5 h-3 w-3 shrink-0" /><span>{entry.by || 'A host'} · {entry.type}{entry.target ? ` · ${entry.target.slice(0, 14)}…` : ''}</span></li>)}
             </ul>
@@ -862,7 +862,7 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
 
         {recordings.length > 0 && (
           <details className="mt-3">
-            <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wide text-white/40">Past recordings ({recordings.length})</summary>
+            <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wide text-white/50">Past recordings ({recordings.length})</summary>
             <ul className="mt-2 space-y-2">
               {recordings.map((rec) => (
                 <Card as="li" key={rec.egressId} variant="custom" className="rounded-2xl bg-white/[0.03] px-3 py-2 text-[11px] text-white/60">
@@ -870,11 +870,11 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
                     <span>{rec.startedAt ? new Date(rec.startedAt).toLocaleString() : 'Unknown time'}</span>
                     <span className={rec.status === 'complete' ? 'text-emerald-300' : rec.status === 'failed' || rec.status === 'aborted' ? 'text-red-300' : 'text-amber-300'}>{rec.status}</span>
                   </div>
-                  {rec.durationSeconds != null && <p className="mt-0.5 text-white/40">{Math.round(rec.durationSeconds / 60)} min</p>}
+                  {rec.durationSeconds != null && <p className="mt-0.5 text-white/50">{Math.round(rec.durationSeconds / 60)} min</p>}
                   {rec.downloadUrl ? (
                     <a href={rec.downloadUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-amber-300 hover:underline">Open recording</a>
                   ) : rec.path ? (
-                    <p className="mt-1 break-all text-white/35">{rec.path}</p>
+                    <p className="mt-1 break-all text-white/50">{rec.path}</p>
                   ) : null}
                 </Card>
               ))}

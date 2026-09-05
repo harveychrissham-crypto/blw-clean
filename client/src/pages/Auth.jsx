@@ -7,7 +7,7 @@ import { Toast } from '../components/ui/Toast';
 import Button from '../components/ui/Button';
 
 const inputClass = 'w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-purple-400';
-const sectionLabelClass = 'text-xs font-semibold uppercase tracking-[0.3em] text-white/40';
+const sectionLabelClass = 'text-xs font-semibold uppercase tracking-[0.3em] text-white/50';
 const AUTH_LOGIN_URL = '/api/auth/login';
 const AUTH_REGISTER_URL = '/api/auth/register';
 const today = new Date().toISOString().slice(0, 10);

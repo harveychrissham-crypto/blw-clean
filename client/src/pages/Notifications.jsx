@@ -38,7 +38,7 @@ export default function Notifications() {
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.08] text-gold-500"><FiBell className="h-7 w-7" /></div>
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-white/40">Inbox</p>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-white/50">Inbox</p>
             <h1 className="text-3xl font-extrabold text-white">Notifications</h1>
             {unreadCount > 0 && <p className="mt-1 text-sm text-white/50">{unreadCount} unread</p>}
           </div>
@@ -60,7 +60,7 @@ export default function Notifications() {
                     {!notification.read && <span className="h-2 w-2 shrink-0 rounded-full bg-gold-500" aria-hidden="true" />}
                   </div>
                   <p className="mt-1 text-sm leading-relaxed text-white/55">{notification.body}</p>
-                  <p className="mt-2 text-xs text-white/30">{formatTimestamp(notification.receivedAt)}</p>
+                  <p className="mt-2 text-xs text-white/50">{formatTimestamp(notification.receivedAt)}</p>
                 </div>
               </div>
             </Button>

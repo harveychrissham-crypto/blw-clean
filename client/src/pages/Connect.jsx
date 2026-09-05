@@ -370,7 +370,7 @@ export default function Connect() {
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
                   <div>
                     <p className="text-sm font-semibold text-white">{locationSummary}</p>
-                    <p className="mt-0.5 text-xs text-white/35">Fellowships within {NEARBY_RADIUS_KM} km</p>
+                    <p className="mt-0.5 text-xs text-white/50">Fellowships within {NEARBY_RADIUS_KM} km</p>
                   </div>
                   <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/55">{nearbyFellowships.length} nearby</span>
                 </div>

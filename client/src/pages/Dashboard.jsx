@@ -365,7 +365,7 @@ export default function Dashboard() {
                 <h2 className="mt-3 text-3xl font-semibold text-white">Keep your info up to date so we can stay connected.</h2>
               </div>
               <form onSubmit={handleSaveProfile} className="space-y-5 overflow-y-auto px-6 py-5" style={{ maxHeight: 'calc(90vh - 100px)' }}>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/40">Personal info</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/50">Personal info</p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2">
                   <span className="text-sm font-semibold text-slate-300">Title</span>
@@ -388,7 +388,7 @@ export default function Dashboard() {
               </div>
 
               <div className="border-t border-white/[0.06] pt-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/40">Contact</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/50">Contact</p>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2">
                   <span className="text-sm font-semibold text-slate-300">Phone</span>
@@ -445,7 +445,7 @@ export default function Dashboard() {
               </div>
 
               <div className="border-t border-white/[0.06] pt-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/40">Ministry</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/50">Ministry</p>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2">
                   <span className="text-sm font-semibold text-slate-300">Service church</span>
@@ -469,7 +469,7 @@ export default function Dashboard() {
               </div>
 
               <div className="border-t border-white/[0.06] pt-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/40">Address</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/50">Address</p>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2">
                   <span className="text-sm font-semibold text-slate-300">Residential address</span>

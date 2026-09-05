@@ -171,7 +171,7 @@ export default function OfflineAttendanceSheet({ members = [], onClose, onBackTo
                           <FiCheckCircle className="h-2.5 w-2.5" /> Signed in
                         </span>
                       ) : (
-                        <span className="shrink-0 rounded-full bg-white/[0.07] px-2 py-0.5 text-[9px] font-semibold text-white/35">
+                        <span className="shrink-0 rounded-full bg-white/[0.07] px-2 py-0.5 text-[9px] font-semibold text-white/50">
                           Not signed in
                         </span>
                       )}

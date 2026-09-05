@@ -37,7 +37,7 @@ export default function ServiceVenues() {
       <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/50">View current campus fellowship venues and service times across the zone.</p>
 
       {loading ? (
-        <p className="mt-8 text-sm text-white/40">Loading venues…</p>
+        <p className="mt-8 text-sm text-white/50">Loading venues…</p>
       ) : !ordered.length ? (
         <div className="mt-8"><EmptyState icon={FiMapPin} title="No service venues yet" hint="Venue information will appear here once it is published." /></div>
       ) : (
@@ -49,7 +49,7 @@ export default function ServiceVenues() {
                 <div className="flex items-start gap-4">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-purple-300"><FiMapPin /></div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold uppercase tracking-widest text-white/35">{venue.chapter}</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-white/50">{venue.chapter}</p>
                     <h2 className="mt-1 text-lg font-bold text-white">{venue.venue || 'Service venue'}</h2>
                     {venue.serviceTime && <p className="mt-2 flex items-center gap-2 text-sm text-white/50"><FiClock className="h-3.5 w-3.5" />{venue.serviceTime}</p>}
                   </div>
