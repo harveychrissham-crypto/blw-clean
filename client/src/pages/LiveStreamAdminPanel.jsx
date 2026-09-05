@@ -108,13 +108,13 @@ export default function LiveStreamAdminPanel() {
             </label>
           </div>
 
-          <button type="button" onClick={() => update('isLive', !form.isLive)} className={`flex w-full items-center justify-between rounded-2xl border px-4 py-4 text-left transition ${form.isLive ? 'border-emerald-400/30 bg-emerald-400/10' : 'border-white/10 bg-white/[0.03]'}`} aria-pressed={form.isLive}>
+          <Button variant="custom" size="none" onClick={() => update('isLive', !form.isLive)} className={`flex w-full items-center justify-between rounded-2xl border px-4 py-4 text-left transition ${form.isLive ? 'border-emerald-400/30 bg-emerald-400/10' : 'border-white/10 bg-white/[0.03]'}`} aria-pressed={form.isLive}>
             <span>
               <span className={`block text-sm font-bold ${form.isLive ? 'text-emerald-300' : 'text-white'}`}>{form.isLive ? 'Live now' : 'Stream is offline'}</span>
               <span className="mt-1 block text-xs text-white/40">{form.isLive ? 'Members will see this session as live.' : 'The public Live page will treat the session as offline.'}</span>
             </span>
             <span className={`relative h-7 w-12 rounded-full p-1 transition ${form.isLive ? 'bg-emerald-500' : 'bg-white/15'}`}><span className={`block h-5 w-5 rounded-full bg-white transition ${form.isLive ? 'translate-x-5' : ''}`} /></span>
-          </button>
+          </Button>
 
           {error && <p className="rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
           {saved && <p className="flex items-center gap-2 rounded-xl bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-300"><FiCheckCircle /> Live stream settings saved.</p>}

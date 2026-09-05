@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import Button from './ui/Button';
 
 // Catches uncaught render errors anywhere below it in the tree and shows a
 // friendly recovery screen instead of leaving the whole app as a blank
@@ -33,7 +34,7 @@ export default class ErrorBoundary extends Component {
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-500">BLW Kenya Zone</p>
           <h1 className="mt-3 text-2xl font-bold text-white">Something went wrong</h1>
           <p className="mt-2 text-sm text-white/55">This page hit an unexpected error. Reloading usually fixes it — if it keeps happening, let us know what you were doing.</p>
-          <button type="button" onClick={this.handleReload} className="mt-6 rounded-full bg-gold-500 px-6 py-3 font-semibold text-black">Reload</button>
+          <Button variant="custom" size="none" onClick={this.handleReload} className="mt-6 rounded-full bg-gold-500 px-6 py-3 font-semibold text-black">Reload</Button>
         </div>
       </div>
     );
