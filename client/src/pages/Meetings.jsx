@@ -509,7 +509,10 @@ function ParticipantTile({ participant, local, speaking, pinned, onTogglePin, bi
     if (track && videoRef.current) track.attach(videoRef.current);
     const audioTrack = participant.getTrackPublication?.(Track.Source.Microphone)?.track;
     if (audioTrack && audioRef.current) audioTrack.attach(audioRef.current);
-    return () => { try { track?.detach(videoRef.current); } catch {} };
+    return () => {
+      try { track?.detach(videoRef.current); } catch {}
+      try { audioTrack?.detach(audioRef.current); } catch {}
+    };
   });
   const display = participant.name || participant.identity || 'Participant';
   const hasScreenShare = Boolean(participant.getTrackPublication?.(Track.Source.ScreenShare)?.track);
@@ -559,6 +562,7 @@ function ParticipantTile({ participant, local, speaking, pinned, onTogglePin, bi
 function ChatPanel({ liveRoom, open, onClose }) {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
+  const [sendError, setSendError] = useState('');
   const listRef = useRef(null);
 
   useEffect(() => {
@@ -576,7 +580,13 @@ function ChatPanel({ liveRoom, open, onClose }) {
     const value = text.trim();
     if (!value || !liveRoom) return;
     setText('');
-    try { await liveRoom.localParticipant.sendChatMessage(value); } catch { /* best effort delivery */ }
+    setSendError('');
+    try {
+      await liveRoom.localParticipant.sendChatMessage(value);
+    } catch {
+      setText(value);
+      setSendError("Message didn't send. Check your connection and try again.");
+    }
   };
 
   if (!open) return null;
@@ -596,6 +606,7 @@ function ChatPanel({ liveRoom, open, onClose }) {
           </div>
         ))}
       </div>
+      {sendError && <p className="px-4 pb-1 text-xs text-red-300">{sendError}</p>}
       <div className="flex items-center gap-2 border-t border-white/10 p-3">
         <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') send(); }} placeholder="Message everyone" className="min-w-0 flex-1 rounded-full border border-white/10 bg-black/20 px-4 py-2 text-sm text-white outline-none placeholder:text-white/30" />
         <Button variant="custom" size="none" onClick={send} aria-label="Send message" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-purple-500 text-white"><FiSend className="h-4 w-4"/></Button>

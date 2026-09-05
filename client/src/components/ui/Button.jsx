@@ -1,3 +1,5 @@
+import { forwardRef } from 'react';
+
 // Shared button styles, extracted from the most common patterns already in
 // use across the app (see the color-token/a11y pass earlier this session).
 // `variant` controls color/intent, `size` controls the two shapes actually
@@ -23,11 +25,13 @@ const SIZES = {
   none: '',
 };
 
-export default function Button({ variant = 'primary', size = 'md', className = '', type = 'button', ...props }) {
+const Button = forwardRef(function Button({ variant = 'primary', size = 'md', className = '', type = 'button', ...props }, ref) {
   const variantClass = VARIANTS[variant] || VARIANTS.primary;
   const sizeClass = SIZES[size] || SIZES.md;
-  return <button type={type} className={`${sizeClass} ${variantClass} transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${className}`.trim()} {...props} />;
-}
+  return <button ref={ref} type={type} className={`${sizeClass} ${variantClass} transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${className}`.trim()} {...props} />;
+});
+
+export default Button;
 
 const ICON_SIZES = {
   xs: 'h-7 w-7',
@@ -39,11 +43,11 @@ const ICON_SIZES = {
 // Circular icon-only button — the other recurring shape across the app
 // (close buttons, back arrows, compact controls). Always needs an
 // aria-label since there's no visible text.
-export function IconButton({ variant = 'ghost', size = 'md', className = '', type = 'button', 'aria-label': ariaLabel, ...props }) {
+export const IconButton = forwardRef(function IconButton({ variant = 'ghost', size = 'md', className = '', type = 'button', 'aria-label': ariaLabel, ...props }, ref) {
   const variantClass = VARIANTS[variant] || VARIANTS.ghost;
   const sizeClass = ICON_SIZES[size] || ICON_SIZES.md;
   if (!ariaLabel && import.meta.env.DEV) {
     console.warn('IconButton rendered without an aria-label — icon-only buttons need one for screen readers.');
   }
-  return <button type={type} aria-label={ariaLabel} className={`grid ${sizeClass} shrink-0 place-items-center rounded-full ${variantClass} transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${className}`.trim()} {...props} />;
-}
+  return <button ref={ref} type={type} aria-label={ariaLabel} className={`grid ${sizeClass} shrink-0 place-items-center rounded-full ${variantClass} transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${className}`.trim()} {...props} />;
+});
