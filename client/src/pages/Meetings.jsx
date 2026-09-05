@@ -608,6 +608,7 @@ function ReactionsBar({ liveRoom, localParticipant, participants }) {
   const [bubbles, setBubbles] = useState([]);
   const [raisedHands, setRaisedHands] = useState({});
   const [handRaised, setHandRaised] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
   const bubbleId = useRef(0);
   const decoder = useRef(typeof TextDecoder !== 'undefined' ? new TextDecoder() : null);
 
@@ -659,10 +660,18 @@ function ReactionsBar({ liveRoom, localParticipant, participants }) {
     return () => liveRoom.off(RoomEvent.ParticipantConnected, handler);
   }, [liveRoom, handRaised, localParticipant]);
 
+  useEffect(() => {
+    if (!showPicker) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setShowPicker(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showPicker]);
+
   const react = (emoji) => {
     const name = localParticipant?.name || 'BLW Member';
     popBubble(emoji, name);
     localParticipant?.publishData(new TextEncoder().encode(JSON.stringify({ emoji, name })), { reliable: true, topic: 'reactions' });
+    setShowPicker(false);
   };
 
   const toggleHand = () => {
@@ -686,12 +695,22 @@ function ReactionsBar({ liveRoom, localParticipant, participants }) {
       {raisedList.length > 0 && (
         <div className="mx-auto mt-3 w-fit rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-1.5 text-xs text-amber-200">✋ {raisedList.join(', ')} raised {raisedList.length === 1 ? 'a hand' : 'hands'}</div>
       )}
-      <Card variant="custom" className="mx-auto mt-3 flex max-w-[22rem] flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-black/30 px-2 py-1.5 sm:w-fit sm:max-w-none sm:rounded-full">
-        {REACTION_EMOJIS.map((emoji) => (
-          <Button variant="custom" size="none" key={emoji} type="button" onClick={() => react(emoji)} aria-label={`React with ${emoji}`} className="rounded-full px-2 py-1 text-lg hover:bg-white/10">{emoji}</Button>
-        ))}
-        <Button variant="custom" size="none" type="button" onClick={toggleHand} className={`ml-1 rounded-full border px-3 py-1.5 text-xs font-semibold ${handRaised ? 'border-amber-400/50 bg-amber-400/15 text-amber-200' : 'border-white/15 bg-white/5 text-white/70 hover:bg-white/10'}`}>✋ {handRaised ? 'Lower hand' : 'Raise hand'}</Button>
-      </Card>
+      <div className="mx-auto mt-3 flex w-fit items-center gap-2">
+        <div className="relative">
+          <Button variant="custom" size="none" type="button" onClick={() => setShowPicker((v) => !v)} aria-label="Send a reaction" aria-expanded={showPicker} className={`rounded-full border px-4 py-1.5 text-lg transition ${showPicker ? 'border-white/25 bg-white/15' : 'border-white/10 bg-black/30 hover:bg-white/10'}`}>🙂</Button>
+          {showPicker && (
+            <>
+              <Button variant="custom" size="none" type="button" aria-label="Close reaction picker" onClick={() => setShowPicker(false)} className="fixed inset-0 z-30 cursor-default" />
+              <Card variant="custom" className="absolute bottom-full left-1/2 z-40 mb-3 flex -translate-x-1/2 gap-1 rounded-full border border-white/10 bg-[#1a1926] p-1.5 shadow-2xl">
+                {REACTION_EMOJIS.map((emoji) => (
+                  <Button variant="custom" size="none" key={emoji} type="button" onClick={() => react(emoji)} aria-label={`React with ${emoji}`} className="rounded-full px-2 py-1 text-xl hover:bg-white/10">{emoji}</Button>
+                ))}
+              </Card>
+            </>
+          )}
+        </div>
+        <Button variant="custom" size="none" type="button" onClick={toggleHand} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${handRaised ? 'border-amber-400/50 bg-amber-400/15 text-amber-200' : 'border-white/15 bg-white/5 text-white/70 hover:bg-white/10'}`}>✋ {handRaised ? 'Lower hand' : 'Raise hand'}</Button>
+      </div>
       <style>{`
         @keyframes reaction-float { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-140px); opacity: 0; } }
         .reaction-bubble { animation: reaction-float 2.5s ease-out forwards; }
