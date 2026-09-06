@@ -107,7 +107,7 @@ export default function Dashboard() {
     phone: '',
     birthday: '',
     gender: '',
-    status: '',
+    maritalStatus: '',
     church: '',
     chapter: '',
     campusZone: '',
@@ -134,7 +134,7 @@ export default function Dashboard() {
     { label: 'Campus zone', value: user?.campusZone || notSet, icon: FiMapPin },
     { label: 'Gender', value: user?.gender || notSet, icon: FiStar },
     { label: 'Country', value: user?.country || notSet, icon: FiGlobe },
-    { label: 'Marital status', value: user?.status || notSet, icon: FiHeart },
+    { label: 'Marital status', value: user?.maritalStatus || notSet, icon: FiHeart },
   ];
 
   const handleDelete = async () => {
@@ -176,7 +176,7 @@ export default function Dashboard() {
       phone: user?.phone || '',
       birthday: user?.birthday || '',
       gender: user?.gender || 'Male',
-      status: user?.status || 'Single',
+      maritalStatus: user?.maritalStatus || 'Single',
       church: user?.church || "Believers' LoveWorld CM Kenya Zone",
       chapter: user?.chapter || '',
       campusZone: user?.campusZone || '',
@@ -198,10 +198,29 @@ export default function Dashboard() {
     setEditStatus('submitting');
     setEditError('');
 
-    // Update local auth state immediately. If server API exists, we'd call it here.
     try {
-      const updatedUser = { ...user, name: editForm.fullName, fullName: editForm.fullName, phone: editForm.phone, birthday: editForm.birthday, gender: editForm.gender, status: editForm.status, church: editForm.church, chapter: editForm.chapter, campusZone: editForm.campusZone, residence: editForm.residence, city: editForm.city, country: editForm.country, invitedBy: editForm.invitedBy, about: editForm.about };
-      login(updatedUser);
+      const res = await apiFetch('/api/auth/profile', {
+        method: 'POST',
+        body: JSON.stringify({
+          fullName: editForm.fullName,
+          phone: editForm.phone,
+          birthday: editForm.birthday,
+          gender: editForm.gender,
+          maritalStatus: editForm.maritalStatus,
+          church: editForm.church,
+          chapter: editForm.chapter,
+          campusZone: editForm.campusZone,
+          residence: editForm.residence,
+          city: editForm.city,
+          country: editForm.country,
+          invitedBy: editForm.invitedBy,
+          about: editForm.about,
+          title: editForm.title,
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.error || 'Unable to update profile.');
+      await login(body.user, body.token);
       setEditStatus('success');
       setToast({ type: 'success', message: 'Profile updated successfully.' });
       setTimeout(() => {
@@ -495,8 +514,8 @@ export default function Dashboard() {
                 <label className="space-y-2">
                   <span className="text-sm font-semibold text-slate-300">Marital status</span>
                   <select
-                    value={editForm.status}
-                    onChange={handleEditChange('status')}
+                    value={editForm.maritalStatus}
+                    onChange={handleEditChange('maritalStatus')}
                     className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                   >
                     <option value="">Marital status</option>

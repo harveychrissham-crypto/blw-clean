@@ -51,6 +51,15 @@ async function ensureAvatarColumn(client) {
   await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT');
 }
 
+async function ensureProfileColumns(client) {
+  await client.query(`ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS title TEXT,
+    ADD COLUMN IF NOT EXISTS marital_status TEXT,
+    ADD COLUMN IF NOT EXISTS church TEXT,
+    ADD COLUMN IF NOT EXISTS city TEXT,
+    ADD COLUMN IF NOT EXISTS about TEXT`);
+}
+
 async function authenticatedUser(request, env, client) {
   const token = bearerToken(request);
   if (!token) return { error: 'Authorization token missing.', status: 401 };
@@ -86,6 +95,11 @@ function payloadUser(row, isAdmin = false) {
     badge: row.badge,
     status: row.status,
     avatarUrl: row.avatar_url || null,
+    title: row.title || '',
+    maritalStatus: row.marital_status || '',
+    church: row.church || '',
+    city: row.city || '',
+    about: row.about || '',
     isAdmin,
   };
 }
@@ -122,6 +136,46 @@ export async function handleAuth(request, env, ctx) {
         const deleted = await client.query('DELETE FROM users WHERE LOWER(email)=LOWER($1) RETURNING email', [sanitizeEmail(auth.user.email)]);
         if (!deleted.rows.length) return { response: json({ error: 'Account not found.' }, 404, headers) };
         return { response: json({ status: 'ok', message: 'Account deleted successfully.' }, 200, { ...headers, 'set-cookie': clearCookie }) };
+      }
+
+      if (url.pathname === '/api/auth/profile') {
+        if (request.method !== 'POST') return { response: json({ error: 'Method not allowed.' }, 405, headers) };
+        const auth = await authenticatedUser(request, env, client);
+        if (auth.error) return { response: json({ error: auth.error }, auth.status, headers) };
+        const profileBody = await request.json().catch(() => null);
+        if (!profileBody) return { response: json({ error: 'Invalid JSON request body.' }, 400, headers) };
+        await ensureProfileColumns(client);
+
+        const fullName = sanitizeString(profileBody.fullName);
+        if (!fullName) return { response: json({ error: 'Full name is required.' }, 400, headers) };
+        const fields = {
+          full_name: fullName,
+          phone: sanitizeString(profileBody.phone),
+          campus_zone: sanitizeString(profileBody.campusZone),
+          chapter: sanitizeString(profileBody.chapter),
+          country: sanitizeString(profileBody.country),
+          residence: sanitizeString(profileBody.residence),
+          birthday: sanitizeString(profileBody.birthday) || null,
+          invited_by: sanitizeString(profileBody.invitedBy),
+          gender: sanitizeString(profileBody.gender),
+          title: sanitizeString(profileBody.title),
+          marital_status: sanitizeString(profileBody.maritalStatus),
+          church: sanitizeString(profileBody.church),
+          city: sanitizeString(profileBody.city),
+          about: sanitizeString(profileBody.about),
+        };
+        const columns = Object.keys(fields);
+        const setClause = columns.map((col, i) => `${col}=$${i + 1}`).join(',');
+        const values = columns.map((col) => fields[col]);
+        const updated = await client.query(
+          `UPDATE users SET ${setClause} WHERE LOWER(email)=LOWER($${columns.length + 1}) RETURNING full_name,email,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status,is_admin,avatar_url,title,marital_status,church,city,about`,
+          [...values, sanitizeEmail(auth.user.email)]
+        );
+        if (!updated.rows.length) return { response: json({ error: 'Account not found.' }, 404, headers) };
+        const row = updated.rows[0];
+        const user = payloadUser(row, !!row.is_admin);
+        const token = signUser(user, env);
+        return { response: json({ user, token }, 200, { ...headers, 'set-cookie': cookie(token) }) };
       }
 
       if (url.pathname === '/api/auth/avatar') {
@@ -186,7 +240,8 @@ export async function handleAuth(request, env, ctx) {
       if (!email || !password) return { response: json({ error: 'Email and password are required.' }, 400, headers) };
       if (!/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(email)) return { response: json({ error: 'Invalid email format.' }, 400, headers) };
       await ensureAvatarColumn(client);
-      const result = await client.query(`SELECT full_name,email,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status,password_hash,is_admin,avatar_url FROM users WHERE LOWER(email)=LOWER($1) LIMIT 1`, [email]);
+      await ensureProfileColumns(client);
+      const result = await client.query(`SELECT full_name,email,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status,password_hash,is_admin,avatar_url,title,marital_status,church,city,about FROM users WHERE LOWER(email)=LOWER($1) LIMIT 1`, [email]);
       if (!result.rows.length) return { response: json({ error: 'Invalid email or password.' }, 401, headers) };
       const row = result.rows[0];
       if (!(await verifyPassword(password, row.password_hash))) return { response: json({ error: 'Invalid email or password.' }, 401, headers) };
