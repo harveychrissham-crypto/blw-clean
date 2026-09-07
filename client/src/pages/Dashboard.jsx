@@ -24,6 +24,7 @@ import {
   FiLoader,
 } from 'react-icons/fi';
 import { Card, Eyebrow, StatGroup, ActionBanner, InfoTile } from '../components/ui/Card';
+import { getAppVersion } from '../native';
 import EmptyState from '../components/ui/EmptyState';
 import { Toast } from '../components/ui/Toast';
 import { Skeleton } from '../components/ui/Skeleton';
@@ -40,6 +41,11 @@ export default function Dashboard() {
   const [venueStatus, setVenueStatus] = useState('idle'); // idle | loading | loaded | none | error
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarError, setAvatarError] = useState('');
+  const [appVersion, setAppVersion] = useState(null);
+
+  useEffect(() => {
+    getAppVersion().then(setAppVersion);
+  }, []);
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
@@ -640,6 +646,7 @@ export default function Dashboard() {
         </div>
       </div>
       )}
+      {appVersion && <p className="mt-8 text-center text-[11px] text-white/50">App version {appVersion.version} (build {appVersion.build})</p>}
       <Toast toast={toast} onClose={() => setToast(null)} />
     </section>
   );

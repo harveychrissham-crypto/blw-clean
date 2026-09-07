@@ -1,5 +1,22 @@
 import { Capacitor } from '@capacitor/core';
 
+/**
+ * Reads the native app's actual installed version/build (versionName/
+ * versionCode on Android) via @capacitor/app. Returns null on web, where
+ * there's no native package to ask. Useful for confirming exactly which
+ * build is installed on a device when troubleshooting a stale install.
+ */
+export async function getAppVersion() {
+  if (!Capacitor.isNativePlatform()) return null;
+  try {
+    const { App } = await import('@capacitor/app');
+    const info = await App.getInfo();
+    return { version: info.version, build: info.build };
+  } catch {
+    return null;
+  }
+}
+
 const PUSH_PERMISSION_PROMPT_EVENT = 'blw:push-permission-prompt';
 const PUSH_PERMISSION_DENIED_EVENT = 'blw:push-permission-denied';
 export const UPDATE_AVAILABLE_EVENT = 'blw:update-available';
