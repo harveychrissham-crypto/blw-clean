@@ -8,54 +8,24 @@ permissions:
   contents: write
 
 jobs:
-  redesign:
-    if: github.event.head_commit.message != 'feat: unify meeting control dock'
+  apply:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Update meeting controls
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch meeting UI
         shell: python
         run: |
           from pathlib import Path
-          import re
 
           path = Path('client/src/pages/Meetings.jsx')
           text = path.read_text()
 
-          old_return = re.compile(r'''          <ReactionsBar liveRoom=\{roomRef\.current\} localParticipant=\{local\} participants=\{participants\} />
-          \{showMutedHint && \(
-            <div className="mx-auto mt-3 w-fit rounded-full border border-white/10 bg-\[#202124\]/95 px-4 py-1\.5 text-xs text-white/80 shadow-lg backdrop-blur">🔇 You are muted</div>
-          \)\}
-          <div className="sticky bottom-4 mx-auto mt-4 flex w-fit flex-wrap items-center justify-center gap-2 rounded-full border border-white/10 bg-\[#11101d\]/95 p-2 shadow-2xl backdrop-blur">
-            <ControlButton active=\{camera\} onClick=\{toggleCamera\} onIcon=\{FiCamera\} offIcon=\{FiCameraOff\} label="Camera"/>
-            <ControlButton active=\{mic\} onClick=\{toggleMic\} onIcon=\{FiMic\} offIcon=\{FiMicOff\} label="Microphone"/>
-            <div className="relative">
-              <ControlButton active=\{showMore \|\| sharing \|\| blurOn\} onClick=\{openMore\} onIcon=\{FiMoreHorizontal\} offIcon=\{FiMoreHorizontal\} label="More options"/>
-              \{showMore && \(
-                <>
-                  <Button variant="custom" size="none" type="button" aria-label="Close menu" onClick=\{\(\) => setShowMore\(false\)\} className="fixed inset-0 z-30 cursor-default !bg-transparent !border-0 !p-0" />
-                  <Card variant="custom" className="absolute bottom-full left-1/2 z-40 mb-3 w-56 -translate-x-1/2 overflow-hidden rounded-2xl border border-white/10 bg-\[#1a1926\] shadow-2xl">
-                    <Button variant="custom" size="none" type="button" onClick=\{\(\) => \{ toggleShare\(\); setShowMore\(false\); \}\} disabled=\{!screenShareSupported\} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30">
-                      <FiMonitor className="h-4 w-4 shrink-0" />
-                      <span className="flex-1">\{screenShareSupported ? 'Share screen' : 'Screen sharing not supported'\}</span>
-                      \{sharing && <FiCheck className="h-4 w-4 shrink-0 text-amber-300" />\}
-                    </Button>
-                    <Button variant="custom" size="none" type="button" onClick=\{\(\) => \{ toggleBlur\(\); setShowMore\(false\); \}\} disabled=\{blurBusy \|\| !camera\} className="flex w-full items-center gap-3 border-t border-white/5 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30">
-                      <FiDroplet className="h-4 w-4 shrink-0" />
-                      <span className="flex-1">\{blurBusy ? 'Loading blur…' : camera ? 'Blur my background' : 'Turn camera on to blur'\}</span>
-                      \{blurOn && <FiCheck className="h-4 w-4 shrink-0 text-amber-300" />\}
-                    </Button>
-                  </Card>
-                </>
-              \)\}
-            </div>
-        <ControlButton active=\{showChat\} onClick=\{openChat\} onIcon=\{FiMessageSquare\} offIcon=\{FiMessageSquare\} label="Chat"/>
-        \{isHost && <ControlButton active=\{showHost\} onClick=\{openHost\} onIcon=\{FiUsers\} offIcon=\{FiUsers\} label="Host controls"/>\}
-        <ControlButton active=\{isFullscreen\} onClick=\{toggleFullscreen\} onIcon=\{FiMinimize2\} offIcon=\{FiMaximize2\} label=\{isFullscreen ? 'Exit full screen' : 'Full screen'\}/>
-        <Button variant="custom" size="none" onClick=\{leaveVoluntarily\} aria-label="Leave meeting" className="grid h-11 w-11 place-items-center rounded-full bg-red-500 text-white"><FiPhoneOff/></Button>
-          </div>''', re.S)
-
-          new_return = '''          <ReactionsBar liveRoom={roomRef.current} localParticipant={local} participants={participants} />
+          section_start = text.index('  return (\n    <section ref={containerRef}', text.index('function CallRoom'))
+          start = text.index('          <ReactionsBar liveRoom={roomRef.current} localParticipant={local} participants={participants} />', section_start)
+          end = text.index('          {error &&', start)
+          new_controls = '''          <ReactionsBar liveRoom={roomRef.current} localParticipant={local} participants={participants} />
           {showMutedHint && (
             <div className="pointer-events-none fixed bottom-24 left-1/2 z-40 -translate-x-1/2 rounded-full border border-white/10 bg-[#202124]/95 px-4 py-1.5 text-xs text-white/80 shadow-lg backdrop-blur">🔇 You are muted</div>
           )}
@@ -84,13 +54,11 @@ jobs:
               <div className="mx-0.5 h-6 w-px shrink-0 bg-white/10" />
               <Button variant="custom" size="none" onClick={leaveVoluntarily} aria-label="Leave meeting" title="Leave meeting" className="grid h-11 w-12 shrink-0 place-items-center rounded-full bg-red-500 text-white shadow-lg shadow-red-950/20 hover:bg-red-600"><FiPhoneOff/></Button>
             </div>
-          </div>'''
-          if not old_return.search(text):
-              raise SystemExit('meeting control block not found')
-          text = old_return.sub(new_return, text, count=1)
-
-          marker = '''  const toggleHand = () => {
+          </div>
 '''
+          text = text[:start] + new_controls + text[end:]
+
+          marker = '  const toggleHand = () => {\n'
           insertion = '''  useEffect(() => {
     const raise = () => toggleHand();
     const reactions = () => setShowPicker((v) => !v);
@@ -108,24 +76,9 @@ jobs:
               raise SystemExit('toggleHand marker not found')
           text = text.replace(marker, insertion, 1)
 
-          text = text.replace('''      <div className="mx-auto mt-3 flex w-fit items-center gap-2">
-        <div className="relative">
-          <Button variant="custom" size="none" type="button" onClick={() => setShowPicker((v) => !v)} aria-label="Send a reaction" aria-expanded={showPicker} className={`rounded-full border px-4 py-1.5 text-lg shadow-lg transition ${showPicker ? 'border-purple-400/40 bg-[#1a1926] shadow-purple-500/10' : 'border-white/10 bg-[#11101d]/80 hover:bg-white/10'}`}>🙂</Button>
-          {showPicker && (
-            <>
-              <Button variant="custom" size="none" type="button" aria-label="Close reaction picker" onClick={() => setShowPicker(false)} className="fixed inset-0 z-30 cursor-default !bg-transparent !border-0 !p-0" />
-              <Card variant="custom" className="absolute bottom-full left-1/2 z-40 mb-3 -translate-x-1/2 rounded-full border border-purple-400/20 bg-[#11101d]/98 p-1.5 shadow-2xl shadow-purple-900/20 backdrop-blur-xl">
-                <div className="flex items-center gap-1">
-                  {REACTION_EMOJIS.map((emoji) => (
-                    <Button variant="custom" size="none" key={emoji} type="button" onClick={() => react(emoji)} aria-label={`React with ${emoji}`} className="grid h-11 w-11 place-items-center rounded-full bg-white/[0.06] px-0 py-0 text-xl shadow-inner ring-1 ring-white/5 transition hover:scale-105 hover:bg-purple-500/20">{emoji}</Button>
-                  ))}
-                </div>
-              </Card>
-            </>
-          )}
-        </div>
-        <Button variant="custom" size="none" type="button" onClick={toggleHand} className={`rounded-full border px-3 py-1.5 text-xs font-semibold shadow-lg transition ${handRaised ? 'border-purple-400/40 bg-purple-500/20 text-purple-200' : 'border-white/10 bg-[#11101d]/80 text-white/70 hover:bg-white/10'}`}>✋ {handRaised ? 'Lower hand' : 'Raise hand'}</Button>
-      </div>''','''      {showPicker && (
+          picker_start = text.index('      <div className="mx-auto mt-3 flex w-fit items-center gap-2">')
+          picker_end = text.index('      <style>{`', picker_start)
+          new_picker = '''      {showPicker && (
         <>
           <Button variant="custom" size="none" type="button" aria-label="Close reaction picker" onClick={() => setShowPicker(false)} className="fixed inset-0 z-40 cursor-default !bg-transparent !border-0 !p-0" />
           <Card variant="custom" className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-full border border-white/10 bg-[#111216]/98 p-1.5 shadow-2xl backdrop-blur-xl sm:bottom-24">
@@ -136,23 +89,30 @@ jobs:
             </div>
           </Card>
         </>
-      )}''', 1)
+      )}
+'''
+          text = text[:picker_start] + new_picker + text[picker_end:]
 
           text = text.replace('''        @keyframes reaction-float { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-140px); opacity: 0; } }
         .reaction-bubble { animation: reaction-float 2.5s ease-out forwards; }''','''        @keyframes reaction-float { 0% { transform: translateY(0) scale(.92); opacity: 0; } 12% { opacity: 1; } 100% { transform: translateY(-180px) scale(1.06); opacity: 0; } }
         .reaction-bubble { animation: reaction-float 2.5s cubic-bezier(.2,.75,.25,1) forwards; }''',1)
 
           path.write_text(text)
+          print('meeting dock patch applied')
 
-      - name: Verify and commit
+      - name: Build client
+        run: npm --prefix client run build
+
+      - name: Commit patch
         shell: bash
         run: |
-          npm --prefix client run build
           git config user.name "Code Audit"
           git config user.email "audit@local"
-          git rm .github/workflows/apply-meeting-dock.yml
-          git add client/src/pages/Meetings.jsx
+          git rm -f .github/workflows/apply-meeting-dock.yml .github/workflows/apply-meeting-redesign.yml 2>/dev/null || true
+          git add client/src/pages/Meetings.jsx .github/workflows
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
           git commit -m "feat: unify meeting control dock"
           git push
-
-# trigger execution after workflow installation
