@@ -250,6 +250,25 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
   const [blurBusy, setBlurBusy] = useState(false);
   const blurProcessorRef = useRef(null);
   const [, rerender] = useState(0);
+  const containerRef = useRef(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', onChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange);
+      if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    };
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.().catch(() => {});
+    } else {
+      containerRef.current?.requestFullscreen?.().catch(() => {});
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -411,14 +430,22 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
   const pageStart = clampedPage * PAGE_SIZE;
   const pageParticipants = all.slice(pageStart, pageStart + PAGE_SIZE);
 
+  const gridColsClass = pageParticipants.length <= 1
+    ? 'grid-cols-1 place-items-center'
+    : pageParticipants.length === 2
+      ? 'grid-cols-1 sm:grid-cols-2'
+      : pageParticipants.length <= 4
+        ? 'grid-cols-2'
+        : 'grid-cols-2 sm:grid-cols-3';
+
   const gridArea = focus
     ? <div className="space-y-3">
         <ParticipantTile participant={focus} local={focus === local} speaking={activeSpeakers.has(focus.identity)} pinned={focus === pinnedParticipant} onTogglePin={() => setPinnedId((id) => (id === focus.identity ? null : focus.identity))} big />
         {all.length > 1 && <div className="flex gap-3 overflow-x-auto pb-1">{all.filter((p) => p !== focus).map((participant) => <div key={participant.identity} className="w-40 shrink-0 sm:w-48"><ParticipantTile participant={participant} local={participant === local} speaking={activeSpeakers.has(participant.identity)} pinned={false} onTogglePin={() => setPinnedId(participant.identity)} /></div>)}</div>}
       </div>
     : <div>
-        <div className="grid min-h-[55vh] gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {pageParticipants.map((participant) => <ParticipantTile key={participant.identity} participant={participant} local={participant === local} speaking={activeSpeakers.has(participant.identity)} pinned={false} onTogglePin={() => setPinnedId(participant.identity)} />)}
+        <div className={`grid min-h-[55vh] gap-3 ${gridColsClass}`}>
+          {pageParticipants.map((participant) => <div key={participant.identity} className={pageParticipants.length === 1 ? 'w-full max-w-2xl' : 'w-full'}><ParticipantTile participant={participant} local={participant === local} speaking={activeSpeakers.has(participant.identity)} pinned={false} onTogglePin={() => setPinnedId(participant.identity)} big={pageParticipants.length === 1} /></div>)}
           {all.length === 1 && <Card variant="custom" className="col-span-full grid place-items-center rounded-3xl border border-white/10 bg-black/30 px-6 py-10 text-center text-white/45"><FiUsers className="mx-auto mb-2 h-6 w-6" /><p className="font-medium text-white/60">You're the only one here</p><p className="mt-1 text-xs">Share the room code and others will show up as soon as they join.</p></Card>}
         </div>
         {pageCount > 1 && (
@@ -435,7 +462,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
   }
 
   return (
-    <section className="mx-auto max-w-7xl px-3 py-4 sm:px-5">
+    <section ref={containerRef} className={`mx-auto max-w-7xl px-3 py-4 sm:px-5 ${isFullscreen ? 'flex h-screen flex-col justify-center overflow-y-auto bg-ink-900' : ''}`}>
       <div className="mb-4 flex items-center justify-between gap-4">
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-gold-500">Live room{recording && <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-red-300"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" aria-hidden="true" />Recording</span>}</p>
@@ -476,6 +503,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
         </div>
         <ControlButton active={showChat} onClick={openChat} onIcon={FiMessageSquare} offIcon={FiMessageSquare} label="Chat"/>
         {isHost && <ControlButton active={showHost} onClick={openHost} onIcon={FiUsers} offIcon={FiUsers} label="Host controls"/>}
+        <ControlButton active={isFullscreen} onClick={toggleFullscreen} onIcon={FiMinimize2} offIcon={FiMaximize2} label={isFullscreen ? 'Exit full screen' : 'Full screen'}/>
         <Button variant="custom" size="none" onClick={leaveVoluntarily} aria-label="Leave meeting" className="grid h-11 w-11 place-items-center rounded-full bg-red-500 text-white"><FiPhoneOff/></Button>
       </div>
       {error && <p className="mx-auto mt-4 max-w-xl rounded-2xl border border-red-400/20 bg-red-400/5 p-3 text-center text-sm text-red-200">{error}</p>}
