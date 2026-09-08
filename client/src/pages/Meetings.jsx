@@ -252,6 +252,9 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
   const [, rerender] = useState(0);
   const containerRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showMutedHint, setShowMutedHint] = useState(false);
+  const mutedHintTimer = useRef(null);
+  useEffect(() => () => clearTimeout(mutedHintTimer.current), []);
 
   useEffect(() => {
     const onChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
@@ -375,7 +378,21 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
   const screenShareSupported = typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getDisplayMedia);
 
   async function toggleCamera() { try { const next = !camera; await roomRef.current?.localParticipant.setCameraEnabled(next); setCamera(next); if (!next) setBlurOn(false); } catch (e) { setError(e.message); } }
-  async function toggleMic() { try { const next = !mic; await roomRef.current?.localParticipant.setMicrophoneEnabled(next); setMic(next); } catch (e) { setError(e.message); } }
+  async function toggleMic() {
+    try {
+      const next = !mic;
+      await roomRef.current?.localParticipant.setMicrophoneEnabled(next);
+      setMic(next);
+      if (!next) {
+        setShowMutedHint(true);
+        clearTimeout(mutedHintTimer.current);
+        mutedHintTimer.current = setTimeout(() => setShowMutedHint(false), 3000);
+      } else {
+        setShowMutedHint(false);
+        clearTimeout(mutedHintTimer.current);
+      }
+    } catch (e) { setError(e.message); }
+  }
   async function toggleShare() {
     if (!screenShareSupported) { setError('Screen sharing is not supported on this device. Try from a desktop browser instead.'); return; }
     try {
@@ -469,7 +486,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
             <div className="min-w-0">
               <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-gold-500">Live room{recording && <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-red-300"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" aria-hidden="true" />Recording</span>}</p>
               <h1 className="truncate text-2xl font-bold">{roomName}</h1>
-              <p className="text-xs text-white/50">{connState === 'reconnecting' ? 'Reconnecting…' : connected ? `${all.length} participant${all.length === 1 ? '' : 's'}` : 'Connecting…'}</p>
+              <ConnectionStateBadge connState={connState} connected={connected} count={all.length} />
             </div>
             <Button variant="custom" size="none" onClick={leaveVoluntarily} className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm"><FiLogOut/>Leave</Button>
           </div>
@@ -480,6 +497,9 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
           )}
           {gridArea}
           <ReactionsBar liveRoom={roomRef.current} localParticipant={local} participants={participants} />
+          {showMutedHint && (
+            <div className="mx-auto mt-3 w-fit rounded-full border border-white/10 bg-[#202124]/95 px-4 py-1.5 text-xs text-white/80 shadow-lg backdrop-blur">🔇 You are muted</div>
+          )}
           <div className="sticky bottom-4 mx-auto mt-4 flex w-fit flex-wrap items-center justify-center gap-2 rounded-full border border-white/10 bg-[#11101d]/95 p-2 shadow-2xl backdrop-blur">
             <ControlButton active={camera} onClick={toggleCamera} onIcon={FiCamera} offIcon={FiCameraOff} label="Camera"/>
             <ControlButton active={mic} onClick={toggleMic} onIcon={FiMic} offIcon={FiMicOff} label="Microphone"/>
@@ -518,6 +538,12 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
       {isHost && <HostPanel roomName={roomName} open={showHost} onClose={() => setShowHost(false)} participants={participants} locked={locked} setLocked={setLocked} waitingRoomEnabled={waitingRoomEnabled} setWaitingRoomEnabled={setWaitingRoomEnabled} recording={recording} onRecordingChange={changeRecording} onEnded={() => onLeave('ended')} />}
     </section>
   );
+}
+
+function ConnectionStateBadge({ connState, connected, count }) {
+  if (connState === 'reconnecting') return <span className="inline-flex items-center gap-1.5 text-xs text-amber-300"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-400" />Reconnecting</span>;
+  if (!connected) return <span className="inline-flex items-center gap-1.5 text-xs text-white/50"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white/40" />Connecting</span>;
+  return <span className="inline-flex items-center gap-1.5 text-xs text-white/50"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />{count} participant{count === 1 ? '' : 's'}</span>;
 }
 
 function ControlButton({ active, onClick, onIcon: OnIcon, offIcon: OffIcon, label, disabled }) { const Icon = active ? OnIcon : OffIcon; return <Button variant="custom" size="none" onClick={onClick} disabled={disabled} aria-label={label} title={label} className={`grid h-11 w-11 place-items-center rounded-full transition ${disabled ? 'cursor-not-allowed bg-white/5 text-white/25' : active ? 'bg-white/15 text-white' : 'bg-white/5 text-white/60 hover:text-white'}`}><Icon/></Button>; }
