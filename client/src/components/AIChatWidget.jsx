@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FiCpu, FiSend, FiX } from 'react-icons/fi';
 import { Card } from './ui/Card';
 import Button from './ui/Button';
@@ -30,7 +30,14 @@ export default function AIChatWidget() {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState(answers.region);
+  const [hidden, setHidden] = useState(false);
   const selectedKey = useMemo(() => suggestions.find((item) => answers[item.key] === answer)?.key, [answer]);
+
+  useEffect(() => {
+    const onCallActive = (e) => setHidden(Boolean(e.detail));
+    window.addEventListener('blw-meeting-call-active', onCallActive);
+    return () => window.removeEventListener('blw-meeting-call-active', onCallActive);
+  }, []);
 
   const submit = (event) => {
     event?.preventDefault();
@@ -39,6 +46,8 @@ export default function AIChatWidget() {
     setAnswer(answerForQuestion(trimmed));
     setQuestion('');
   };
+
+  if (hidden) return null;
 
   return (
     <div className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-[60] sm:bottom-4">
