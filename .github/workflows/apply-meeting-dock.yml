@@ -108,7 +108,6 @@ jobs:
               raise SystemExit('toggleHand marker not found')
           text = text.replace(marker, insertion, 1)
 
-          # Keep the picker anchored above the single dock; remove the separate hand/reaction row.
           text = text.replace('''      <div className="mx-auto mt-3 flex w-fit items-center gap-2">
         <div className="relative">
           <Button variant="custom" size="none" type="button" onClick={() => setShowPicker((v) => !v)} aria-label="Send a reaction" aria-expanded={showPicker} className={`rounded-full border px-4 py-1.5 text-lg shadow-lg transition ${showPicker ? 'border-purple-400/40 bg-[#1a1926] shadow-purple-500/10' : 'border-white/10 bg-[#11101d]/80 hover:bg-white/10'}`}>🙂</Button>
@@ -155,3 +154,5 @@ jobs:
           git add client/src/pages/Meetings.jsx
           git commit -m "feat: unify meeting control dock"
           git push
+
+# trigger execution after workflow installation
