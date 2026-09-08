@@ -458,7 +458,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
           <ControlButton active={showMore || sharing || blurOn} onClick={openMore} onIcon={FiMoreHorizontal} offIcon={FiMoreHorizontal} label="More options"/>
           {showMore && (
             <>
-              <Button variant="custom" size="none" type="button" aria-label="Close menu" onClick={() => setShowMore(false)} className="fixed inset-0 z-30 cursor-default" />
+              <Button variant="custom" size="none" type="button" aria-label="Close menu" onClick={() => setShowMore(false)} className="fixed inset-0 z-30 cursor-default !bg-transparent !border-0 !p-0" />
               <Card variant="custom" className="absolute bottom-full left-1/2 z-40 mb-3 w-56 -translate-x-1/2 overflow-hidden rounded-2xl border border-white/10 bg-[#1a1926] shadow-2xl">
                 <Button variant="custom" size="none" type="button" onClick={() => { toggleShare(); setShowMore(false); }} disabled={!screenShareSupported} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30">
                   <FiMonitor className="h-4 w-4 shrink-0" />
@@ -705,29 +705,31 @@ function ReactionsBar({ liveRoom, localParticipant, participants }) {
     <>
       <div className="pointer-events-none fixed inset-x-0 bottom-24 z-20 h-40 overflow-hidden">
         {bubbles.map((b) => (
-          <div key={b.id} className="reaction-bubble absolute bottom-0 text-2xl" style={{ left: `${b.left}%` }}>
-            <span>{b.emoji}</span> <span className="ml-1 rounded-full bg-black/50 px-2 py-0.5 align-middle text-[10px] text-white/80">{b.name}</span>
+          <div key={b.id} className="reaction-bubble absolute bottom-0 text-2xl drop-shadow-lg" style={{ left: `${b.left}%` }}>
+            <span>{b.emoji}</span> <span className="ml-1 rounded-full bg-[#11101d]/75 px-2 py-0.5 align-middle text-[10px] text-white/80 backdrop-blur">{b.name}</span>
           </div>
         ))}
       </div>
       {raisedList.length > 0 && (
-        <div className="mx-auto mt-3 w-fit rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-1.5 text-xs text-amber-200">✋ {raisedList.join(', ')} raised {raisedList.length === 1 ? 'a hand' : 'hands'}</div>
+        <div className="mx-auto mt-3 w-fit rounded-full border border-pink-400/25 bg-[#1a1926]/90 px-4 py-1.5 text-xs text-pink-200 shadow-lg backdrop-blur">✋ {raisedList.join(', ')} raised {raisedList.length === 1 ? 'a hand' : 'hands'}</div>
       )}
       <div className="mx-auto mt-3 flex w-fit items-center gap-2">
         <div className="relative">
-          <Button variant="custom" size="none" type="button" onClick={() => setShowPicker((v) => !v)} aria-label="Send a reaction" aria-expanded={showPicker} className={`rounded-full border px-4 py-1.5 text-lg transition ${showPicker ? 'border-white/25 bg-white/15' : 'border-white/10 bg-black/30 hover:bg-white/10'}`}>🙂</Button>
+          <Button variant="custom" size="none" type="button" onClick={() => setShowPicker((v) => !v)} aria-label="Send a reaction" aria-expanded={showPicker} className={`rounded-full border px-4 py-1.5 text-lg shadow-lg transition ${showPicker ? 'border-purple-400/40 bg-[#1a1926] shadow-purple-500/10' : 'border-white/10 bg-[#11101d]/80 hover:bg-white/10'}`}>🙂</Button>
           {showPicker && (
             <>
-              <Button variant="custom" size="none" type="button" aria-label="Close reaction picker" onClick={() => setShowPicker(false)} className="fixed inset-0 z-30 cursor-default" />
-              <Card variant="custom" className="absolute bottom-full left-1/2 z-40 mb-3 flex -translate-x-1/2 gap-1 rounded-full border border-white/10 bg-[#1a1926] p-1.5 shadow-2xl">
-                {REACTION_EMOJIS.map((emoji) => (
-                  <Button variant="custom" size="none" key={emoji} type="button" onClick={() => react(emoji)} aria-label={`React with ${emoji}`} className="rounded-full px-2 py-1 text-xl hover:bg-white/10">{emoji}</Button>
-                ))}
+              <Button variant="custom" size="none" type="button" aria-label="Close reaction picker" onClick={() => setShowPicker(false)} className="fixed inset-0 z-30 cursor-default !bg-transparent !border-0 !p-0" />
+              <Card variant="custom" className="absolute bottom-full left-1/2 z-40 mb-3 -translate-x-1/2 rounded-full border border-purple-400/20 bg-[#11101d]/98 p-1.5 shadow-2xl shadow-purple-900/20 backdrop-blur-xl">
+                <div className="flex items-center gap-1">
+                  {REACTION_EMOJIS.map((emoji) => (
+                    <Button variant="custom" size="none" key={emoji} type="button" onClick={() => react(emoji)} aria-label={`React with ${emoji}`} className="grid h-11 w-11 place-items-center rounded-full bg-white/[0.06] px-0 py-0 text-xl shadow-inner ring-1 ring-white/5 transition hover:scale-105 hover:bg-purple-500/20">{emoji}</Button>
+                  ))}
+                </div>
               </Card>
             </>
           )}
         </div>
-        <Button variant="custom" size="none" type="button" onClick={toggleHand} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${handRaised ? 'border-amber-400/50 bg-amber-400/15 text-amber-200' : 'border-white/15 bg-white/5 text-white/70 hover:bg-white/10'}`}>✋ {handRaised ? 'Lower hand' : 'Raise hand'}</Button>
+        <Button variant="custom" size="none" type="button" onClick={toggleHand} className={`rounded-full border px-3 py-1.5 text-xs font-semibold shadow-lg transition ${handRaised ? 'border-purple-400/40 bg-purple-500/20 text-purple-200' : 'border-white/10 bg-[#11101d]/80 text-white/70 hover:bg-white/10'}`}>✋ {handRaised ? 'Lower hand' : 'Raise hand'}</Button>
       </div>
       <style>{`
         @keyframes reaction-float { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-140px); opacity: 0; } }
