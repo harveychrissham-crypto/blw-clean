@@ -11,6 +11,8 @@ const ApkInstaller = registerPlugin('ApkInstaller');
 let lastCheckAt = 0;
 let checkInFlight = null;
 let appStateListener = null;
+let pendingUpdate = null;
+let visibilityListenerBound = false;
 
 function compareVersions(a, b) {
   const partsA = String(a).split('.').map((value) => Number.parseInt(value, 10) || 0);
@@ -26,9 +28,18 @@ function compareVersions(a, b) {
 }
 
 function dispatchUpdate(currentVersion, latestVersion, updateUrl) {
+  pendingUpdate = { currentVersion, latestVersion, updateUrl };
   window.dispatchEvent(new CustomEvent(UPDATE_AVAILABLE_EVENT, {
-    detail: { currentVersion, latestVersion, updateUrl },
+    detail: pendingUpdate,
   }));
+}
+
+export function getPendingAppUpdate() {
+  return pendingUpdate;
+}
+
+export function clearPendingAppUpdate() {
+  pendingUpdate = null;
 }
 
 export async function checkForAppUpdate({ force = false } = {}) {
@@ -43,6 +54,8 @@ export async function checkForAppUpdate({ force = false } = {}) {
       const currentVersion = String(info?.version || '').trim();
       if (!currentVersion) return null;
 
+      console.log('[appUpdater] checking for Android update:', currentVersion);
+
       const response = await fetch(
         `https://api.github.com/repos/${REPO}/releases/tags/${RELEASE_TAG}`,
         {
@@ -52,12 +65,16 @@ export async function checkForAppUpdate({ force = false } = {}) {
         },
       );
 
+      console.log('[appUpdater] GitHub release check response:', response.status);
       if (!response.ok) return null;
 
       const release = await response.json();
       const body = String(release?.body || '');
       const versionMatch = body.match(/(?:^|\n)\s*Version:\s*([0-9]+(?:\.[0-9]+)*)/i);
       const latestVersion = String(versionMatch?.[1] || '').trim();
+
+      console.log('[appUpdater] installed/latest versions:', currentVersion, latestVersion || '(missing)');
+
       if (!latestVersion || compareVersions(currentVersion, latestVersion) >= 0) return null;
 
       const asset = Array.isArray(release?.assets)
@@ -66,6 +83,7 @@ export async function checkForAppUpdate({ force = false } = {}) {
       const updateUrl = String(asset?.browser_download_url || FALLBACK_APK_URL).trim();
 
       dispatchUpdate(currentVersion, latestVersion, updateUrl);
+      console.log('[appUpdater] update available:', latestVersion);
       return { currentVersion, latestVersion, updateUrl };
     } catch (error) {
       console.warn('[appUpdater] update check failed:', error?.message || error);
@@ -88,7 +106,7 @@ export async function initAppUpdateChecker() {
     try {
       const { App } = await import('@capacitor/app');
       appStateListener = await App.addListener('appStateChange', ({ isActive }) => {
-        if (isActive) checkForAppUpdate();
+        if (isActive) void checkForAppUpdate();
       });
     } catch (error) {
       console.warn('[appUpdater] app-state listener skipped:', error?.message || error);
@@ -96,9 +114,12 @@ export async function initAppUpdateChecker() {
     }
   }
 
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') checkForAppUpdate();
-  });
+  if (!visibilityListenerBound) {
+    visibilityListenerBound = true;
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') void checkForAppUpdate();
+    });
+  }
 }
 
 export async function installApk(url) {
