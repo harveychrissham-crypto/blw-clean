@@ -63,6 +63,3 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus { outline: none !important; border-color: #EC2FA8 !important; }
 input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3) !important; }
 select option { color: #0d0c18 !important; background: #ffffff !important; }
-
-/* trigger meeting dock workflow */
-/* trigger unified meeting dock commit */
