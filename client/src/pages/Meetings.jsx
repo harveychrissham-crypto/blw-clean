@@ -167,43 +167,48 @@ function Lobby({ participantName, onCancel, onJoin }) {
   };
 
   return (
-    <section className="mx-auto max-w-2xl px-5 py-10 sm:py-14">
+    <section className="mx-auto max-w-4xl px-5 py-10 sm:py-14">
       <h1 className="mb-1 text-2xl font-bold text-white">Check your camera and mic</h1>
       <p className="mb-5 text-sm text-white/50">Joining as <span className="text-white/80">{participantName}</span></p>
-      <Card variant="custom" className="overflow-hidden rounded-3xl border border-white/10 bg-ink-900">
-        <div className="relative aspect-video bg-[#3c4043]">
-          <video ref={videoRef} autoPlay playsInline muted className={`h-full w-full scale-x-[-1] object-cover ${camOn ? '' : 'hidden'}`} />
-          {!camOn && <div className="grid h-full place-items-center text-white/40"><FiCameraOff className="h-10 w-10" /></div>}
-          <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2">
-            <Button variant="custom" size="none" type="button" onClick={toggleMic} className={`grid h-11 w-11 place-items-center rounded-full ${micOn ? 'bg-white/15 text-white' : 'bg-red-500 text-white'}`}>{micOn ? <FiMic /> : <FiMicOff />}</Button>
-            <Button variant="custom" size="none" type="button" onClick={toggleCam} className={`grid h-11 w-11 place-items-center rounded-full ${camOn ? 'bg-white/15 text-white' : 'bg-red-500 text-white'}`}>{camOn ? <FiCamera /> : <FiCameraOff />}</Button>
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+        <Card variant="custom" className="overflow-hidden rounded-3xl border border-white/10 bg-ink-900 lg:flex-1">
+          <div className="relative aspect-video bg-[#3c4043]">
+            <video ref={videoRef} autoPlay playsInline muted className={`h-full w-full scale-x-[-1] object-cover ${camOn ? '' : 'hidden'}`} />
+            {!camOn && <div className="grid h-full place-items-center text-white/40"><FiCameraOff className="h-10 w-10" /></div>}
+            <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2">
+              <Button variant="custom" size="none" type="button" onClick={toggleMic} className={`grid h-11 w-11 place-items-center rounded-full ${micOn ? 'bg-white/15 text-white' : 'bg-red-500 text-white'}`}>{micOn ? <FiMic /> : <FiMicOff />}</Button>
+              <Button variant="custom" size="none" type="button" onClick={toggleCam} className={`grid h-11 w-11 place-items-center rounded-full ${camOn ? 'bg-white/15 text-white' : 'bg-red-500 text-white'}`}>{camOn ? <FiCamera /> : <FiCameraOff />}</Button>
+            </div>
           </div>
+        </Card>
+        <div className="lg:w-72 lg:shrink-0">
+          <Card variant="custom" className="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
+            <h2 className="text-lg font-semibold text-white">Ready to join?</h2>
+            <div className="mt-4 space-y-3">
+              <label className="block text-xs text-white/50">Microphone
+                <select value={micId} onChange={(e) => changeMic(e.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 px-2 py-2 text-xs text-white outline-none">
+                  {devices.mics.length === 0 && <option value="">Default microphone</option>}
+                  {devices.mics.map((d) => <option key={d.deviceId} value={d.deviceId}>{d.label || 'Microphone'}</option>)}
+                </select>
+              </label>
+              <label className="block text-xs text-white/50">Camera
+                <select value={camId} onChange={(e) => changeCam(e.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 px-2 py-2 text-xs text-white outline-none">
+                  {devices.cams.length === 0 && <option value="">Default camera</option>}
+                  {devices.cams.map((d) => <option key={d.deviceId} value={d.deviceId}>{d.label || 'Camera'}</option>)}
+                </select>
+              </label>
+              <label className="block text-xs text-white/50">Speaker
+                <select value={speakerId} onChange={(e) => setSpeakerId(e.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 px-2 py-2 text-xs text-white outline-none">
+                  <option value="">Default speaker</option>
+                  {devices.speakers.map((d) => <option key={d.deviceId} value={d.deviceId}>{d.label || 'Speaker'}</option>)}
+                </select>
+              </label>
+            </div>
+            {error && <p className="mt-3 rounded-xl border border-red-400/20 bg-red-500/10 px-3 py-2.5 text-xs text-red-200">{error}</p>}
+            <Button variant="custom" size="none" type="button" disabled={!ready} onClick={join} className="mt-5 w-full rounded-2xl bg-gradient-to-r from-pink-600 to-purple-500 py-3 font-semibold text-white disabled:opacity-50">Join now</Button>
+            <Button variant="custom" size="none" type="button" onClick={() => { stopStream(); onCancel(); }} className="mt-2 w-full text-center text-sm text-white/50 hover:text-white">← Back</Button>
+          </Card>
         </div>
-        <div className="grid gap-3 p-4 sm:grid-cols-3">
-          <label className="text-xs text-white/50">Camera
-            <select value={camId} onChange={(e) => changeCam(e.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 px-2 py-2 text-xs text-white outline-none">
-              {devices.cams.length === 0 && <option value="">Default camera</option>}
-              {devices.cams.map((d) => <option key={d.deviceId} value={d.deviceId}>{d.label || 'Camera'}</option>)}
-            </select>
-          </label>
-          <label className="text-xs text-white/50">Microphone
-            <select value={micId} onChange={(e) => changeMic(e.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 px-2 py-2 text-xs text-white outline-none">
-              {devices.mics.length === 0 && <option value="">Default microphone</option>}
-              {devices.mics.map((d) => <option key={d.deviceId} value={d.deviceId}>{d.label || 'Microphone'}</option>)}
-            </select>
-          </label>
-          <label className="text-xs text-white/50">Speaker
-            <select value={speakerId} onChange={(e) => setSpeakerId(e.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 px-2 py-2 text-xs text-white outline-none">
-              <option value="">Default speaker</option>
-              {devices.speakers.map((d) => <option key={d.deviceId} value={d.deviceId}>{d.label || 'Speaker'}</option>)}
-            </select>
-          </label>
-        </div>
-      </Card>
-      {error && <p className="mt-3 rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
-      <div className="mt-5 flex items-center justify-between">
-        <Button variant="custom" size="none" type="button" onClick={() => { stopStream(); onCancel(); }} className="text-sm text-white/50 hover:text-white">← Back</Button>
-        <Button variant="custom" size="none" type="button" disabled={!ready} onClick={join} className="rounded-2xl bg-gradient-to-r from-pink-600 to-purple-500 px-6 py-3 font-semibold text-white disabled:opacity-50">Join meeting</Button>
       </div>
     </section>
   );
