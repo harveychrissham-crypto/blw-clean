@@ -1,4 +1,4 @@
-name: Apply Google Meet meeting polish
+name: Remove duplicate Meet controls
 
 on:
   push:
@@ -8,54 +8,68 @@ permissions:
   contents: write
 
 jobs:
-  polish:
-    if: ${{ !startsWith(github.event.head_commit.message, 'fix: reliably remove duplicate Meet controls') && !startsWith(github.event.head_commit.message, 'fix: remove duplicate Meet controls') }}
+  cleanup:
+    if: ${{ !startsWith(github.event.head_commit.message, 'fix: remove duplicate Meet controls completely') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Remove duplicate meeting controls
+      - name: Remove duplicate controls from source
         shell: bash
         run: |
           python - <<'PY'
-          import re
           from pathlib import Path
           p = Path('client/src/pages/Meetings.jsx')
           s = p.read_text()
 
-          s, leave_count = re.subn(
-              r'<Button[^>]*onClick=\{leaveVoluntarily\}[^>]*>\s*<FiLogOut\s*/>Leave</Button>',
-              '',
-              s,
-              count=1,
-              flags=re.S,
-          )
+          header_leave = '''<Button variant="custom" size="none" onClick={leaveVoluntarily} className="hidden shrink-0 rounded-full border border-white/10 bg-[#3c4043] px-4 py-2 text-xs font-semibold text-white hover:bg-white/10 sm:inline-flex"><FiLogOut/>Leave</Button>'''
+          more_present = '''<Button variant="custom" size="none" onClick={() => { toggleShare(); setShowMore(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-white hover:bg-white/10"><FiMonitor/><span className="flex-1">{screenShareSupported ? (sharing ? 'Stop presenting' : 'Present screen, window or tab') : 'Present not supported'}</span>{sharing && <FiCheck className="text-emerald-300"/>}</Button>'''
 
-          s, present_count = re.subn(
-              r'<Button[^>]*onClick=\{\(\) => \{ toggleShare\(\); setShowMore\(false\); \}\}[^>]*>.*?Present screen, window or tab.*?</Button>',
-              '',
-              s,
-              count=1,
-              flags=re.S,
-          )
+          for name, snippet in [('header leave', header_leave), ('More Present', more_present)]:
+              count = s.count(snippet)
+              s = s.replace(snippet, '')
+              print(f'{name}: removed {count}')
 
-          if leave_count == 0 and present_count == 0:
-              print('No duplicate controls found; nothing to change.')
-          else:
-              print(f'Removed header leave={leave_count}, More-menu present={present_count}')
-              p.write_text(s)
+          # Remove now-unused icon import entries when no other JSX references remain.
+          if 'FiLogOut' not in s:
+              s = s.replace(', FiLogOut', '')
+          if 'FiMonitor' not in s:
+              s = s.replace(', FiMonitor', '')
+          p.write_text(s)
           PY
 
-      - name: Commit duplicate-control fix
+      - name: Remove obsolete CSS duplicate-hiding rules
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('client/src/meetings.css')
+          s = p.read_text()
+          rules = '''/* The fixed dock is the single source of truth for leave/present actions. */
+          section:has([aria-label="Leave meeting"]) > div > div > div.mb-3 > button { display: none !important; }
+          section:has([aria-label="Leave meeting"]) [aria-label="More options"] + [aria-label="Close menu"] + [class*="w-60"] > button:first-child { display: none !important; }
+          '''
+          if rules in s:
+              s = s.replace(rules, '')
+              print('Removed obsolete duplicate-hiding CSS rules')
+          else:
+              print('Duplicate-hiding CSS rules already absent; continuing')
+          p.write_text(s)
+          PY
+
+      - name: Remove this temporary cleanup workflow
+        run: rm -f .github/workflows/apply-google-meet-polish.yml
+
+      - name: Commit complete cleanup
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add client/src/pages/Meetings.jsx
+          git add client/src/pages/Meetings.jsx client/src/meetings.css .github/workflows/apply-google-meet-polish.yml
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
           fi
-          git commit -m "fix: remove duplicate Meet controls"
+          git commit -m "fix: remove duplicate Meet controls completely"
           git push
