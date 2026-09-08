@@ -25,10 +25,14 @@ const SIZES = {
   none: '',
 };
 
-const Button = forwardRef(function Button({ variant = 'primary', size = 'md', className = '', type = 'button', ...props }, ref) {
+const Button = forwardRef(function Button({ variant = 'primary', size = 'md', className = '', type = 'button', style, ...props }, ref) {
   const variantClass = VARIANTS[variant] || VARIANTS.primary;
   const sizeClass = SIZES[size] || SIZES.md;
-  return <button ref={ref} type={type} className={`${sizeClass} ${variantClass} transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${className}`.trim()} {...props} />;
+  const isFullscreenBackdrop = className.includes('fixed inset-0 z-30 cursor-default');
+  const buttonStyle = isFullscreenBackdrop
+    ? { backgroundColor: 'transparent', border: 0, padding: 0, margin: 0, boxShadow: 'none', color: 'transparent', ...style }
+    : style;
+  return <button ref={ref} type={type} className={`${sizeClass} ${variantClass} transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${className}`.trim()} style={buttonStyle} {...props} />;
 });
 
 export default Button;
