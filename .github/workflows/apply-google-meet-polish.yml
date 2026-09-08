@@ -9,38 +9,36 @@ permissions:
 
 jobs:
   polish:
-    if: ${{ !startsWith(github.event.head_commit.message, 'feat: improve Meet screen sharing') }}
+    if: ${{ !startsWith(github.event.head_commit.message, 'feat: improve Meet screen sharing') && !startsWith(github.event.head_commit.message, 'fix: remove duplicate Meet controls') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Patch screen sharing
+      - name: Fix duplicate meeting controls
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           p = Path('client/src/pages/Meetings.jsx')
           s = p.read_text()
-          old = "await roomRef.current?.localParticipant.setScreenShareEnabled(next);"
-          new = """await roomRef.current?.localParticipant.setScreenShareEnabled(next, next ? {
-            audio: true,
-            contentHint: 'detail',
-            preferCurrentTab: false,
-            selfBrowserSurface: 'include',
-            surfaceSwitching: 'include',
-            systemAudio: 'include',
-            video: true,
-          } : undefined);"""
-          if old not in s:
-              raise SystemExit('screen share target not found')
-          s = s.replace(old, new, 1)
-          s = s.replace("label={screenShareSupported ? 'Present now' : 'Present not supported'}", "label={screenShareSupported ? 'Present' : 'Present not supported'}", 1)
-          s = s.replace("{screenShareSupported ? (sharing ? 'Stop presenting' : 'Present now') : 'Present not supported'}", "{screenShareSupported ? (sharing ? 'Stop presenting' : 'Present screen, window or tab') : 'Present not supported'}", 1)
+
+          old_leave = '<Button variant="custom" size="none" onClick={leaveVoluntarily} className="hidden shrink-0 items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm sm:inline-flex"><FiLogOut/>Leave</Button>'
+          if old_leave in s:
+              s = s.replace(old_leave, '', 1)
+
+          old_present = '<Button variant="custom" size="none" type="button" onClick={() => { toggleShare(); setShowMore(false); }} disabled={!screenShareSupported} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:text-white/30"><FiMonitor className="h-4 w-4 shrink-0"/><span className="flex-1">{screenShareSupported ? (sharing ? \'Stop presenting\' : \'Present screen, window or tab\') : \'Present not supported\'}</span>{sharing && <FiCheck className="h-4 w-4 shrink-0 text-amber-300"/>}</Button>'
+          if old_present in s:
+              s = s.replace(old_present, '', 1)
+
+          old_copy = '<Button variant="custom" size="none" type="button" onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/meetings?room=${encodeURIComponent(roomName)}`); setShowMore(false); }} className="flex w-full items-center gap-3 border-t border-white/5 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5"><FiCopy className="h-4 w-4 shrink-0"/><span className="flex-1">Copy meeting link</span></Button>'
+          if old_copy in s:
+              s = s.replace(old_copy, '<Button variant="custom" size="none" type="button" onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/meetings?room=${encodeURIComponent(roomName)}`); setShowMore(false); }} className="flex w-full items-center gap-3 border-t border-white/5 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5"><FiCopy className="h-4 w-4 shrink-0"/><span className="flex-1">Copy meeting link</span></Button>', 1)
+
           p.write_text(s)
           PY
 
-      - name: Commit improved screen sharing
+      - name: Commit duplicate-control fix
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
@@ -50,5 +48,5 @@ jobs:
             echo "No changes to commit"
             exit 0
           fi
-          git commit -m "feat: improve Meet screen sharing"
+          git commit -m "fix: remove duplicate Meet controls"
           git push
