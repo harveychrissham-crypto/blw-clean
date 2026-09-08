@@ -137,9 +137,6 @@ function Lobby({ participantName, onCancel, onJoin }) {
   }, [camOn, micOn, stopStream]);
 
   useEffect(() => {
-    // Use the remembered device as a soft preference (ideal, not exact) so a
-    // no-longer-connected device from a previous session falls back to the
-    // default instead of throwing OverconstrainedError.
     startPreview({
       video: savedPrefs.camId ? { deviceId: { ideal: savedPrefs.camId } } : true,
       audio: savedPrefs.micId ? { deviceId: { ideal: savedPrefs.micId } } : true,
@@ -305,7 +302,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
 
   useEffect(() => {
     let disposed = false;
-    let isPending = false; // internal flag mirroring `pending` state, kept outside React state to avoid stale closures in the event handlers below
+    let isPending = false;
     const liveRoom = new Room({
       adaptiveStream: true,
       dynacast: true,
@@ -345,7 +342,7 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
     const admissionCheck = async (participant) => {
       if (disposed || !isPending || participant !== liveRoom.localParticipant) return;
       let stillPending = true;
-      try { stillPending = JSON.parse(liveRoom.localParticipant.metadata || '{}')?.pending === true; } catch { /* treat unparsable metadata as no longer pending */ stillPending = false; }
+      try { stillPending = JSON.parse(liveRoom.localParticipant.metadata || '{}')?.pending === true; } catch { stillPending = false; }
       if (stillPending) return;
       isPending = false;
       setPending(false);
@@ -479,16 +476,16 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
   }
 
   return (
-    <section ref={containerRef} className={`mx-auto max-w-7xl px-3 py-4 sm:px-5 ${isFullscreen ? 'flex h-screen flex-col justify-center overflow-y-auto bg-ink-900' : ''}`}>
-      <div className="flex gap-4">
+    <section ref={containerRef} className={`mx-auto max-w-7xl px-2 pb-24 pt-3 sm:px-4 ${isFullscreen ? 'flex h-screen max-w-none flex-col justify-center overflow-y-auto bg-ink-900' : ''}`}>
+      <div className="flex gap-3">
         <div className="min-w-0 flex-1">
-          <div className="mb-4 flex items-center justify-between gap-4">
+          <div className="mb-3 flex items-center justify-between gap-4 px-1">
             <div className="min-w-0">
-              <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-gold-500">Live room{recording && <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-red-300"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" aria-hidden="true" />Recording</span>}</p>
-              <h1 className="truncate text-2xl font-bold">{roomName}</h1>
+              <p className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-gold-500">Live room{recording && <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-red-300"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" aria-hidden="true" />Recording</span>}</p>
+              <h1 className="truncate text-xl font-bold sm:text-2xl">{roomName}</h1>
               <ConnectionStateBadge connState={connState} connected={connected} count={all.length} />
             </div>
-            <Button variant="custom" size="none" onClick={leaveVoluntarily} className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm"><FiLogOut/>Leave</Button>
+            <Button variant="custom" size="none" onClick={leaveVoluntarily} className="hidden shrink-0 items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm sm:inline-flex"><FiLogOut/>Leave</Button>
           </div>
           {connState === 'reconnecting' && (
             <div className="mb-3 flex items-center gap-2 rounded-2xl border border-amber-400/20 bg-amber-400/5 px-4 py-2.5 text-sm text-amber-200">
@@ -498,41 +495,51 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
           {gridArea}
           <ReactionsBar liveRoom={roomRef.current} localParticipant={local} participants={participants} />
           {showMutedHint && (
-            <div className="mx-auto mt-3 w-fit rounded-full border border-white/10 bg-[#202124]/95 px-4 py-1.5 text-xs text-white/80 shadow-lg backdrop-blur">🔇 You are muted</div>
+            <div className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full border border-white/10 bg-[#202124]/95 px-4 py-1.5 text-xs text-white/80 shadow-lg backdrop-blur">🔇 You are muted</div>
           )}
-          <div className="sticky bottom-4 mx-auto mt-4 flex w-fit flex-wrap items-center justify-center gap-2 rounded-full border border-white/10 bg-[#11101d]/95 p-2 shadow-2xl backdrop-blur">
-            <ControlButton active={camera} onClick={toggleCamera} onIcon={FiCamera} offIcon={FiCameraOff} label="Camera"/>
-            <ControlButton active={mic} onClick={toggleMic} onIcon={FiMic} offIcon={FiMicOff} label="Microphone"/>
-            <div className="relative">
-              <ControlButton active={showMore || sharing || blurOn} onClick={openMore} onIcon={FiMoreHorizontal} offIcon={FiMoreHorizontal} label="More options"/>
-              {showMore && (
-                <>
-                  <Button variant="custom" size="none" type="button" aria-label="Close menu" onClick={() => setShowMore(false)} className="fixed inset-0 z-30 cursor-default !bg-transparent !border-0 !p-0" />
-                  <Card variant="custom" className="absolute bottom-full left-1/2 z-40 mb-3 w-56 -translate-x-1/2 overflow-hidden rounded-2xl border border-white/10 bg-[#1a1926] shadow-2xl">
-                    <Button variant="custom" size="none" type="button" onClick={() => { toggleShare(); setShowMore(false); }} disabled={!screenShareSupported} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30">
-                      <FiMonitor className="h-4 w-4 shrink-0" />
-                      <span className="flex-1">{screenShareSupported ? 'Share screen' : 'Screen sharing not supported'}</span>
-                      {sharing && <FiCheck className="h-4 w-4 shrink-0 text-amber-300" />}
-                    </Button>
-                    <Button variant="custom" size="none" type="button" onClick={() => { toggleBlur(); setShowMore(false); }} disabled={blurBusy || !camera} className="flex w-full items-center gap-3 border-t border-white/5 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30">
-                      <FiDroplet className="h-4 w-4 shrink-0" />
-                      <span className="flex-1">{blurBusy ? 'Loading blur…' : camera ? 'Blur my background' : 'Turn camera on to blur'}</span>
-                      {blurOn && <FiCheck className="h-4 w-4 shrink-0 text-amber-300" />}
-                    </Button>
-                  </Card>
-                </>
-              )}
+          <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center px-2 pb-[max(0.65rem,env(safe-area-inset-bottom))] sm:px-4 sm:pb-4">
+            <div className="flex w-fit max-w-[calc(100vw-1rem)] items-center gap-1.5 overflow-x-auto rounded-full border border-white/10 bg-[#111216]/95 p-1.5 shadow-[0_18px_60px_rgba(0,0,0,.55)] backdrop-blur-2xl sm:gap-2 sm:p-2">
+              <ControlButton active={mic} onClick={toggleMic} onIcon={FiMic} offIcon={FiMicOff} label="Microphone"/>
+              <ControlButton active={camera} onClick={toggleCamera} onIcon={FiCamera} offIcon={FiCameraOff} label="Camera"/>
+              <ControlButton active={false} onClick={() => window.dispatchEvent(new Event('blw-meeting-raise-hand'))} onIcon={FiUsers} offIcon={FiUsers} label="Raise hand"/>
+              <ControlButton active={false} onClick={() => window.dispatchEvent(new Event('blw-meeting-toggle-reactions'))} onIcon={FiMessageSquare} offIcon={FiMessageSquare} label="Reactions"/>
+              <ControlButton active={sharing} onClick={toggleShare} onIcon={FiMonitor} offIcon={FiMonitor} label={screenShareSupported ? 'Present now' : 'Present not supported'} disabled={!screenShareSupported}/>
+              <ControlButton active={showChat} onClick={openChat} onIcon={FiMessageSquare} offIcon={FiMessageSquare} label="Chat"/>
+              {isHost && <ControlButton active={showHost} onClick={openHost} onIcon={FiUsers} offIcon={FiUsers} label="Participants"/>}
+              <div className="mx-0.5 h-7 w-px shrink-0 bg-white/10 sm:mx-1" aria-hidden="true" />
+              <div className="relative shrink-0">
+                <ControlButton active={showMore} onClick={openMore} onIcon={FiMoreHorizontal} offIcon={FiMoreHorizontal} label="More options"/>
+                {showMore && (
+                  <>
+                    <Button variant="custom" size="none" type="button" aria-label="Close menu" onClick={() => setShowMore(false)} className="fixed inset-0 z-30 cursor-default !bg-transparent !border-0 !p-0" />
+                    <Card variant="custom" className="absolute bottom-full right-0 z-40 mb-3 w-60 overflow-hidden rounded-2xl border border-white/10 bg-[#1a1926] shadow-2xl">
+                      <Button variant="custom" size="none" type="button" onClick={() => { toggleShare(); setShowMore(false); }} disabled={!screenShareSupported} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:text-white/30">
+                        <FiMonitor className="h-4 w-4 shrink-0" />
+                        <span className="flex-1">{screenShareSupported ? (sharing ? 'Stop presenting' : 'Present now') : 'Present not supported'}</span>
+                        {sharing && <FiCheck className="h-4 w-4 shrink-0 text-amber-300" />}
+                      </Button>
+                      <Button variant="custom" size="none" type="button" onClick={() => { toggleBlur(); setShowMore(false); }} disabled={blurBusy || !camera} className="flex w-full items-center gap-3 border-t border-white/5 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:text-white/30">
+                        <FiDroplet className="h-4 w-4 shrink-0" />
+                        <span className="flex-1">{blurBusy ? 'Loading blur…' : camera ? 'Blur my background' : 'Turn camera on to blur'}</span>
+                        {blurOn && <FiCheck className="h-4 w-4 shrink-0 text-amber-300" />}
+                      </Button>
+                      <Button variant="custom" size="none" type="button" onClick={() => { toggleFullscreen(); setShowMore(false); }} className="flex w-full items-center gap-3 border-t border-white/5 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5">
+                        {isFullscreen ? <FiMinimize2 className="h-4 w-4 shrink-0" /> : <FiMaximize2 className="h-4 w-4 shrink-0" />}
+                        <span className="flex-1">{isFullscreen ? 'Exit full screen' : 'Full screen'}</span>
+                      </Button>
+                      <Button variant="custom" size="none" type="button" onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/meetings?room=${encodeURIComponent(roomName)}`); setShowMore(false); }} className="flex w-full items-center gap-3 border-t border-white/5 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5">
+                        <FiCopy className="h-4 w-4 shrink-0" />
+                        <span className="flex-1">Copy meeting link</span>
+                      </Button>
+                    </Card>
+                  </>
+                )}
+              </div>
+              <Button variant="custom" size="none" onClick={leaveVoluntarily} aria-label="Leave meeting" title="Leave meeting" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-red-500 text-white shadow-lg shadow-red-950/30 hover:bg-red-400"><FiPhoneOff/></Button>
             </div>
-        <ControlButton active={showChat} onClick={openChat} onIcon={FiMessageSquare} offIcon={FiMessageSquare} label="Chat"/>
-        {isHost && <ControlButton active={showHost} onClick={openHost} onIcon={FiUsers} offIcon={FiUsers} label="Host controls"/>}
-        <ControlButton active={isFullscreen} onClick={toggleFullscreen} onIcon={FiMinimize2} offIcon={FiMaximize2} label={isFullscreen ? 'Exit full screen' : 'Full screen'}/>
-        <Button variant="custom" size="none" onClick={leaveVoluntarily} aria-label="Leave meeting" className="grid h-11 w-11 place-items-center rounded-full bg-red-500 text-white"><FiPhoneOff/></Button>
           </div>
           {error && <p className="mx-auto mt-4 max-w-xl rounded-2xl border border-red-400/20 bg-red-400/5 p-3 text-center text-sm text-red-200">{error}</p>}
         </div>
-        {/* On sm+ screens chat is a real side panel that shares space with the
-            grid; on mobile it stays a full overlay since there's no room to
-            split a phone screen — ChatPanel's own className handles that. */}
         <ChatPanel liveRoom={roomRef.current} open={showChat} onClose={() => setShowChat(false)} />
       </div>
       {isHost && <HostPanel roomName={roomName} open={showHost} onClose={() => setShowHost(false)} participants={participants} locked={locked} setLocked={setLocked} waitingRoomEnabled={waitingRoomEnabled} setWaitingRoomEnabled={setWaitingRoomEnabled} recording={recording} onRecordingChange={changeRecording} onEnded={() => onLeave('ended')} />}
@@ -546,7 +553,7 @@ function ConnectionStateBadge({ connState, connected, count }) {
   return <span className="inline-flex items-center gap-1.5 text-xs text-white/50"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />{count} participant{count === 1 ? '' : 's'}</span>;
 }
 
-function ControlButton({ active, onClick, onIcon: OnIcon, offIcon: OffIcon, label, disabled }) { const Icon = active ? OnIcon : OffIcon; return <Button variant="custom" size="none" onClick={onClick} disabled={disabled} aria-label={label} title={label} className={`grid h-11 w-11 place-items-center rounded-full transition ${disabled ? 'cursor-not-allowed bg-white/5 text-white/25' : active ? 'bg-white/15 text-white' : 'bg-white/5 text-white/60 hover:text-white'}`}><Icon/></Button>; }
+function ControlButton({ active, onClick, onIcon: OnIcon, offIcon: OffIcon, label, disabled }) { const Icon = active ? OnIcon : OffIcon; return <Button variant="custom" size="none" onClick={onClick} disabled={disabled} aria-label={label} title={label} className={`grid h-11 w-11 shrink-0 place-items-center rounded-full transition ${disabled ? 'cursor-not-allowed bg-white/5 text-white/25' : active ? 'bg-white/15 text-white' : 'bg-white/5 text-white/60 hover:text-white'}`}><Icon/></Button>; }
 
 function ConnectionQualityIcon({ quality }) {
   if (quality === ConnectionQuality.Poor) return <FiWifi className="h-3 w-3 text-amber-400" />;
@@ -593,10 +600,7 @@ function ParticipantTile({ participant, local, speaking, pinned, onTogglePin, bi
           {avatarUrl && !avatarFailed ? (
             <img src={avatarUrl} alt="" onError={() => setAvatarFailed(true)} className={`rounded-full object-cover shadow-lg transition-all duration-150 ${big ? 'h-28 w-28 sm:h-36 sm:w-36' : 'h-20 w-20 sm:h-24 sm:w-24'} ${speaking ? 'ring-[3px] ring-[#8AB4F8] ring-offset-2 ring-offset-[#3c4043]' : ''}`} />
           ) : (
-            <div
-              className={`grid place-items-center rounded-full font-semibold text-white shadow-lg transition-all duration-150 ${big ? 'h-28 w-28 text-4xl sm:h-36 sm:w-36' : 'h-20 w-20 text-2xl sm:h-24 sm:w-24'} ${speaking ? 'ring-[3px] ring-[#8AB4F8] ring-offset-2 ring-offset-[#3c4043]' : ''}`}
-              style={{ backgroundColor: avatarColor }}
-            >
+            <div className={`grid place-items-center rounded-full font-semibold text-white shadow-lg transition-all duration-150 ${big ? 'h-28 w-28 text-4xl sm:h-36 sm:w-36' : 'h-20 w-20 text-2xl sm:h-24 sm:w-24'} ${speaking ? 'ring-[3px] ring-[#8AB4F8] ring-offset-2 ring-offset-[#3c4043]' : ''}`} style={{ backgroundColor: avatarColor }}>
               {display.slice(0, 1).toUpperCase()}
             </div>
           )}
@@ -604,25 +608,13 @@ function ParticipantTile({ participant, local, speaking, pinned, onTogglePin, bi
       )}
       {hasScreenShare && <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded bg-black/70 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/90 backdrop-blur">Presenting</div>}
       {onTogglePin && (
-        <Button variant="custom" size="none"
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onTogglePin(); }}
-          aria-label={pinned ? 'Unpin from spotlight' : 'Pin to spotlight'}
-          title={pinned ? 'Unpin from spotlight' : 'Pin to spotlight'}
-          className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-black/55 text-white/80 opacity-70 backdrop-blur-sm transition-opacity hover:opacity-100"
-        >
-          {pinned ? <FiMinimize2 className="h-3.5 w-3.5" /> : <FiMaximize2 className="h-3.5 w-3.5" />}
-        </Button>
+        <Button variant="custom" size="none" type="button" onClick={(e) => { e.stopPropagation(); onTogglePin(); }} aria-label={pinned ? 'Unpin from spotlight' : 'Pin to spotlight'} title={pinned ? 'Unpin from spotlight' : 'Pin to spotlight'} className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-black/55 text-white/80 opacity-70 backdrop-blur-sm transition-opacity hover:opacity-100">{pinned ? <FiMinimize2 className="h-3.5 w-3.5" /> : <FiMaximize2 className="h-3.5 w-3.5" />}</Button>
       )}
       <div className="absolute bottom-2 left-2 inline-flex max-w-[calc(100%-1rem)] items-center gap-1.5 rounded-md bg-black/55 px-2 py-1 backdrop-blur-sm">
         <ConnectionQualityIcon quality={participant.connectionQuality} />
         <span className="truncate text-xs font-medium text-white">{display}{local ? ' (You)' : ''}</span>
       </div>
-      {!micOn && (
-        <div className="absolute bottom-2 right-2 grid h-6 w-6 place-items-center rounded-full bg-black/55 backdrop-blur-sm">
-          <FiMicOff className="h-3.5 w-3.5 text-white" />
-        </div>
-      )}
+      {!micOn && <div className="absolute bottom-2 right-2 grid h-6 w-6 place-items-center rounded-full bg-black/55 backdrop-blur-sm"><FiMicOff className="h-3.5 w-3.5 text-white" /></div>}
     </div>
   );
 }
@@ -632,7 +624,6 @@ function ChatPanel({ liveRoom, open, onClose }) {
   const [text, setText] = useState('');
   const [sendError, setSendError] = useState('');
   const listRef = useRef(null);
-
   useEffect(() => {
     if (!liveRoom) return undefined;
     const handler = (message, participant) => {
@@ -641,44 +632,24 @@ function ChatPanel({ liveRoom, open, onClose }) {
     liveRoom.on(RoomEvent.ChatMessage, handler);
     return () => liveRoom.off(RoomEvent.ChatMessage, handler);
   }, [liveRoom]);
-
   useEffect(() => { if (open) listRef.current?.scrollTo({ top: listRef.current.scrollHeight }); }, [messages, open]);
-
   const send = async () => {
     const value = text.trim();
     if (!value || !liveRoom) return;
-    setText('');
-    setSendError('');
-    try {
-      await liveRoom.localParticipant.sendChatMessage(value);
-    } catch {
-      setText(value);
-      setSendError("Message didn't send. Check your connection and try again.");
-    }
+    setText(''); setSendError('');
+    try { await liveRoom.localParticipant.sendChatMessage(value); }
+    catch { setText(value); setSendError("Message didn't send. Check your connection and try again."); }
   };
-
   if (!open) return null;
-
   return (
     <Card variant="custom" className="fixed inset-x-3 bottom-24 top-24 z-30 flex flex-col rounded-3xl border border-white/10 bg-[#11101d]/98 shadow-2xl backdrop-blur sm:static sm:inset-auto sm:h-[calc(100vh-7rem)] sm:w-80 sm:shrink-0 sm:self-start">
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-        <p className="text-sm font-semibold text-white">In-call chat</p>
-        <Button variant="custom" size="none" onClick={onClose} aria-label="Close chat" className="text-white/50 hover:text-white"><FiX/></Button>
-      </div>
+      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3"><p className="text-sm font-semibold text-white">In-call chat</p><Button variant="custom" size="none" onClick={onClose} aria-label="Close chat" className="text-white/50 hover:text-white"><FiX/></Button></div>
       <div ref={listRef} className="flex-1 space-y-2 overflow-y-auto px-4 py-3">
         {messages.length === 0 && <p className="text-xs text-white/50">No messages yet. Say hello!</p>}
-        {messages.map((m) => (
-          <div key={m.id} className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${m.isLocal ? 'ml-auto bg-purple-500/40 text-white' : 'bg-white/[0.06] text-white/85'}`}>
-            {!m.isLocal && <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/50">{m.name}</p>}
-            <p>{m.text}</p>
-          </div>
-        ))}
+        {messages.map((m) => <div key={m.id} className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${m.isLocal ? 'ml-auto bg-purple-500/40 text-white' : 'bg-white/[0.06] text-white/85'}`}>{!m.isLocal && <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/50">{m.name}</p>}<p>{m.text}</p></div>)}
       </div>
       {sendError && <p className="px-4 pb-1 text-xs text-red-300">{sendError}</p>}
-      <div className="flex items-center gap-2 border-t border-white/10 p-3">
-        <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') send(); }} placeholder="Message everyone" className="min-w-0 flex-1 rounded-full border border-white/10 bg-black/20 px-4 py-2 text-sm text-white outline-none placeholder:text-white/30" />
-        <Button variant="custom" size="none" onClick={send} aria-label="Send message" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-purple-500 text-white"><FiSend className="h-4 w-4"/></Button>
-      </div>
+      <div className="flex items-center gap-2 border-t border-white/10 p-3"><input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') send(); }} placeholder="Message everyone" className="min-w-0 flex-1 rounded-full border border-white/10 bg-black/20 px-4 py-2 text-sm text-white outline-none placeholder:text-white/30" /><Button variant="custom" size="none" onClick={send} aria-label="Send message" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-purple-500 text-white"><FiSend className="h-4 w-4"/></Button></div>
     </Card>
   );
 }
@@ -728,8 +699,6 @@ function ReactionsBar({ liveRoom, localParticipant, participants }) {
 
   useEffect(() => {
     if (!liveRoom) return undefined;
-    // If I already have my hand up, let anyone who joins after me know,
-    // so latecomers (including a host opening the panel late) see it.
     const handler = (participant) => {
       if (!handRaised) return;
       const name = localParticipant?.name || 'BLW Member';
@@ -738,6 +707,17 @@ function ReactionsBar({ liveRoom, localParticipant, participants }) {
     liveRoom.on(RoomEvent.ParticipantConnected, handler);
     return () => liveRoom.off(RoomEvent.ParticipantConnected, handler);
   }, [liveRoom, handRaised, localParticipant]);
+
+  useEffect(() => {
+    const raise = () => toggleHand();
+    const reactions = () => setShowPicker((v) => !v);
+    window.addEventListener('blw-meeting-raise-hand', raise);
+    window.addEventListener('blw-meeting-toggle-reactions', reactions);
+    return () => {
+      window.removeEventListener('blw-meeting-raise-hand', raise);
+      window.removeEventListener('blw-meeting-toggle-reactions', reactions);
+    };
+  }, [handRaised, liveRoom, localParticipant]);
 
   useEffect(() => {
     if (!showPicker) return undefined;
@@ -764,37 +744,26 @@ function ReactionsBar({ liveRoom, localParticipant, participants }) {
 
   return (
     <>
-      <div className="pointer-events-none fixed inset-x-0 bottom-24 z-20 h-40 overflow-hidden">
-        {bubbles.map((b) => (
-          <div key={b.id} className="reaction-bubble absolute bottom-0 text-2xl drop-shadow-lg" style={{ left: `${b.left}%` }}>
-            <span>{b.emoji}</span> <span className="ml-1 rounded-full bg-[#11101d]/75 px-2 py-0.5 align-middle text-[10px] text-white/80 backdrop-blur">{b.name}</span>
-          </div>
-        ))}
+      <div className="pointer-events-none fixed inset-x-0 bottom-24 z-20 h-44 overflow-hidden">
+        {bubbles.map((b) => <div key={b.id} className="reaction-bubble absolute bottom-0 text-2xl drop-shadow-lg" style={{ left: `${b.left}%` }}><span>{b.emoji}</span><span className="ml-1 rounded-full bg-[#11101d]/75 px-2 py-0.5 align-middle text-[10px] text-white/80 backdrop-blur">{b.name}</span></div>)}
       </div>
-      {raisedList.length > 0 && (
-        <div className="mx-auto mt-3 w-fit rounded-full border border-pink-400/25 bg-[#1a1926]/90 px-4 py-1.5 text-xs text-pink-200 shadow-lg backdrop-blur">✋ {raisedList.join(', ')} raised {raisedList.length === 1 ? 'a hand' : 'hands'}</div>
+      {raisedList.length > 0 && <div className="fixed bottom-24 left-1/2 z-40 -translate-x-1/2 rounded-full border border-pink-400/25 bg-[#1a1926]/90 px-4 py-1.5 text-xs text-pink-200 shadow-lg backdrop-blur">✋ {raisedList.join(', ')} raised {raisedList.length === 1 ? 'a hand' : 'hands'}</div>}
+      {showPicker && (
+        <>
+          <Button variant="custom" size="none" type="button" aria-label="Close reaction picker" onClick={() => setShowPicker(false)} className="fixed inset-0 z-40 cursor-default !bg-transparent !border-0 !p-0" />
+          <Card variant="custom" className="fixed bottom-[5.8rem] left-1/2 z-50 -translate-x-1/2 rounded-full border border-purple-400/20 bg-[#11101d]/98 p-1.5 shadow-2xl shadow-purple-900/20 backdrop-blur-xl">
+            <div className="flex items-center gap-1">
+              {REACTION_EMOJIS.map((emoji) => <Button variant="custom" size="none" key={emoji} type="button" onClick={() => react(emoji)} aria-label={`React with ${emoji}`} className="grid h-11 w-11 place-items-center rounded-full bg-white/[0.06] px-0 py-0 text-xl shadow-inner ring-1 ring-white/5 transition hover:scale-105 hover:bg-purple-500/20">{emoji}</Button>)}
+            </div>
+          </Card>
+        </>
       )}
-      <div className="mx-auto mt-3 flex w-fit items-center gap-2">
-        <div className="relative">
-          <Button variant="custom" size="none" type="button" onClick={() => setShowPicker((v) => !v)} aria-label="Send a reaction" aria-expanded={showPicker} className={`rounded-full border px-4 py-1.5 text-lg shadow-lg transition ${showPicker ? 'border-purple-400/40 bg-[#1a1926] shadow-purple-500/10' : 'border-white/10 bg-[#11101d]/80 hover:bg-white/10'}`}>🙂</Button>
-          {showPicker && (
-            <>
-              <Button variant="custom" size="none" type="button" aria-label="Close reaction picker" onClick={() => setShowPicker(false)} className="fixed inset-0 z-30 cursor-default !bg-transparent !border-0 !p-0" />
-              <Card variant="custom" className="absolute bottom-full left-1/2 z-40 mb-3 -translate-x-1/2 rounded-full border border-purple-400/20 bg-[#11101d]/98 p-1.5 shadow-2xl shadow-purple-900/20 backdrop-blur-xl">
-                <div className="flex items-center gap-1">
-                  {REACTION_EMOJIS.map((emoji) => (
-                    <Button variant="custom" size="none" key={emoji} type="button" onClick={() => react(emoji)} aria-label={`React with ${emoji}`} className="grid h-11 w-11 place-items-center rounded-full bg-white/[0.06] px-0 py-0 text-xl shadow-inner ring-1 ring-white/5 transition hover:scale-105 hover:bg-purple-500/20">{emoji}</Button>
-                  ))}
-                </div>
-              </Card>
-            </>
-          )}
-        </div>
-        <Button variant="custom" size="none" type="button" onClick={toggleHand} className={`rounded-full border px-3 py-1.5 text-xs font-semibold shadow-lg transition ${handRaised ? 'border-purple-400/40 bg-purple-500/20 text-purple-200' : 'border-white/10 bg-[#11101d]/80 text-white/70 hover:bg-white/10'}`}>✋ {handRaised ? 'Lower hand' : 'Raise hand'}</Button>
+      <div className="mt-2 flex justify-center">
+        {handRaised && <span className="sr-only">Your hand is raised</span>}
       </div>
       <style>{`
-        @keyframes reaction-float { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-140px); opacity: 0; } }
-        .reaction-bubble { animation: reaction-float 2.5s ease-out forwards; }
+        @keyframes reaction-float { 0% { transform: translateY(0) scale(.92); opacity: 0; } 12% { opacity: 1; } 100% { transform: translateY(-180px) scale(1.06); opacity: 0; } }
+        .reaction-bubble { animation: reaction-float 2.5s cubic-bezier(.2,.75,.25,1) forwards; }
       `}</style>
     </>
   );
@@ -828,85 +797,25 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
 
   const waitingParticipants = participants.filter(isPendingParticipant);
   const activeParticipants = participants.filter((p) => !isPendingParticipant(p));
-
   const call = async (path, options) => {
     const response = await apiFetch(path, { method: 'POST', ...options });
     const body = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(body?.error || 'That action failed.');
     return body;
   };
-
-  const muteAll = async () => {
-    setBusy('mute-all'); setNotice('');
-    try { await call(`/api/video/rooms/${encodeURIComponent(roomName)}/mute-all`); setNotice('Muted all participants.'); }
-    catch (err) { setNotice(err?.message || 'Unable to mute everyone.'); }
-    finally { setBusy(''); }
-  };
-
-  const muteOne = async (identity) => {
-    setBusy(identity); setNotice('');
-    try { await call(`/api/video/rooms/${encodeURIComponent(roomName)}/participants/${encodeURIComponent(identity)}/mute`); }
-    catch (err) { setNotice(err?.message || 'Unable to mute that participant.'); }
-    finally { setBusy(''); }
-  };
-
-  const removeOne = async (identity) => {
-    setBusy(identity); setNotice('');
-    try { await apiFetch(`/api/video/rooms/${encodeURIComponent(roomName)}/participants/${encodeURIComponent(identity)}`, { method: 'DELETE' }); }
-    catch { setNotice('Unable to remove that participant.'); }
-    finally { setBusy(''); }
-  };
-
-  const admit = async (identity) => {
-    setBusy(identity); setNotice('');
-    try { await call(`/api/video/rooms/${encodeURIComponent(roomName)}/participants/${encodeURIComponent(identity)}/admit`); }
-    catch (err) { setNotice(err?.message || 'Unable to admit that participant.'); }
-    finally { setBusy(''); }
-  };
-
-  const deny = async (identity) => {
-    setBusy(identity); setNotice('');
-    try { await call(`/api/video/rooms/${encodeURIComponent(roomName)}/participants/${encodeURIComponent(identity)}/deny`); }
-    catch { setNotice('Unable to deny that participant.'); }
-    finally { setBusy(''); }
-  };
-
-  const toggleLock = async () => {
-    setBusy('lock'); setNotice('');
-    try { const next = !locked; await call(`/api/video/rooms/${encodeURIComponent(roomName)}/lock`, { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ locked: next }) }); setLocked(next); setNotice(next ? 'Room locked — no new participants can join.' : 'Room unlocked.'); }
-    catch (err) { setNotice(err?.message || 'Unable to change the lock.'); }
-    finally { setBusy(''); }
-  };
-
-  const toggleWaitingRoom = async () => {
-    setBusy('waiting-room'); setNotice('');
-    try { const next = !waitingRoomEnabled; await call(`/api/video/rooms/${encodeURIComponent(roomName)}/waiting-room`, { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: next }) }); setWaitingRoomEnabled(next); setNotice(next ? 'Waiting room on — new joiners need your approval.' : 'Waiting room off.'); }
-    catch (err) { setNotice(err?.message || 'Unable to change the waiting room.'); }
-    finally { setBusy(''); }
-  };
-
-  const toggleRecording = async () => {
-    setBusy('recording'); setNotice('');
-    try {
-      if (recording) { await call(`/api/video/rooms/${encodeURIComponent(roomName)}/recording/stop`); onRecordingChange(false); setNotice('Recording stopped.'); }
-      else { await call(`/api/video/rooms/${encodeURIComponent(roomName)}/recording/start`); onRecordingChange(true); setNotice('Recording started — everyone in the call now sees a recording badge.'); }
-    } catch (err) { setNotice(err?.message || 'Unable to change recording.'); }
-    finally { setBusy(''); }
-  };
-
-  const endForEveryone = async () => {
-    if (!window.confirm('End this meeting for everyone? All participants will be disconnected.')) return;
-    setBusy('end'); setNotice('');
-    try { await apiFetch(`/api/video/rooms/${encodeURIComponent(roomName)}`, { method: 'DELETE' }); onEnded(); }
-    catch { setNotice('Unable to end the meeting.'); setBusy(''); }
-  };
+  const muteAll = async () => { setBusy('mute-all'); setNotice(''); try { await call(`/api/video/rooms/${encodeURIComponent(roomName)}/mute-all`); setNotice('Muted all participants.'); } catch (err) { setNotice(err?.message || 'Unable to mute everyone.'); } finally { setBusy(''); } };
+  const muteOne = async (identity) => { setBusy(identity); setNotice(''); try { await call(`/api/video/rooms/${encodeURIComponent(roomName)}/participants/${encodeURIComponent(identity)}/mute`); } catch (err) { setNotice(err?.message || 'Unable to mute that participant.'); } finally { setBusy(''); } };
+  const removeOne = async (identity) => { setBusy(identity); setNotice(''); try { await apiFetch(`/api/video/rooms/${encodeURIComponent(roomName)}/participants/${encodeURIComponent(identity)}`, { method: 'DELETE' }); } catch { setNotice('Unable to remove that participant.'); } finally { setBusy(''); } };
+  const admit = async (identity) => { setBusy(identity); setNotice(''); try { await call(`/api/video/rooms/${encodeURIComponent(roomName)}/participants/${encodeURIComponent(identity)}/admit`); } catch (err) { setNotice(err?.message || 'Unable to admit that participant.'); } finally { setBusy(''); } };
+  const deny = async (identity) => { setBusy(identity); setNotice(''); try { await call(`/api/video/rooms/${encodeURIComponent(roomName)}/participants/${encodeURIComponent(identity)}/deny`); } catch { setNotice('Unable to deny that participant.'); } finally { setBusy(''); } };
+  const toggleLock = async () => { setBusy('lock'); setNotice(''); try { const next = !locked; await call(`/api/video/rooms/${encodeURIComponent(roomName)}/lock`, { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ locked: next }) }); setLocked(next); setNotice(next ? 'Room locked — no new participants can join.' : 'Room unlocked.'); } catch (err) { setNotice(err?.message || 'Unable to change the lock.'); } finally { setBusy(''); } };
+  const toggleWaitingRoom = async () => { setBusy('waiting-room'); setNotice(''); try { const next = !waitingRoomEnabled; await call(`/api/video/rooms/${encodeURIComponent(roomName)}/waiting-room`, { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: next }) }); setWaitingRoomEnabled(next); setNotice(next ? 'Waiting room on — new joiners need your approval.' : 'Waiting room off.'); } catch (err) { setNotice(err?.message || 'Unable to change the waiting room.'); } finally { setBusy(''); } };
+  const toggleRecording = async () => { setBusy('recording'); setNotice(''); try { if (recording) { await call(`/api/video/rooms/${encodeURIComponent(roomName)}/recording/stop`); onRecordingChange(false); setNotice('Recording stopped.'); } else { await call(`/api/video/rooms/${encodeURIComponent(roomName)}/recording/start`); onRecordingChange(true); setNotice('Recording started — everyone in the call now sees a recording badge.'); } } catch (err) { setNotice(err?.message || 'Unable to change recording.'); } finally { setBusy(''); } };
+  const endForEveryone = async () => { if (!window.confirm('End this meeting for everyone? All participants will be disconnected.')) return; setBusy('end'); setNotice(''); try { await apiFetch(`/api/video/rooms/${encodeURIComponent(roomName)}`, { method: 'DELETE' }); onEnded(); } catch { setNotice('Unable to end the meeting.'); setBusy(''); } };
 
   return (
     <Card as="div" role="dialog" aria-modal="true" aria-label="Host controls" variant="custom" className="fixed inset-x-3 bottom-24 top-24 z-30 flex flex-col rounded-3xl border border-white/10 bg-[#11101d]/98 shadow-2xl backdrop-blur sm:inset-x-auto sm:left-4 sm:top-28 sm:h-[30rem] sm:w-80">
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-        <p className="text-sm font-semibold text-white">Host controls</p>
-        <Button variant="custom" size="none" ref={closeButtonRef} onClick={onClose} aria-label="Close host controls" className="text-white/50 hover:text-white"><FiX/></Button>
-      </div>
+      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3"><p className="text-sm font-semibold text-white">Host controls</p><Button variant="custom" size="none" ref={closeButtonRef} onClick={onClose} aria-label="Close host controls" className="text-white/50 hover:text-white"><FiX/></Button></div>
       <div className="flex-1 overflow-y-auto px-4 py-3">
         <div className="flex flex-wrap gap-2">
           <Button variant="custom" size="none" type="button" disabled={busy === 'mute-all'} onClick={muteAll} className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 disabled:opacity-50">{busy === 'mute-all' ? 'Muting…' : 'Mute all'}</Button>
@@ -915,76 +824,12 @@ function HostPanel({ roomName, open, onClose, participants, locked, setLocked, w
           <Button variant="custom" size="none" type="button" disabled={busy === 'recording'} onClick={toggleRecording} className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold disabled:opacity-50 ${recording ? 'border-red-400/40 bg-red-500/10 text-red-300' : 'border-white/15 bg-white/5 text-white/80 hover:bg-white/10'}`}><FiVideo className="h-3 w-3" /> {busy === 'recording' ? 'Updating…' : recording ? 'Stop recording' : 'Record meeting'}</Button>
         </div>
         {notice && <p aria-live="polite" className="mt-2 text-xs text-white/60">{notice}</p>}
-
-        {waitingParticipants.length > 0 && (
-          <div className="mt-4">
-            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-300/80">Waiting to join ({waitingParticipants.length})</p>
-            <ul className="space-y-1.5">
-              {waitingParticipants.map((p) => (
-                <Card as="li" key={p.identity} variant="custom" className="flex items-center justify-between gap-3 rounded-2xl border border-amber-400/15 bg-amber-400/5 px-3 py-2">
-                  <span className="truncate text-xs text-white/80">{p.name || 'BLW Member'}</span>
-                  <span className="flex shrink-0 gap-2">
-                    <Button variant="custom" size="none" type="button" disabled={busy === p.identity} onClick={() => admit(p.identity)} aria-label={`Admit ${p.name || 'participant'}`} className="rounded-full border border-emerald-400/30 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-50"><FiUserCheck className="h-3 w-3" /></Button>
-                    <Button variant="custom" size="none" type="button" disabled={busy === p.identity} onClick={() => deny(p.identity)} aria-label={`Deny ${p.name || 'participant'}`} className="rounded-full border border-red-400/25 px-2.5 py-1 text-[11px] font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-50"><FiX className="h-3 w-3" /></Button>
-                  </span>
-                </Card>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        <div className="mt-4">
-          {activeParticipants.length === 0 ? (
-            <p className="text-xs text-white/50">No one else has joined yet.</p>
-          ) : (
-            <ul className="space-y-1.5">
-              {activeParticipants.map((p) => (
-                <Card as="li" key={p.identity} variant="custom" className="flex items-center justify-between gap-3 rounded-2xl bg-white/[0.03] px-3 py-2">
-                  <span className="truncate text-xs text-white/75">{p.name || 'BLW Member'}</span>
-                  <span className="flex shrink-0 gap-2">
-                    <Button variant="custom" size="none" type="button" disabled={busy === p.identity} onClick={() => muteOne(p.identity)} aria-label={`Mute ${p.name || 'participant'}`} className="rounded-full border border-white/15 px-2.5 py-1 text-[11px] font-semibold text-white/70 hover:bg-white/10 disabled:opacity-50"><FiMicOff className="h-3 w-3" /></Button>
-                    <Button variant="custom" size="none" type="button" disabled={busy === p.identity} onClick={() => removeOne(p.identity)} aria-label={`Remove ${p.name || 'participant'}`} className="rounded-full border border-red-400/25 px-2.5 py-1 text-[11px] font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-50"><FiUserX className="h-3 w-3" /></Button>
-                  </span>
-                </Card>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {log.length > 0 && (
-          <details className="mt-4">
-            <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wide text-white/50">Recent activity</summary>
-            <ul className="mt-2 space-y-1 text-[11px] text-white/45">
-              {log.map((entry, i) => <li key={i} className="flex items-start gap-1.5"><FiClock className="mt-0.5 h-3 w-3 shrink-0" /><span>{entry.by || 'A host'} · {entry.type}{entry.target ? ` · ${entry.target.slice(0, 14)}…` : ''}</span></li>)}
-            </ul>
-          </details>
-        )}
-
-        {recordings.length > 0 && (
-          <details className="mt-3">
-            <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wide text-white/50">Past recordings ({recordings.length})</summary>
-            <ul className="mt-2 space-y-2">
-              {recordings.map((rec) => (
-                <Card as="li" key={rec.egressId} variant="custom" className="rounded-2xl bg-white/[0.03] px-3 py-2 text-[11px] text-white/60">
-                  <div className="flex items-center justify-between gap-2">
-                    <span>{rec.startedAt ? new Date(rec.startedAt).toLocaleString() : 'Unknown time'}</span>
-                    <span className={rec.status === 'complete' ? 'text-emerald-300' : rec.status === 'failed' || rec.status === 'aborted' ? 'text-red-300' : 'text-amber-300'}>{rec.status}</span>
-                  </div>
-                  {rec.durationSeconds != null && <p className="mt-0.5 text-white/50">{Math.round(rec.durationSeconds / 60)} min</p>}
-                  {rec.downloadUrl ? (
-                    <a href={rec.downloadUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-amber-300 hover:underline">Open recording</a>
-                  ) : rec.path ? (
-                    <p className="mt-1 break-all text-white/50">{rec.path}</p>
-                  ) : null}
-                </Card>
-              ))}
-            </ul>
-          </details>
-        )}
+        {waitingParticipants.length > 0 && <div className="mt-4"><p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-300/80">Waiting to join ({waitingParticipants.length})</p><ul className="space-y-1.5">{waitingParticipants.map((p) => <Card as="li" key={p.identity} variant="custom" className="flex items-center justify-between gap-3 rounded-2xl border border-amber-400/15 bg-amber-400/5 px-3 py-2"><span className="truncate text-xs text-white/80">{p.name || 'BLW Member'}</span><span className="flex shrink-0 gap-2"><Button variant="custom" size="none" type="button" disabled={busy === p.identity} onClick={() => admit(p.identity)} aria-label={`Admit ${p.name || 'participant'}`} className="rounded-full border border-emerald-400/30 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-50"><FiUserCheck className="h-3 w-3" /></Button><Button variant="custom" size="none" type="button" disabled={busy === p.identity} onClick={() => deny(p.identity)} aria-label={`Deny ${p.name || 'participant'}`} className="rounded-full border border-red-400/25 px-2.5 py-1 text-[11px] font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-50"><FiX className="h-3 w-3" /></Button></span></Card>)}</ul></div>}
+        <div className="mt-4">{activeParticipants.length === 0 ? <p className="text-xs text-white/50">No one else has joined yet.</p> : <ul className="space-y-1.5">{activeParticipants.map((p) => <Card as="li" key={p.identity} variant="custom" className="flex items-center justify-between gap-3 rounded-2xl bg-white/[0.03] px-3 py-2"><span className="truncate text-xs text-white/75">{p.name || 'BLW Member'}</span><span className="flex shrink-0 gap-2"><Button variant="custom" size="none" type="button" disabled={busy === p.identity} onClick={() => muteOne(p.identity)} aria-label={`Mute ${p.name || 'participant'}`} className="rounded-full border border-white/15 px-2.5 py-1 text-[11px] font-semibold text-white/70 hover:bg-white/10 disabled:opacity-50"><FiMicOff className="h-3 w-3" /></Button><Button variant="custom" size="none" type="button" disabled={busy === p.identity} onClick={() => removeOne(p.identity)} aria-label={`Remove ${p.name || 'participant'}`} className="rounded-full border border-red-400/25 px-2.5 py-1 text-[11px] font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-50"><FiUserX className="h-3 w-3" /></Button></span></Card>)}</ul>}</div>
+        {log.length > 0 && <details className="mt-4"><summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wide text-white/50">Recent activity</summary><ul className="mt-2 space-y-1 text-[11px] text-white/45">{log.map((entry, i) => <li key={i} className="flex items-start gap-1.5"><FiClock className="mt-0.5 h-3 w-3 shrink-0" /><span>{entry.by || 'A host'} · {entry.type}{entry.target ? ` · ${entry.target.slice(0, 14)}…` : ''}</span></li>)}</ul></details>}
+        {recordings.length > 0 && <details className="mt-3"><summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wide text-white/50">Past recordings ({recordings.length})</summary><ul className="mt-2 space-y-2">{recordings.map((rec) => <Card as="li" key={rec.egressId} variant="custom" className="rounded-2xl bg-white/[0.03] px-3 py-2 text-[11px] text-white/60"><div className="flex items-center justify-between gap-2"><span>{rec.startedAt ? new Date(rec.startedAt).toLocaleString() : 'Unknown time'}</span><span className={rec.status === 'complete' ? 'text-emerald-300' : rec.status === 'failed' || rec.status === 'aborted' ? 'text-red-300' : 'text-amber-300'}>{rec.status}</span></div>{rec.durationSeconds != null && <p className="mt-0.5 text-white/50">{Math.round(rec.durationSeconds / 60)} min</p>}{rec.downloadUrl ? <a href={rec.downloadUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-amber-300 hover:underline">Open recording</a> : rec.path ? <p className="mt-1 break-all text-white/50">{rec.path}</p> : null}</Card>)}</ul></details>}
       </div>
-      <div className="border-t border-white/10 p-3">
-        <Button variant="custom" size="none" type="button" disabled={busy === 'end'} onClick={endForEveryone} className="w-full rounded-2xl border border-red-400/30 bg-red-500/10 py-2.5 text-sm font-semibold text-red-200 hover:bg-red-500/20 disabled:opacity-50">{busy === 'end' ? 'Ending…' : 'End for everyone'}</Button>
-      </div>
+      <div className="border-t border-white/10 p-3"><Button variant="custom" size="none" type="button" disabled={busy === 'end'} onClick={endForEveryone} className="w-full rounded-2xl border border-red-400/30 bg-red-500/10 py-2.5 text-sm font-semibold text-red-200 hover:bg-red-500/20 disabled:opacity-50">{busy === 'end' ? 'Ending…' : 'End for everyone'}</Button></div>
     </Card>
   );
 }
