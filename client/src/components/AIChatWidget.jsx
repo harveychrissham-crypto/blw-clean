@@ -64,7 +64,7 @@ export default function AIChatWidget() {
           </div>
           <div className="mt-4 space-y-2">
             {suggestions.map((item) => (
-              <Button variant="custom" size="none" key={item.key} onClick={() => setAnswer(answers[item.key])} className={`w-full rounded-2xl border px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${selectedKey === item.key ? 'border-purple-400/40 bg-purple-500/10 text-fuchsia-300' : 'border-white/10 bg-white/5 text-slate-300'}`}>
+              <Button variant="custom" size="none" key={item.key} onClick={() => setAnswer(answers[item.key])} className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EC2FA8]/60 ${selectedKey === item.key ? 'border-[#EC2FA8]/40 bg-[#EC2FA8]/10 text-[#EC2FA8]' : 'border-white/10 bg-white/5 text-slate-300'}`}>
                 {item.label}
               </Button>
             ))}
@@ -75,13 +75,13 @@ export default function AIChatWidget() {
           </Card>
           <form onSubmit={submit} className="mt-4 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
             <input value={question} onChange={(event) => setQuestion(event.target.value)} className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none" placeholder="Ask a ministry question" aria-label="Ask a ministry question" />
-            <Button variant="custom" size="none" type="submit" disabled={!question.trim()} className="rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 p-2 text-white disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" aria-label="Send question">
+            <Button variant="gradient" size="none" type="submit" disabled={!question.trim()} className="rounded-full p-2" aria-label="Send question">
               <FiSend />
             </Button>
           </form>
         </Card>
       ) : (
-        <Button variant="custom" size="none" onClick={() => setOpen(true)} className="flex items-center gap-2 rounded-full border border-purple-400/40 bg-purple-400/15 px-4 py-3 text-sm font-semibold text-fuchsia-300 backdrop-blur focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+        <Button variant="secondary" size="none" onClick={() => setOpen(true)} className="flex items-center gap-2 rounded-full px-4 py-3 text-sm text-white backdrop-blur">
           <FiCpu /> Ministry Assistant
         </Button>
       )}
