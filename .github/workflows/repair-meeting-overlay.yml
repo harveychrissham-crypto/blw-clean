@@ -43,3 +43,5 @@ jobs:
           git rm .github/workflows/repair-meeting-overlay.yml
           git commit -m "fix: repair meeting reaction overlay"
           git push
+
+# One-shot repair workflow; self-removes after applying the fix.
