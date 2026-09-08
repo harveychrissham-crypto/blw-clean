@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { FiDownload, FiX } from 'react-icons/fi';
 import { UPDATE_AVAILABLE_EVENT, clearPendingAppUpdate, getPendingAppUpdate, installApk } from '../appUpdater';
 import Button from './ui/Button';
@@ -22,7 +23,7 @@ export default function UpdateAvailablePrompt() {
     return () => window.removeEventListener(UPDATE_AVAILABLE_EVENT, handler);
   }, []);
 
-  if (!details) return null;
+  if (!details || typeof document === 'undefined') return null;
 
   const dismiss = () => {
     clearPendingAppUpdate();
@@ -47,8 +48,14 @@ export default function UpdateAvailablePrompt() {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/85 px-5 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="update-available-title">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[2147483647] grid place-items-center bg-slate-950/85 px-5 backdrop-blur-md"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="update-available-title"
+      style={{ zIndex: 2147483647 }}
+    >
       <div className="relative w-full max-w-md rounded-[2rem] border border-white/10 bg-[#151322] p-6 shadow-2xl">
         <Button
           variant="custom"
@@ -103,6 +110,7 @@ export default function UpdateAvailablePrompt() {
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
