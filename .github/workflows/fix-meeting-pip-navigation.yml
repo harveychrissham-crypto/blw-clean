@@ -1,0 +1,281 @@
+name: Fix persistent meeting PiP navigation
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-meeting-pip-navigation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch persistent meeting session
+        shell: python
+        run: |
+          from pathlib import Path
+
+          meetings = Path('client/src/pages/Meetings.jsx')
+          s = meetings.read_text()
+
+          # Expose CallRoom to the app-level persistent host.
+          export_marker = "\nfunction ConnectionStateBadge({ connState, connected, count }) {"
+          if 'export { CallRoom };' not in s:
+              if export_marker not in s:
+                  raise SystemExit('Could not find CallRoom export marker')
+              s = s.replace(export_marker, "\nexport { CallRoom };\n" + export_marker, 1)
+
+          # Publish the active session instead of rendering CallRoom inside the route.
+          session_marker = "const DEVICE_PREFS_KEY = 'blw-meet-device-prefs';"
+          session_code = """const MEETING_SESSION_EVENT = 'blw-meeting-session-change';
+function publishMeetingSession(session) {
+  try {
+    window.__BLW_MEETING_SESSION__ = session;
+    window.dispatchEvent(new Event(MEETING_SESSION_EVENT));
+  } catch {}
+}
+"""
+          if 'const MEETING_SESSION_EVENT' not in s:
+              if session_marker not in s:
+                  raise SystemExit('Could not find meeting session marker')
+              s = s.replace(session_marker, session_marker + "\n" + session_code, 1)
+
+          old_room = "  if (stage === 'room' && credentials && choices) return <CallRoom credentials={credentials} choices={choices} room={room} onLeave={handleLeave} />;"
+          new_room = "  if (stage === 'room' && credentials && choices) { publishMeetingSession({ credentials, choices, room }); return <div className=\"min-h-[50vh]\" aria-label=\"Meeting connected\" />; }"
+          if old_room in s:
+              s = s.replace(old_room, new_room, 1)
+          elif 'publishMeetingSession({ credentials, choices, room });' not in s:
+              raise SystemExit('Could not find Meetings room render')
+
+          old_leave = "  function handleLeave(reason) {\n    setStage('form'); setCredentials(null); setChoices(null);"
+          new_leave = "  function handleLeave(reason) {\n    publishMeetingSession(null);\n    setStage('form'); setCredentials(null); setChoices(null);"
+          if old_leave in s:
+              s = s.replace(old_leave, new_leave, 1)
+          elif 'publishMeetingSession(null);' not in s:
+              raise SystemExit('Could not find Meetings leave handler')
+
+          meetings.write_text(s)
+
+          app = Path('client/src/App.jsx')
+          a = app.read_text()
+
+          react_import = "import { useEffect, useRef, lazy, Suspense } from 'react';"
+          if react_import in a and "useState" not in react_import:
+              a = a.replace(react_import, "import { useEffect, useRef, useState, lazy, Suspense } from 'react';", 1)
+
+          if "import { CallRoom } from './pages/Meetings';" not in a:
+              marker = "import { useAuth }"
+              if marker not in a:
+                  raise SystemExit('App import marker not found')
+              a = a.replace(marker, "import { CallRoom } from './pages/Meetings';\n" + marker, 1)
+
+          if "import { registerPlugin } from '@capacitor/core';" not in a:
+              marker = "import ErrorBoundary from './components/ErrorBoundary';"
+              if marker not in a:
+                  raise SystemExit('App ErrorBoundary import marker not found')
+              a = a.replace(marker, marker + "\nimport { registerPlugin } from '@capacitor/core';", 1)
+
+          plugin_marker = "const RouteFallback = () =>"
+          if "const MeetingPiP = registerPlugin('MeetingPiP');" not in a:
+              if plugin_marker not in a:
+                  raise SystemExit('App plugin marker not found')
+              a = a.replace(plugin_marker, "const MeetingPiP = registerPlugin('MeetingPiP');\n\n" + plugin_marker, 1)
+
+          if 'function PersistentMeetingOverlay()' not in a:
+              component = '''function PersistentMeetingOverlay() {
+  const [session, setSession] = useState(() => {
+    try { return window.__BLW_MEETING_SESSION__ || null; } catch { return null; }
+  });
+  useEffect(() => {
+    const sync = () => {
+      try { setSession(window.__BLW_MEETING_SESSION__ || null); } catch {}
+    };
+    window.addEventListener('blw-meeting-session-change', sync);
+    return () => window.removeEventListener('blw-meeting-session-change', sync);
+  }, []);
+  if (!session?.credentials || !session?.choices || !session?.room) return null;
+  return <CallRoom credentials={session.credentials} choices={session.choices} room={session.room} onLeave={() => {
+    try {
+      window.__BLW_MEETING_SESSION__ = null;
+      window.dispatchEvent(new Event('blw-meeting-session-change'));
+    } catch {}
+  }} />;
+}
+
+'''
+              marker = 'const AnimatedRoutes = () => {'
+              if marker not in a:
+                  raise SystemExit('AnimatedRoutes marker not found')
+              a = a.replace(marker, component + marker, 1)
+
+          # Trigger PiP whenever an active meeting is left through app navigation.
+          nav_code = '''
+  useEffect(() => {
+    if (location.pathname === '/meetings') return;
+    if (!window.__BLW_MEETING_SESSION__) return;
+    try { MeetingPiP.enter(); } catch {}
+  }, [location.pathname]);
+'''
+          if 'MeetingPiP.enter();' not in a:
+              marker = '  const navigationType = useNavigationType();'
+              if marker not in a:
+                  raise SystemExit('AnimatedRoutes navigation marker not found')
+              a = a.replace(marker, marker + nav_code, 1)
+
+          # Keep the persistent call above the routed UI so it survives route unmounts.
+          if '<PersistentMeetingOverlay />' not in a:
+              old_return = "return <><OfflineBanner /><AnimatedRoutes /><NotificationPermissionPrompt /><UpdateAvailablePrompt /></>;"
+              new_return = "return <><PersistentMeetingOverlay /><OfflineBanner /><AnimatedRoutes /><NotificationPermissionPrompt /><UpdateAvailablePrompt /></>;"
+              if old_return not in a:
+                  raise SystemExit('App return marker not found')
+              a = a.replace(old_return, new_return, 1)
+
+          app.write_text(a)
+
+          # Make the Android release build generate a native MeetingPiP bridge after cap sync.
+          workflow = Path('.github/workflows/android-release.yml')
+          w = workflow.read_text()
+          sync_step = "      - name: Sync Capacitor Android project\n        working-directory: client\n        run: npx cap sync android\n"
+          native_step = r'''      - name: Configure native Android meeting Picture-in-Picture
+        working-directory: client/android
+        shell: bash
+        run: |
+          set -euo pipefail
+          MAIN_ACTIVITY="app/src/main/java/com/blwcampusministry/app/MainActivity.java"
+          PIP_PLUGIN="app/src/main/java/com/blwcampusministry/app/MeetingPiP.java"
+
+          mkdir -p "$(dirname "$PIP_PLUGIN")"
+          cat > "$PIP_PLUGIN" <<'EOF'
+          package com.blwcampusministry.app;
+
+          import android.app.Activity;
+          import android.app.PictureInPictureParams;
+          import android.os.Build;
+          import android.util.Rational;
+
+          import com.getcapacitor.JSObject;
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+
+          @CapacitorPlugin(name = "MeetingPiP")
+          public class MeetingPiP extends Plugin {
+            @PluginMethod
+            public void enter(PluginCall call) {
+              Activity activity = getActivity();
+              activity.runOnUiThread(() -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                  activity.enterPictureInPictureMode();
+                }
+                call.resolve();
+              });
+            }
+
+            @PluginMethod
+            public void setEnabled(PluginCall call) {
+              boolean enabled = call.getBoolean("enabled", false);
+              Activity activity = getActivity();
+              activity.runOnUiThread(() -> {
+                if (activity instanceof MainActivity) {
+                  ((MainActivity) activity).setMeetingPipEnabled(enabled);
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                  PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder()
+                      .setAspectRatio(new Rational(16, 9));
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    builder.setAutoEnterEnabled(enabled);
+                  }
+                  activity.setPictureInPictureParams(builder.build());
+                }
+                call.resolve(new JSObject().put("enabled", enabled));
+              });
+            }
+          }
+          EOF
+
+          test -f "$MAIN_ACTIVITY"
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/src/main/java/com/blwcampusministry/app/MainActivity.java')
+          s = p.read_text()
+          marker = 'public class MainActivity extends BridgeActivity {'
+          if marker not in s:
+              raise SystemExit('MainActivity class marker not found')
+          if 'setMeetingPipEnabled' not in s:
+              replacement = '''public class MainActivity extends BridgeActivity {
+              private volatile boolean meetingPipEnabled = false;
+
+              public void setMeetingPipEnabled(boolean enabled) {
+                  meetingPipEnabled = enabled;
+              }
+
+              @Override
+              protected void onCreate(android.os.Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  registerPlugin(MeetingPiP.class);
+              }
+
+              @Override
+              public void onUserLeaveHint() {
+                  if (meetingPipEnabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
+                      enterPictureInPictureMode();
+                  }
+                  super.onUserLeaveHint();
+              }'''
+              s = s.replace(marker, replacement, 1)
+              p.write_text(s)
+          PY
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/src/main/AndroidManifest.xml')
+          s = p.read_text()
+          if 'android:supportsPictureInPicture="true"' not in s:
+              old = 'android:exported="true"'
+              idx = s.find(old)
+              if idx < 0:
+                  raise SystemExit('Main activity exported attribute not found')
+              s = s[:idx] + s[idx:idx + len(old)] + ' android:supportsPictureInPicture="true" android:resizeableActivity="true"' + s[idx + len(old):]
+              p.write_text(s)
+          PY
+'''
+          if 'Configure native Android meeting Picture-in-Picture' not in w:
+              if sync_step not in w:
+                  raise SystemExit('Capacitor sync step not found in android-release.yml')
+              w = w.replace(sync_step, sync_step + native_step, 1)
+          workflow.write_text(w)
+
+          # Remove older one-shot PiP patchers so they cannot race this implementation.
+          for stale in [
+              '.github/workflows/add-pip.yml',
+              '.github/workflows/meeting-pip-navigation.yml',
+              '.github/workflows/patch-android-pip.yml',
+          ]:
+              p = Path(stale)
+              if p.exists():
+                  p.unlink()
+
+      - name: Install and build client
+        working-directory: client
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Commit finished PiP implementation
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm -f .github/workflows/fix-meeting-pip-navigation.yml
+          git add client/src/pages/Meetings.jsx client/src/App.jsx .github/workflows/android-release.yml .github/workflows/add-pip.yml .github/workflows/meeting-pip-navigation.yml .github/workflows/patch-android-pip.yml .github/workflows/fix-meeting-pip-navigation.yml
+          git diff --cached --quiet && exit 0
+          git commit -m 'feat: keep meetings active and enter PiP on navigation'
+          git push
