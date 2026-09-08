@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap');
+@import './meetings.css';
 
 @tailwind base;
 @tailwind components;
@@ -34,31 +35,24 @@ body {
 
 * { box-sizing: border-box; }
 
-a, button, [role="button"], input, textarea, select {
-  -webkit-tap-highlight-color: transparent;
-}
+a, button, [role="button"], input, textarea, select { -webkit-tap-highlight-color: transparent; }
 
 @media (hover: none) {
   a:active, button:not(:disabled):active, [role="button"]:active {
     transform: scale(0.96);
     transition: transform 0.1s ease;
   }
-}
-
-@media (hover: none) {
   a, button, [role="button"], img {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
   }
+  input, select, textarea { font-size: 16px !important; }
 }
 
 ::selection { background: rgba(236,47,168,0.3); color: white; }
-
-/* Hide scrollbar on nav */
 nav::-webkit-scrollbar { display: none; }
 
-/* Input / select styling */
 input, select, textarea {
   background: rgba(255,255,255,0.05) !important;
   border: 1px solid rgba(255,255,255,0.1) !important;
@@ -66,24 +60,6 @@ input, select, textarea {
   color: #fff !important;
   transition: border-color 0.15s;
 }
-
-@media (hover: none) {
-  input, select, textarea {
-    font-size: 16px !important;
-  }
-}
-input:focus, select:focus, textarea:focus {
-  outline: none !important;
-  border-color: #EC2FA8 !important;
-}
+input:focus, select:focus, textarea:focus { outline: none !important; border-color: #EC2FA8 !important; }
 input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3) !important; }
-
-/* The select element itself stays white text on our dark background, but the
-   native dropdown popup needs explicit readable option colors. */
-select option {
-  color: #0d0c18 !important;
-  background: #ffffff !important;
-}
-
-/* Google Meet-inspired E-Meeting presentation layer. */
-@import './meetings.css';
+select option { color: #0d0c18 !important; background: #ffffff !important; }
