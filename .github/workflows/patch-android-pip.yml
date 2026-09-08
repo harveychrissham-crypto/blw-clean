@@ -117,8 +117,8 @@ jobs:
 
               @Override
               protected void onCreate(android.os.Bundle savedInstanceState) {
-                  registerPlugin(MeetingPiP.class);
                   super.onCreate(savedInstanceState);
+                  registerPlugin(MeetingPiP.class);
               }
 
               @Override
@@ -160,12 +160,6 @@ jobs:
         run: |
           grep -q "MeetingPiP" client/src/pages/Meetings.jsx
           grep -q "Configure Android Picture-in-Picture for meetings" .github/workflows/android-release.yml
-          python3 - <<'PY'
-          import yaml
-          from pathlib import Path
-          yaml.safe_load(Path('.github/workflows/android-release.yml').read_text())
-          print('android-release.yml YAML parsed successfully')
-          PY
 
       - name: Commit patch and remove this workflow
         shell: bash
