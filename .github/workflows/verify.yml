@@ -21,7 +21,6 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-
           path = Path('client/src/pages/Meetings.jsx')
           text = path.read_text()
 
