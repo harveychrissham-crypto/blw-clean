@@ -10,7 +10,7 @@ import { forwardRef } from 'react';
 // anything already using one of these looks.
 
 const VARIANTS = {
-  primary: 'bg-gold-500 text-ink-900 font-bold hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50',
+  primary: 'bg-purple-600 text-white font-bold hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50',
   secondary: 'border border-white/10 bg-white/5 text-white font-semibold hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50',
   ghost: 'border border-white/15 text-white/80 font-semibold hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50',
   danger: 'border border-red-400/30 bg-red-500/10 text-red-200 font-semibold hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50',
