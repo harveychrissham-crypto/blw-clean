@@ -1,0 +1,81 @@
+name: Apply Google Meet meeting polish
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  polish:
+    if: ${{ !startsWith(github.event.head_commit.message, 'feat: apply Google Meet polish') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Patch meeting UI
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          meetings = Path('client/src/pages/Meetings.jsx')
+          text = meetings.read_text()
+
+          old = """  useEffect(() => {\n    if (!showPicker) return undefined;\n    const onKey = (e) => { if (e.key === 'Escape') setShowPicker(false); };\n    window.addEventListener('keydown', onKey);\n    return () => window.removeEventListener('keydown', onKey);\n  }, [showPicker]);\n"""
+          new = """  useEffect(() => {\n    const raise = () => toggleHand();\n    const reactions = () => setShowPicker((v) => !v);\n    window.addEventListener('blw-meeting-raise-hand', raise);\n    window.addEventListener('blw-meeting-toggle-reactions', reactions);\n    return () => {\n      window.removeEventListener('blw-meeting-raise-hand', raise);\n      window.removeEventListener('blw-meeting-toggle-reactions', reactions);\n    };\n  }, [handRaised, liveRoom, localParticipant]);\n\n  useEffect(() => {\n    if (!showPicker) return undefined;\n    const onKey = (e) => { if (e.key === 'Escape') setShowPicker(false); };\n    window.addEventListener('keydown', onKey);\n    return () => window.removeEventListener('keydown', onKey);\n  }, [showPicker]);\n"""
+          if old not in text:
+              raise SystemExit('reaction keyboard block not found')
+          text = text.replace(old, new, 1)
+
+          start = text.index("  return (\n    <>\n      <div className=\"pointer-events-none fixed inset-x-0 bottom-24")
+          end_marker = "      <style>{`\n        @keyframes reaction-float"
+          end = text.index(end_marker, start)
+          replacement = """  return (\n    <>\n      <div className=\"pointer-events-none fixed inset-x-0 bottom-28 z-40 h-52 overflow-hidden\">\n        {bubbles.map((b) => (\n          <div key={b.id} className=\"reaction-bubble absolute bottom-0 text-3xl drop-shadow-lg sm:text-4xl\" style={{ left: `${b.left}%` }}>\n            <span>{b.emoji}</span> <span className=\"ml-1 rounded-full bg-[#111216]/75 px-2 py-0.5 align-middle text-[10px] text-white/80 backdrop-blur\">{b.name}</span>\n          </div>\n        ))}\n      </div>\n      {raisedList.length > 0 && (\n        <div className=\"fixed bottom-24 left-1/2 z-40 -translate-x-1/2 rounded-full border border-white/10 bg-[#202124]/95 px-4 py-1.5 text-xs text-white/80 shadow-lg backdrop-blur\">✋ {raisedList.join(', ')} raised {raisedList.length === 1 ? 'a hand' : 'hands'}</div>\n      )}\n      {showPicker && (\n        <>\n          <Button variant=\"custom\" size=\"none\" type=\"button\" aria-label=\"Close reaction picker\" onClick={() => setShowPicker(false)} className=\"fixed inset-0 z-40 cursor-default !bg-transparent !border-0 !p-0\" />\n          <Card variant=\"custom\" className=\"fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full border border-white/10 bg-[#202124]/98 p-2 shadow-2xl backdrop-blur-2xl\">\n            <div className=\"flex items-center gap-1\">\n              {REACTION_EMOJIS.map((emoji) => (\n                <Button variant=\"custom\" size=\"none\" key={emoji} type=\"button\" onClick={() => react(emoji)} aria-label={`React with ${emoji}`} className=\"grid h-11 w-11 place-items-center rounded-full px-0 py-0 text-xl transition hover:scale-110 hover:bg-white/10 sm:h-12 sm:w-12 sm:text-2xl\">{emoji}</Button>\n              ))}\n            </div>\n          </Card>\n        </>\n      )}\n"""
+          text = text[:start] + replacement + text[end:]
+          meetings.write_text(text)
+
+          css = Path('client/src/meetings.css')
+          css.write_text(css.read_text() + """
+
+/* Meet-like dedicated call surface */
+section:has([aria-label=\"Leave meeting\"]){
+  background:#202124!important;
+}
+section:has([aria-label=\"Leave meeting\"]) > div:first-of-type{height:100%;}
+section:has([aria-label=\"Leave meeting\"]) [class*=\"grid-cols-1\"],[class*=\"grid-cols-2\"]{max-height:calc(100vh - 8.75rem);}
+section:has([aria-label=\"Leave meeting\"]) [class*=\"aspect-video\"]{background:#3c4043!important;}
+section:has([aria-label=\"Leave meeting\"]) [aria-label=\"Microphone\"],
+section:has([aria-label=\"Leave meeting\"]) [aria-label=\"Camera\"],
+section:has([aria-label=\"Leave meeting\"]) [aria-label=\"Raise hand\"],
+section:has([aria-label=\"Leave meeting\"]) [aria-label=\"Reactions\"],
+section:has([aria-label=\"Leave meeting\"]) [aria-label=\"Present now\"],
+section:has([aria-label=\"Leave meeting\"]) [aria-label=\"Chat\"],
+section:has([aria-label=\"Leave meeting\"]) [aria-label=\"Participants\"],
+section:has([aria-label=\"Leave meeting\"]) [aria-label=\"More options\"]{background:transparent!important;}
+section:has([aria-label=\"Leave meeting\"]) [aria-label=\"Microphone\"]:hover,
+section:has([aria-label=\"Leave meeting\"]) [aria-label=\"Camera\"]:hover,
+section:has([aria-label=\"Leave meeting\"]) [aria-label=\"Raise hand\"]:hover,
+section:has([aria-label=\"Leave meeting\"]) [aria-label=\"Reactions\"]:hover,
+section:has([aria-label=\"Leave meeting\"]) [aria-label=\"Present now\"]:hover,
+section:has([aria-label=\"Leave meeting\"]) [aria-label=\"Chat\"]:hover,
+section:has([aria-label=\"Leave meeting\"]) [aria-label=\"Participants\"]:hover,
+section:has([aria-label=\"Leave meeting\"]) [aria-label=\"More options\"]:hover{background:rgba(255,255,255,.10)!important;}
+section:has([aria-label=\"Leave meeting\"]) .reaction-bubble{animation:reaction-float 2.8s cubic-bezier(.2,.75,.25,1) forwards;}
+@keyframes reaction-float{0%{transform:translateY(0) scale(.92);opacity:0}12%{opacity:1}100%{transform:translateY(-190px) scale(1.08);opacity:0}}
+@media(max-width:639px){
+  section:has([aria-label=\"Leave meeting\"]){padding:.2rem .2rem 0!important;}
+  section:has([aria-label=\"Leave meeting\"]) [class*=\"min-h-[55vh]\"]{min-height:calc(100vh - 7.5rem)!important;}
+}
+""")
+          PY
+
+      - name: Commit polished meeting surface
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add client/src/pages/Meetings.jsx client/src/meetings.css
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: apply Google Meet polish"
+          git push
