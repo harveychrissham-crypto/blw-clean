@@ -1,4 +1,5 @@
 /* Google-Meet-inspired E-Meeting presentation layer. */
+/* Keep one primary action per function in the call dock; secondary actions live under More. */
 section:has([aria-label="Leave meeting"]) {
   position: fixed !important;
   inset: 0 !important;
