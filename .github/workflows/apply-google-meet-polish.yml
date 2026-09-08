@@ -20,43 +20,35 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-
-          meetings = Path('client/src/pages/Meetings.jsx')
-          text = meetings.read_text()
-
-          old = """    try {
-      const next = !sharing;
-      await roomRef.current?.localParticipant.setScreenShareEnabled(next);
-      setSharing(next);
-    } catch (e) {
-"""
-          new = """    try {
-      const next = !sharing;
-      await roomRef.current?.localParticipant.setScreenShareEnabled(next, next ? {
-        audio: true,
-        contentHint: 'detail',
-        preferCurrentTab: false,
-        selfBrowserSurface: 'include',
-        surfaceSwitching: 'include',
-        systemAudio: 'include',
-        video: true,
-      } : undefined);
-      setSharing(next);
-    } catch (e) {
-"""
-          if old not in text:
-              raise SystemExit('screen share block not found')
-          text = text.replace(old, new, 1)
-          text = text.replace("label={screenShareSupported ? 'Present now' : 'Present not supported'}", "label={screenShareSupported ? 'Present' : 'Present not supported'}", 1)
-          text = text.replace("{screenShareSupported ? (sharing ? 'Stop presenting' : 'Present now') : 'Present not supported'}", "{screenShareSupported ? (sharing ? 'Stop presenting' : 'Present screen, window or tab') : 'Present not supported'}", 1)
-          meetings.write_text(text)
+          p = Path('client/src/pages/Meetings.jsx')
+          s = p.read_text()
+          old = "await roomRef.current?.localParticipant.setScreenShareEnabled(next);"
+          new = """await roomRef.current?.localParticipant.setScreenShareEnabled(next, next ? {
+            audio: true,
+            contentHint: 'detail',
+            preferCurrentTab: false,
+            selfBrowserSurface: 'include',
+            surfaceSwitching: 'include',
+            systemAudio: 'include',
+            video: true,
+          } : undefined);"""
+          if old not in s:
+              raise SystemExit('screen share target not found')
+          s = s.replace(old, new, 1)
+          s = s.replace("label={screenShareSupported ? 'Present now' : 'Present not supported'}", "label={screenShareSupported ? 'Present' : 'Present not supported'}", 1)
+          s = s.replace("{screenShareSupported ? (sharing ? 'Stop presenting' : 'Present now') : 'Present not supported'}", "{screenShareSupported ? (sharing ? 'Stop presenting' : 'Present screen, window or tab') : 'Present not supported'}", 1)
+          p.write_text(s)
           PY
 
       - name: Commit improved screen sharing
+        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add client/src/pages/Meetings.jsx
-          git diff --cached --quiet && exit 0
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
           git commit -m "feat: improve Meet screen sharing"
           git push
