@@ -16,6 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Patch screen sharing
+        shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -46,10 +47,8 @@ jobs:
           if old not in text:
               raise SystemExit('screen share block not found')
           text = text.replace(old, new, 1)
-
           text = text.replace("label={screenShareSupported ? 'Present now' : 'Present not supported'}", "label={screenShareSupported ? 'Present' : 'Present not supported'}", 1)
           text = text.replace("{screenShareSupported ? (sharing ? 'Stop presenting' : 'Present now') : 'Present not supported'}", "{screenShareSupported ? (sharing ? 'Stop presenting' : 'Present screen, window or tab') : 'Present not supported'}", 1)
-
           meetings.write_text(text)
           PY
 
