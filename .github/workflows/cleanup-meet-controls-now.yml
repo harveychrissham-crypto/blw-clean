@@ -1,0 +1,67 @@
+name: One-time Meet duplicate cleanup
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: ${{ !startsWith(github.event.head_commit.message, 'fix: remove duplicate Meet controls completely') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Remove duplicate JSX controls
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('client/src/pages/Meetings.jsx')
+          s = p.read_text()
+
+          patterns = [
+              '''<Button variant="custom" size="none" onClick={leaveVoluntarily} className="hidden shrink-0 rounded-full border border-white/10 bg-[#3c4043] px-4 py-2 text-xs font-semibold text-white hover:bg-white/10 sm:inline-flex"><FiLogOut/>Leave</Button>''',
+              '''<Button variant="custom" size="none" onClick={() => { toggleShare(); setShowMore(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-white hover:bg-white/10"><FiMonitor/><span className="flex-1">{screenShareSupported ? (sharing ? 'Stop presenting' : 'Present screen, window or tab') : 'Present not supported'}</span>{sharing && <FiCheck className="text-emerald-300"/>}</Button>''',
+          ]
+          for pattern in patterns:
+              print('removed:', s.count(pattern))
+              s = s.replace(pattern, '')
+
+          # Remove icon imports only when unused after JSX cleanup.
+          if 'FiLogOut' not in s:
+              s = s.replace(', FiLogOut', '')
+          if 'FiMonitor' not in s:
+              s = s.replace(', FiMonitor', '')
+
+          p.write_text(s)
+          PY
+
+      - name: Remove duplicate-hiding CSS
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('client/src/meetings.css')
+          s = p.read_text()
+          start = s.find('/* The fixed dock is the single source of truth for leave/present actions. */')
+          if start != -1:
+              end = s.find('\n', s.find('}', start)) + 1
+              end2 = s.find('\n', s.find('}', end)) + 1
+              s = s[:start] + s[end2:]
+              print('removed obsolete duplicate CSS')
+          p.write_text(s)
+          PY
+
+      - name: Delete one-time cleanup workflows and commit
+        shell: bash
+        run: |
+          rm -f .github/workflows/apply-google-meet-polish.yml .github/workflows/cleanup-meet-controls-now.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "fix: remove duplicate Meet controls completely"
+          git push
