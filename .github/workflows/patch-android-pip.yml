@@ -1,0 +1,80 @@
+name: Patch native Android meeting PiP
+
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-android-pip.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch meeting bridge and Android build
+        shell: python
+        run: |
+          from pathlib import Path
+
+          meetings = Path('client/src/pages/Meetings.jsx')
+          s = meetings.read_text()
+
+          react_import = "import { useCallback, useEffect, useRef, useState } from 'react';"
+          if "import { registerPlugin } from '@capacitor/core';" not in s:
+              if react_import not in s:
+                  raise SystemExit('React import not found')
+              s = s.replace(react_import, react_import + "\nimport { registerPlugin } from '@capacitor/core';", 1)
+
+          marker = "const DEVICE_PREFS_KEY = 'blw-meet-device-prefs';"
+          if "const MeetingPiP = registerPlugin('MeetingPiP');" not in s:
+              if marker not in s:
+                  raise SystemExit('device preference marker not found')
+              s = s.replace(marker, marker + "\nconst MeetingPiP = registerPlugin('MeetingPiP');", 1)
+
+          effect_marker = "  useEffect(() => () => { clearTimeout(mutedHintTimer.current); clearTimeout(copiedHintTimer.current); }, []);"
+          pip_effect = "  useEffect(() => {\n    if (pending) return undefined;\n    MeetingPiP.setEnabled({ enabled: true }).catch(() => {});\n    return () => { MeetingPiP.setEnabled({ enabled: false }).catch(() => {}); };\n  }, [pending]);"
+          if pip_effect not in s:
+              if effect_marker not in s:
+                  raise SystemExit('CallRoom lifecycle marker not found')
+              s = s.replace(effect_marker, effect_marker + "\n" + pip_effect, 1)
+
+          meetings.write_text(s)
+
+          workflow = Path('.github/workflows/android-release.yml')
+          w = workflow.read_text()
+          sync_step = "      - name: Sync Capacitor Android project\n        working-directory: client\n        run: npx cap sync android\n"
+          native_step = r'''\n      - name: Configure Android Picture-in-Picture for meetings\n        working-directory: client/android\n        shell: bash\n        run: |\n          set -euo pipefail\n          MAIN_ACTIVITY="app/src/main/java/com/blwcampusministry/app/MainActivity.java"\n          PIP_PLUGIN="app/src/main/java/com/blwcampusministry/app/MeetingPiP.java"\n          MANIFEST="app/src/main/AndroidManifest.xml"\n\n          cat > "$PIP_PLUGIN" <<'EOF'\n          package com.blwcampusministry.app;\n\n          import android.app.Activity;\n          import android.app.PictureInPictureParams;\n          import android.os.Build;\n          import android.util.Rational;\n\n          import com.getcapacitor.JSObject;\n          import com.getcapacitor.Plugin;\n          import com.getcapacitor.PluginCall;\n          import com.getcapacitor.annotation.CapacitorPlugin;\n\n          @CapacitorPlugin(name = "MeetingPiP")\n          public class MeetingPiP extends Plugin {\n            @PluginMethod\n            public void setEnabled(PluginCall call) {\n              boolean enabled = call.getBoolean("enabled", false);\n              Activity activity = getActivity();\n              activity.runOnUiThread(() -> {\n                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {\n                  PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder()\n                      .setAspectRatio(new Rational(16, 9));\n                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {\n                    builder.setAutoEnterEnabled(enabled);\n                  }\n                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {\n                    builder.setSeamlessResizeEnabled(true);\n                  }\n                  activity.setPictureInPictureParams(builder.build());\n                }\n                call.resolve(new JSObject().put("enabled", enabled));\n              });\n            }\n          }\n          EOF\n\n          if [ ! -f "$MAIN_ACTIVITY" ]; then\n            echo "MainActivity.java not found: $MAIN_ACTIVITY" >&2\n            exit 1\n          fi\n\n          python3 - <<'PY'\n          from pathlib import Path\n          p = Path('app/src/main/java/com/blwcampusministry/app/MainActivity.java')\n          s = p.read_text()\n          if 'registerPlugin(MeetingPiP.class);' not in s:\n              marker = 'public class MainActivity extends BridgeActivity {'\n              if marker not in s:\n                  raise SystemExit('MainActivity class marker not found')\n              s = s.replace(marker, marker + "\n    @Override\n    protected void onCreate(android.os.Bundle savedInstanceState) {\n        registerPlugin(MeetingPiP.class);\n        super.onCreate(savedInstanceState);\n    }", 1)\n          if '@Override\\n    public void onUserLeaveHint()' not in s and 'public void onUserLeaveHint()' not in s:\n              s = s.rstrip() + "\\n\\n    @Override\\n    public void onUserLeaveHint() {\\n        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {\\n            enterPictureInPictureMode();\\n        }\\n        super.onUserLeaveHint();\\n    }\\n}\n"\n          p.write_text(s)\n          PY\n\n          python3 - <<'PY'\n          from pathlib import Path\n          p = Path('app/src/main/AndroidManifest.xml')\n          s = p.read_text()\n          old = 'android:exported="true"'\n          if 'android:supportsPictureInPicture="true"' not in s:\n              idx = s.find(old)\n              if idx < 0:\n                  raise SystemExit('exported activity attribute not found in AndroidManifest.xml')\n              s = s[:idx] + s[idx: idx + len(old)] + ' android:supportsPictureInPicture="true" android:resizeableActivity="true"' + s[idx + len(old):]\n          p.write_text(s)\n          PY\n'''
+          if 'Configure Android Picture-in-Picture for meetings' not in w:
+              if sync_step not in w:
+                  raise SystemExit('Capacitor sync step not found')
+              w = w.replace(sync_step, sync_step + native_step, 1)
+          workflow.write_text(w)
+
+          # The earlier browser-only PiP patch was not sufficient for Android app backgrounding.
+          old_pip = Path('.github/workflows/add-pip.yml')
+          if old_pip.exists():
+              old_pip.unlink()
+
+      - name: Validate the generated source files
+        shell: bash
+        run: |
+          test -f .github/workflows/android-release.yml
+          grep -q "MeetingPiP" client/src/pages/Meetings.jsx
+          grep -q "Configure Android Picture-in-Picture for meetings" .github/workflows/android-release.yml
+
+      - name: Commit patch and remove this workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm -f .github/workflows/patch-android-pip.yml
+          git add client/src/pages/Meetings.jsx .github/workflows/android-release.yml .github/workflows/add-pip.yml .github/workflows/patch-android-pip.yml
+          git diff --cached --quiet && exit 0
+          git commit -m 'feat: enable native Android meeting picture-in-picture'
+          git push
