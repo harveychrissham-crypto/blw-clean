@@ -252,7 +252,7 @@ export default function Dashboard() {
                   {user?.avatarUrl ? (
                     <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-pink-500 via-purple-400 to-indigo-500 text-2xl font-black text-white">
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#C93690] to-[#4D1B82] text-2xl font-black text-white">
                       {displayName.charAt(0).toUpperCase()}
                     </div>
                   )}
@@ -279,7 +279,7 @@ export default function Dashboard() {
               <Button variant="custom" size="none"
                 type="button"
                 onClick={openEdit}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_20px_40px_rgba(236,47,168,0.18)] transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#A62574] to-[#3C1464] px-4 py-2 text-sm font-semibold text-white shadow-[0_20px_40px_rgba(236,47,168,0.18)] transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
                 <FiEdit2 /> Edit Profile
               </Button>
@@ -302,7 +302,7 @@ export default function Dashboard() {
               <span className="text-[11px] font-semibold text-pink-500">60%</span>
             </div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-950">
-              <div className="h-full w-[60%] rounded-full bg-gradient-to-r from-pink-500 via-purple-400 to-indigo-500 shadow-[0_0_20px_rgba(163,77,255,0.45)]" />
+              <div className="h-full w-[60%] rounded-full bg-gradient-to-r from-[#C93690] to-[#4D1B82] shadow-[0_0_20px_rgba(163,77,255,0.45)]" />
             </div>
           </div>
         </Card>
@@ -328,7 +328,7 @@ export default function Dashboard() {
         {/* Sunday check-in */}
         <Card variant="raised" className="p-5">
           <div className="flex items-start gap-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-500 via-purple-400 to-indigo-500 text-white">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#C93690] to-[#4D1B82] text-white">
               <FiClock className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
@@ -357,7 +357,7 @@ export default function Dashboard() {
               <Button variant="custom" size="none"
                 type="button"
                 onClick={() => navigate('/checkin')}
-                className="mt-4 inline-flex items-center gap-2 rounded-full border border-pink-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-pink-600/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#EC2FA8]/60 px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#EC2FA8]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EC2FA8]/60"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 Show my QR badge
@@ -636,7 +636,7 @@ export default function Dashboard() {
                 </Button>
                 <Button variant="custom" size="none"
                   type="submit"
-                  className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                  className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#A62574] to-[#3C1464] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                 >
                   Save Changes
                 </Button>

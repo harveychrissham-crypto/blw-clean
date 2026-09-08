@@ -191,7 +191,7 @@ export default function RecordSouls() {
 
             {error && <p className="text-sm text-red-300">{error}</p>}
 
-            <Button variant="custom" size="none" type="submit" className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+            <Button variant="custom" size="none" type="submit" className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#A62574] to-[#3C1464] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
               Record soul
             </Button>
           </form>

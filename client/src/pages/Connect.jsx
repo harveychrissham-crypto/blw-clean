@@ -326,7 +326,7 @@ export default function Connect() {
 
             <Card variant="subtle" className="mt-7 p-4 sm:p-5">
               <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-purple-500/15 text-purple-300"><FiSearch className="h-5 w-5" /></div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#3C1464]/60 text-[#F04FB8]"><FiSearch className="h-5 w-5" /></div>
                 <div>
                   <p className="text-sm font-bold text-white">Find your nearest fellowship</p>
                   <p className="text-xs text-white/60">Search a place or use your current location.</p>
@@ -352,7 +352,7 @@ export default function Connect() {
                     <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-30 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
                       {suggestions.map((location) => (
                         <button key={location.id} type="button" onClick={() => chooseSuggestion(location)} className="flex w-full items-start gap-3 border-b border-white/5 px-4 py-3.5 text-left transition last:border-b-0 hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
-                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-purple-500/15 text-purple-300"><FiMapPin className="h-4 w-4" /></span>
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#3C1464]/60 text-[#F04FB8]"><FiMapPin className="h-4 w-4" /></span>
                           <span className="min-w-0">
                             <span className="block truncate text-sm font-semibold text-white">{location.fellowshipName}</span>
                             <span className="mt-1 block truncate text-xs text-white/60">{[location.town || location.city, location.area, location.university, location.country].filter(Boolean).join(' • ')}</span>
@@ -363,7 +363,7 @@ export default function Connect() {
                   )}
                 </div>
                 <Button type="button" onClick={searchPlace} disabled={searching || campusSearch.trim().length < 2} variant="gradient" size="none" className="inline-flex min-w-[110px] items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm shadow-[0_12px_28px_rgba(138,43,226,0.2)] hover:opacity-95">{searching ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiSearch className="h-4 w-4" />} Search</Button>
-                <Button type="button" onClick={useMyLocation} disabled={locating} variant="custom" size="none" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-purple-500/30 bg-purple-500/10 px-5 py-3.5 text-sm font-bold text-white hover:border-purple-500/50 hover:bg-purple-500/15 disabled:opacity-60">{locating ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiNavigation className="h-4 w-4" />} Where I am</Button>
+                <Button type="button" onClick={useMyLocation} disabled={locating} variant="custom" size="none" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#EC2FA8]/25 bg-[#3C1464]/60 px-5 py-3.5 text-sm font-bold text-white hover:border-[#EC2FA8]/35 hover:bg-[#4D1B82]/70 disabled:opacity-60">{locating ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiNavigation className="h-4 w-4" />} Where I am</Button>
               </div>
 
               <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/50">
@@ -385,7 +385,7 @@ export default function Connect() {
                             <p className="truncate text-sm font-semibold text-white">{location.fellowshipName}</p>
                             <p className="truncate text-xs text-white/60">{[location.town || location.city, location.area, location.university].filter(Boolean).join(' • ')}</p>
                           </div>
-                          <span className="shrink-0 text-xs font-semibold text-purple-300">{location.distanceKm.toFixed(1)} km</span>
+                          <span className="shrink-0 text-xs font-semibold text-[#F04FB8]">{location.distanceKm.toFixed(1)} km</span>
                         </Card>
                       ))}
                     </div>
@@ -401,7 +401,7 @@ export default function Connect() {
         </Card>
 
         <Card variant="subtle" className="p-6">
-          <div className="flex items-center gap-2 text-purple-300"><FiMapPin /> Connect globally</div>
+          <div className="flex items-center gap-2 text-[#F04FB8]"><FiMapPin /> Connect globally</div>
           <p className="mt-4 text-sm leading-relaxed text-slate-400">Search any town, area, university or fellowship, or use “Where I am” to see nearby fellowship locations on the map.</p>
         </Card>
       </div>

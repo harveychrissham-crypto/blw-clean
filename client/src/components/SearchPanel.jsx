@@ -54,7 +54,7 @@ export default function SearchPanel({ open, onClose }) {
             <Card variant="subtle" className="p-4 text-sm text-slate-400">No matching pages found yet.</Card>
           ) : (
             results.map((item) => (
-              <Card key={item.path} as="a" href={item.path} onClick={onClose} variant="subtle" className="block p-4 transition hover:border-purple-400/40 hover:bg-purple-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+              <Card key={item.path} as="a" href={item.path} onClick={onClose} variant="subtle" className="block p-4 transition hover:border-[#EC2FA8]/40 hover:bg-[#EC2FA8]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
                 <div className="font-semibold text-white">{item.title}</div>
                 <div className="mt-1 text-sm text-slate-400">{item.description}</div>
               </Card>

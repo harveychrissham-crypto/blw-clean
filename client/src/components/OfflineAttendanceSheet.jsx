@@ -155,7 +155,7 @@ export default function OfflineAttendanceSheet({ members = [], onClose, onBackTo
                   const isChecked = !!member.checkedIn;
                   return (
                     <div key={member.membershipId} className="flex items-center gap-2.5 px-3 py-2">
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-pink-600 via-purple-500 to-indigo-500 text-[11px] font-black text-white">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#A62574] to-[#3C1464] text-[11px] font-black text-white">
                         {String(member.name || '?').charAt(0)}
                       </div>
                       <div className="min-w-0 flex-1">

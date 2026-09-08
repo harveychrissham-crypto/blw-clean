@@ -182,7 +182,7 @@ export default function NotificationCenter() {
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Button variant="custom" size="none" type="button" onClick={handleSelfTest} disabled={busy || loadingTargets || (targetType !== 'announcement' && !selectedTarget) || !title.trim() || !body.trim()} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-gold-500/30 bg-gold-500/10 py-3 font-bold text-gold-500 disabled:opacity-50"><FiUserCheck /> {busy ? 'Sending…' : 'Send Test to Me'}</Button>
-          <Button variant="custom" size="none" type="submit" disabled={busy || loadingTargets || (targetType !== 'announcement' && !selectedTarget)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 py-3 font-bold text-white disabled:opacity-50"><FiSend /> {busy ? 'Sending…' : 'Send Notification'}</Button>
+          <Button variant="custom" size="none" type="submit" disabled={busy || loadingTargets || (targetType !== 'announcement' && !selectedTarget)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#A62574] to-[#3C1464] py-3 font-bold text-white disabled:opacity-50"><FiSend /> {busy ? 'Sending…' : 'Send Notification'}</Button>
         </div>
 
         {error && <div className="flex items-start gap-2 rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-300"><FiAlertCircle className="mt-0.5" />{error}</div>}

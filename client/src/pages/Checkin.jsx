@@ -103,7 +103,7 @@ function MemberQRCode({ member }) {
           {member.joinDate && <p className="text-xs text-slate-400">Joined: {member.joinDate}</p>}
         </div>
       </div>
-      <Button variant="custom" size="none" type="button" onClick={handleDownload} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+      <Button variant="custom" size="none" type="button" onClick={handleDownload} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#A62574] to-[#3C1464] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
         <FiDownload /> Download QR Badge
       </Button>
     </div>
@@ -190,7 +190,7 @@ export default function Checkin() {
                   <label className="block text-sm font-medium text-slate-400">Phone number or email</label>
                   <input value={query} onChange={(e) => setQuery(e.target.value)} className="mt-2 w-full bg-transparent text-white outline-none placeholder:text-slate-500" placeholder="0712345678 or name@example.com" />
                 </div>
-                <Button variant="custom" size="none" type="submit" disabled={isLoading} className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+                <Button variant="custom" size="none" type="submit" disabled={isLoading} className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#A62574] to-[#3C1464] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
                   <FiSearch /> {isLoading ? 'Searching...' : 'Find me'}
                 </Button>
               </form>
@@ -225,7 +225,7 @@ export default function Checkin() {
           <Card variant="raised" className="p-4">
             <div className="flex flex-col gap-6 rounded-3xl border border-white/10 bg-[#121321]/80 p-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-pink-600 via-purple-500 to-indigo-500 text-2xl font-black text-white shadow-xl shadow-purple-400/20">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-[#A62574] to-[#3C1464] text-2xl font-black text-white shadow-xl shadow-purple-400/20">
                   {foundProfile.name?.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
@@ -261,7 +261,7 @@ export default function Checkin() {
                 {foundProfile.checkedIn ? (
                   <div className="flex items-center gap-3 rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-300"><FiCheckCircle className="h-5 w-5" /> You are already checked in for today.</div>
                 ) : (
-                  <Button variant="custom" size="none" type="button" onClick={handleSelfCheckIn} disabled={isCheckingIn} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-500 py-4 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+                  <Button variant="custom" size="none" type="button" onClick={handleSelfCheckIn} disabled={isCheckingIn} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#A62574] to-[#3C1464] py-4 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
                     <FiCheckCircle /> {isCheckingIn ? 'Checking in...' : user?.email ? 'Check In Now' : 'Sign In to Check In'}
                   </Button>
                 )}
