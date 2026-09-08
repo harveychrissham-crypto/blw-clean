@@ -463,51 +463,58 @@ function CallRoom({ credentials, choices, room: roomName, onLeave }) {
 
   return (
     <section ref={containerRef} className={`mx-auto max-w-7xl px-3 py-4 sm:px-5 ${isFullscreen ? 'flex h-screen flex-col justify-center overflow-y-auto bg-ink-900' : ''}`}>
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-gold-500">Live room{recording && <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-red-300"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" aria-hidden="true" />Recording</span>}</p>
-          <h1 className="truncate text-2xl font-bold">{roomName}</h1>
-          <p className="text-xs text-white/50">{connState === 'reconnecting' ? 'Reconnecting…' : connected ? `${all.length} participant${all.length === 1 ? '' : 's'}` : 'Connecting…'}</p>
-        </div>
-        <Button variant="custom" size="none" onClick={leaveVoluntarily} className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm"><FiLogOut/>Leave</Button>
-      </div>
-      {connState === 'reconnecting' && (
-        <div className="mb-3 flex items-center gap-2 rounded-2xl border border-amber-400/20 bg-amber-400/5 px-4 py-2.5 text-sm text-amber-200">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-amber-300" /> Reconnecting — hang on, trying to get you back into the meeting…
-        </div>
-      )}
-      {gridArea}
-      <ReactionsBar liveRoom={roomRef.current} localParticipant={local} participants={participants} />
-      <div className="sticky bottom-4 mx-auto mt-4 flex w-fit flex-wrap items-center justify-center gap-2 rounded-full border border-white/10 bg-[#11101d]/95 p-2 shadow-2xl backdrop-blur">
-        <ControlButton active={camera} onClick={toggleCamera} onIcon={FiCamera} offIcon={FiCameraOff} label="Camera"/>
-        <ControlButton active={mic} onClick={toggleMic} onIcon={FiMic} offIcon={FiMicOff} label="Microphone"/>
-        <div className="relative">
-          <ControlButton active={showMore || sharing || blurOn} onClick={openMore} onIcon={FiMoreHorizontal} offIcon={FiMoreHorizontal} label="More options"/>
-          {showMore && (
-            <>
-              <Button variant="custom" size="none" type="button" aria-label="Close menu" onClick={() => setShowMore(false)} className="fixed inset-0 z-30 cursor-default !bg-transparent !border-0 !p-0" />
-              <Card variant="custom" className="absolute bottom-full left-1/2 z-40 mb-3 w-56 -translate-x-1/2 overflow-hidden rounded-2xl border border-white/10 bg-[#1a1926] shadow-2xl">
-                <Button variant="custom" size="none" type="button" onClick={() => { toggleShare(); setShowMore(false); }} disabled={!screenShareSupported} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30">
-                  <FiMonitor className="h-4 w-4 shrink-0" />
-                  <span className="flex-1">{screenShareSupported ? 'Share screen' : 'Screen sharing not supported'}</span>
-                  {sharing && <FiCheck className="h-4 w-4 shrink-0 text-amber-300" />}
-                </Button>
-                <Button variant="custom" size="none" type="button" onClick={() => { toggleBlur(); setShowMore(false); }} disabled={blurBusy || !camera} className="flex w-full items-center gap-3 border-t border-white/5 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30">
-                  <FiDroplet className="h-4 w-4 shrink-0" />
-                  <span className="flex-1">{blurBusy ? 'Loading blur…' : camera ? 'Blur my background' : 'Turn camera on to blur'}</span>
-                  {blurOn && <FiCheck className="h-4 w-4 shrink-0 text-amber-300" />}
-                </Button>
-              </Card>
-            </>
+      <div className="flex gap-4">
+        <div className="min-w-0 flex-1">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-gold-500">Live room{recording && <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-red-300"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" aria-hidden="true" />Recording</span>}</p>
+              <h1 className="truncate text-2xl font-bold">{roomName}</h1>
+              <p className="text-xs text-white/50">{connState === 'reconnecting' ? 'Reconnecting…' : connected ? `${all.length} participant${all.length === 1 ? '' : 's'}` : 'Connecting…'}</p>
+            </div>
+            <Button variant="custom" size="none" onClick={leaveVoluntarily} className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm"><FiLogOut/>Leave</Button>
+          </div>
+          {connState === 'reconnecting' && (
+            <div className="mb-3 flex items-center gap-2 rounded-2xl border border-amber-400/20 bg-amber-400/5 px-4 py-2.5 text-sm text-amber-200">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-amber-300" /> Reconnecting — hang on, trying to get you back into the meeting…
+            </div>
           )}
-        </div>
+          {gridArea}
+          <ReactionsBar liveRoom={roomRef.current} localParticipant={local} participants={participants} />
+          <div className="sticky bottom-4 mx-auto mt-4 flex w-fit flex-wrap items-center justify-center gap-2 rounded-full border border-white/10 bg-[#11101d]/95 p-2 shadow-2xl backdrop-blur">
+            <ControlButton active={camera} onClick={toggleCamera} onIcon={FiCamera} offIcon={FiCameraOff} label="Camera"/>
+            <ControlButton active={mic} onClick={toggleMic} onIcon={FiMic} offIcon={FiMicOff} label="Microphone"/>
+            <div className="relative">
+              <ControlButton active={showMore || sharing || blurOn} onClick={openMore} onIcon={FiMoreHorizontal} offIcon={FiMoreHorizontal} label="More options"/>
+              {showMore && (
+                <>
+                  <Button variant="custom" size="none" type="button" aria-label="Close menu" onClick={() => setShowMore(false)} className="fixed inset-0 z-30 cursor-default !bg-transparent !border-0 !p-0" />
+                  <Card variant="custom" className="absolute bottom-full left-1/2 z-40 mb-3 w-56 -translate-x-1/2 overflow-hidden rounded-2xl border border-white/10 bg-[#1a1926] shadow-2xl">
+                    <Button variant="custom" size="none" type="button" onClick={() => { toggleShare(); setShowMore(false); }} disabled={!screenShareSupported} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30">
+                      <FiMonitor className="h-4 w-4 shrink-0" />
+                      <span className="flex-1">{screenShareSupported ? 'Share screen' : 'Screen sharing not supported'}</span>
+                      {sharing && <FiCheck className="h-4 w-4 shrink-0 text-amber-300" />}
+                    </Button>
+                    <Button variant="custom" size="none" type="button" onClick={() => { toggleBlur(); setShowMore(false); }} disabled={blurBusy || !camera} className="flex w-full items-center gap-3 border-t border-white/5 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30">
+                      <FiDroplet className="h-4 w-4 shrink-0" />
+                      <span className="flex-1">{blurBusy ? 'Loading blur…' : camera ? 'Blur my background' : 'Turn camera on to blur'}</span>
+                      {blurOn && <FiCheck className="h-4 w-4 shrink-0 text-amber-300" />}
+                    </Button>
+                  </Card>
+                </>
+              )}
+            </div>
         <ControlButton active={showChat} onClick={openChat} onIcon={FiMessageSquare} offIcon={FiMessageSquare} label="Chat"/>
         {isHost && <ControlButton active={showHost} onClick={openHost} onIcon={FiUsers} offIcon={FiUsers} label="Host controls"/>}
         <ControlButton active={isFullscreen} onClick={toggleFullscreen} onIcon={FiMinimize2} offIcon={FiMaximize2} label={isFullscreen ? 'Exit full screen' : 'Full screen'}/>
         <Button variant="custom" size="none" onClick={leaveVoluntarily} aria-label="Leave meeting" className="grid h-11 w-11 place-items-center rounded-full bg-red-500 text-white"><FiPhoneOff/></Button>
+          </div>
+          {error && <p className="mx-auto mt-4 max-w-xl rounded-2xl border border-red-400/20 bg-red-400/5 p-3 text-center text-sm text-red-200">{error}</p>}
+        </div>
+        {/* On sm+ screens chat is a real side panel that shares space with the
+            grid; on mobile it stays a full overlay since there's no room to
+            split a phone screen — ChatPanel's own className handles that. */}
+        <ChatPanel liveRoom={roomRef.current} open={showChat} onClose={() => setShowChat(false)} />
       </div>
-      {error && <p className="mx-auto mt-4 max-w-xl rounded-2xl border border-red-400/20 bg-red-400/5 p-3 text-center text-sm text-red-200">{error}</p>}
-      <ChatPanel liveRoom={roomRef.current} open={showChat} onClose={() => setShowChat(false)} />
       {isHost && <HostPanel roomName={roomName} open={showHost} onClose={() => setShowHost(false)} participants={participants} locked={locked} setLocked={setLocked} waitingRoomEnabled={waitingRoomEnabled} setWaitingRoomEnabled={setWaitingRoomEnabled} recording={recording} onRecordingChange={changeRecording} onEnded={() => onLeave('ended')} />}
     </section>
   );
@@ -627,7 +634,7 @@ function ChatPanel({ liveRoom, open, onClose }) {
   if (!open) return null;
 
   return (
-    <Card variant="custom" className="fixed inset-x-3 bottom-24 top-24 z-30 flex flex-col rounded-3xl border border-white/10 bg-[#11101d]/98 shadow-2xl backdrop-blur sm:inset-x-auto sm:right-4 sm:top-28 sm:h-[28rem] sm:w-80">
+    <Card variant="custom" className="fixed inset-x-3 bottom-24 top-24 z-30 flex flex-col rounded-3xl border border-white/10 bg-[#11101d]/98 shadow-2xl backdrop-blur sm:static sm:inset-auto sm:h-[calc(100vh-7rem)] sm:w-80 sm:shrink-0 sm:self-start">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <p className="text-sm font-semibold text-white">In-call chat</p>
         <Button variant="custom" size="none" onClick={onClose} aria-label="Close chat" className="text-white/50 hover:text-white"><FiX/></Button>
