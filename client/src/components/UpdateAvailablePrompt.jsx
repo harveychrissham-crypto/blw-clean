@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { FiDownload, FiX } from 'react-icons/fi';
-import { UPDATE_AVAILABLE_EVENT, installApk } from '../appUpdater';
+import { UPDATE_AVAILABLE_EVENT, clearPendingAppUpdate, getPendingAppUpdate, installApk } from '../appUpdater';
 import Button from './ui/Button';
 
 export default function UpdateAvailablePrompt() {
-  const [details, setDetails] = useState(null);
+  const [details, setDetails] = useState(() => getPendingAppUpdate());
   const [installing, setInstalling] = useState(false);
   const [error, setError] = useState('');
 
@@ -12,14 +12,22 @@ export default function UpdateAvailablePrompt() {
     const handler = (event) => {
       setError('');
       setInstalling(false);
-      setDetails(event.detail);
+      setDetails(event.detail || getPendingAppUpdate());
     };
 
     window.addEventListener(UPDATE_AVAILABLE_EVENT, handler);
+    const pending = getPendingAppUpdate();
+    if (pending) setDetails(pending);
+
     return () => window.removeEventListener(UPDATE_AVAILABLE_EVENT, handler);
   }, []);
 
   if (!details) return null;
+
+  const dismiss = () => {
+    clearPendingAppUpdate();
+    setDetails(null);
+  };
 
   const handleInstall = async () => {
     setInstalling(true);
@@ -31,7 +39,7 @@ export default function UpdateAvailablePrompt() {
         setError('Allow BLW Kenya Zone to install apps from this source in Android settings, then tap Install update again.');
         return;
       }
-      setDetails(null);
+      dismiss();
     } catch (installError) {
       setError(installError?.message || 'The update could not be installed. Please try again.');
     } finally {
@@ -46,7 +54,7 @@ export default function UpdateAvailablePrompt() {
           variant="custom"
           size="none"
           type="button"
-          onClick={() => setDetails(null)}
+          onClick={dismiss}
           disabled={installing}
           className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-white/50 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:opacity-40"
           aria-label="Close"
@@ -87,7 +95,7 @@ export default function UpdateAvailablePrompt() {
             variant="custom"
             size="none"
             type="button"
-            onClick={() => setDetails(null)}
+            onClick={dismiss}
             disabled={installing}
             className="rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white/70 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:opacity-40"
           >
