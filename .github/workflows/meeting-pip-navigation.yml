@@ -1,0 +1,145 @@
+name: Persist meeting PiP across app navigation
+
+on:
+  push:
+    paths:
+      - '.github/workflows/meeting-pip-navigation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch meeting session persistence
+        shell: python
+        run: |
+          from pathlib import Path
+
+          meetings = Path('client/src/pages/Meetings.jsx')
+          s = meetings.read_text()
+
+          if 'export { CallRoom };' not in s:
+              marker = '\nfunction ConnectionStateBadge({ connState, connected, count }) {'
+              if marker not in s:
+                  raise SystemExit('CallRoom export marker not found')
+              s = s.replace(marker, '\nexport { CallRoom };\n' + marker, 1)
+
+          # Publish the active meeting session from the Meetings page so App.jsx can
+          # keep the actual CallRoom mounted while routes change.
+          marker = "const DEVICE_PREFS_KEY = 'blw-meet-device-prefs';"
+          session_code = """const MEETING_SESSION_EVENT = 'blw-meeting-session-change';
+function publishMeetingSession(session) {
+  try {
+    window.__BLW_MEETING_SESSION__ = session;
+    window.dispatchEvent(new Event(MEETING_SESSION_EVENT));
+  } catch {}
+}
+"""
+          if 'window.__BLW_MEETING_SESSION__' not in s:
+              if marker not in s:
+                  raise SystemExit('Meeting session marker not found')
+              s = s.replace(marker, marker + '\n' + session_code, 1)
+
+          old_room = "  if (stage === 'room' && credentials && choices) return <CallRoom credentials={credentials} choices={choices} room={room} onLeave={handleLeave} />;"
+          new_room = "  if (stage === 'room' && credentials && choices) { publishMeetingSession({ credentials, choices, room }); return <div className=\"mx-auto max-w-4xl px-5 py-12\" />; }"
+          if old_room in s:
+              s = s.replace(old_room, new_room, 1)
+          elif "publishMeetingSession({ credentials, choices, room });" not in s:
+              raise SystemExit('Meetings room render marker not found')
+
+          old_handle = "  function handleLeave(reason) {\n    setStage('form'); setCredentials(null); setChoices(null);"
+          new_handle = "  function handleLeave(reason) {\n    publishMeetingSession(null);\n    setStage('form'); setCredentials(null); setChoices(null);"
+          if old_handle not in s:
+              raise SystemExit('Meetings handleLeave marker not found')
+          s = s.replace(old_handle, new_handle, 1)
+
+          meetings.write_text(s)
+
+          app = Path('client/src/App.jsx')
+          a = app.read_text()
+          if "import { CallRoom } from './pages/Meetings';" not in a:
+              import_marker = "import {"
+              # Use a standalone import near the top; the existing file's imports are plain ES modules.
+              first_import_end = a.find('\n', a.find("from 'react'"))
+              if first_import_end < 0:
+                  first_import_end = 0
+              a = a[:first_import_end + 1] + "import { CallRoom } from './pages/Meetings';\n" + a[first_import_end + 1:]
+
+          if 'function PersistentMeetingOverlay()' not in a:
+              component = '''\nfunction PersistentMeetingOverlay() {\n  const [session, setSession] = useState(() => {\n    try { return window.__BLW_MEETING_SESSION__ || null; } catch { return null; }\n  });\n  useEffect(() => {\n    const sync = () => {\n      try { setSession(window.__BLW_MEETING_SESSION__ || null); } catch {}\n    };\n    window.addEventListener('blw-meeting-session-change', sync);\n    return () => window.removeEventListener('blw-meeting-session-change', sync);\n  }, []);\n  if (!session?.credentials || !session?.choices || !session?.room) return null;\n  return <CallRoom credentials={session.credentials} choices={session.choices} room={session.room} onLeave={() => {\n    try {\n      window.__BLW_MEETING_SESSION__ = null;\n      window.dispatchEvent(new Event('blw-meeting-session-change'));\n    } catch {}\n  }} />;\n}\n\n'''
+              marker = 'export default function App() {'
+              if marker not in a:
+                  raise SystemExit('App component marker not found')
+              a = a.replace(marker, component + marker, 1)
+
+          # Add navigation-aware PiP entry. The persistent CallRoom stays mounted;
+          # route changes only minimize it into native PiP.
+          if 'const MeetingPiP = registerPlugin(\'MeetingPiP\');' not in a:
+              react_dom_marker = "import {" if "import { registerPlugin }" not in a else None
+              # Prefer a deterministic import insertion after the React imports.
+              lines = a.splitlines(True)
+              idx = 0
+              for i, line in enumerate(lines):
+                  if line.startswith('import '):
+                      idx = i + 1
+                  elif idx and not line.startswith('import '):
+                      break
+              lines.insert(idx, "import { registerPlugin } from '@capacitor/core';\n")
+              a = ''.join(lines)
+          if "const MeetingPiP = registerPlugin('MeetingPiP');" not in a:
+              marker = 'function PersistentMeetingOverlay() {'
+              if marker not in a:
+                  raise SystemExit('Persistent overlay insertion marker not found')
+              a = a.replace(marker, "const MeetingPiP = registerPlugin('MeetingPiP');\n\n" + marker, 1)
+
+          nav_effect = '''  useEffect(() => {\n    const check = () => {\n      if (window.location.pathname === '/meetings') return;\n      if (!window.__BLW_MEETING_SESSION__) return;\n      MeetingPiP.enter?.().catch?.(() => {});\n    };\n    const timer = window.setTimeout(check, 50);\n    return () => window.clearTimeout(timer);\n  }, [location.pathname]);\n'''
+          if 'MeetingPiP.enter?.()' not in a:
+              # App.jsx uses useLocation in AnimatedRoutes, so this belongs there.
+              marker = 'function AnimatedRoutes() {'
+              if marker not in a:
+                  raise SystemExit('AnimatedRoutes marker not found')
+              a = a.replace(marker, marker + '\n' + nav_effect, 1)
+
+          # Render persistent meeting after the routed UI so it survives route unmounts.
+          if '<PersistentMeetingOverlay />' not in a:
+              marker = 'return <>'
+              if marker not in a:
+                  raise SystemExit('App return fragment marker not found')
+              a = a.replace(marker, 'return <>\n    <PersistentMeetingOverlay />', 1)
+
+          app.write_text(a)
+
+          workflow = Path('.github/workflows/patch-android-pip.yml')
+          w = workflow.read_text()
+          # Extend the native bridge with an explicit enter method for in-app navigation.
+          old_method = '''            @PluginMethod\n            public void setEnabled(PluginCall call) {'''
+          new_method = '''            @PluginMethod\n            public void enter(PluginCall call) {\n              Activity activity = getActivity();\n              activity.runOnUiThread(() -> {\n                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {\n                  activity.enterPictureInPictureMode();\n                }\n                call.resolve();\n              });\n            }\n\n            @PluginMethod\n            public void setEnabled(PluginCall call) {'''
+          if 'public void enter(PluginCall call)' not in w:
+              if old_method not in w:
+                  raise SystemExit('Native MeetingPiP method marker not found')
+              w = w.replace(old_method, new_method, 1)
+          workflow.write_text(w)
+
+      - name: Build web client
+        shell: bash
+        run: |
+          npm --prefix client ci --no-audit --no-fund
+          npm --prefix client run build
+
+      - name: Remove old one-shot PiP workflow and commit
+        shell: bash
+        run: |
+          rm -f .github/workflows/add-pip.yml .github/workflows/meeting-pip-navigation.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add client/src/pages/Meetings.jsx client/src/App.jsx .github/workflows/patch-android-pip.yml .github/workflows/add-pip.yml .github/workflows/meeting-pip-navigation.yml
+          git diff --cached --quiet && exit 0
+          git commit -m 'feat: keep meeting PiP active across app navigation'
+          git push

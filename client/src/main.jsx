@@ -4,11 +4,13 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { initNative } from './native';
+import { initAppUpdateChecker } from './appUpdater';
 import { bindGlobalTapHaptics } from './utils/haptics';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 
 initNative();
+initAppUpdateChecker();
 bindGlobalTapHaptics();
 
 ReactDOM.createRoot(document.getElementById('root')).render(

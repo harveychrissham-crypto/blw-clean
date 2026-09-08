@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap');
+@import './meetings.css';
 
 @tailwind base;
 @tailwind components;
@@ -34,48 +35,24 @@ body {
 
 * { box-sizing: border-box; }
 
-/* App-feel pass (v6): touch devices don't have hover, so buttons/links need
-   their own tap feedback — otherwise taps feel dead and the browser's own
-   default tap-highlight box shows instead, both of which read as "website"
-   rather than "app". Scoped to touch-primary devices only so desktop/mouse
-   behavior (which already gets :hover feedback) is untouched. */
-a, button, [role="button"], input, textarea, select {
-  -webkit-tap-highlight-color: transparent;
-}
+a, button, [role="button"], input, textarea, select { -webkit-tap-highlight-color: transparent; }
 
 @media (hover: none) {
   a:active, button:not(:disabled):active, [role="button"]:active {
     transform: scale(0.96);
     transition: transform 0.1s ease;
   }
-}
-
-/* App-feel pass (v9): on touch devices, a long-press on a link or button
-   triggers the browser/OS's native text-selection magnifier and "Copy"
-   callout - the same behavior you'd get long-pressing a word in an article.
-   On a button that reads as a broken tap, not a press. Scoped to touch-only
-   (same @media (hover: none) gate as the two rules above) and to
-   interactive elements only, so normal text selection/copy still works
-   everywhere else - sermon descriptions, event details, form values, etc.
-   Inputs/textarea/select are deliberately excluded: users still need to
-   select and copy what they've typed.
-   v11: added img - a long-press on a sermon/event/fellowship thumbnail was
-   still triggering the OS "Save Image" / "Open in new tab" callout, the
-   same category of bug this rule already fixed for links and buttons. */
-@media (hover: none) {
   a, button, [role="button"], img {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
   }
+  input, select, textarea { font-size: 16px !important; }
 }
 
 ::selection { background: rgba(236,47,168,0.3); color: white; }
-
-/* Hide scrollbar on nav */
 nav::-webkit-scrollbar { display: none; }
 
-/* Input / select styling */
 input, select, textarea {
   background: rgba(255,255,255,0.05) !important;
   border: 1px solid rgba(255,255,255,0.1) !important;
@@ -83,34 +60,6 @@ input, select, textarea {
   color: #fff !important;
   transition: border-color 0.15s;
 }
-
-/* App-feel pass (v9): iOS Safari/WKWebView auto-zooms the whole page when
-   a focused input's computed font-size is under 16px. Many inputs across
-   this app use Tailwind's text-sm (14px) or smaller, which triggers that
-   zoom on every focus — a strong "website form" tell, not "app". Force
-   16px on touch-primary viewports regardless of the Tailwind text-size
-   utility applied, since editing every input's className individually
-   would mean touching 25+ call sites across the codebase for one fix.
-   !important matches the existing pattern in this same input/select/
-   textarea block above. Desktop/mouse devices are untouched — this only
-   matters where WebKit's auto-zoom behavior applies. */
-@media (hover: none) {
-  input, select, textarea {
-    font-size: 16px !important;
-  }
-}
-input:focus, select:focus, textarea:focus {
-  outline: none !important;
-  border-color: #EC2FA8 !important;
-}
+input:focus, select:focus, textarea:focus { outline: none !important; border-color: #EC2FA8 !important; }
 input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3) !important; }
-
-/* The select element itself stays white text on our dark background (above),
-   but the actual dropdown list of options is rendered by the OS/browser using
-   its own native popup — which ignores our dark background and shows a light
-   one. Without this, the white select text becomes invisible against that
-   light popup. Force readable dark text + light background on options only. */
-select option {
-  color: #0d0c18 !important;
-  background: #ffffff !important;
-}
+select option { color: #0d0c18 !important; background: #ffffff !important; }
