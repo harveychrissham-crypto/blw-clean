@@ -9,29 +9,42 @@ permissions:
 
 jobs:
   polish:
-    if: ${{ !startsWith(github.event.head_commit.message, 'feat: improve Meet screen sharing') && !startsWith(github.event.head_commit.message, 'chore: run duplicate control cleanup') }}
+    if: ${{ !startsWith(github.event.head_commit.message, 'fix: reliably remove duplicate Meet controls') && !startsWith(github.event.head_commit.message, 'fix: remove duplicate Meet controls') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Fix duplicate meeting controls
+      - name: Remove duplicate meeting controls
         shell: bash
         run: |
           python - <<'PY'
+          import re
           from pathlib import Path
           p = Path('client/src/pages/Meetings.jsx')
           s = p.read_text()
 
-          old_leave = '<Button variant="custom" size="none" onClick={leaveVoluntarily} className="hidden shrink-0 items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm sm:inline-flex"><FiLogOut/>Leave</Button>'
-          if old_leave in s:
-              s = s.replace(old_leave, '', 1)
+          s, leave_count = re.subn(
+              r'<Button[^>]*onClick=\{leaveVoluntarily\}[^>]*>\s*<FiLogOut\s*/>Leave</Button>',
+              '',
+              s,
+              count=1,
+              flags=re.S,
+          )
 
-          old_present = '<Button variant="custom" size="none" type="button" onClick={() => { toggleShare(); setShowMore(false); }} disabled={!screenShareSupported} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:text-white/30"><FiMonitor className="h-4 w-4 shrink-0"/><span className="flex-1">{screenShareSupported ? (sharing ? \'Stop presenting\' : \'Present screen, window or tab\') : \'Present not supported\'}</span>{sharing && <FiCheck className="h-4 w-4 shrink-0 text-amber-300"/>}</Button>'
-          if old_present in s:
-              s = s.replace(old_present, '', 1)
+          s, present_count = re.subn(
+              r'<Button[^>]*onClick=\{\(\) => \{ toggleShare\(\); setShowMore\(false\); \}\}[^>]*>.*?Present screen, window or tab.*?</Button>',
+              '',
+              s,
+              count=1,
+              flags=re.S,
+          )
 
-          p.write_text(s)
+          if leave_count == 0 and present_count == 0:
+              print('No duplicate controls found; nothing to change.')
+          else:
+              print(f'Removed header leave={leave_count}, More-menu present={present_count}')
+              p.write_text(s)
           PY
 
       - name: Commit duplicate-control fix
