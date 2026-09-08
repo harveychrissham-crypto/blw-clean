@@ -238,8 +238,8 @@ function ControlButton({ active, onClick, onIcon: OnIcon, offIcon: OffIcon, labe
   const Icon = active ? OnIcon : OffIcon;
   let tone;
   if (disabled) tone = 'border-white/5 bg-white/5 text-white/25 cursor-not-allowed';
-  else if (warnWhenOff && !active) tone = 'border-red-400/30 bg-red-500/15 text-red-200 hover:bg-red-500/20';
-  else if (!warnWhenOff && active) tone = 'border-[#EC2FA8]/35 bg-[#EC2FA8]/15 text-white hover:bg-[#EC2FA8]/20';
+  else if (warnWhenOff && !active) tone = 'border-red-400/25 bg-red-500/10 text-red-200 hover:bg-red-500/15';
+  else if (!warnWhenOff && active) tone = 'border-[#EC2FA8]/25 bg-[#EC2FA8]/10 text-white hover:bg-[#EC2FA8]/15';
   else tone = 'border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10 hover:text-white';
   return <Button variant="custom" size="none" onClick={onClick} disabled={disabled} aria-label={label} title={label} className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border transition active:scale-[0.94] ${tone}`}><Icon/></Button>;
 }

@@ -17,12 +17,12 @@ import { forwardRef } from 'react';
 // constant, or the utility silently never gets generated.
 
 const VARIANTS = {
-  primary: 'bg-[#EC2FA8] text-white shadow-[0_10px_24px_-10px_rgba(236,47,168,0.65)] ring-1 ring-inset ring-white/15 hover:bg-[#FF3FC2] active:bg-[#C71F88] active:shadow-none disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30 disabled:shadow-none disabled:ring-0',
-  secondary: 'border border-[#EC2FA8]/25 bg-[#3C1464]/60 text-white hover:bg-[#4D1B82]/70 hover:border-[#EC2FA8]/40 active:bg-[#3C1464] disabled:cursor-not-allowed disabled:opacity-40 disabled:border-white/10',
+  primary: 'bg-[#A62574] text-white shadow-[0_6px_16px_-8px_rgba(166,37,116,0.5)] hover:bg-[#BC2E85] active:bg-[#7D1C59] active:shadow-none disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30 disabled:shadow-none',
+  secondary: 'border border-[#EC2FA8]/20 bg-[#3C1464]/60 text-white hover:bg-[#4D1B82]/70 hover:border-[#EC2FA8]/30 active:bg-[#3C1464] disabled:cursor-not-allowed disabled:opacity-40 disabled:border-white/10',
   ghost: 'border border-white/15 text-white/80 hover:bg-white/10 hover:text-white active:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40',
   danger: 'border border-red-400/30 bg-red-500/10 text-red-200 hover:bg-red-500/20 active:bg-red-500/25 disabled:cursor-not-allowed disabled:opacity-40',
-  gradient: 'bg-gradient-to-r from-[#EC2FA8] to-[#3C1464] text-white shadow-[0_10px_24px_-10px_rgba(236,47,168,0.5)] hover:brightness-110 active:brightness-90 active:shadow-none disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none',
-  link: 'text-[#EC2FA8] hover:text-[#FF3FC2] font-medium',
+  gradient: 'bg-gradient-to-r from-[#A62574] to-[#3C1464] text-white shadow-[0_6px_16px_-8px_rgba(166,37,116,0.4)] hover:brightness-105 active:brightness-90 active:shadow-none disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none',
+  link: 'text-[#EC2FA8] hover:text-[#F04FB8] font-medium',
   custom: '',
 };
 
