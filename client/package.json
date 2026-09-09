@@ -23,7 +23,6 @@
     "@capacitor/preferences": "^6.0.4",
     "@capacitor/push-notifications": "^6.0.3",
     "@capacitor/share": "^6.0.4",
-    "@capacitor/splash-screen": "^6.0.4",
     "@capacitor/status-bar": "^6.0.2",
     "@livekit/track-processors": "^0.7.2",
     "framer-motion": "^11.11.9",
