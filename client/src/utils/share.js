@@ -47,6 +47,33 @@ export async function shareContent({ title, text, url }) {
   }
 }
 
+export async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (error) {
+    console.warn('[clipboard] navigator.clipboard failed, trying legacy fallback:', error?.message || error);
+  }
+  // Legacy fallback for WebViews/browsers where the modern Clipboard API is
+  // missing or silently fails (seen in some Android WebView versions).
+  try {
+    const el = document.createElement('textarea');
+    el.value = text;
+    el.setAttribute('readonly', '');
+    el.style.position = 'fixed';
+    el.style.opacity = '0';
+    document.body.appendChild(el);
+    el.select();
+    el.setSelectionRange(0, text.length);
+    const ok = document.execCommand('copy');
+    document.body.removeChild(el);
+    return ok;
+  } catch (error) {
+    console.warn('[clipboard] legacy fallback failed:', error?.message || error);
+    return false;
+  }
+}
+
 function isUserCancelled(error) {
   // Web Share API and @capacitor/share both use AbortError-style names/
   // messages when the person dismisses the native share sheet.

@@ -14,6 +14,7 @@ const SELF_CHECKIN_URL = '/api/members/self-checkin';
 
 function MemberQRCode({ member }) {
   const canvasRef = useRef(null);
+  const [downloadError, setDownloadError] = useState(null);
   const qrPayload = [member.membershipId, member.name, member.phone, member.email].join('|');
 
   useEffect(() => {
@@ -61,12 +62,19 @@ function MemberQRCode({ member }) {
       const file = new File([blob], fileName, { type: 'image/png' });
 
       if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
-        await navigator.share({
-          title: `${member.name} QR Badge`,
-          text: `BLW Campus Ministry QR badge for ${member.name}`,
-          files: [file],
-        });
-        return;
+        try {
+          await navigator.share({
+            title: `${member.name} QR Badge`,
+            text: `BLW Campus Ministry QR badge for ${member.name}`,
+            files: [file],
+          });
+          return;
+        } catch (shareError) {
+          if (shareError?.name === 'AbortError') return; // person cancelled the share sheet — not a failure
+          // Share looked supported but failed at runtime (a known gap in some
+          // Android WebViews) — fall through to the popup/download route
+          // below instead of leaving the person with nothing.
+        }
       }
 
       const imageUrl = URL.createObjectURL(blob);
@@ -75,6 +83,7 @@ function MemberQRCode({ member }) {
       setTimeout(() => URL.revokeObjectURL(imageUrl), 10000);
     } catch (error) {
       console.error('Unable to download/share QR badge:', error);
+      setDownloadError('Could not save the QR badge on this device. Try taking a screenshot instead.');
     }
   };
 
@@ -106,6 +115,7 @@ function MemberQRCode({ member }) {
       <Button variant="custom" size="none" type="button" onClick={handleDownload} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#A62574] to-[#3C1464] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
         <FiDownload /> Download QR Badge
       </Button>
+      <Toast toast={downloadError ? { type: 'error', message: downloadError } : null} onClose={() => setDownloadError(null)} />
     </div>
   );
 }
