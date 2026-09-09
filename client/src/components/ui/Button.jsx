@@ -32,14 +32,13 @@ const SIZES = {
   none: '',
 };
 
-const Button = forwardRef(function Button({ variant = 'primary', size = 'md', className = '', type = 'button', style, ...props }, ref) {
+const Button = forwardRef(function Button({ variant = 'primary', size = 'md', className = '', type = 'button', style, invisible = false, ...props }, ref) {
   const variantClass = VARIANTS[variant] || VARIANTS.primary;
   const sizeClass = SIZES[size] || SIZES.md;
-  const isFullscreenBackdrop = className.includes('fixed inset-0 z-30 cursor-default');
-  const buttonStyle = isFullscreenBackdrop
+  const buttonStyle = invisible
     ? { backgroundColor: 'transparent', border: 0, padding: 0, margin: 0, boxShadow: 'none', color: 'transparent', ...style }
     : style;
-  const pressClass = isFullscreenBackdrop ? '' : 'active:scale-[0.97]';
+  const pressClass = invisible ? '' : 'active:scale-[0.97]';
   return <button ref={ref} type={type} className={`${sizeClass} ${variantClass} ${pressClass} transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EC2FA8]/60 ${className}`.trim()} style={buttonStyle} {...props} />;
 });
 
