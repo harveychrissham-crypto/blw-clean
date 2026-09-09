@@ -1,4 +1,4 @@
-name: Patch native Android meeting PiP
+name: Integrate persistent meeting PiP
 
 on:
   push:
@@ -13,11 +13,12 @@ jobs:
   patch:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out main
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Patch meeting bridge and Android build
+      - name: Patch current meeting and Android sources
         shell: python
         run: |
           from pathlib import Path
@@ -25,149 +26,316 @@ jobs:
           meetings = Path('client/src/pages/Meetings.jsx')
           s = meetings.read_text()
 
-          react_import = "import { useCallback, useEffect, useRef, useState } from 'react';"
-          if "import { registerPlugin } from '@capacitor/core';" not in s:
-              if react_import not in s:
-                  raise SystemExit('React import not found')
-              s = s.replace(react_import, react_import + "\nimport { registerPlugin } from '@capacitor/core';", 1)
+          if 'export { CallRoom };' not in s:
+              marker = '\nfunction ConnectionStateBadge({ connState, connected, count }) {'
+              if marker not in s:
+                  raise SystemExit('Could not find CallRoom export marker')
+              s = s.replace(marker, '\nexport { CallRoom };\n' + marker, 1)
 
           marker = "const DEVICE_PREFS_KEY = 'blw-meet-device-prefs';"
-          if "const MeetingPiP = registerPlugin('MeetingPiP');" not in s:
+          session_code = '''const MEETING_SESSION_EVENT = 'blw-meeting-session-change';
+          function publishMeetingSession(session) {
+            try {
+              window.__BLW_MEETING_SESSION__ = session;
+              window.dispatchEvent(new Event(MEETING_SESSION_EVENT));
+            } catch {}
+          }
+          '''
+          if 'const MEETING_SESSION_EVENT' not in s:
               if marker not in s:
-                  raise SystemExit('device preference marker not found')
-              s = s.replace(marker, marker + "\nconst MeetingPiP = registerPlugin('MeetingPiP');", 1)
+                  raise SystemExit('Could not find device prefs marker')
+              s = s.replace(marker, marker + '\n' + session_code, 1)
 
-          effect_marker = "  useEffect(() => () => { clearTimeout(mutedHintTimer.current); clearTimeout(copiedHintTimer.current); }, []);"
-          pip_effect = "  useEffect(() => {\n    if (pending) return undefined;\n    MeetingPiP.setEnabled({ enabled: true }).catch(() => {});\n    return () => { MeetingPiP.setEnabled({ enabled: false }).catch(() => {}); };\n  }, [pending]);"
-          if "MeetingPiP.setEnabled({ enabled: true })" not in s:
-              if effect_marker not in s:
-                  raise SystemExit('CallRoom lifecycle marker not found')
-              s = s.replace(effect_marker, effect_marker + "\n" + pip_effect, 1)
+          if 'publishMeetingSession({ credentials, choices: values, room });' not in s:
+              old = "onJoin={(values) => { setChoices(values); setStage('room'); }}"
+              new = "onJoin={(values) => { publishMeetingSession({ credentials, choices: values, room }); setChoices(values); setStage('room'); }}"
+              if old not in s:
+                  raise SystemExit('Could not find lobby onJoin')
+              s = s.replace(old, new, 1)
+
+          if 'publishMeetingSession(null);' not in s:
+              old = "  function handleLeave(reason) {\n    setStage('form'); setCredentials(null); setChoices(null);"
+              new = "  function handleLeave(reason) {\n    publishMeetingSession(null);\n    setStage('form'); setCredentials(null); setChoices(null);"
+              if old not in s:
+                  raise SystemExit('Could not find Meetings handleLeave')
+              s = s.replace(old, new, 1)
+
+          old = "  if (stage === 'room' && credentials && choices) return <CallRoom credentials={credentials} choices={choices} room={room} onLeave={handleLeave} />;"
+          new = "  if (stage === 'room' && credentials && choices) return <div className=\"mx-auto max-w-4xl px-5 py-12\" aria-hidden=\"true\" />;"
+          if old in s:
+              s = s.replace(old, new, 1)
+          elif 'aria-hidden=\"true\" />;' not in s:
+              raise SystemExit('Could not replace Meetings room render')
+
+          if 'blw-meeting-session-change' not in s.split("export default function Meetings()", 1)[1].split("function Lobby", 1)[0]:
+              marker = "  useEffect(() => {\n    let cancelled = false;"
+              listener = '''  useEffect(() => {
+            const sync = () => {
+              try {
+                if (!window.__BLW_MEETING_SESSION__ && stage === 'room') {
+                  setStage('form');
+                  setCredentials(null);
+                  setChoices(null);
+                }
+              } catch {}
+            };
+            window.addEventListener(MEETING_SESSION_EVENT, sync);
+            return () => window.removeEventListener(MEETING_SESSION_EVENT, sync);
+          }, [stage]);
+
+          '''
+              if marker not in s:
+                  raise SystemExit('Could not find Meetings effect marker')
+              s = s.replace(marker, listener + marker, 1)
+
+          # Keep the active LiveKit room reachable by the in-app mini player.
+          if 'window.__BLW_ACTIVE_LIVEKIT_ROOM__' not in s:
+              marker = "  useEffect(() => { window.dispatchEvent(new CustomEvent('blw-meeting-call-active', { detail: true })); return () => window.dispatchEvent(new CustomEvent('blw-meeting-call-active', { detail: false })); }, []);"
+              replacement = marker + "\n  useEffect(() => () => { try { if (window.__BLW_ACTIVE_LIVEKIT_ROOM__ === roomRef.current) delete window.__BLW_ACTIVE_LIVEKIT_ROOM__; } catch {} }, []);"
+              if marker not in s:
+                  raise SystemExit('Could not find CallRoom lifecycle marker')
+              s = s.replace(marker, replacement, 1)
+
+          marker = '    const room = new Room('
+          if 'window.__BLW_ACTIVE_LIVEKIT_ROOM__ = room;' not in s:
+              if marker not in s:
+                  raise SystemExit('Could not find LiveKit Room constructor')
+              s = s.replace(marker, marker + '\n    window.__BLW_ACTIVE_LIVEKIT_ROOM__ = room;', 1)
+
+          # Add an optional visual minimization mode without changing the call logic.
+          s = s.replace('function CallRoom({ credentials, choices, room: roomName, onLeave }) {', 'function CallRoom({ credentials, choices, room: roomName, onLeave, minimized = false }) {', 1)
+          if 'if (minimized) return null;' not in s:
+              marker = '  if (pending) return <WaitingScreen onCancel={leaveVoluntarily}/>;'
+              if marker not in s:
+                  raise SystemExit('Could not find CallRoom render marker')
+              s = s.replace(marker, '  if (pending) return <WaitingScreen onCancel={leaveVoluntarily}/>;\n  if (minimized) return <div className="hidden" aria-hidden="true" />;', 1)
 
           meetings.write_text(s)
 
-          workflow = Path('.github/workflows/android-release.yml')
-          w = workflow.read_text()
-          sync_step = "      - name: Sync Capacitor Android project\n        working-directory: client\n        run: npx cap sync android\n"
-          native_step = r'''      - name: Configure Android Picture-in-Picture for meetings
-        working-directory: client/android
-        shell: bash
-        run: |
-          set -euo pipefail
-          MAIN_ACTIVITY="app/src/main/java/com/blwcampusministry/app/MainActivity.java"
-          PIP_PLUGIN="app/src/main/java/com/blwcampusministry/app/MeetingPiP.java"
-          MANIFEST="app/src/main/AndroidManifest.xml"
+          app = Path('client/src/App.jsx')
+          a = app.read_text()
+          a = a.replace("import { useEffect, useRef, lazy, Suspense } from 'react';", "import { useEffect, useRef, useState, lazy, Suspense } from 'react';", 1)
+          if "const CallRoom = lazy(() => import('./pages/Meetings').then((module) => ({ default: module.CallRoom })));" not in a:
+              marker = "const Meetings = lazy(() => import('./pages/Meetings'));"
+              if marker not in a:
+                  raise SystemExit('Could not find Meetings lazy import')
+              a = a.replace(marker, marker + "\nconst CallRoom = lazy(() => import('./pages/Meetings').then((module) => ({ default: module.CallRoom })));", 1)
 
-          cat > "$PIP_PLUGIN" <<'EOF'
-          package com.blwcampusministry.app;
+          persistent = '''
+function MeetingMiniPlayer({ onOpen, onLeave }) {
+  const videoRef = useRef(null);
+  const [room, setRoom] = useState(null);
+  const [label, setLabel] = useState('Meeting');
 
-          import android.app.Activity;
-          import android.app.PictureInPictureParams;
-          import android.os.Build;
-          import android.util.Rational;
+  useEffect(() => {
+    const sync = () => setRoom(window.__BLW_ACTIVE_LIVEKIT_ROOM__ || null);
+    sync();
+    window.addEventListener('blw-meeting-room-change', sync);
+    return () => window.removeEventListener('blw-meeting-room-change', sync);
+  }, []);
 
-          import com.getcapacitor.JSObject;
-          import com.getcapacitor.Plugin;
-          import com.getcapacitor.PluginCall;
-          import com.getcapacitor.annotation.CapacitorPlugin;
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !room) return undefined;
+    const pickTrack = () => {
+      const local = room.localParticipant?.getTrackPublication?.('camera')?.track;
+      const remote = Array.from(room.remoteParticipants?.values?.() || []).map((p) => p.getTrackPublication?.('camera')?.track).find(Boolean);
+      return local || remote || null;
+    };
+    const track = pickTrack();
+    if (!track) return undefined;
+    track.attach(video);
+    setLabel(`${room.remoteParticipants?.size || 0} other${room.remoteParticipants?.size === 1 ? '' : 's'}`);
+    return () => { try { track.detach(video); } catch {} };
+  }, [room]);
 
-          @CapacitorPlugin(name = "MeetingPiP")
-          public class MeetingPiP extends Plugin {
-            @PluginMethod
-            public void setEnabled(PluginCall call) {
-              boolean enabled = call.getBoolean("enabled", false);
-              Activity activity = getActivity();
-              activity.runOnUiThread(() -> {
-                if (activity instanceof MainActivity) {
-                  ((MainActivity) activity).setMeetingPipEnabled(enabled);
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                  PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder()
-                      .setAspectRatio(new Rational(16, 9));
-                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    builder.setAutoEnterEnabled(enabled);
-                  }
-                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    builder.setSeamlessResizeEnabled(true);
-                  }
-                  activity.setPictureInPictureParams(builder.build());
-                }
-                call.resolve(new JSObject().put("enabled", enabled));
-              });
-            }
-          }
-          EOF
+  return <div className="fixed bottom-20 right-3 z-[120] w-[min(320px,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-white/15 bg-[#111118]/95 shadow-2xl backdrop-blur-xl sm:bottom-4 sm:right-4">
+    <div className="relative aspect-video bg-black">
+      <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
+      <div className="absolute left-2 top-2 rounded-full bg-black/65 px-2.5 py-1 text-[11px] font-semibold text-white/90">{label}</div>
+      <button type="button" onClick={onLeave} aria-label="Leave meeting" className="absolute right-2 top-2 rounded-full bg-red-500/90 px-2.5 py-1 text-xs font-semibold text-white">Leave</button>
+    </div>
+    <button type="button" onClick={onOpen} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-semibold text-white hover:bg-white/5"><span>Meeting in progress</span><span className="text-xs text-white/50">Open call</span></button>
+  </div>;
+}
 
-          test -f "$MAIN_ACTIVITY"
+function PersistentMeetingOverlay() {
+  const location = useLocation();
+  const [session, setSession] = useState(() => window.__BLW_MEETING_SESSION__ || null);
 
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('app/src/main/java/com/blwcampusministry/app/MainActivity.java')
-          s = p.read_text()
-          marker = 'public class MainActivity extends BridgeActivity {'
-          if marker not in s:
-              raise SystemExit('MainActivity class marker not found')
-          if 'setMeetingPipEnabled' not in s:
-              replacement = '''public class MainActivity extends BridgeActivity {
-              private volatile boolean meetingPipEnabled = false;
+  useEffect(() => {
+    const sync = () => setSession(window.__BLW_MEETING_SESSION__ || null);
+    window.addEventListener('blw-meeting-session-change', sync);
+    return () => window.removeEventListener('blw-meeting-session-change', sync);
+  }, []);
 
-              public void setMeetingPipEnabled(boolean enabled) {
-                  meetingPipEnabled = enabled;
-              }
+  useEffect(() => {
+    if (!session) return undefined;
+    const publish = () => {
+      window.dispatchEvent(new Event('blw-meeting-room-change'));
+    };
+    publish();
+    return undefined;
+  }, [session]);
 
-              @Override
-              protected void onCreate(android.os.Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-                  registerPlugin(MeetingPiP.class);
-              }
+  const openCall = () => {
+    window.history.pushState({}, '', `/meetings?room=${encodeURIComponent(session.room)}`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
 
-              @Override
-              public void onUserLeaveHint() {
-                  if (meetingPipEnabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
-                      enterPictureInPictureMode();
-                  }
-                  super.onUserLeaveHint();
-              }'''
-              s = s.replace(marker, replacement, 1)
-              p.write_text(s)
-          PY
+  const leave = () => {
+    try {
+      window.__BLW_MEETING_SESSION__ = null;
+      window.__BLW_ACTIVE_LIVEKIT_ROOM__?.disconnect?.();
+      delete window.__BLW_ACTIVE_LIVEKIT_ROOM__;
+      window.dispatchEvent(new Event('blw-meeting-session-change'));
+      window.dispatchEvent(new Event('blw-meeting-room-change'));
+    } catch {}
+  };
 
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('app/src/main/AndroidManifest.xml')
-          s = p.read_text()
-          if 'android:supportsPictureInPicture="true"' not in s:
-              old = 'android:exported="true"'
-              idx = s.find(old)
-              if idx < 0:
-                  raise SystemExit('Main activity exported attribute not found')
-              s = s[:idx] + s[idx:idx + len(old)] + ' android:supportsPictureInPicture="true" android:resizeableActivity="true"' + s[idx + len(old):]
-              p.write_text(s)
-          PY
+  if (!session?.credentials || !session?.choices || !session?.room) return null;
+  const minimized = location.pathname !== '/meetings';
+  return <>
+    <div className={minimized ? 'pointer-events-none fixed inset-0 z-[90]' : 'fixed inset-0 z-[90] bg-[#08080d]'} aria-hidden={minimized}>
+      <Suspense fallback={null}>
+        <CallRoom credentials={session.credentials} choices={session.choices} room={session.room} onLeave={leave} minimized={minimized} />
+      </Suspense>
+    </div>
+    {minimized && <MeetingMiniPlayer onOpen={openCall} onLeave={leave} />}
+  </>;
+}
+
 '''
-          if 'Configure Android Picture-in-Picture for meetings' not in w:
-              if sync_step not in w:
-                  raise SystemExit('Capacitor sync step not found')
-              w = w.replace(sync_step, sync_step + native_step, 1)
-          workflow.write_text(w)
+          if 'function PersistentMeetingOverlay()' not in a:
+              marker = 'const notificationDestination = (notification) =>'
+              idx = a.find(marker)
+              if idx < 0:
+                  raise SystemExit('Could not find App insertion marker')
+              a = a[:idx] + persistent + a[idx:]
 
-          stale = Path('.github/workflows/add-pip.yml')
-          if stale.exists():
-              stale.unlink()
+          # Native PiP is entered when the Android app is actually backgrounded;
+          # internal route navigation uses the persistent in-app mini player above.
+          a = a.replace('function AnimatedRoutes() {', "function AnimatedRoutes() {", 1)
+          if '<PersistentMeetingOverlay />' not in a:
+              marker = 'return <><OfflineBanner />'
+              if marker not in a:
+                  raise SystemExit('Could not find App return marker')
+              a = a.replace(marker, 'return <><PersistentMeetingOverlay /><OfflineBanner />', 1)
 
-      - name: Validate patch inputs
+          app.write_text(a)
+
+          # Patch the Android project directly in the repository used by Capacitor sync.
+          main = Path('client/android/app/src/main/java/com/blwcampusministry/app/MainActivity.java')
+          m = main.read_text()
+          m = m.replace('import android.os.Bundle;\n', 'import android.app.PictureInPictureParams;\nimport android.os.Build;\nimport android.os.Bundle;\nimport android.util.Rational;\n', 1)
+          m = m.replace('public class MainActivity extends BridgeActivity {', '''public class MainActivity extends BridgeActivity {
+    private volatile boolean meetingPipEnabled = false;
+
+    public void setMeetingPipEnabled(boolean enabled) {
+        meetingPipEnabled = enabled;
+    }
+
+    @Override
+    public void onUserLeaveHint() {
+        if (meetingPipEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            enterPictureInPictureMode();
+        }
+        super.onUserLeaveHint();
+    }
+''', 1)
+          main.write_text(m)
+
+          manifest = Path('client/android/app/src/main/AndroidManifest.xml')
+          ms = manifest.read_text()
+          if 'android:supportsPictureInPicture="true"' not in ms:
+              old = 'android:exported="true"'
+              ms = ms.replace(old, old + ' android:supportsPictureInPicture="true" android:resizeableActivity="true"', 1)
+              manifest.write_text(ms)
+
+          plugin = Path('client/android/app/src/main/java/com/blwcampusministry/app/MeetingPiP.java')
+          plugin.write_text('''package com.blwcampusministry.app;
+
+import android.app.Activity;
+import android.app.PictureInPictureParams;
+import android.os.Build;
+import android.util.Rational;
+
+import com.getcapacitor.JSObject;
+import com.getcapacitor.Plugin;
+import com.getcapacitor.PluginCall;
+import com.getcapacitor.annotation.CapacitorPlugin;
+
+@CapacitorPlugin(name = "MeetingPiP")
+public class MeetingPiP extends Plugin {
+  @PluginMethod
+  public void setEnabled(PluginCall call) {
+    boolean enabled = call.getBoolean("enabled", false);
+    Activity activity = getActivity();
+    activity.runOnUiThread(() -> {
+      if (activity instanceof MainActivity) {
+        ((MainActivity) activity).setMeetingPipEnabled(enabled);
+      }
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder()
+            .setAspectRatio(new Rational(16, 9));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+          builder.setAutoEnterEnabled(enabled);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+          builder.setSeamlessResizeEnabled(true);
+        }
+        activity.setPictureInPictureParams(builder.build());
+      }
+      call.resolve(new JSObject().put("enabled", enabled));
+    });
+  }
+
+  @PluginMethod
+  public void enter(PluginCall call) {
+    Activity activity = getActivity();
+    activity.runOnUiThread(() -> {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        activity.enterPictureInPictureMode();
+      }
+      call.resolve();
+    });
+  }
+}
+''')
+
+          # Make the current CallRoom enable the native PiP bridge while connected.
+          if "registerPlugin('MeetingPiP')" not in s:
+              react_import = "import { useCallback, useEffect, useRef, useState } from 'react';"
+              s = s.replace(react_import, react_import + "\nimport { registerPlugin } from '@capacitor/core';", 1)
+              s = s.replace(marker, marker, 1)
+          if "const MeetingPiP = registerPlugin('MeetingPiP');" not in s:
+              s = s.replace("const DEVICE_PREFS_KEY = 'blw-meet-device-prefs';", "const DEVICE_PREFS_KEY = 'blw-meet-device-prefs';\nconst MeetingPiP = registerPlugin('MeetingPiP');", 1)
+          lifecycle = "  useEffect(() => () => { clearTimeout(mutedHintTimer.current); clearTimeout(copiedHintTimer.current); }, []);"
+          if "MeetingPiP.setEnabled({ enabled: true })" not in s:
+              effect = lifecycle + "\n  useEffect(() => {\n    if (pending) return undefined;\n    MeetingPiP.setEnabled({ enabled: true }).catch(() => {});\n    return () => { MeetingPiP.setEnabled({ enabled: false }).catch(() => {}); };\n  }, [pending]);"
+              if lifecycle not in s:
+                  raise SystemExit('Could not find CallRoom cleanup effect for PiP')
+              s = s.replace(lifecycle, effect, 1)
+          meetings.write_text(s)
+
+          print('PiP source patch prepared successfully')
+
+      - name: Remove obsolete one-shot workflows
         shell: bash
         run: |
-          grep -q "MeetingPiP" client/src/pages/Meetings.jsx
-          grep -q "Configure Android Picture-in-Picture for meetings" .github/workflows/android-release.yml
+          rm -f .github/workflows/add-pip.yml .github/workflows/meeting-pip-navigation.yml .github/workflows/patch-android-pip.yml
 
-      - name: Commit patch and remove this workflow
+      - name: Validate web build and commit
         shell: bash
         run: |
+          npm --prefix client ci --no-audit --no-fund
+          npm --prefix client run build
+          grep -q 'PersistentMeetingOverlay' client/src/App.jsx
+          grep -q 'MeetingPiP' client/src/pages/Meetings.jsx
+          test -f client/android/app/src/main/java/com/blwcampusministry/app/MeetingPiP.java
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          rm -f .github/workflows/patch-android-pip.yml
-          git add client/src/pages/Meetings.jsx .github/workflows/android-release.yml .github/workflows/add-pip.yml .github/workflows/patch-android-pip.yml
+          git add client/src/pages/Meetings.jsx client/src/App.jsx client/android/app/src/main/AndroidManifest.xml client/android/app/src/main/java/com/blwcampusministry/app/MainActivity.java client/android/app/src/main/java/com/blwcampusministry/app/MeetingPiP.java .github/workflows/add-pip.yml .github/workflows/meeting-pip-navigation.yml .github/workflows/patch-android-pip.yml
           git diff --cached --quiet && exit 0
-          git commit -m 'feat: enable native Android meeting picture-in-picture'
+          git commit -m 'feat: keep meetings active with persistent in-app and Android PiP'
           git push
