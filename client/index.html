@@ -13,7 +13,8 @@
          runs, so there's no blank/white gap while the app boots — removed
          by App.jsx once React has actually mounted (see #boot-splash
          removal there). Deliberately has zero image/network dependencies
-         so it can never itself be the slow part. */
+         (background is a pure CSS gradient, not a file) so it can never
+         itself be the slow part. */
       #boot-splash {
         position: fixed;
         inset: 0;
@@ -23,10 +24,18 @@
         align-items: center;
         justify-content: center;
         gap: 16px;
-        background: #0d0c18;
+        background: linear-gradient(-45deg, #0d0c18, #1a1030, #2d1b4e, #170f2b, #0d0c18);
+        background-size: 400% 400%;
+        animation: boot-splash-gradient 8s ease infinite;
         transition: opacity 0.2s ease;
       }
+      @keyframes boot-splash-gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
       #boot-splash svg {
+        position: relative;
         animation: boot-splash-spin 1s linear infinite;
       }
       @keyframes boot-splash-spin {
