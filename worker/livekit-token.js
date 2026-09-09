@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
-import { AccessToken, LiveKitAPI, StreamOutput, TrackSource, EncodedFileOutput, S3Upload } from 'livekit-server-sdk';
+import { AccessToken, LiveKitAPI, StreamOutput, TrackSource, EncodedFileOutput, S3Upload, EncodedFileType } from 'livekit-server-sdk';
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', ...headers } });
 function bearer(request) { const h = request.headers.get('Authorization') || request.headers.get('authorization') || ''; return h.startsWith('Bearer ') ? h.slice(7).trim() : ''; }
@@ -66,12 +66,7 @@ async function recentRooms(request, env, headers) {
 // Room metadata is a single JSON blob LiveKit stores per-room. We use it to
 // hold lightweight, ephemeral coordination state (lock flag, waiting-room
 // flag, active recording egress id, a short remove-cooldown map, and a
-// trimmed moderation log) without needing a separate database table. This is
-// a plain read-modify-write, not a compare-and-swap: two moderation actions
-// landing on the same room in the same instant could race and one could
-// clobber the other. For the traffic this app sees (small group calls, one
-// or two leaders acting at a time) that's an acceptable tradeoff, but it's
-// worth knowing this isn't atomic.
+// trimmed moderation log) without needing a separate database table.
 async function readRoomMeta(api, safeRoomName) { try { const rooms = await api.room.listRooms([safeRoomName]); return rooms[0]?.metadata ? JSON.parse(rooms[0].metadata) : {}; } catch { return {}; } }
 async function writeRoomMeta(api, safeRoomName, meta) { await api.room.updateRoomMetadata(safeRoomName, JSON.stringify(meta)); }
 function appendLog(meta, entry) { const log = Array.isArray(meta.log) ? meta.log.slice(-49) : []; log.push({ ...entry, ts: Date.now() }); return { ...meta, log }; }
@@ -164,8 +159,6 @@ async function denyParticipant(request, env, headers, room, identity) {
   const auth = authUser(request, env); if (!auth) return json({ error: 'Authentication required.' }, 401, headers);
   if (!isLeader(auth)) return json({ error: 'Leader access required.' }, 403, headers);
   const { api } = livekit(env); const safe = safeRoom(room);
-  // Unlike removeParticipant, denying someone waiting for admission doesn't
-  // set the remove-cooldown — they weren't misbehaving, just not let in yet.
   await api.room.removeParticipant(safe, identity);
   const meta = await readRoomMeta(api, safe);
   await writeRoomMeta(api, safe, appendLog(meta, { type: 'deny', target: identity, by: memberEmail(auth) })).catch(() => {});
@@ -197,8 +190,21 @@ async function setWaitingRoom(request, env, headers, room) {
 async function roomStatus(request, env, headers, room) {
   const auth = authUser(request, env); if (!auth) return json({ error: 'Authentication required.' }, 401, headers);
   const { api } = livekit(env); const safe = safeRoom(room);
+  let meta = await readRoomMeta(api, safe);
   const host = isLeader(auth);
-  const meta = await readRoomMeta(api, safe);
+  const activeRecordingId = String(meta?.recordingEgressId || '').trim();
+  if (activeRecordingId) {
+    try {
+      const egresses = await api.egress.listEgress({ roomName: safe });
+      const current = egresses.find((e) => e.egressId === activeRecordingId);
+      const terminal = current && [3, 4, 5].includes(Number(current.status));
+      if (!current || terminal) {
+        const { recordingEgressId, ...rest } = meta;
+        meta = rest;
+        await writeRoomMeta(api, safe, appendLog(rest, { type: 'recording-finished', egressId: activeRecordingId, status: current ? Number(current.status) : 'missing' })).catch(() => {});
+      }
+    } catch { /* status should still be useful if Egress listing is temporarily unavailable */ }
+  }
   const result = { isHost: host, locked: Boolean(meta?.locked), waitingRoom: Boolean(meta?.waitingRoom), recording: Boolean(meta?.recordingEgressId) };
   if (host) {
     result.pending = [];
@@ -211,26 +217,63 @@ async function roomStatus(request, env, headers, room) {
   return json(result, 200, headers);
 }
 
-async function startRecording(request, env, headers, room) {
-  const auth = authUser(request, env); if (!auth) return json({ error: 'Authentication required.' }, 401, headers);
-  if (!isLeader(auth)) return json({ error: 'Leader access required.' }, 403, headers);
+function recordingOutput(env, safe) {
   const accessKey = String(env.LIVEKIT_RECORDING_S3_ACCESS_KEY || '').trim();
   const secret = String(env.LIVEKIT_RECORDING_S3_SECRET || '').trim();
   const bucket = String(env.LIVEKIT_RECORDING_S3_BUCKET || '').trim();
   const endpoint = String(env.LIVEKIT_RECORDING_S3_ENDPOINT || '').trim();
-  if (!accessKey || !secret || !bucket) return json({ error: 'Recording storage is not configured. Add LIVEKIT_RECORDING_S3_ACCESS_KEY, LIVEKIT_RECORDING_S3_SECRET and LIVEKIT_RECORDING_S3_BUCKET.' }, 503, headers);
+  const region = String(env.LIVEKIT_RECORDING_S3_REGION || 'auto').trim() || 'auto';
+  const configured = [accessKey, secret, bucket, endpoint].some(Boolean);
+  if (!configured) {
+    // No per-request storage override: LiveKit Cloud can use storage configured
+    // at the Egress service level. This also keeps recordings working when the
+    // project already has its own Egress storage configuration.
+    return new EncodedFileOutput({
+      fileType: EncodedFileType.MP4,
+      filepath: `recordings/${safe}-${Date.now()}.mp4`,
+    });
+  }
+  if (!accessKey || !secret || !bucket) {
+    throw new Error('Recording storage is partially configured. Set LIVEKIT_RECORDING_S3_ACCESS_KEY, LIVEKIT_RECORDING_S3_SECRET, and LIVEKIT_RECORDING_S3_BUCKET together.');
+  }
+  if (endpoint && !/^https:\/\//i.test(endpoint)) {
+    throw new Error('LIVEKIT_RECORDING_S3_ENDPOINT must start with https://.');
+  }
+  return new EncodedFileOutput({
+    fileType: EncodedFileType.MP4,
+    filepath: `recordings/${safe}-${Date.now()}.mp4`,
+    s3: new S3Upload({ accessKey, secret, bucket, region, endpoint: endpoint || undefined, forcePathStyle: true }),
+  });
+}
+
+async function startRecording(request, env, headers, room) {
+  const auth = authUser(request, env); if (!auth) return json({ error: 'Authentication required.' }, 401, headers);
+  if (!isLeader(auth)) return json({ error: 'Leader access required.' }, 403, headers);
   const { api } = livekit(env); const safe = safeRoom(room);
   const existing = await readRoomMeta(api, safe);
-  if (existing?.recordingEgressId) return json({ error: 'A recording is already in progress for this room.' }, 409, headers);
-  const output = new EncodedFileOutput({
-    filepath: `recordings/${safe}-${Date.now()}.mp4`,
-    s3: new S3Upload({ accessKey, secret, bucket, region: String(env.LIVEKIT_RECORDING_S3_REGION || 'auto'), endpoint, forcePathStyle: true }),
-  });
+  const existingId = String(existing?.recordingEgressId || '').trim();
+  if (existingId) {
+    try {
+      const egresses = await api.egress.listEgress({ roomName: safe });
+      const active = egresses.find((e) => e.egressId === existingId);
+      if (active && ![3, 4, 5].includes(Number(active.status))) return json({ error: 'A recording is already in progress for this room.' }, 409, headers);
+    } catch {}
+    const { recordingEgressId, ...rest } = existing;
+    await writeRoomMeta(api, safe, appendLog(rest, { type: 'recording-stale-cleared', egressId: existingId })).catch(() => {});
+  }
+  let output;
+  try { output = recordingOutput(env, safe); }
+  catch (error) { return json({ error: error?.message || 'Recording storage configuration is invalid.' }, 503, headers); }
   let egress;
-  try { egress = await api.egress.startRoomCompositeEgress(safe, output, { layout: 'grid' }); }
-  catch (error) { return json({ error: error?.message || 'Unable to start recording.' }, 502, headers); }
+  try {
+    egress = await api.egress.startRoomCompositeEgress(safe, output, { layout: 'grid' });
+  } catch (error) {
+    const message = String(error?.message || 'Unable to start recording.');
+    const hint = /storage|bucket|s3|egress/i.test(message) ? ' Check the LiveKit Egress storage configuration or the recording S3 settings.' : '';
+    return json({ error: `${message}${hint}` }, 502, headers);
+  }
   const meta = await readRoomMeta(api, safe);
-  await writeRoomMeta(api, safe, appendLog({ ...meta, recordingEgressId: egress.egressId }, { type: 'recording-start', by: memberEmail(auth) })).catch(() => {});
+  await writeRoomMeta(api, safe, appendLog({ ...meta, recordingEgressId: egress.egressId }, { type: 'recording-start', by: memberEmail(auth), egressId: egress.egressId })).catch(() => {});
   return json({ ok: true, egressId: egress.egressId }, 201, headers);
 }
 
@@ -243,8 +286,8 @@ async function stopRecording(request, env, headers, room) {
   if (!egressId) return json({ error: 'No active recording found for this room.' }, 404, headers);
   try { await api.egress.stopEgress(egressId); } catch (error) { return json({ error: error?.message || 'Unable to stop recording.' }, 502, headers); }
   const { recordingEgressId, ...rest } = meta;
-  await writeRoomMeta(api, safe, appendLog(rest, { type: 'recording-stop', by: memberEmail(auth) })).catch(() => {});
-  return json({ ok: true }, 200, headers);
+  await writeRoomMeta(api, safe, appendLog(rest, { type: 'recording-stop', by: memberEmail(auth), egressId })).catch(() => {});
+  return json({ ok: true, egressId }, 200, headers);
 }
 
 async function listRecordings(request, env, headers, room) {
