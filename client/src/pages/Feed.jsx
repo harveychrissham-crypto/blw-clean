@@ -24,6 +24,7 @@ function ActionMenu({post}) {
 }
 
 function useDoubleTap(action,delay=280){const last=useRef(0);return useCallback((e)=>{const now=Date.now();if(now-last.current<delay){last.current=0;action(e);}else last.current=now;},[action,delay]);}
+function useTapAction(doubleAction,singleAction,delay=280){const timer=useRef(null);return useCallback((e)=>{if(timer.current){clearTimeout(timer.current);timer.current=null;doubleAction?.(e);return;}timer.current=setTimeout(()=>{timer.current=null;singleAction?.(e);},delay);},[doubleAction,singleAction,delay]);}
 
 function Actions({post,user,onUpdate,onComments}) {
   const [busy,setBusy]=useState('');
@@ -33,12 +34,14 @@ function Actions({post,user,onUpdate,onComments}) {
 }
 
 function VideoMedia({post,active=false,reel=false,onDoubleTap}) {
-  const videoRef=useRef(null); const frameRef=useRef(null); const [muted,setMuted]=useState(true); const [progress,setProgress]=useState(0); const isYoutube=Boolean(post.videoId);
-  useEffect(()=>{if(!videoRef.current)return;videoRef.current.muted=muted;if(active)videoRef.current.play?.().catch(()=>{});else videoRef.current.pause?.();},[active,muted]);
-  useEffect(()=>{if(!isYoutube)return;const frame=frameRef.current;if(!frame)return;const command=active?'playVideo':'pauseVideo';frame.contentWindow?.postMessage(JSON.stringify({event:'command',func:command,args:[]}), '*');frame.contentWindow?.postMessage(JSON.stringify({event:'command',func:muted?'mute':'unMute',args:[]}), '*');},[active,muted,isYoutube]);
-  useEffect(()=>{const v=videoRef.current;if(!v)return;const update=()=>setProgress(v.duration?Math.min(100,(v.currentTime/v.duration)*100):0);v.addEventListener('timeupdate',update);return()=>v.removeEventListener('timeupdate',update);},[]);
+  const videoRef=useRef(null); const frameRef=useRef(null); const [muted,setMuted]=useState(true); const [playing,setPlaying]=useState(active); const [progress,setProgress]=useState(0); const isYoutube=Boolean(post.videoId);
+  useEffect(()=>{if(!videoRef.current)return;videoRef.current.muted=muted;if(active){videoRef.current.play?.().then(()=>setPlaying(true)).catch(()=>setPlaying(false));}else{videoRef.current.pause?.();setPlaying(false);}},[active,muted]);
+  useEffect(()=>{if(!isYoutube)return;const frame=frameRef.current;if(!frame)return;const command=active?'playVideo':'pauseVideo';frame.contentWindow?.postMessage(JSON.stringify({event:'command',func:command,args:[]}), '*');frame.contentWindow?.postMessage(JSON.stringify({event:'command',func:muted?'mute':'unMute',args:[]}), '*');setPlaying(active);},[active,muted,isYoutube]);
+  useEffect(()=>{const v=videoRef.current;if(!v)return;const update=()=>setProgress(v.duration?Math.min(100,(v.currentTime/v.duration)*100):0);v.addEventListener('timeupdate',update);v.addEventListener('play',()=>setPlaying(true));v.addEventListener('pause',()=>setPlaying(false));return()=>{v.removeEventListener('timeupdate',update);};},[]);
   const toggleMute=()=>setMuted(v=>!v);
-  const media = isYoutube ? <iframe ref={frameRef} className="h-full w-full" src={`https://www.youtube-nocookie.com/embed/${post.videoId}?enablejsapi=1&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${post.videoId}`} title={post.title} allow="autoplay; encrypted-media; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen/> : <video ref={videoRef} src={post.mediaUrl} autoPlay={active} muted={muted} loop playsInline controls={false} onClick={onDoubleTap} className="h-full w-full object-cover" onTimeUpdate={e=>setProgress(e.currentTarget.duration?(e.currentTarget.currentTime/e.currentTarget.duration)*100:0)}/>;
+  const togglePlayback=useCallback((e)=>{if(e?.target?.closest?.('button'))return;const v=videoRef.current;if(!v)return;if(v.paused){v.play?.().then(()=>setPlaying(true)).catch(()=>{});}else{v.pause?.();setPlaying(false);}},[]);
+  const handleTap=useTapAction(onDoubleTap,togglePlayback);
+  const media = isYoutube ? <iframe ref={frameRef} className="h-full w-full" src={`https://www.youtube-nocookie.com/embed/${post.videoId}?enablejsapi=1&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${post.videoId}`} title={post.title} allow="autoplay; encrypted-media; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen/> : <video ref={videoRef} src={post.mediaUrl} autoPlay={active} muted={muted} loop playsInline controls={false} className="h-full w-full object-cover" onClick={handleTap} onTimeUpdate={e=>setProgress(e.currentTarget.duration?(e.currentTarget.currentTime/e.currentTarget.duration)*100:0)}/>;
   return <div className="relative h-full w-full" onDoubleClick={onDoubleTap}>{media}<div className="pointer-events-none absolute inset-x-0 bottom-0 h-1 bg-white/10"><div className="h-full bg-white/80" style={{width:`${progress}%`}}/></div>{(reel||!isYoutube)&&<button type="button" onClick={toggleMute} className="absolute bottom-4 right-4 z-10 rounded-full bg-black/55 p-2.5 text-white backdrop-blur-xl" aria-label={muted?'Unmute video':'Mute video'}>{muted?<FiVolumeX/>:<FiVolume2/>}</button>}</div>;
 }
 
@@ -123,7 +126,7 @@ function ReelCard({post,user,onUpdate,active,notificationId}) {
 function Reels({posts,user,onUpdate,notificationId}) {
   const ref=useRef(null); const [active,setActive]=useState(String(posts[0]?.id||''));
   useEffect(()=>{const root=ref.current;if(!root)return;const cards=[...root.querySelectorAll('[data-reel]')];const obs=new IntersectionObserver(entries=>{const e=entries.filter(x=>x.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];if(e)setActive(e.target.dataset.reel);},{root,threshold:.6});cards.forEach(c=>obs.observe(c));return()=>obs.disconnect();},[posts.length]);
-  useEffect(()=>{if(!notificationId)return;const node=rootElement(ref.current,`[data-reel="${CSS.escape(notificationId)}"]`);if(node)setTimeout(()=>node.scrollIntoView({block:'start',behavior:'instant'}),80);},[notificationId,posts.length]);
+  useEffect(()=>{if(!notificationId)return;const node=rootElement(ref.current,`[data-reel=\"${CSS.escape(notificationId)}\"]`);if(node)setTimeout(()=>node.scrollIntoView({block:'start',behavior:'instant'}),80);},[notificationId,posts.length]);
   return <div ref={ref} className="h-[calc(100dvh-8.5rem)] snap-y snap-mandatory overflow-y-auto" style={{scrollbarWidth:'none'}}>{posts.map(p=><div key={p.id} data-reel={p.id} className="h-[calc(100dvh-8.5rem)]"><ReelCard post={p} user={user} onUpdate={onUpdate} active={active===String(p.id)} notificationId={notificationId}/></div>)}</div>;
 }
 function rootElement(root,selector){try{return root?.querySelector(selector)||null;}catch{return null;}}
