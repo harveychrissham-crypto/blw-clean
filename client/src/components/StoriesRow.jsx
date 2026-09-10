@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { FiPlus } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
+import { prepareImageForUpload } from '../utils/feed';
 import { hapticTap, hapticSuccess, hapticError } from '../utils/haptics';
 import StoryViewer from './StoryViewer';
 
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 30 * 1024 * 1024;
 
 function groupByAuthor(stories) {
@@ -73,21 +74,35 @@ export default function StoriesRow() {
   };
 
   const handleFileChosen = async (event) => {
-    const file = event.target.files?.[0];
+    const originalFile = event.target.files?.[0];
     event.target.value = '';
-    if (!file) return;
+    if (!originalFile) return;
 
-    const isVideo = file.type.startsWith('video/');
-    const maxBytes = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
-    if (file.size > maxBytes) {
+    const isVideo = originalFile.type.startsWith('video/');
+    if (isVideo && originalFile.size > MAX_VIDEO_BYTES) {
       hapticError();
-      setUploadError(`${isVideo ? 'Videos' : 'Images'} must be ${Math.round(maxBytes / (1024 * 1024))} MB or smaller.`);
+      setUploadError('Videos must be 30 MB or smaller.');
+      return;
+    }
+    if (!isVideo && originalFile.size > MAX_IMAGE_BYTES) {
+      hapticError();
+      setUploadError('That image is over 15 MB. Choose a smaller image.');
       return;
     }
 
     setUploading(true);
     setUploadError('');
     try {
+      // Large phone photos are automatically resized/compressed to WebP before
+      // upload, so normal camera/gallery images no longer fail the 5 MB server limit.
+      const file = isVideo ? originalFile : await prepareImageForUpload(originalFile, {
+        maxBytes: 5 * 1024 * 1024,
+        maxDimension: 2200,
+      });
+      if (!isVideo && file.size > 5 * 1024 * 1024) {
+        throw new Error('This image could not be compressed enough. Please choose a slightly smaller image.');
+      }
+
       const form = new FormData();
       form.append('media', file);
       const uploadRes = await apiFetch('/api/stories/upload', { method: 'POST', body: form });
