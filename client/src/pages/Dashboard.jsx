@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { fetchVenueByChapter } from '../utils/venues';
 import { apiFetch } from '../config/api';
@@ -20,7 +20,6 @@ import {
   FiFileText,
   FiClock,
   FiCamera,
-  FiX,
   FiLoader,
 } from 'react-icons/fi';
 import { Card, Eyebrow, StatGroup, ActionBanner, InfoTile } from '../components/ui/Card';
@@ -41,6 +40,8 @@ export default function Dashboard() {
   const [venueStatus, setVenueStatus] = useState('idle'); // idle | loading | loaded | none | error
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarError, setAvatarError] = useState('');
+  const [showPhotoSheet, setShowPhotoSheet] = useState(false);
+  const avatarInputRef = useRef(null);
   const [appVersion, setAppVersion] = useState(null);
 
   useEffect(() => {
@@ -72,6 +73,7 @@ export default function Dashboard() {
   };
 
   const handleAvatarRemove = async () => {
+    setShowPhotoSheet(false);
     setAvatarBusy(true);
     setAvatarError('');
     try {
@@ -248,7 +250,7 @@ export default function Dashboard() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
               <div className="relative shrink-0">
-                <label className="group relative block h-16 w-16 cursor-pointer overflow-hidden rounded-3xl shadow-xl shadow-purple-400/20">
+                <Button variant="custom" size="none" type="button" onClick={() => setShowPhotoSheet(true)} disabled={avatarBusy} aria-label="Change profile photo" className="group relative block h-16 w-16 cursor-pointer overflow-hidden rounded-3xl shadow-xl shadow-purple-400/20 disabled:cursor-wait">
                   {user?.avatarUrl ? (
                     <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                   ) : (
@@ -259,14 +261,25 @@ export default function Dashboard() {
                   <div className={`absolute inset-0 flex items-center justify-center bg-black/50 transition ${avatarBusy ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                     {avatarBusy ? <FiLoader className="h-4 w-4 animate-spin text-white" /> : <FiCamera className="h-5 w-5 text-white" />}
                   </div>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} disabled={avatarBusy} />
-                </label>
-                {user?.avatarUrl && (
-                  <Button variant="custom" size="none" type="button" onClick={handleAvatarRemove} disabled={avatarBusy} aria-label="Remove profile photo" className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-ink-900 text-white/70 ring-2 ring-ink-900 hover:text-white disabled:opacity-50">
-                    <FiX className="h-3 w-3" />
-                  </Button>
-                )}
+                </Button>
+                <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} disabled={avatarBusy} />
               </div>
+              {showPhotoSheet && (
+                <div className="fixed inset-0 z-[80] grid place-items-end bg-black/60 p-3 backdrop-blur-sm sm:place-items-center" role="presentation" onClick={() => setShowPhotoSheet(false)}>
+                  <div className="w-full max-w-sm space-y-2" onClick={(e) => e.stopPropagation()}>
+                    <Card variant="custom" role="dialog" aria-modal="true" aria-label="Change profile photo" className="overflow-hidden rounded-3xl border border-white/10 bg-[#1a1926]/95 shadow-2xl backdrop-blur">
+                      <p className="border-b border-white/10 px-4 py-3.5 text-center text-sm font-semibold text-white">Change Profile Photo</p>
+                      <Button variant="custom" size="none" type="button" onClick={() => { setShowPhotoSheet(false); avatarInputRef.current?.click(); }} className="block w-full border-b border-white/10 px-4 py-3.5 text-center text-sm font-semibold text-[#F04FB8] hover:bg-white/5">Upload Photo</Button>
+                      {user?.avatarUrl && (
+                        <Button variant="custom" size="none" type="button" onClick={handleAvatarRemove} className="block w-full px-4 py-3.5 text-center text-sm font-semibold text-red-400 hover:bg-red-500/5">Remove Current Photo</Button>
+                      )}
+                    </Card>
+                    <Card variant="custom" className="overflow-hidden rounded-3xl border border-white/10 bg-[#1a1926]/95 shadow-2xl backdrop-blur">
+                      <Button variant="custom" size="none" type="button" onClick={() => setShowPhotoSheet(false)} className="block w-full px-4 py-3.5 text-center text-sm font-semibold text-white hover:bg-white/5">Cancel</Button>
+                    </Card>
+                  </div>
+                </div>
+              )}
               <div className="min-w-0">
                 <Eyebrow>Member dashboard</Eyebrow>
                 <h1 className="mt-1 text-2xl font-semibold text-white truncate">Brother {displayName}</h1>
