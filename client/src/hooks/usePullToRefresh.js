@@ -1,10 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
+import { hapticTap, hapticSuccess, hapticError } from '../utils/haptics';
 
-// Pull-to-refresh for pages that scroll on the window/body (this app has no
-// inner scroll containers on data pages - see Layout.jsx, `<main>` has no
-// overflow rules of its own). Gesture only engages when the page is already
-// scrolled to the top, matching native app behavior and avoiding any
-// conflict with normal vertical scrolling further down the page.
 const TRIGGER_DISTANCE = 70;
 const MAX_PULL_DISTANCE = 110;
 const DRAG_RESISTANCE = 0.5;
@@ -14,6 +10,7 @@ export function usePullToRefresh(onRefresh, { enabled = true } = {}) {
   const [refreshing, setRefreshing] = useState(false);
   const startY = useRef(null);
   const isTracking = useRef(false);
+  const triggered = useRef(false);
 
   const onTouchStart = useCallback((e) => {
     if (!enabled || refreshing) return;
@@ -24,6 +21,7 @@ export function usePullToRefresh(onRefresh, { enabled = true } = {}) {
     }
     startY.current = e.touches[0].clientY;
     isTracking.current = true;
+    triggered.current = false;
   }, [enabled, refreshing]);
 
   const onTouchMove = useCallback((e) => {
@@ -38,7 +36,14 @@ export function usePullToRefresh(onRefresh, { enabled = true } = {}) {
       setPullDistance(0);
       return;
     }
-    setPullDistance(Math.min(delta * DRAG_RESISTANCE, MAX_PULL_DISTANCE));
+    const distance = Math.min(delta * DRAG_RESISTANCE, MAX_PULL_DISTANCE);
+    setPullDistance(distance);
+    if (distance >= TRIGGER_DISTANCE && !triggered.current) {
+      triggered.current = true;
+      hapticTap();
+    } else if (distance < TRIGGER_DISTANCE) {
+      triggered.current = false;
+    }
   }, [enabled]);
 
   const onTouchEnd = useCallback(async () => {
@@ -51,18 +56,25 @@ export function usePullToRefresh(onRefresh, { enabled = true } = {}) {
       setPullDistance(TRIGGER_DISTANCE);
       try {
         await onRefresh();
+        hapticSuccess();
+      } catch (error) {
+        hapticError();
+        throw error;
       } finally {
         setRefreshing(false);
         setPullDistance(0);
+        triggered.current = false;
       }
     } else {
       setPullDistance(0);
+      triggered.current = false;
     }
   }, [pullDistance, onRefresh]);
 
   const onTouchCancel = useCallback(() => {
     isTracking.current = false;
     startY.current = null;
+    triggered.current = false;
     setPullDistance(0);
   }, []);
 
