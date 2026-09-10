@@ -128,8 +128,13 @@ export async function flushFeedActionQueue() {
 }
 
 if (typeof window !== 'undefined') {
-  window.addEventListener('online', () => { flushFeedActionQueue().catch(() => {}); });
-  if (navigator.onLine) flushFeedActionQueue().catch(() => {});
+  const flushWhenAvailable = () => { flushFeedActionQueue().catch(() => {}); };
+  window.addEventListener('online', flushWhenAvailable);
+  window.addEventListener('pageshow', flushWhenAvailable);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') flushWhenAvailable();
+  });
+  if (navigator.onLine) flushWhenAvailable();
 }
 
 export async function fetchFeed({ limit = 20, offset = 0 } = {}) {
