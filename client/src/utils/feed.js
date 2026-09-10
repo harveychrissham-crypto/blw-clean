@@ -1,6 +1,7 @@
 import { apiFetch } from '../config/api';
 
 const FEED_CACHE_KEY = 'blw_feed_cache_v2';
+const FEED_ACTION_QUEUE_KEY = 'blw_feed_action_queue_v1';
 
 function formatFeedTime(value) {
   const date = value ? new Date(value) : null;
@@ -40,6 +41,84 @@ function normalizePost(row = {}) {
     saved: Boolean(row.saved),
     time: row.time || formatFeedTime(row.created_at),
   };
+}
+
+function readActionQueue() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(FEED_ACTION_QUEUE_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch { return []; }
+}
+
+function writeActionQueue(queue) {
+  try {
+    if (queue.length) localStorage.setItem(FEED_ACTION_QUEUE_KEY, JSON.stringify(queue));
+    else localStorage.removeItem(FEED_ACTION_QUEUE_KEY);
+  } catch {}
+}
+
+function queueAction(entry) {
+  const queue = readActionQueue();
+  queue.push({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, createdAt: Date.now(), ...entry });
+  writeActionQueue(queue);
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('feed-action-queued', { detail: entry }));
+}
+
+async function runQueuedAction(entry) {
+  const action = entry.action;
+  if (action === 'comment') {
+    const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(entry.postId)}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ body: entry.body }),
+    });
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      const error = new Error(result?.error || 'Unable to sync Feed comment.');
+      error.status = response.status;
+      throw error;
+    }
+    return response.json().catch(() => ({}));
+  }
+
+  const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(entry.postId)}/${action}`, { method: 'POST' });
+  if (!response.ok) {
+    const result = await response.json().catch(() => ({}));
+    const error = new Error(result?.error || 'Unable to sync Feed action.');
+    error.status = response.status;
+    throw error;
+  }
+  return response.json().catch(() => ({}));
+}
+
+let flushingQueue = false;
+export async function flushFeedActionQueue() {
+  if (flushingQueue || (typeof navigator !== 'undefined' && !navigator.onLine)) return;
+  const queue = readActionQueue();
+  if (!queue.length) return;
+  flushingQueue = true;
+  const remaining = [];
+  try {
+    for (const entry of queue) {
+      try {
+        const result = await runQueuedAction(entry);
+        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('feed-action-synced', { detail: { ...entry, result } }));
+      } catch (error) {
+        if (error?.status === 401 || error?.status === 403) {
+          if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('feed-action-dropped', { detail: entry }));
+          continue;
+        }
+        remaining.push(entry);
+      }
+    }
+    writeActionQueue(remaining);
+  } finally {
+    flushingQueue = false;
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => { flushFeedActionQueue().catch(() => {}); });
+  if (navigator.onLine) flushFeedActionQueue().catch(() => {});
 }
 
 export async function fetchFeed({ limit = 20, offset = 0 } = {}) {
@@ -123,10 +202,22 @@ export async function createFeedPost({ type = 'post', title, body = '', imageUrl
 }
 
 async function postAction(id, action) {
-  const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/${action}`, { method: 'POST' });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body?.error || 'Please sign in to use this feature.');
-  return body;
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    queueAction({ action, postId: String(id) });
+    return { queued: true };
+  }
+  try {
+    const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/${action}`, { method: 'POST' });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw Object.assign(new Error(body?.error || 'Please sign in to use this feature.'), { status: response.status });
+    return body;
+  } catch (error) {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      queueAction({ action, postId: String(id) });
+      return { queued: true };
+    }
+    throw error;
+  }
 }
 export const toggleLike = (id) => postAction(id, 'like');
 export const toggleSave = (id) => postAction(id, 'save');
@@ -137,12 +228,40 @@ export async function fetchComments(id) {
   if (!response.ok) throw new Error(body?.error || 'Unable to load comments.');
   return Array.isArray(body?.comments) ? body.comments : [];
 }
+
 export async function addComment(id, body) {
-  const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/comments`, { method: 'POST', body: JSON.stringify({ body }) });
-  const result = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(result?.error || 'Unable to add comment.');
-  return result.comment;
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    queueAction({ action: 'comment', postId: String(id), body: String(body || '').trim() });
+    return {
+      id: `queued-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      postId: String(id),
+      body: String(body || '').trim(),
+      author: 'You',
+      avatarUrl: '',
+      queued: true,
+    };
+  }
+  try {
+    const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/comments`, { method: 'POST', body: JSON.stringify({ body }) });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw Object.assign(new Error(result?.error || 'Unable to add comment.'), { status: response.status });
+    return result.comment;
+  } catch (error) {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      queueAction({ action: 'comment', postId: String(id), body: String(body || '').trim() });
+      return {
+        id: `queued-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        postId: String(id),
+        body: String(body || '').trim(),
+        author: 'You',
+        avatarUrl: '',
+        queued: true,
+      };
+    }
+    throw error;
+  }
 }
+
 export async function deleteComment(id, commentId) {
   const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/comments?commentId=${encodeURIComponent(commentId)}`, { method: 'DELETE' });
   const result = await response.json().catch(() => ({}));
