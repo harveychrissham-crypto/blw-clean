@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { FiX, FiVolume2, FiVolumeX, FiTrash2, FiSend, FiLoader } from 'react-icons/fi';
+import { FiX, FiVolume2, FiVolumeX, FiTrash2, FiSend, FiLoader, FiEye } from 'react-icons/fi';
 import { apiFetch } from '../config/api';
 import { hapticError, hapticSuccess, hapticTap } from '../utils/haptics';
 
@@ -15,10 +15,16 @@ function timeAgo(iso) {
   return `${Math.floor(hours / 24)}d`;
 }
 
-// Renders one author's set of stories full-screen, auto-advancing through
-// each segment (image: fixed duration, video: its own length). Tapping the
-// left third of the screen goes back, the right two-thirds goes forward,
-// and holding down pauses. Horizontal swipes can move between author groups.
+function ViewerAvatar({ viewer, size = 'h-7 w-7' }) {
+  return viewer?.avatarUrl ? (
+    <img src={viewer.avatarUrl} alt="" className={`${size} shrink-0 rounded-full border border-black/70 object-cover`} />
+  ) : (
+    <div className={`${size} grid shrink-0 place-items-center rounded-full border border-black/70 bg-white/15 text-[9px] font-bold text-white`}>
+      {(viewer?.name || '?').charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
 export default function StoryViewer({ stories, initialIndex = 0, viewerEmail, onClose, onViewed, onDeleted, onSwipeGroup }) {
   const [index, setIndex] = useState(initialIndex);
   const [progress, setProgress] = useState(0);
@@ -26,6 +32,9 @@ export default function StoryViewer({ stories, initialIndex = 0, viewerEmail, on
   const [muted, setMuted] = useState(true);
   const [reply, setReply] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
+  const [viewers, setViewers] = useState([]);
+  const [viewersOpen, setViewersOpen] = useState(false);
+  const [loadingViewers, setLoadingViewers] = useState(false);
   const rafRef = useRef(null);
   const elapsedRef = useRef(0);
   const pressStartRef = useRef(0);
@@ -70,7 +79,27 @@ export default function StoryViewer({ stories, initialIndex = 0, viewerEmail, on
     setProgress(0);
     elapsedRef.current = 0;
     setReply('');
+    setViewers([]);
+    setViewersOpen(false);
   }, [index, story?.id]);
+
+  useEffect(() => {
+    if (!isOwn || !story?.id) return undefined;
+    let cancelled = false;
+    setLoadingViewers(true);
+    apiFetch(`/api/stories/${story.id}/viewers`)
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!cancelled && response.ok) setViewers(Array.isArray(body?.viewers) ? body.viewers : []);
+      })
+      .catch(() => {
+        if (!cancelled) setViewers([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingViewers(false);
+      });
+    return () => { cancelled = true; };
+  }, [isOwn, story?.id]);
 
   useEffect(() => {
     if (story?.mediaType === 'video') return undefined;
@@ -198,10 +227,53 @@ export default function StoryViewer({ stories, initialIndex = 0, viewerEmail, on
 
       <div className="relative flex-1 select-none" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         {story.mediaType === 'video' ? <video ref={videoRef} src={story.mediaUrl} muted={muted} playsInline autoPlay className="h-full w-full object-contain" /> : <img src={story.mediaUrl} alt="" className="h-full w-full object-contain" />}
-        {story.caption && <p className={`absolute inset-x-0 bg-gradient-to-t from-black/70 to-transparent px-4 pb-6 pt-10 text-center text-sm text-white ${isOwn ? 'bottom-0' : 'bottom-20'}`}>{story.caption}</p>}
+        {story.caption && <p className={`absolute inset-x-0 bg-gradient-to-t from-black/70 to-transparent px-4 pb-6 pt-10 text-center text-sm text-white ${isOwn ? 'bottom-16' : 'bottom-20'}`}>{story.caption}</p>}
 
         <button type="button" aria-label="Previous" onPointerDown={() => { pressStartRef.current = Date.now(); setPaused(true); }} onPointerUp={() => { setPaused(false); if (Date.now() - pressStartRef.current < 300) goPrev(); }} onPointerLeave={() => setPaused(false)} className="absolute inset-y-0 left-0 w-1/3 cursor-default" />
         <button type="button" aria-label="Next" onPointerDown={() => { pressStartRef.current = Date.now(); setPaused(true); }} onPointerUp={() => { setPaused(false); if (Date.now() - pressStartRef.current < 300) goNext(); }} onPointerLeave={() => setPaused(false)} className="absolute inset-y-0 right-0 w-2/3 cursor-default" />
+
+        {isOwn && (
+          <div className="absolute inset-x-3 bottom-3 z-20">
+            <button
+              type="button"
+              onClick={() => setViewersOpen((value) => !value)}
+              onPointerDown={(event) => event.stopPropagation()}
+              aria-expanded={viewersOpen}
+              aria-label="See who viewed your story"
+              className="flex items-center gap-2 rounded-full border border-white/20 bg-black/55 px-3 py-2 backdrop-blur-xl"
+            >
+              <FiEye className="h-4 w-4 text-white/70" />
+              {viewers.length > 0 ? (
+                <span className="flex -space-x-2">
+                  {viewers.slice(0, 4).map((viewer) => <ViewerAvatar key={viewer.email} viewer={viewer} />)}
+                </span>
+              ) : loadingViewers ? (
+                <span className="h-5 w-16 animate-pulse rounded-full bg-white/10" />
+              ) : null}
+              <span className="text-xs font-semibold text-white/80">{viewers.length} {viewers.length === 1 ? 'view' : 'views'}</span>
+            </button>
+
+            {viewersOpen && (
+              <div className="mt-2 max-h-48 overflow-y-auto rounded-2xl border border-white/15 bg-black/75 p-2 shadow-2xl backdrop-blur-xl" onPointerDown={(event) => event.stopPropagation()}>
+                {loadingViewers ? (
+                  <div className="px-3 py-4 text-xs text-white/45">Loading viewers…</div>
+                ) : viewers.length ? (
+                  viewers.map((viewer) => (
+                    <div key={viewer.email} className="flex items-center gap-3 rounded-xl px-3 py-2">
+                      <ViewerAvatar viewer={viewer} size="h-9 w-9" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-semibold text-white">{viewer.name}</p>
+                        <p className="text-[10px] text-white/35">Viewed {timeAgo(viewer.viewedAt)} ago</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-3 py-4 text-xs text-white/45">No one has viewed this story yet.</div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {!isOwn && story.authorEmail && (
           <form onSubmit={sendReply} className="absolute inset-x-3 bottom-3 z-20 flex items-center gap-2 rounded-full border border-white/20 bg-black/55 p-1.5 backdrop-blur-xl" onPointerDown={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()}>
