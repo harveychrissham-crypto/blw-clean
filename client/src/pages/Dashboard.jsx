@@ -20,6 +20,7 @@ import {
   FiFileText,
   FiClock,
   FiCamera,
+  FiX,
   FiLoader,
 } from 'react-icons/fi';
 import { Card, Eyebrow, StatGroup, ActionBanner, InfoTile } from '../components/ui/Card';
@@ -41,7 +42,24 @@ export default function Dashboard() {
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarError, setAvatarError] = useState('');
   const [showPhotoSheet, setShowPhotoSheet] = useState(false);
+  const [showPhotoViewer, setShowPhotoViewer] = useState(false);
   const avatarInputRef = useRef(null);
+  const longPressTimer = useRef(null);
+  const longPressFired = useRef(false);
+
+  const startAvatarPress = () => {
+    longPressFired.current = false;
+    clearTimeout(longPressTimer.current);
+    longPressTimer.current = setTimeout(() => {
+      longPressFired.current = true;
+      if (user?.avatarUrl) setShowPhotoViewer(true);
+    }, 500);
+  };
+  const cancelAvatarPress = () => clearTimeout(longPressTimer.current);
+  const handleAvatarClick = () => {
+    if (longPressFired.current) { longPressFired.current = false; return; } // the long-press already acted — don't also open the change sheet
+    setShowPhotoSheet(true);
+  };
   const [appVersion, setAppVersion] = useState(null);
 
   useEffect(() => {
@@ -252,14 +270,19 @@ export default function Dashboard() {
               <div className="relative shrink-0">
                 <button
                   type="button"
-                  onClick={() => setShowPhotoSheet(true)}
+                  onClick={handleAvatarClick}
+                  onPointerDown={startAvatarPress}
+                  onPointerUp={cancelAvatarPress}
+                  onPointerLeave={cancelAvatarPress}
+                  onPointerCancel={cancelAvatarPress}
+                  onContextMenu={(e) => e.preventDefault()}
                   disabled={avatarBusy}
-                  aria-label="Change profile photo"
-                  style={{ position: 'relative', display: 'block', width: '64px', height: '64px', flexShrink: 0, padding: 0, border: 'none', background: 'transparent', cursor: avatarBusy ? 'wait' : 'pointer' }}
+                  aria-label="Profile photo — tap to change, hold to view"
+                  style={{ position: 'relative', display: 'block', width: '64px', height: '64px', flexShrink: 0, padding: 0, border: 'none', background: 'transparent', cursor: avatarBusy ? 'wait' : 'pointer', WebkitTouchCallout: 'none', userSelect: 'none' }}
                 >
                   <span style={{ display: 'block', width: '100%', height: '100%', borderRadius: '9999px', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.12)', background: 'linear-gradient(135deg,#C93690,#4D1B82)' }}>
                     {user?.avatarUrl ? (
-                      <img src={user.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                      <img src={user.avatarUrl} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                     ) : (
                       <span style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 900, color: '#fff' }}>
                         {displayName.charAt(0).toUpperCase()}
@@ -313,6 +336,29 @@ export default function Dashboard() {
                       Cancel
                     </button>
                   </div>
+                </div>
+              )}
+              {showPhotoViewer && user?.avatarUrl && (
+                <div
+                  role="presentation"
+                  onClick={() => setShowPhotoViewer(false)}
+                  style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.9)', padding: '24px' }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setShowPhotoViewer(false)}
+                    aria-label="Close photo"
+                    style={{ position: 'absolute', top: 'max(16px, env(safe-area-inset-top))', right: '16px', width: '36px', height: '36px', borderRadius: '9999px', background: 'rgba(255,255,255,0.12)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}
+                  >
+                    <FiX style={{ width: '18px', height: '18px' }} />
+                  </button>
+                  <img
+                    src={user.avatarUrl}
+                    alt="Profile"
+                    draggable={false}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', borderRadius: '16px', objectFit: 'contain', boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}
+                  />
                 </div>
               )}
               <div className="min-w-0">
