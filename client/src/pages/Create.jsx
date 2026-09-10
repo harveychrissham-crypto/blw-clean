@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FiArrowLeft, FiCamera, FiCheck, FiFilm, FiImage, FiLoader, FiMapPin, FiSend, FiSmile, FiX } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { createFeedPost, uploadFeedMedia } from '../utils/feed';
@@ -19,6 +20,7 @@ export default function Create() {
   const [location, setLocation] = useState('');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [published, setPublished] = useState(false);
 
   const isDirty = Boolean(file || caption.trim() || location.trim());
   const confirmLeave = () => !isDirty || window.confirm('You have unsaved content. Leave Create and discard it?');
@@ -111,7 +113,10 @@ export default function Create() {
       const body = cleanLocation ? `${cleanCaption}${cleanCaption ? '\n\n' : ''}📍 ${cleanLocation}` : cleanCaption;
       const created = await createFeedPost({ type, title, body, mediaUrl: uploaded.url, mediaType: uploaded.mediaType });
       hapticSuccess();
-      navigate(`/feed${type === 'reel' ? '?tab=reels' : ''}`, { replace: true, state: { createdPost: created } });
+      setPublished(true);
+      setTimeout(() => {
+        navigate(`/feed${type === 'reel' ? '?tab=reels' : ''}`, { replace: true, state: { createdPost: created } });
+      }, 900);
     } catch (err) {
       setError(err?.message || 'Unable to publish right now.');
       hapticError();
@@ -180,6 +185,28 @@ export default function Create() {
           </section>
         </div>
       </div>
+      <AnimatePresence>
+        {published && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[90] grid place-items-center bg-[#090812]/95 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.4, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 340, damping: 18 }}
+              className="flex flex-col items-center gap-3"
+            >
+              <div className="grid h-20 w-20 place-items-center rounded-full bg-gradient-to-br from-[#A62574] to-[#3C1464] shadow-2xl shadow-purple-400/30">
+                <FiCheck className="h-10 w-10 text-white" />
+              </div>
+              <p className="text-sm font-bold text-white">{type === 'reel' ? 'Reel shared!' : 'Posted!'}</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
