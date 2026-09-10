@@ -1,8 +1,8 @@
 import { MdQrCodeScanner } from 'react-icons/md';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
-import { FiX, FiHome, FiMic, FiCalendar, FiTarget, FiRadio, FiHeart, FiGift, FiPhone, FiSearch, FiUser, FiLogIn, FiShield, FiBell, FiVideo } from 'react-icons/fi';
+import { FiX, FiHome, FiMic, FiCalendar, FiTarget, FiRadio, FiHeart, FiGift, FiPhone, FiSearch, FiUser, FiLogIn, FiShield, FiBell, FiVideo, FiMessageCircle } from 'react-icons/fi';
 import AIChatWidget from '../components/AIChatWidget';
 import SearchPanel from '../components/SearchPanel';
 import BottomNav from '../components/BottomNav';
@@ -22,11 +22,51 @@ const navItems = [
   { name: 'Leaders', path: '/leaders-forum', icon: FiShield },
 ];
 
+function FeedSocialChrome({ user }) {
+  const name = user?.name || 'BLW Kenya Zone';
+  const firstName = name.split(' ')[0] || 'Member';
+  const initial = firstName.charAt(0).toUpperCase();
+
+  return (
+    <div className="border-b border-white/[0.07] bg-ink-950/95 px-4 py-3 backdrop-blur-xl sm:hidden">
+      <div className="mx-auto flex max-w-3xl items-center justify-between">
+        <Link to={user ? '/dashboard' : '/auth'} className="flex min-w-0 items-center gap-3" aria-label={user ? 'Open your profile' : 'Sign in'}>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#c93690] to-[#4d1b82] text-xs font-black text-white ring-1 ring-white/15">
+            {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" /> : initial}
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-bold text-white">{user ? firstName : 'BLW Kenya Zone'}</span>
+            <span className="block text-[10px] text-white/40">{user ? 'Your profile' : 'Community Feed'}</span>
+          </span>
+        </Link>
+        <div className="flex items-center gap-1">
+          <Link to="/notifications" aria-label="Notifications" className="rounded-full p-2.5 text-white/70 transition hover:bg-white/5 hover:text-white"><FiBell className="h-[19px] w-[19px]" /></Link>
+          <Link to="/messages" aria-label="Messages" className="rounded-full p-2.5 text-white/80 transition hover:bg-white/5 hover:text-white"><FiMessageCircle className="h-[20px] w-[20px]" /></Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FeedTabStyle() {
+  return <style>{`
+    main.feed-page .sticky.top-0 > div { gap: 1.25rem !important; }
+    main.feed-page .sticky.top-0 button { position: relative; border-radius: 0 !important; padding: .7rem .15rem !important; background: transparent !important; color: rgba(255,255,255,.45) !important; font-size: .72rem !important; }
+    main.feed-page .sticky.top-0 button:hover { background: transparent !important; color: rgba(255,255,255,.85) !important; }
+    main.feed-page .sticky.top-0 button:first-child { margin-left: .15rem; }
+    main.feed-page .sticky.top-0 button[aria-current="true"] { color: #fff !important; }
+    main.feed-page .sticky.top-0 button::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 999px; background: transparent; }
+    main.feed-page .sticky.top-0 button:hover::after { background: rgba(255,255,255,.18); }
+  `}</style>;
+}
+
 export default function Layout({ children }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const { user } = useAuth();
+  const location = useLocation();
+  const isFeed = location.pathname === '/feed';
 
   useEffect(() => {
     const refresh = () => setUnreadCount(getUnreadCount());
@@ -55,9 +95,12 @@ export default function Layout({ children }) {
         </div>
       </header>
 
+      {isFeed && <FeedSocialChrome user={user} />}
+      {isFeed && <FeedTabStyle />}
+
       {menuOpen && <div className="fixed inset-0 z-[60] sm:hidden" role="dialog" aria-modal="true"><div className="absolute inset-0 bg-black/60" onClick={() => setMenuOpen(false)} aria-hidden="true" /><div className="absolute inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto rounded-t-[1.75rem] border-t border-white/10 px-4 pb-6 pt-3" style={{ background: '#0f0e1b', paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}><div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/15" /><div className="flex items-center justify-between px-1 pb-3"><span className="text-xs font-semibold uppercase tracking-widest text-white/40">Menu</span><Button variant="custom" size="none" onClick={() => setMenuOpen(false)} aria-label="Close menu" className="text-white/50 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"><FiX size={18} /></Button></div><div className="grid grid-cols-3 gap-2">{navItems.map((item) => { const Icon=item.icon; return <NavLink key={`${item.path}-${item.name}`} to={item.path} end={item.path==='/' } className={({isActive})=>`flex flex-col items-center gap-1.5 rounded-2xl px-2 py-3.5 text-center text-[11px] font-medium transition ${isActive ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white'}`} onClick={()=>setMenuOpen(false)}><Icon className="h-5 w-5" />{item.name}</NavLink>; })}</div><div className="mt-4 pt-4 border-t border-white/[0.07]">{user ? <Link to="/dashboard" className="flex items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold text-white" style={{background:'linear-gradient(135deg,#EC2FA8,#8A2BE2)'}} onClick={()=>setMenuOpen(false)}><FiUser className="h-4 w-4" />My Account</Link> : <Link to="/auth" className="flex items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold text-white" style={{background:'linear-gradient(135deg,#EC2FA8,#8A2BE2)'}} onClick={()=>setMenuOpen(false)}><FiLogIn className="h-4 w-4" />Sign In</Link>}</div></div></div>}
 
-      <main>{children}</main>
+      <main className={isFeed ? 'feed-page' : undefined}>{children}</main>
       <SearchPanel open={searchOpen} onClose={() => setSearchOpen(false)} />
       <AIChatWidget />
 
