@@ -46,6 +46,21 @@ export default function StoriesRow() {
 
   if (!user) return null;
 
+  if (loading) {
+    return (
+      <div className="w-full px-5 pt-2" aria-label="Loading stories" aria-busy="true">
+        <div className="flex gap-4 overflow-hidden pb-2">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="flex shrink-0 flex-col items-center gap-1.5">
+              <div className="h-16 w-16 animate-pulse rounded-full border-2 border-white/[.08] bg-white/[.06]" />
+              <div className="h-2.5 w-12 animate-pulse rounded-full bg-white/[.06]" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   const groups = groupByAuthor(stories);
   const myEmail = user.email?.toLowerCase();
   const myGroup = groups.find((group) => group[0].authorEmail?.toLowerCase() === myEmail);
@@ -130,8 +145,6 @@ export default function StoriesRow() {
       setUploading(false);
     }
   };
-
-  if (loading) return null;
 
   return (
     <div className="w-full px-5 pt-2">
