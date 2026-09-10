@@ -4,13 +4,14 @@ import { FiBell, FiCalendar, FiCheckCircle, FiFilm, FiImage, FiMapPin, FiRadio, 
 import { MdQrCodeScanner, MdFlashlightOn } from 'react-icons/md';
 import jsQR from 'jsqr';
 import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { useAuth } from '../context/AuthContext';
 import { useIsAdmin } from '../hooks/useIsAdmin';
 import Button, { IconButton } from '../components/ui/Button';
 import { fetchAllMembers, searchMembers, checkInMember, syncOfflineCheckins } from '../utils/members';
 import { getOfflineCheckinQueue } from '../utils/offlineCheckin';
 import { fetchEvents } from '../utils/events';
-import { shareContent } from '../utils/share';
 import NotificationCenter from './NotificationCenter';
 import FellowshipLocationsAdminSecure from './FellowshipLocationsAdminSecure';
 import LiveStreamAdminPanel from './LiveStreamAdminPanel';
@@ -84,11 +85,15 @@ function CSVDownload({ members, event }) {
 
     if (Capacitor.isNativePlatform()) {
       // The <a download> browser trick below is a silent no-op inside a
-      // Capacitor WebView (no download manager to catch it). Share the CSV
-      // content through the OS share sheet instead — same proven path used
-      // for links elsewhere in the app.
-      const result = await shareContent({ title: filename, text: csv });
-      if (result.method === 'failed') alert("Couldn't export the CSV. Please try again.");
+      // Capacitor WebView (no download manager to catch it). Write a real
+      // file to the app's cache dir and share it as an actual attachment,
+      // so it opens/saves as a genuine .csv document on the other end.
+      try {
+        const written = await Filesystem.writeFile({ path: filename, data: csv, directory: Directory.Cache, encoding: Encoding.UTF8 });
+        await Share.share({ title: filename, dialogTitle: 'Save or share attendance CSV', files: [written.uri] });
+      } catch (err) {
+        if (err?.message !== 'Share canceled') alert("Couldn't export the CSV. Please try again.");
+      }
       return;
     }
 
