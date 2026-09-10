@@ -14,7 +14,15 @@ export default function Home() {
     <section>
       <div className="relative overflow-hidden" style={{ backgroundImage: "url('/illustration.png')", backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
         <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(13,12,24,0.72) 0%, rgba(13,12,24,0.88) 100%)' }} />
-        <motion.div variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.11, delayChildren: 0.08 } }} initial="hidden" animate="visible" className="relative mx-auto max-w-6xl px-5 py-28 sm:py-36">
+        <motion.div
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1, transition: { staggerChildren: 0.11, delayChildren: 0.08 } },
+          }}
+          initial="hidden"
+          animate="visible"
+          className="relative mx-auto max-w-6xl px-5 py-28 sm:py-36"
+        >
           <motion.div variants={{ hidden: { opacity: 0, y: 18 }, visible: { opacity: 1, y: 0 } }} className="max-w-3xl">
             <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest" style={{ color: '#F2A31C' }}><FiGlobe className="h-3.5 w-3.5" /> Fellowship Without Borders</motion.div>
             <motion.h1 variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }} className="text-3xl font-extrabold leading-tight text-white sm:text-4xl lg:text-5xl" style={{ fontFamily: 'Montserrat, sans-serif' }}>Raising a generation of believers rooted in the Word, prayer, and soul-winning impact.</motion.h1>
