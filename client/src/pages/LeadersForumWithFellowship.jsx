@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { FiBell, FiCalendar, FiCheckCircle, FiFilm, FiImage, FiMapPin, FiRadio, FiSearch, FiShield, FiLock, FiUsers, FiX, FiDownload, FiZap } from 'react-icons/fi';
 import { MdQrCodeScanner, MdFlashlightOn } from 'react-icons/md';
 import jsQR from 'jsqr';
+import { Capacitor } from '@capacitor/core';
 import { useAuth } from '../context/AuthContext';
 import { useIsAdmin } from '../hooks/useIsAdmin';
 import Button, { IconButton } from '../components/ui/Button';
 import { fetchAllMembers, searchMembers, checkInMember, syncOfflineCheckins } from '../utils/members';
 import { getOfflineCheckinQueue } from '../utils/offlineCheckin';
 import { fetchEvents } from '../utils/events';
+import { shareContent } from '../utils/share';
 import NotificationCenter from './NotificationCenter';
 import FellowshipLocationsAdminSecure from './FellowshipLocationsAdminSecure';
 import LiveStreamAdminPanel from './LiveStreamAdminPanel';
@@ -60,7 +62,7 @@ function parseQRPayload(raw) {
 }
 
 function CSVDownload({ members, event }) {
-  const exportCsv = () => {
+  const exportCsv = async () => {
     const date = new Date().toISOString().slice(0, 10);
     const rows = [
       ['Event', 'Event Date', 'Membership ID', 'Name', 'Chapter', 'Phone', 'Email', 'Checked In', 'Checked In At', 'Checked In By'],
@@ -78,10 +80,22 @@ function CSVDownload({ members, event }) {
       ]),
     ];
     const csv = rows.map((row) => row.map((value) => `"${String(value ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    const filename = `blw-attendance-${event?.date || date}.csv`;
+
+    if (Capacitor.isNativePlatform()) {
+      // The <a download> browser trick below is a silent no-op inside a
+      // Capacitor WebView (no download manager to catch it). Share the CSV
+      // content through the OS share sheet instead — same proven path used
+      // for links elsewhere in the app.
+      const result = await shareContent({ title: filename, text: csv });
+      if (result.method === 'failed') alert("Couldn't export the CSV. Please try again.");
+      return;
+    }
+
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `blw-attendance-${event?.date || date}.csv`;
+    anchor.download = filename;
     anchor.click();
     URL.revokeObjectURL(url);
   };
