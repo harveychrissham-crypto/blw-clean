@@ -14,6 +14,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Repair Feed JSX syntax
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('client/src/pages/Feed.jsx')
+          text = path.read_text()
+          broken = '</motion.div></AnimatePresence>}'
+          fixed = '</motion.div>}</AnimatePresence>'
+          if broken in text:
+              path.write_text(text.replace(broken, fixed, 1))
+              print('Repaired Feed JSX syntax.')
+          else:
+              print('Feed JSX syntax already repaired.')
+          PY
+          if ! git diff --quiet -- client/src/pages/Feed.jsx; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add client/src/pages/Feed.jsx
+            git commit -m 'fix: repair Feed JSX syntax'
+            git push
+          fi
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
