@@ -54,7 +54,8 @@ function FeedTabStyle() {
     main.feed-page .sticky.top-0 button { position: relative; border-radius: 0 !important; padding: .7rem .15rem !important; background: transparent !important; color: rgba(255,255,255,.45) !important; font-size: .72rem !important; }
     main.feed-page .sticky.top-0 button:hover { background: transparent !important; color: rgba(255,255,255,.85) !important; }
     main.feed-page .sticky.top-0 button:first-child { margin-left: .15rem; }
-    main.feed-page .sticky.top-0 button[aria-current="true"] { color: #fff !important; }
+    main.feed-page .sticky.top-0 button.text-ink-950 { color: #fff !important; font-weight: 700 !important; }
+    main.feed-page .sticky.top-0 button.text-ink-950::after { background: #fff !important; }
     main.feed-page .sticky.top-0 button::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 999px; background: transparent; }
     main.feed-page .sticky.top-0 button:hover::after { background: rgba(255,255,255,.18); }
   `}</style>;
