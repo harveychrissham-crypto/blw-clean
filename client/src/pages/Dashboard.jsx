@@ -250,33 +250,68 @@ export default function Dashboard() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
               <div className="relative shrink-0">
-                <Button variant="custom" size="none" type="button" onClick={() => setShowPhotoSheet(true)} disabled={avatarBusy} aria-label="Change profile photo" className="group relative block h-16 w-16 cursor-pointer overflow-hidden rounded-3xl shadow-xl shadow-purple-400/20 disabled:cursor-wait">
-                  {user?.avatarUrl ? (
-                    <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#C93690] to-[#4D1B82] text-2xl font-black text-white">
-                      {displayName.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div className={`absolute inset-0 flex items-center justify-center bg-black/50 transition ${avatarBusy ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                    {avatarBusy ? <FiLoader className="h-4 w-4 animate-spin text-white" /> : <FiCamera className="h-5 w-5 text-white" />}
-                  </div>
-                </Button>
+                <button
+                  type="button"
+                  onClick={() => setShowPhotoSheet(true)}
+                  disabled={avatarBusy}
+                  aria-label="Change profile photo"
+                  style={{ position: 'relative', display: 'block', width: '64px', height: '64px', flexShrink: 0, padding: 0, border: 'none', background: 'transparent', cursor: avatarBusy ? 'wait' : 'pointer' }}
+                >
+                  <span style={{ display: 'block', width: '100%', height: '100%', borderRadius: '9999px', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.12)', background: 'linear-gradient(135deg,#C93690,#4D1B82)' }}>
+                    {user?.avatarUrl ? (
+                      <img src={user.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                    ) : (
+                      <span style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 900, color: '#fff' }}>
+                        {displayName.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </span>
+                  <span style={{ position: 'absolute', right: '-2px', bottom: '-2px', width: '22px', height: '22px', borderRadius: '9999px', background: '#EC2FA8', border: '2px solid #0d0c1a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {avatarBusy ? <FiLoader className="animate-spin" style={{ width: '11px', height: '11px', color: '#fff' }} /> : <FiCamera style={{ width: '11px', height: '11px', color: '#fff' }} />}
+                  </span>
+                </button>
                 <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} disabled={avatarBusy} />
               </div>
               {showPhotoSheet && (
-                <div className="fixed inset-0 z-[80] grid place-items-end bg-black/60 p-3 backdrop-blur-sm sm:place-items-center" role="presentation" onClick={() => setShowPhotoSheet(false)}>
-                  <div className="w-full max-w-sm space-y-2" onClick={(e) => e.stopPropagation()}>
-                    <Card variant="custom" role="dialog" aria-modal="true" aria-label="Change profile photo" className="overflow-hidden rounded-3xl border border-white/10 bg-[#1a1926]/95 shadow-2xl backdrop-blur">
-                      <p className="border-b border-white/10 px-4 py-3.5 text-center text-sm font-semibold text-white">Change Profile Photo</p>
-                      <Button variant="custom" size="none" type="button" onClick={() => { setShowPhotoSheet(false); avatarInputRef.current?.click(); }} className="block w-full border-b border-white/10 px-4 py-3.5 text-center text-sm font-semibold text-[#F04FB8] hover:bg-white/5">Upload Photo</Button>
-                      {user?.avatarUrl && (
-                        <Button variant="custom" size="none" type="button" onClick={handleAvatarRemove} className="block w-full px-4 py-3.5 text-center text-sm font-semibold text-red-400 hover:bg-red-500/5">Remove Current Photo</Button>
-                      )}
-                    </Card>
-                    <Card variant="custom" className="overflow-hidden rounded-3xl border border-white/10 bg-[#1a1926]/95 shadow-2xl backdrop-blur">
-                      <Button variant="custom" size="none" type="button" onClick={() => setShowPhotoSheet(false)} className="block w-full px-4 py-3.5 text-center text-sm font-semibold text-white hover:bg-white/5">Cancel</Button>
-                    </Card>
+                <div
+                  role="presentation"
+                  onClick={() => setShowPhotoSheet(false)}
+                  style={{ position: 'fixed', inset: 0, zIndex: 80, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'rgba(0,0,0,0.6)' }}
+                >
+                  <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Change profile photo"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ width: '100%', maxWidth: '480px', background: '#151420', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', paddingBottom: 'max(16px, env(safe-area-inset-bottom))', boxShadow: '0 -10px 40px rgba(0,0,0,0.5)' }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '10px' }}>
+                      <span style={{ width: '36px', height: '4px', borderRadius: '999px', background: 'rgba(255,255,255,0.25)' }} />
+                    </div>
+                    <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: '13px', padding: '14px 16px 4px', margin: 0 }}>Change Profile Photo</p>
+                    <button
+                      type="button"
+                      onClick={() => { setShowPhotoSheet(false); avatarInputRef.current?.click(); }}
+                      style={{ display: 'block', width: '100%', padding: '16px', textAlign: 'center', fontSize: '15px', fontWeight: 600, color: '#fff', background: 'transparent', border: 'none', borderTop: '1px solid rgba(255,255,255,0.08)' }}
+                    >
+                      Upload Photo
+                    </button>
+                    {user?.avatarUrl && (
+                      <button
+                        type="button"
+                        onClick={handleAvatarRemove}
+                        style={{ display: 'block', width: '100%', padding: '16px', textAlign: 'center', fontSize: '15px', fontWeight: 600, color: '#ff5c5c', background: 'transparent', border: 'none', borderTop: '1px solid rgba(255,255,255,0.08)' }}
+                      >
+                        Remove Current Photo
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowPhotoSheet(false)}
+                      style={{ display: 'block', width: '100%', padding: '16px', textAlign: 'center', fontSize: '15px', fontWeight: 700, color: 'rgba(255,255,255,0.6)', background: 'transparent', border: 'none', borderTop: '1px solid rgba(255,255,255,0.08)' }}
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
               )}
