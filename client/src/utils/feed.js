@@ -1,10 +1,27 @@
 import { apiFetch } from '../config/api';
 
-export async function fetchFeed() {
-  const response = await apiFetch('/api/feed', { method: 'GET' });
+const FEED_CACHE_KEY = 'blw_feed_cache_v2';
+
+export async function fetchFeed({ limit = 20, offset = 0 } = {}) {
+  const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+  const response = await apiFetch(`/api/feed?${params.toString()}`, { method: 'GET' });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body?.error || 'Unable to load the Feed.');
-  return Array.isArray(body?.posts) ? body.posts : [];
+  return {
+    posts: Array.isArray(body?.posts) ? body.posts : [],
+    hasMore: Boolean(body?.hasMore),
+  };
+}
+
+export function readCachedFeed() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(FEED_CACHE_KEY) || 'null');
+    return Array.isArray(parsed?.posts) ? parsed.posts : [];
+  } catch { return []; }
+}
+
+export function writeCachedFeed(posts) {
+  try { localStorage.setItem(FEED_CACHE_KEY, JSON.stringify({ posts: posts.slice(0, 40), cachedAt: Date.now() })); } catch {}
 }
 
 export async function uploadFeedMedia(file) {
