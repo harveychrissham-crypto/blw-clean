@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'node:crypto';
 import { corsHeaders, rateLimit } from './security.js';
 import { handleSermons } from './sermon-api.js';
+import { handleFeed } from './feed-api.js';
 import { handleLive } from './live-api.js';
 import { handleOutreach } from './outreach-api.js';
 import { handleUpload } from './upload-api.js';
@@ -147,6 +148,10 @@ export default {
     if (needsLeader(request, url) && !(await adminStatus(request, env)).isAdmin) return json({ error: 'Administrator authorization is required.' }, 403, headers);
     if (url.pathname.startsWith('/api/sermons')) {
       const response = await handleSermons(request, env, url);
+      if (response) return response;
+    }
+    if (url.pathname.startsWith('/api/feed')) {
+      const response = await handleFeed(request, env, url);
       if (response) return response;
     }
     if (url.pathname.startsWith('/api/live')) {
