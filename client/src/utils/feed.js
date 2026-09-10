@@ -61,9 +61,18 @@ function writeActionQueue(queue) {
 
 function queueAction(entry) {
   const queue = readActionQueue();
-  queue.push({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, createdAt: Date.now(), ...entry });
+  if (entry.action === 'like' || entry.action === 'save') {
+    const index = queue.findIndex((item) => item.postId === entry.postId && item.action === entry.action);
+    if (index >= 0) {
+      queue.splice(index, 1);
+      writeActionQueue(queue);
+      return;
+    }
+  }
+  const queued = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, createdAt: Date.now(), ...entry };
+  queue.push(queued);
   writeActionQueue(queue);
-  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('feed-action-queued', { detail: entry }));
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('feed-action-queued', { detail: queued }));
 }
 
 async function runQueuedAction(entry) {
