@@ -13,9 +13,9 @@ const features = [
   },
   {
     icon: FiBookOpen,
-    label: 'SERMONS',
-    title: 'Sermons',
-    desc: 'Access sermons and teaching resources for daily spiritual growth.',
+    label: 'COMMUNITY FEED',
+    title: 'Feed',
+    desc: 'See ministry updates, stories, teachings, and community posts in one place.',
     to: '/sermons',
   },
   {
