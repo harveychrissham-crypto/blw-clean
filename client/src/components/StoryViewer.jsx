@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { FiX, FiVolume2, FiVolumeX, FiTrash2 } from 'react-icons/fi';
+import { FiX, FiVolume2, FiVolumeX, FiTrash2, FiSend, FiLoader } from 'react-icons/fi';
 import { apiFetch } from '../config/api';
-import { hapticTap } from '../utils/haptics';
+import { hapticError, hapticSuccess, hapticTap } from '../utils/haptics';
 
 const IMAGE_DURATION_MS = 5000;
 
@@ -24,6 +24,8 @@ export default function StoryViewer({ stories, initialIndex = 0, viewerEmail, on
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(true);
+  const [reply, setReply] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
   const rafRef = useRef(null);
   const elapsedRef = useRef(0);
   const pressStartRef = useRef(0);
@@ -57,9 +59,6 @@ export default function StoryViewer({ stories, initialIndex = 0, viewerEmail, on
     });
   }, [onSwipeGroup]);
 
-  // Mark viewed once per story, fire-and-forget -- a failed view ping isn't
-  // worth blocking or retrying over, it just means the ring stays "unseen"
-  // a bit longer next time.
   useEffect(() => {
     if (!story || viewedRef.current.has(story.id)) return;
     viewedRef.current.add(story.id);
@@ -67,12 +66,10 @@ export default function StoryViewer({ stories, initialIndex = 0, viewerEmail, on
     apiFetch(`/api/stories/${story.id}/view`, { method: 'POST' }).catch(() => {});
   }, [story, onViewed]);
 
-  // Progress/auto-advance loop. Images use a fixed duration; videos drive
-  // their own progress from playback time so the bar matches what's on
-  // screen instead of an arbitrary guess at video length.
   useEffect(() => {
     setProgress(0);
     elapsedRef.current = 0;
+    setReply('');
   }, [index, story?.id]);
 
   useEffect(() => {
@@ -119,7 +116,39 @@ export default function StoryViewer({ stories, initialIndex = 0, viewerEmail, on
       onDeleted?.(story.id);
       if (stories.length <= 1) onClose(); else goNext();
     } catch {
-      // Best-effort; the story just stays visible if this fails.
+      hapticError();
+    }
+  };
+
+  const sendReply = async (event) => {
+    event.preventDefault();
+    const body = reply.trim();
+    if (!body || !story?.authorEmail || isOwn || sendingReply) return;
+    setSendingReply(true);
+    setPaused(true);
+    try {
+      const conversationRes = await apiFetch('/api/messages/conversations', {
+        method: 'POST',
+        body: JSON.stringify({ recipientEmail: story.authorEmail }),
+      });
+      const conversationBody = await conversationRes.json().catch(() => ({}));
+      if (!conversationRes.ok || !conversationBody.conversationId) throw new Error(conversationBody.error || 'Unable to start conversation.');
+
+      const messageRes = await apiFetch(`/api/messages/conversations/${encodeURIComponent(conversationBody.conversationId)}`, {
+        method: 'POST',
+        body: JSON.stringify({ body }),
+      });
+      const messageBody = await messageRes.json().catch(() => ({}));
+      if (!messageRes.ok) throw new Error(messageBody.error || 'Unable to send reply.');
+
+      setReply('');
+      hapticSuccess();
+      window.location.assign(`/feed?messages=1&conversation=${encodeURIComponent(conversationBody.conversationId)}`);
+    } catch {
+      setPaused(false);
+      hapticError();
+    } finally {
+      setSendingReply(false);
     }
   };
 
@@ -169,10 +198,28 @@ export default function StoryViewer({ stories, initialIndex = 0, viewerEmail, on
 
       <div className="relative flex-1 select-none" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         {story.mediaType === 'video' ? <video ref={videoRef} src={story.mediaUrl} muted={muted} playsInline autoPlay className="h-full w-full object-contain" /> : <img src={story.mediaUrl} alt="" className="h-full w-full object-contain" />}
-        {story.caption && <p className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 pb-6 pt-10 text-center text-sm text-white">{story.caption}</p>}
+        {story.caption && <p className={`absolute inset-x-0 bg-gradient-to-t from-black/70 to-transparent px-4 pb-6 pt-10 text-center text-sm text-white ${isOwn ? 'bottom-0' : 'bottom-20'}`}>{story.caption}</p>}
 
         <button type="button" aria-label="Previous" onPointerDown={() => { pressStartRef.current = Date.now(); setPaused(true); }} onPointerUp={() => { setPaused(false); if (Date.now() - pressStartRef.current < 300) goPrev(); }} onPointerLeave={() => setPaused(false)} className="absolute inset-y-0 left-0 w-1/3 cursor-default" />
         <button type="button" aria-label="Next" onPointerDown={() => { pressStartRef.current = Date.now(); setPaused(true); }} onPointerUp={() => { setPaused(false); if (Date.now() - pressStartRef.current < 300) goNext(); }} onPointerLeave={() => setPaused(false)} className="absolute inset-y-0 right-0 w-2/3 cursor-default" />
+
+        {!isOwn && story.authorEmail && (
+          <form onSubmit={sendReply} className="absolute inset-x-3 bottom-3 z-20 flex items-center gap-2 rounded-full border border-white/20 bg-black/55 p-1.5 backdrop-blur-xl" onPointerDown={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()}>
+            <input
+              value={reply}
+              onChange={(event) => setReply(event.target.value.slice(0, 1000))}
+              onFocus={() => setPaused(true)}
+              onBlur={() => setPaused(false)}
+              placeholder="Reply to story…"
+              className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm text-white outline-none placeholder:text-white/45"
+              aria-label="Reply to story"
+              disabled={sendingReply}
+            />
+            <button type="submit" disabled={!reply.trim() || sendingReply} aria-label="Send story reply" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-[#0d0c18] disabled:cursor-not-allowed disabled:opacity-35">
+              {sendingReply ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiSend className="h-4 w-4" />}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
