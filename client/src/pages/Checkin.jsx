@@ -2,6 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { FiSearch, FiPhone, FiMail, FiDownload, FiCheckCircle } from 'react-icons/fi';
 import { MdQrCodeScanner } from 'react-icons/md';
 import QRCode from 'qrcode';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { apiFetch } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import { Card, Eyebrow, InfoTile } from '../components/ui/Card';
@@ -36,6 +39,33 @@ function MemberQRCode({ member }) {
       .replace(/^_+|_+$/g, '') || 'Member';
     const fileName = `${safeName}_QR_Badge.png`;
 
+    // The <a download> browser trick below is a silent no-op inside a
+    // Capacitor WebView — it doesn't throw, it just does nothing, which
+    // means this try block would "succeed" and return early without ever
+    // reaching the (working) share fallback beneath it. Skip straight to
+    // the fallback on native instead of trying and silently failing here.
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const blob = await new Promise((resolve, reject) => {
+          canvas.toBlob((value) => (value ? resolve(value) : reject(new Error('Unable to create QR image.'))), 'image/png');
+        });
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(String(reader.result).split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        const written = await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.Cache });
+        await Share.share({ title: `${member.name} QR Badge`, dialogTitle: 'Save or share QR badge', files: [written.uri] });
+      } catch (error) {
+        if (error?.message !== 'Share canceled') {
+          console.error('Unable to download/share QR badge:', error);
+          setDownloadError('Could not save the QR badge on this device. Try taking a screenshot instead.');
+        }
+      }
+      return;
+    }
+
     try {
       const blob = await new Promise((resolve, reject) => {
         canvas.toBlob((value) => (value ? resolve(value) : reject(new Error('Unable to create QR image.'))), 'image/png');
@@ -52,7 +82,7 @@ function MemberQRCode({ member }) {
       setTimeout(() => URL.revokeObjectURL(url), 1500);
       return;
     } catch {
-      // Fall through to the Android/browser share fallback.
+      // Fall through to the browser share fallback.
     }
 
     try {
