@@ -27,6 +27,8 @@ function normalizePost(row = {}) {
     sourceType: row.source_type || row.sourceType || '',
     isOfficial: Boolean(row.is_official ?? row.isOfficial ?? row.is_featured),
     isUserPost: Boolean(row.is_user_post ?? row.isUserPost),
+    isOwner: Boolean(row.is_owner ?? row.isOwner),
+    viewCount: Number(row.view_count ?? row.viewCount ?? 0),
     videoId: row.youtube_id || row.video_id || row.videoId || '',
     mediaUrl: row.media_url || row.mediaUrl || row.image_url || row.image || '',
     mediaType: row.media_type || row.mediaType || (row.image_url || row.image ? 'image' : ''),
@@ -49,6 +51,13 @@ export async function fetchFeed({ limit = 20, offset = 0 } = {}) {
     posts: Array.isArray(body?.posts) ? body.posts.map(normalizePost) : [],
     hasMore: Boolean(body?.hasMore),
   };
+}
+
+export async function recordFeedView(id) {
+  const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/view`, { method: 'POST' });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok && response.status !== 401) throw new Error(body?.error || 'Unable to record Feed view.');
+  return body;
 }
 
 export function readCachedFeed() {
