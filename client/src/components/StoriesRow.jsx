@@ -23,7 +23,7 @@ export default function StoriesRow() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
-  const [viewerGroup, setViewerGroup] = useState(null); // { stories, startIndex } | null
+  const [viewerGroup, setViewerGroup] = useState(null);
   const fileInputRef = useRef(null);
 
   const load = async () => {
@@ -32,27 +32,27 @@ export default function StoriesRow() {
       const body = await res.json().catch(() => ({}));
       if (res.ok) setStories(Array.isArray(body.stories) ? body.stories : []);
     } catch {
-      // Stories are non-critical to the home screen; fail quietly.
+      // Stories are non-critical to the feed; fail quietly.
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { if (user) load(); else setLoading(false); }, [user]);
+  useEffect(() => {
+    if (user) load();
+    else setLoading(false);
+  }, [user]);
 
   if (!user) return null;
 
   const groups = groupByAuthor(stories);
   const myEmail = user.email?.toLowerCase();
-  const myGroup = groups.find((g) => g[0].authorEmail?.toLowerCase() === myEmail);
+  const myGroup = groups.find((group) => group[0].authorEmail?.toLowerCase() === myEmail);
   const otherGroups = groups
-    .filter((g) => g[0].authorEmail?.toLowerCase() !== myEmail)
-    // Unseen authors first, matching the convention every app in this
-    // category uses -- the whole point of the ring is to draw the eye to
-    // what's new first.
+    .filter((group) => group[0].authorEmail?.toLowerCase() !== myEmail)
     .sort((a, b) => {
-      const aUnseen = a.some((s) => !s.viewed);
-      const bUnseen = b.some((s) => !s.viewed);
+      const aUnseen = a.some((story) => !story.viewed);
+      const bUnseen = b.some((story) => !story.viewed);
       if (aUnseen === bUnseen) return 0;
       return aUnseen ? -1 : 1;
     });
@@ -63,17 +63,20 @@ export default function StoriesRow() {
   };
 
   const markViewedLocally = (storyId) => {
-    setStories((prev) => prev.map((s) => (s.id === storyId ? { ...s, viewed: true } : s)));
+    setStories((prev) => prev.map((story) => (
+      story.id === storyId ? { ...story, viewed: true } : story
+    )));
   };
 
   const removeLocally = (storyId) => {
-    setStories((prev) => prev.filter((s) => s.id !== storyId));
+    setStories((prev) => prev.filter((story) => story.id !== storyId));
   };
 
   const handleFileChosen = async (event) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+
     const isVideo = file.type.startsWith('video/');
     const maxBytes = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
     if (file.size > maxBytes) {
@@ -81,6 +84,7 @@ export default function StoriesRow() {
       setUploadError(`${isVideo ? 'Videos' : 'Images'} must be ${Math.round(maxBytes / (1024 * 1024))} MB or smaller.`);
       return;
     }
+
     setUploading(true);
     setUploadError('');
     try {
@@ -92,25 +96,31 @@ export default function StoriesRow() {
 
       const createRes = await apiFetch('/api/stories', {
         method: 'POST',
-        body: JSON.stringify({ mediaUrl: uploadBody.url, mediaType: isVideo ? 'video' : 'image' }),
+        body: JSON.stringify({
+          mediaUrl: uploadBody.url,
+          mediaType: isVideo ? 'video' : 'image',
+        }),
       });
-      if (!createRes.ok) { const b = await createRes.json().catch(() => ({})); throw new Error(b.error || 'Unable to post that story.'); }
+      if (!createRes.ok) {
+        const body = await createRes.json().catch(() => ({}));
+        throw new Error(body.error || 'Unable to post that story.');
+      }
+
       hapticSuccess();
       await load();
-    } catch (err) {
+    } catch (error) {
       hapticError();
-      setUploadError(err?.message || 'Something went wrong posting that.');
+      setUploadError(error?.message || 'Something went wrong posting that.');
     } finally {
       setUploading(false);
     }
   };
 
-  if (loading) return null; // avoid a layout flash while the first fetch resolves
-  if (!myGroup && otherGroups.length === 0) return null; // nothing to show, no empty row taking up space
+  if (loading) return null;
 
   return (
-    <div className="mx-auto max-w-6xl px-5 pt-8">
-      <div className="flex gap-4 overflow-x-auto pb-2">
+    <div className="w-full px-5 pt-2">
+      <div className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none]">
         <div className="flex shrink-0 flex-col items-center gap-1.5">
           <div className="relative h-16 w-16 shrink-0">
             <button
@@ -120,14 +130,33 @@ export default function StoriesRow() {
               aria-label={myGroup ? 'View your story' : 'Add a story'}
             >
               {myGroup ? (
-                <div className="h-full w-full rounded-full p-[2px]" style={{ background: myGroup.some((s) => !s.viewed) ? 'linear-gradient(135deg,#EC2FA8,#8A2BE2,#F2A31C)' : 'rgba(255,255,255,0.15)' }}>
+                <div
+                  className="h-full w-full rounded-full p-[2px]"
+                  style={{
+                    background: myGroup.some((story) => !story.viewed)
+                      ? 'linear-gradient(135deg,#EC2FA8,#8A2BE2,#F2A31C)'
+                      : 'rgba(255,255,255,0.15)',
+                  }}
+                >
                   <div className="h-full w-full overflow-hidden rounded-full border-2 border-[#0d0c18] bg-white/5">
-                    {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" /> : <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">{(user.name || '?').charAt(0).toUpperCase()}</div>}
+                    {user.avatarUrl ? (
+                      <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">
+                        {(user.name || '?').charAt(0).toUpperCase()}
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
                 <div className="grid h-full w-full place-items-center overflow-hidden rounded-full border-2 border-dashed border-white/20 bg-white/[0.04]">
-                  {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover opacity-60" /> : <span className="text-sm font-bold text-white/50">{(user.name || '?').charAt(0).toUpperCase()}</span>}
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="" className="h-full w-full object-cover opacity-60" />
+                  ) : (
+                    <span className="text-sm font-bold text-white/50">
+                      {(user.name || '?').charAt(0).toUpperCase()}
+                    </span>
+                  )}
                 </div>
               )}
             </button>
@@ -145,13 +174,32 @@ export default function StoriesRow() {
 
         {otherGroups.map((group) => {
           const first = group[0];
-          const unseen = group.some((s) => !s.viewed);
+          const unseen = group.some((story) => !story.viewed);
+          const firstUnseenIndex = group.findIndex((story) => !story.viewed);
           return (
             <div key={first.authorEmail} className="flex shrink-0 flex-col items-center gap-1.5">
-              <button type="button" onClick={() => openGroup(group, group.findIndex((s) => !s.viewed) === -1 ? 0 : group.findIndex((s) => !s.viewed))} className="h-16 w-16 shrink-0 rounded-full" aria-label={`View ${first.authorName}'s story`}>
-                <div className="h-full w-full rounded-full p-[2px]" style={{ background: unseen ? 'linear-gradient(135deg,#EC2FA8,#8A2BE2,#F2A31C)' : 'rgba(255,255,255,0.15)' }}>
+              <button
+                type="button"
+                onClick={() => openGroup(group, firstUnseenIndex === -1 ? 0 : firstUnseenIndex)}
+                className="h-16 w-16 shrink-0 rounded-full"
+                aria-label={`View ${first.authorName}'s story`}
+              >
+                <div
+                  className="h-full w-full rounded-full p-[2px]"
+                  style={{
+                    background: unseen
+                      ? 'linear-gradient(135deg,#EC2FA8,#8A2BE2,#F2A31C)'
+                      : 'rgba(255,255,255,0.15)',
+                  }}
+                >
                   <div className="h-full w-full overflow-hidden rounded-full border-2 border-[#0d0c18] bg-white/5">
-                    {first.authorAvatarUrl ? <img src={first.authorAvatarUrl} alt="" className="h-full w-full object-cover" /> : <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">{(first.authorName || '?').charAt(0).toUpperCase()}</div>}
+                    {first.authorAvatarUrl ? (
+                      <img src={first.authorAvatarUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">
+                        {(first.authorName || '?').charAt(0).toUpperCase()}
+                      </div>
+                    )}
                   </div>
                 </div>
               </button>
@@ -163,7 +211,13 @@ export default function StoriesRow() {
 
       {uploadError && <p className="mt-1 text-xs text-red-300">{uploadError}</p>}
 
-      <input ref={fileInputRef} type="file" accept="image/*,video/*" onChange={handleFileChosen} className="hidden" />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,video/*"
+        onChange={handleFileChosen}
+        className="hidden"
+      />
 
       {viewerGroup && (
         <StoryViewer
