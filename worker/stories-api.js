@@ -77,7 +77,9 @@ export async function handleStories(request, env, url) {
          FROM public.story_views v
          JOIN public.stories s ON s.id = v.story_id
          LEFT JOIN users u ON LOWER(u.email) = LOWER(v.viewer_email)
-         WHERE v.story_id = $1 AND LOWER(s.author_email) = LOWER($2)
+         WHERE v.story_id = $1
+           AND LOWER(s.author_email) = LOWER($2)
+           AND LOWER(v.viewer_email) <> LOWER(s.author_email)
          ORDER BY v.created_at DESC`,
         [storyId, email],
       ));
