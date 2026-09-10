@@ -1,15 +1,14 @@
 import { NavLink, Link } from 'react-router-dom';
-import { FiHome, FiRadio, FiGrid, FiUser, FiHeart, FiPlusSquare, FiMessageCircle } from 'react-icons/fi';
-import { MdQrCodeScanner } from 'react-icons/md';
+import { FiHome, FiGrid, FiUser, FiPlusSquare, FiMessageCircle } from 'react-icons/fi';
 
 const tabs = [
   { name: 'Home', path: '/', icon: FiHome, end: true },
   { name: 'Feed', path: '/feed', icon: FiGrid },
-  { name: 'Create', path: '/feed', icon: FiPlusSquare },
-  { name: 'Live', path: '/live', icon: FiRadio },
+  { name: 'Create', path: '/create', icon: FiPlusSquare },
+  { name: 'Messages', path: '/messages', icon: FiMessageCircle },
 ];
 
-export default function BottomNav({ onMoreClick, moreActive }) {
+export default function BottomNav() {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/[0.07] sm:hidden" style={{ background: 'rgba(13,12,24,0.97)', backdropFilter: 'blur(22px)', paddingBottom: 'env(safe-area-inset-bottom)' }} aria-label="Primary">
       <div className="grid grid-cols-5 px-2">
