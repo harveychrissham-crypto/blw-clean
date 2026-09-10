@@ -10,6 +10,9 @@ import { handleVenues } from './venue-api.js';
 import { sendWeeklyServiceReminders } from './scheduled-jobs.js';
 import { handleLiveKitToken, handleVideoApi } from './livekit-token.js';
 import { handleAppVersion } from './app-version-api.js';
+import { handleStories, handleStoryUpload } from './stories-api.js';
+import { handleFeedUpload } from './upload-api.js';
+import { handleMessages } from './messages-api.js';
 
 function normalizeResponse(request, env, response) {
   const headers = new Headers(response.headers);
@@ -18,38 +21,23 @@ function normalizeResponse(request, env, response) {
   for (const [key, value] of Object.entries(normalizedCors)) headers.set(key, value);
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
-
-function preflightResponse(request, env) {
-  return new Response(null, { status: 204, headers: corsHeaders(request, env) });
-}
-
-async function applyRateLimit(request, env, bindingName, key, fallbackLimit) {
-  const limiter = env[bindingName];
-  if (limiter?.limit) { const { success } = await limiter.limit({ key }); return success; }
-  const now = Math.floor(Date.now() / 60000); const ip = request.headers.get('CF-Connecting-IP') || 'unknown'; const fallbackKey = `${bindingName}:${ip}:${now}`;
-  if (!globalThis.__blwRateFallback) globalThis.__blwRateFallback = new Map();
-  const current = globalThis.__blwRateFallback.get(fallbackKey) || 0;
-  if (current >= fallbackLimit) return false;
-  globalThis.__blwRateFallback.set(fallbackKey, current + 1); return true;
-}
-
-function rateLimitedResponse(request, env) {
-  return normalizeResponse(request, env, new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), { status: 429, headers: { 'content-type': 'application/json; charset=utf-8', 'retry-after': '60' } }));
-}
+function preflightResponse(request, env) { return new Response(null, { status: 204, headers: corsHeaders(request, env) }); }
+async function applyRateLimit(request, env, bindingName, key, fallbackLimit) { const limiter = env[bindingName]; if (limiter?.limit) { const { success } = await limiter.limit({ key }); return success; } const now = Math.floor(Date.now() / 60000); const ip = request.headers.get('CF-Connecting-IP') || 'unknown'; const fallbackKey = `${bindingName}:${ip}:${now}`; if (!globalThis.__blwRateFallback) globalThis.__blwRateFallback = new Map(); const current = globalThis.__blwRateFallback.get(fallbackKey) || 0; if (current >= fallbackLimit) return false; globalThis.__blwRateFallback.set(fallbackKey, current + 1); return true; }
+function rateLimitedResponse(request, env) { return normalizeResponse(request, env, new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), { status: 429, headers: { 'content-type': 'application/json; charset=utf-8', 'retry-after': '60' } })); }
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-
-    // Handle browser CORS preflight before any authentication or API routing.
-    // POST /api/video/* uses Authorization + JSON, which requires OPTIONS.
     if (request.method === 'OPTIONS') return preflightResponse(request, env);
-
     if (url.pathname === '/api/health' && request.method === 'GET') return normalizeResponse(request, env, new Response(JSON.stringify({ status: 'ok', message: 'BLW Campus Ministry API is running' }), { status: 200, headers: { 'content-type': 'application/json; charset=utf-8' } }));
     if (url.pathname === '/api/app/version' && request.method === 'GET') { const response = await handleAppVersion(request, env, url); if (response) return normalizeResponse(request, env, response); }
     if (url.pathname === '/api/push/send' && request.method === 'POST') return normalizeResponse(request, env, await sendPushNotification(request, env));
     if (url.pathname === '/api/livekit/token') return normalizeResponse(request, env, await handleLiveKitToken(request, env, corsHeaders(request, env)));
     if (url.pathname.startsWith('/api/video')) { const response = await handleVideoApi(request, env, url, corsHeaders(request, env)); if (response) return normalizeResponse(request, env, response); }
+    if (url.pathname === '/api/feed/upload') { const response = await handleFeedUpload(request, env, url); if (response) return normalizeResponse(request, env, response); }
+    if (url.pathname === '/api/stories/upload') { const response = await handleStoryUpload(request, env, url); if (response) return normalizeResponse(request, env, response); }
+    if (url.pathname.startsWith('/api/stories')) { const response = await handleStories(request, env, url); if (response) return normalizeResponse(request, env, response); }
+    if (url.pathname.startsWith('/api/messages')) { const response = await handleMessages(request, env, url); if (response) return normalizeResponse(request, env, response); }
     if (url.pathname.startsWith('/api/members')) { const response = await handleAttendance(request, env); if (response) return normalizeResponse(request, env, response); }
     if ((url.pathname === '/api/auth/login' || url.pathname === '/api/auth/register') && request.method === 'POST') { const isRegister = url.pathname.endsWith('/register'); const allowed = await applyRateLimit(request, env, isRegister ? 'AUTH_REGISTER_LIMITER' : 'AUTH_LOGIN_LIMITER', `${isRegister ? 'register' : 'login'}:${request.headers.get('CF-Connecting-IP') || 'unknown'}`, isRegister ? 5 : 10); if (!allowed) return rateLimitedResponse(request, env); }
     if ((url.pathname === '/api/auth/forgot-password' || url.pathname === '/api/auth/reset-password') && request.method === 'POST') { const isReset = url.pathname.endsWith('/reset-password'); const allowed = await applyRateLimit(request, env, 'PASSWORD_RESET_LIMITER', `${isReset ? 'reset' : 'forgot'}:${request.headers.get('CF-Connecting-IP') || 'unknown'}`, isReset ? 8 : 3); if (!allowed) return rateLimitedResponse(request, env); }
@@ -65,5 +53,3 @@ export default {
     if (typeof secureWorker.scheduled === 'function') return secureWorker.scheduled(controller, env, ctx);
   },
 };
-
-// trigger: handle CORS preflight before authenticated video routes

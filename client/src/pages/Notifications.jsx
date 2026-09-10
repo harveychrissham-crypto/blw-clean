@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FiBell, FiCheck } from 'react-icons/fi';
 import { loadNotifications, markAsRead, markAllAsRead, onNotificationsUpdated } from '../utils/notificationStorage';
 import Button from '../components/ui/Button';
@@ -21,7 +22,16 @@ const formatTimestamp = (iso) => {
   }
 };
 
+const getFeedTarget = (notification) => {
+  const data = notification?.data && typeof notification.data === 'object' ? notification.data : {};
+  const postId = data.postId ?? data.post_id ?? data.feedPostId ?? data.feed_post_id ?? data.targetPostId ?? data.target_post_id;
+  if (!postId) return null;
+  const type = String(data.type || data.postType || data.post_type || '').toLowerCase();
+  return { postId: String(postId), tab: type === 'reel' ? 'Reels' : '' };
+};
+
 export default function Notifications() {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState(() => loadNotifications());
 
   useEffect(() => {
@@ -31,6 +41,15 @@ export default function Notifications() {
   }, []);
 
   const unreadCount = notifications.filter((notification) => !notification.read).length;
+
+  const openNotification = (notification) => {
+    markAsRead(notification.id);
+    const target = getFeedTarget(notification);
+    if (!target) return;
+    const params = new URLSearchParams({ notificationId: target.postId });
+    if (target.tab) params.set('tab', target.tab);
+    navigate(`/feed?${params.toString()}`);
+  };
 
   return (
     <section className="mx-auto max-w-2xl px-5 py-12">
@@ -51,7 +70,7 @@ export default function Notifications() {
       ) : (
         <div className="space-y-3">
           {notifications.map((notification) => (
-            <Button variant="custom" size="none" key={notification.id} type="button" onClick={() => markAsRead(notification.id)} className={`w-full rounded-2xl border p-4 text-left transition ${notification.read ? 'border-white/8 bg-white/[0.03]' : 'border-gold-500/25 bg-gold-500/8'}`}>
+            <Button variant="custom" size="none" key={notification.id} type="button" onClick={() => openNotification(notification)} className={`w-full rounded-2xl border p-4 text-left transition ${notification.read ? 'border-white/8 bg-white/[0.03]' : 'border-gold-500/25 bg-gold-500/8'}`}>
               <div className="flex items-start gap-3">
                 <img src="/logo.png" alt="BLW Campus Ministry" className={`h-11 w-11 shrink-0 rounded-2xl object-cover transition ${notification.read ? 'opacity-45 grayscale' : 'opacity-100'}`} />
                 <div className="min-w-0 flex-1">
