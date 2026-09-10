@@ -2,6 +2,8 @@ import { apiFetch } from '../config/api';
 
 const FEED_CACHE_KEY = 'blw_feed_cache_v2';
 const FEED_ACTION_QUEUE_KEY = 'blw_feed_action_queue_v1';
+const recordedFeedViews = new Set();
+const inFlightFeedViews = new Map();
 
 function formatFeedTime(value) {
   const date = value ? new Date(value) : null;
@@ -133,10 +135,26 @@ export async function fetchFeed({ limit = 20, offset = 0 } = {}) {
 }
 
 export async function recordFeedView(id) {
-  const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/view`, { method: 'POST' });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok && response.status !== 401) throw new Error(body?.error || 'Unable to record Feed view.');
-  return body;
+  const key = String(id ?? '');
+  if (!key) return {};
+  if (recordedFeedViews.has(key)) return { deduped: true };
+  const existing = inFlightFeedViews.get(key);
+  if (existing) return existing;
+
+  const request = (async () => {
+    const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(key)}/view`, { method: 'POST' });
+    const body = await response.json().catch(() => ({}));
+    if (response.ok) recordedFeedViews.add(key);
+    if (!response.ok && response.status !== 401) throw new Error(body?.error || 'Unable to record Feed view.');
+    return body;
+  })();
+
+  inFlightFeedViews.set(key, request);
+  try {
+    return await request;
+  } finally {
+    inFlightFeedViews.delete(key);
+  }
 }
 
 export function readCachedFeed() {
