@@ -42,6 +42,63 @@ function VideoMedia({post,active=false,reel=false,onDoubleTap}) {
   return <div className="relative h-full w-full" onDoubleClick={onDoubleTap}>{media}<div className="pointer-events-none absolute inset-x-0 bottom-0 h-1 bg-white/10"><div className="h-full bg-white/80" style={{width:`${progress}%`}}/></div>{(reel||!isYoutube)&&<button type="button" onClick={toggleMute} className="absolute bottom-4 right-4 z-10 rounded-full bg-black/55 p-2.5 text-white backdrop-blur-xl" aria-label={muted?'Unmute video':'Mute video'}>{muted?<FiVolumeX/>:<FiVolume2/>}</button>}</div>;
 }
 
+function ZoomableImage({src,onDoubleTap}) {
+  const [zoom,setZoom]=useState({scale:1,x:0,y:0});
+  const pointers=useRef(new Map());
+  const gesture=useRef({mode:'',startDistance:0,startScale:1,startX:0,startY:0,startMidpoint:null,lastPoint:null});
+  const clampOffset=useCallback((x,y,scale)=>{
+    const node=pointers.current.get('__node');
+    const width=node?.clientWidth||0;
+    const height=node?.clientHeight||0;
+    const maxX=Math.max(0,(width*(scale-1))/2);
+    const maxY=Math.max(0,(height*(scale-1))/2);
+    return {x:Math.max(-maxX,Math.min(maxX,x)),y:Math.max(-maxY,Math.min(maxY,y))};
+  },[]);
+  const distanceAndMidpoint=()=>{
+    const pts=[...pointers.current.entries()].filter(([key])=>key!=='__node').map(([,p])=>p);
+    if(pts.length<2)return null;
+    const [a,b]=pts; return {distance:Math.hypot(b.x-a.x,b.y-a.y),midpoint:{x:(a.x+b.x)/2,y:(a.y+b.y)/2}};
+  };
+  const onPointerDown=e=>{
+    if(e.pointerType!=='touch')return;
+    pointers.current.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    pointers.current.set('__node',e.currentTarget);
+    if(pointers.current.size-1===2){
+      const g=distanceAndMidpoint();
+      gesture.current={mode:'pinch',startDistance:g.distance,startScale:zoom.scale,startX:zoom.x,startY:zoom.y,startMidpoint:g.midpoint,lastPoint:null};
+      e.preventDefault();
+    }else if(pointers.current.size-1===1&&zoom.scale>1){
+      gesture.current={...gesture.current,mode:'pan',lastPoint:{x:e.clientX,y:e.clientY},startX:zoom.x,startY:zoom.y};
+    }
+  };
+  const onPointerMove=e=>{
+    if(e.pointerType!=='touch'||!pointers.current.has(e.pointerId))return;
+    pointers.current.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    const g=gesture.current;
+    if((pointers.current.size-1)>=2&&g.mode==='pinch'){
+      const next=distanceAndMidpoint(); if(!next)return;
+      const scale=Math.max(1,Math.min(4,g.startScale*(next.distance/Math.max(1,g.startDistance))));
+      const deltaX=next.midpoint.x-g.startMidpoint.x; const deltaY=next.midpoint.y-g.startMidpoint.y;
+      const offset=clampOffset(g.startX+deltaX,g.startY+deltaY,scale);
+      setZoom({scale,...offset}); e.preventDefault();
+    }else if((pointers.current.size-1)===1&&g.mode==='pan'&&zoom.scale>1){
+      const point=pointers.current.get(e.pointerId); const dx=point.x-g.lastPoint.x; const dy=point.y-g.lastPoint.y;
+      const offset=clampOffset(zoom.x+dx,zoom.y+dy,zoom.scale); setZoom(v=>({...v,...offset})); gesture.current.lastPoint=point; e.preventDefault();
+    }
+  };
+  const endPointer=e=>{
+    if(e.pointerType!=='touch')return;
+    pointers.current.delete(e.pointerId);
+    if(pointers.current.size-1===0)gesture.current.mode='';
+    else if(pointers.current.size-1===1){
+      const point=[...pointers.current.values()][0]; if(point&&zoom.scale>1)gesture.current={...gesture.current,mode:'pan',lastPoint:point,startX:zoom.x,startY:zoom.y};
+    }
+    if(zoom.scale<=1.02)setZoom({scale:1,x:0,y:0});
+  };
+  const onWheel=e=>{if(!e.ctrlKey)return;e.preventDefault();const scale=Math.max(1,Math.min(4,zoom.scale-(e.deltaY*.01)));const offset=clampOffset(zoom.x,zoom.y,scale);setZoom({scale,...offset});};
+  return <div className="h-full w-full overflow-hidden" style={{touchAction:'pan-y'}} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endPointer} onPointerCancel={endPointer} onWheel={onWheel} onDoubleClick={onDoubleTap}><img src={src} alt="" draggable={false} className="h-full w-full select-none object-cover" style={{transform:`translate3d(${zoom.x}px,${zoom.y}px,0) scale(${zoom.scale})`,transformOrigin:'center center',transition:gesture.current.mode?'none':'transform 120ms ease-out'}}/></div>;
+}
+
 function PostCard({post,user,onUpdate,notificationId}) {
   const [comments,setComments]=useState(false); const [heart,setHeart]=useState(false); const [videoActive,setVideoActive]=useState(false); const ref=useRef(null); const target=String(post.id)===String(notificationId); const showViews=post.isOwner&&canViewPostInsights(user);
   const label=post.sourceType==='sermon'?'Teaching':post.sourceType==='devotional'?'Devotional':post.sourceType==='testimony'?'Testimony':'Post';
@@ -49,7 +106,7 @@ function PostCard({post,user,onUpdate,notificationId}) {
   const doubleTap=useDoubleTap(like);
   useEffect(()=>{const node=ref.current;if(!node||post.mediaType!=='video'||!post.mediaUrl)return;const obs=new IntersectionObserver(([e])=>setVideoActive(Boolean(e?.isIntersecting&&e.intersectionRatio>=.6)),{threshold:[.6]});obs.observe(node);return()=>obs.disconnect();},[post.mediaType,post.mediaUrl]);
   useEffect(()=>{const node=ref.current;if(!node||!post.isUserPost||!user)return;let recorded=false;const obs=new IntersectionObserver(([e])=>{if(e?.isIntersecting&&e.intersectionRatio>=.6&&!recorded){recorded=true;recordFeedView(post.id).catch(()=>{});}}, {threshold:[.6]});obs.observe(node);return()=>obs.disconnect();},[post.id,post.isUserPost,user]);
-  return <article ref={ref} id={`feed-${post.id}`} className={`overflow-hidden border-y border-white/[.07] bg-[#0d0c18] sm:rounded-2xl sm:border sm:shadow-[0_10px_30px_rgba(0,0,0,.18)] ${target?'ring-2 ring-white/50':''}`}><div className="flex items-center justify-between px-4 py-3"><div className="flex min-w-0 items-center gap-2.5"><div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-white/[.07]">{post.avatarUrl?<img src={post.avatarUrl} alt="" className="h-full w-full object-cover"/>:<img src="/logo.png" alt="" className="h-full w-full object-cover"/>}</div><div className="flex min-w-0 items-baseline gap-2"><p className="max-w-[15rem] truncate text-sm font-bold">{post.author}{post.isOfficial&&<span className="ml-1 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white text-[9px] text-ink-950" aria-label="Official ministry">✓</span>}</p><span className="shrink-0 text-[10px] text-white/35">{post.time}</span></div></div><ActionMenu post={post}/></div>{post.mediaUrl&&post.mediaType==='video'?<div className="relative aspect-video bg-black"><VideoMedia post={post} active={videoActive} onDoubleTap={doubleTap}/></div>:post.videoId?<div className="aspect-video bg-black" onDoubleClick={doubleTap}><VideoMedia post={post} active onDoubleTap={doubleTap}/></div>:post.mediaUrl||post.image?<div className="relative aspect-video bg-black overflow-hidden" onDoubleClick={doubleTap}><img src={post.mediaUrl||post.image} alt="" className="h-full w-full object-cover"/><AnimatePresence>{heart&&<motion.div initial={{opacity:0,scale:.4}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:1.25}} className="pointer-events-none absolute inset-0 grid place-items-center"><FiHeart className="h-24 w-24 text-white drop-shadow-2xl" fill="currentColor"/></motion.div>}</AnimatePresence></div>:null}<div className="px-4 pb-4 pt-2"><span className="rounded-full bg-white/[.06] px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-white/45">{label}</span><p className="mt-2 text-sm leading-6"><b>{post.author}</b>{post.body&&<> <span className="text-white/70">{post.body}</span></>}</p><Actions post={post} user={user} onUpdate={onUpdate} onComments={()=>setComments(true)}/><p className="mt-1 text-xs text-white/55">{post.likeCount>0?`${post.likeCount} ${post.likeCount===1?'like':'likes'} · `:''}{post.commentCount} comments · {post.saveCount} saves{showViews?` · ${post.viewCount} views`:''}</p></div><Comments post={post} user={user} onUpdate={onUpdate} open={comments} onClose={()=>setComments(false)}/></article>;
+  return <article ref={ref} id={`feed-${post.id}`} className={`overflow-hidden border-y border-white/[.07] bg-[#0d0c18] sm:rounded-2xl sm:border sm:shadow-[0_10px_30px_rgba(0,0,0,.18)] ${target?'ring-2 ring-white/50':''}`}><div className="flex items-center justify-between px-4 py-3"><div className="flex min-w-0 items-center gap-2.5"><div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-white/[.07]">{post.avatarUrl?<img src={post.avatarUrl} alt="" className="h-full w-full object-cover"/>:<img src="/logo.png" alt="" className="h-full w-full object-cover"/>}</div><div className="flex min-w-0 items-baseline gap-2"><p className="max-w-[15rem] truncate text-sm font-bold">{post.author}{post.isOfficial&&<span className="ml-1 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white text-[9px] text-ink-950" aria-label="Official ministry">✓</span>}</p><span className="shrink-0 text-[10px] text-white/35">{post.time}</span></div></div><ActionMenu post={post}/></div>{post.mediaUrl&&post.mediaType==='video'?<div className="relative aspect-video bg-black"><VideoMedia post={post} active={videoActive} onDoubleTap={doubleTap}/></div>:post.videoId?<div className="aspect-video bg-black" onDoubleClick={doubleTap}><VideoMedia post={post} active onDoubleTap={doubleTap}/></div>:post.mediaUrl||post.image?<div className="relative aspect-video bg-black overflow-hidden"><ZoomableImage src={post.mediaUrl||post.image} onDoubleTap={doubleTap}/><AnimatePresence>{heart&&<motion.div initial={{opacity:0,scale:.4}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:1.25}} className="pointer-events-none absolute inset-0 grid place-items-center"><FiHeart className="h-24 w-24 text-white drop-shadow-2xl" fill="currentColor"/></motion.div>}</AnimatePresence></div>:null}<div className="px-4 pb-4 pt-2"><span className="rounded-full bg-white/[.06] px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-white/45">{label}</span><p className="mt-2 text-sm leading-6"><b>{post.author}</b>{post.body&&<> <span className="text-white/70">{post.body}</span></>}</p><Actions post={post} user={user} onUpdate={onUpdate} onComments={()=>setComments(true)}/><p className="mt-1 text-xs text-white/55">{post.likeCount>0?`${post.likeCount} ${post.likeCount===1?'like':'likes'} · `:''}{post.commentCount} comments · {post.saveCount} saves{showViews?` · ${post.viewCount} views`:''}</p></div><Comments post={post} user={user} onUpdate={onUpdate} open={comments} onClose={()=>setComments(false)}/></article>;
 }
 
 function ReelCard({post,user,onUpdate,active,notificationId}) {
@@ -77,7 +134,7 @@ function Comments({post,user,onUpdate,open,onClose}) {
   useEffect(()=>{if(open&&listRef.current)listRef.current.scrollTop=listRef.current.scrollHeight;},[open,items.length]);
   const submit=async e=>{e.preventDefault();if(!user||!text.trim())return;const body=text.trim();setText('');try{const created=await addComment(post.id,body);setItems(v=>[...v,created]);onUpdate(post.id,{commentCount:post.commentCount+1});hapticSuccess();}catch{hapticError();}};
   if(!open)return null;
-  return <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60 p-0 sm:p-6" onClick={onClose}><motion.div initial={{y:'100%'}} animate={{y:0}} exit={{y:'100%'}} onClick={e=>e.stopPropagation()} className="flex h-[78dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-white/10 bg-[#12111f] shadow-2xl sm:rounded-3xl"><div className="flex justify-center pt-3"><span className="h-1 w-12 rounded-full bg-white/20"/></div><div className="flex items-center justify-between border-b border-white/10 px-4 py-3"><h3 className="font-bold">Comments</h3><button type="button" onClick={onClose} aria-label="Close comments" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/[.06]"><FiX/></button></div><div ref={listRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">{loading?<div className="flex items-center justify-center py-10 text-white/50"><FiLoader className="animate-spin"/></div>:items.length?items.map(c=><div key={c.id} className="flex gap-3"><div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[.08]"><img src={c.avatarUrl||'/logo.png'} alt="" className="h-full w-full object-cover"/></div><div><p className="text-sm font-semibold">{c.author}</p><p className="text-sm text-white/70">{c.body}</p></div></div>):<EmptyState title="No comments yet" description="Be the first to add a comment."/>}</div>{user&&<form onSubmit={submit} className="flex gap-2 border-t border-white/10 p-3"><input value={text} onChange={e=>setText(e.target.value)} placeholder="Add a comment..." className="min-w-0 flex-1 rounded-full bg-white/[.06] px-4 py-3 text-sm outline-none"/><button className="rounded-full bg-white px-4 py-2 text-sm font-bold text-black">Post</button></form>}</motion.div></div>;
+  return <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60 p-0 sm:p-6" onClick={onClose}><motion.div initial={{y:'100%'}} animate={{y:0}} onClick={e=>e.stopPropagation()} className="flex h-[78dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-white/10 bg-[#12111f] shadow-2xl sm:rounded-3xl"><div className="flex justify-center pt-3"><span className="h-1 w-12 rounded-full bg-white/20"/></div><div className="flex items-center justify-between border-b border-white/10 px-4 py-3"><h3 className="font-bold">Comments</h3><button type="button" onClick={onClose} aria-label="Close comments" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/[.06]"><FiX/></button></div><div ref={listRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">{loading?<div className="flex items-center justify-center py-10 text-white/50"><FiLoader className="animate-spin"/></div>:items.length?items.map(c=><div key={c.id} className="flex gap-3"><div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[.08]"><img src={c.avatarUrl||'/logo.png'} alt="" className="h-full w-full object-cover"/></div><div><p className="text-sm font-semibold">{c.author}</p><p className="text-sm text-white/70">{c.body}</p></div></div>):<EmptyState title="No comments yet" description="Be the first to add a comment."/>}</div>{user&&<form onSubmit={submit} className="flex gap-2 border-t border-white/10 p-3"><input value={text} onChange={e=>setText(e.target.value)} placeholder="Add a comment..." className="min-w-0 flex-1 rounded-full bg-white/[.06] px-4 py-3 text-sm outline-none"/><button className="rounded-full bg-white px-4 py-2 text-sm font-bold text-black">Post</button></form>}</motion.div></div>;
 }
 
 export default function Feed(){
