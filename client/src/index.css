@@ -16,123 +16,33 @@
   background-color: var(--bg-page);
   color: #fff;
 }
-
 html { scroll-behavior: smooth; overscroll-behavior-y: contain; }
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
-  overscroll-behavior-y: contain;
-  background:
-    radial-gradient(ellipse at top left, rgba(120,20,60,0.45) 0%, transparent 45%),
-    radial-gradient(ellipse at bottom right, rgba(60,20,100,0.35) 0%, transparent 45%),
-    #0d0c18;
-}
-
+body { margin: 0; min-height: 100vh; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); overscroll-behavior-y: contain; background: radial-gradient(ellipse at top left, rgba(120,20,60,0.45) 0%, transparent 45%), radial-gradient(ellipse at bottom right, rgba(60,20,100,0.35) 0%, transparent 45%), #0d0c18; }
 * { box-sizing: border-box; }
-
 a, button, [role="button"], input, textarea, select { -webkit-tap-highlight-color: transparent; }
-
-@media (hover: none) {
-  a:active, button:not(:disabled):active, [role="button"]:active {
-    transform: scale(0.96);
-    transition: transform 0.1s ease;
-  }
-  a, button, [role="button"], img {
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
-  }
-  input, select, textarea { font-size: 16px !important; }
-}
-
+@media (hover: none) { a:active, button:not(:disabled):active, [role="button"]:active { transform: scale(0.96); transition: transform 0.1s ease; } a, button, [role="button"], img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; } input, select, textarea { font-size: 16px !important; } }
 ::selection { background: rgba(236,47,168,0.3); color: white; }
 nav::-webkit-scrollbar { display: none; }
-
-input, select, textarea {
-  background: rgba(255,255,255,0.05) !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
-  border-radius: 0.75rem !important;
-  color: #fff !important;
-  transition: border-color 0.15s;
-}
+input, select, textarea { background: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 0.75rem !important; color: #fff !important; transition: border-color 0.15s; }
 input:focus, select:focus, textarea:focus { outline: none !important; border-color: #EC2FA8 !important; }
 input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3) !important; }
 select option { color: #0d0c18 !important; background: #ffffff !important; }
 
-/* Feed upgrade: keep the existing Feed architecture, but give it a cleaner social-first surface. */
-article[id^="feed-"] {
-  position: relative;
-  isolation: isolate;
-  background: rgba(13, 12, 24, 0.96) !important;
-  transition: background 180ms ease, box-shadow 180ms ease;
-}
+/* Feed social surface */
+article[id^="feed-"] { position: relative; isolation: isolate; background: rgba(13,12,24,0.96) !important; transition: background 180ms ease, box-shadow 180ms ease; }
+article[id^="feed-"] > div:first-child { min-height: 58px; }
+article[id^="feed-"] > div:first-child img { box-shadow: 0 0 0 2px rgba(255,255,255,0.08); }
+article[id^="feed-"] > div:last-of-type { background: linear-gradient(180deg, rgba(13,12,24,0.96), rgba(13,12,24,1)); }
+article[id^="feed-"] button { transition: transform 140ms ease, opacity 140ms ease, background 140ms ease; }
+@media (min-width: 640px) { article[id^="feed-"] { margin-bottom: 14px; border: 1px solid rgba(255,255,255,0.075) !important; border-radius: 18px; overflow: hidden; box-shadow: 0 10px 35px rgba(0,0,0,0.18); } article[id^="feed-"]:hover { box-shadow: 0 14px 42px rgba(0,0,0,0.28); } }
+.sticky.top-0.z-20 { box-shadow: 0 10px 28px rgba(0,0,0,0.16); }
+.sticky.top-0.z-20 button { min-height: 38px; transition: color 160ms ease, transform 160ms ease; }
+article.relative.h-full.min-h-\[540px\] { background: #000; }
 
-article[id^="feed-"] > div:first-child {
-  min-height: 58px;
-}
+/* Stories polish */
+.stories-row, [data-stories-row] { scrollbar-width: none; -ms-overflow-style: none; }
+.stories-row::-webkit-scrollbar, [data-stories-row]::-webkit-scrollbar { display: none; }
+[role="dialog"][aria-modal="true"] { overscroll-behavior: contain; }
+[role="dialog"][aria-modal="true"] video, [role="dialog"][aria-modal="true"] img { max-height: 100%; }
 
-article[id^="feed-"] > div:first-child img {
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.08);
-}
-
-article[id^="feed-"] img[alt=""]:not([class*="avatar"]) {
-  display: block;
-}
-
-article[id^="feed-"] > div:last-of-type {
-  background: linear-gradient(180deg, rgba(13,12,24,0.96), rgba(13,12,24,1));
-}
-
-article[id^="feed-"] button {
-  transition: transform 140ms ease, opacity 140ms ease, background 140ms ease;
-}
-
-article[id^="feed-"] button:not(:disabled):hover {
-  opacity: 1;
-}
-
-@media (min-width: 640px) {
-  article[id^="feed-"] {
-    margin-bottom: 14px;
-    border: 1px solid rgba(255,255,255,0.075) !important;
-    border-radius: 18px;
-    overflow: hidden;
-    box-shadow: 0 10px 35px rgba(0,0,0,0.18);
-  }
-  article[id^="feed-"]:hover {
-    box-shadow: 0 14px 42px rgba(0,0,0,0.28);
-  }
-}
-
-/* Make the story strip feel like a real social tray without changing its existing logic. */
-article[id^="feed-"] ~ * {}
-
-/* Sticky feed filters: subtle glass surface and better touch targets. */
-.sticky.top-0.z-20 {
-  box-shadow: 0 10px 28px rgba(0,0,0,0.16);
-}
-
-.sticky.top-0.z-20 button {
-  min-height: 38px;
-  transition: color 160ms ease, transform 160ms ease;
-}
-
-/* Reels retain the existing full-screen experience, with stronger edge-to-edge presentation. */
-article.relative.h-full.min-h-\[540px\] {
-  background: #000;
-}
-
-@media (max-width: 639px) {
-  article[id^="feed-"] {
-    border-color: rgba(255,255,255,0.055) !important;
-  }
-  article[id^="feed-"] > div:first-child {
-    padding-top: 12px;
-    padding-bottom: 12px;
-  }
-}
+@media (max-width: 639px) { article[id^="feed-"] { border-color: rgba(255,255,255,0.055) !important; } article[id^="feed-"] > div:first-child { padding-top: 12px; padding-bottom: 12px; } }
