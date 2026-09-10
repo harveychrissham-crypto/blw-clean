@@ -55,16 +55,16 @@ export async function handleStories(request, env, url) {
 
   try {
     // GET /api/stories -- every non-expired story, newest first, with the
-    // requesting member's own view state joined in. Grouping by author and
-    // ordering "unseen authors first" (Instagram's behavior) is left to the
-    // client, same as it already handles ordering for other list views.
+    // requesting member's own view state joined in. The profile join is
+    // deliberately LEFT JOINed so a valid story is never hidden just because
+    // its author does not yet have a matching users row.
     if (url.pathname === '/api/stories' && request.method === 'GET') {
       const rows = await db(env, (client) => client.query(
         `SELECT s.id, s.author_email, s.media_url, s.media_type, s.caption, s.created_at,
                 u.full_name, u.avatar_url,
                 v.viewer_email
          FROM public.stories s
-         JOIN users u ON LOWER(u.email) = LOWER(s.author_email)
+         LEFT JOIN users u ON LOWER(u.email) = LOWER(s.author_email)
          LEFT JOIN public.story_views v ON v.story_id = s.id AND LOWER(v.viewer_email) = LOWER($1)
          WHERE s.expires_at > now()
          ORDER BY s.created_at ASC`,
@@ -73,9 +73,6 @@ export async function handleStories(request, env, url) {
       return json({ stories: rows.rows.map((row) => storyDto(row, email)) }, 200, headers);
     }
 
-    // POST /api/stories -- create a story from an already-uploaded media URL
-    // (the client uploads via /api/uploads first, same two-step flow used
-    // for avatars and outreach photos elsewhere in this app).
     if (url.pathname === '/api/stories' && request.method === 'POST') {
       const body = await request.json().catch(() => ({}));
       const mediaUrl = typeof body?.mediaUrl === 'string' ? body.mediaUrl.trim() : '';
@@ -119,9 +116,6 @@ export async function handleStories(request, env, url) {
   }
 }
 
-// POST /api/stories/upload -- a thin wrapper around the shared upload path
-// that allows video for this one call site, so the story compose UI can
-// send image or video in a single request field ("media").
 export async function handleStoryUpload(request, env, url) {
   if (url.pathname !== '/api/stories/upload' || request.method !== 'POST') return null;
   const headers = corsHeaders(request, env);
