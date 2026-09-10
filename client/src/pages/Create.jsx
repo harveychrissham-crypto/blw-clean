@@ -20,12 +20,43 @@ export default function Create() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
 
+  const isDirty = Boolean(file || caption.trim() || location.trim());
+  const confirmLeave = () => !isDirty || window.confirm('You have unsaved content. Leave Create and discard it?');
+
   useEffect(() => {
     if (!file) { setPreview(''); return undefined; }
     const url = URL.createObjectURL(file);
     setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [file]);
+
+  useEffect(() => {
+    if (!isDirty) return undefined;
+    const onBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [isDirty]);
+
+  useEffect(() => {
+    if (!isDirty) return undefined;
+    const guardState = { ...(window.history.state || {}), __createGuard: true };
+    window.history.pushState(guardState, '', window.location.href);
+    let acceptingLeave = false;
+    const onPopState = () => {
+      if (acceptingLeave) return;
+      if (window.confirm('You have unsaved content. Leave Create and discard it?')) {
+        acceptingLeave = true;
+        navigate(-1);
+      } else {
+        window.history.pushState(guardState, '', window.location.href);
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [isDirty, navigate]);
 
   const choose = (mode = type) => {
     hapticTap();
@@ -87,13 +118,17 @@ export default function Create() {
     } finally { setUploading(false); }
   };
 
+  const back = () => {
+    if (confirmLeave()) navigate(-1);
+  };
+
   if (!user) return <div className="min-h-[70vh] grid place-items-center px-6 text-center"><div><p className="text-lg font-bold text-white">Sign in to create</p><p className="mt-2 text-sm text-white/50">Create posts and Reels for the community.</p><Link to="/auth" className="mt-5 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-bold text-ink-950">Sign in</Link></div></div>;
 
   return (
     <div className="min-h-screen bg-[#090812] text-white sm:py-8">
       <div className="mx-auto min-h-screen max-w-2xl overflow-hidden border-x border-white/[0.07] bg-[#0d0c18] sm:min-h-0 sm:rounded-[28px] sm:border sm:shadow-2xl">
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-white/[0.07] bg-[#0d0c18]/90 px-3 backdrop-blur-2xl">
-          <button type="button" onClick={() => navigate(-1)} className="grid h-10 w-10 place-items-center rounded-full text-white/75 transition hover:bg-white/[0.07]" aria-label="Back"><FiArrowLeft className="h-5 w-5" /></button>
+          <button type="button" onClick={back} className="grid h-10 w-10 place-items-center rounded-full text-white/75 transition hover:bg-white/[0.07]" aria-label="Back"><FiArrowLeft className="h-5 w-5" /></button>
           <div className="text-center"><h1 className="text-[15px] font-bold tracking-tight">Create</h1><p className="text-[9px] uppercase tracking-[0.18em] text-white/30">Share with the community</p></div>
           <button type="button" onClick={publish} disabled={uploading || !file} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-ink-950 transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35">{uploading ? <FiLoader className="animate-spin" /> : <><FiCheck /> Share</>}</button>
         </header>
@@ -138,7 +173,7 @@ export default function Create() {
 
             <div className="mt-3 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.025] px-3.5 py-2.5"><FiMapPin className="shrink-0 text-white/35" /><input value={location} onChange={(event) => setLocation(event.target.value)} maxLength={100} placeholder="Add location (optional)" className="min-w-0 flex-1 bg-transparent text-xs text-white outline-none placeholder:text-white/25" /></div>
 
-            <div className="mt-4 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3.5"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/30">Sharing to Feed</p><p className="mt-1.5 text-xs leading-5 text-white/45">Your {type === 'reel' ? 'Reel' : 'post'} will appear in the community Feed where people can like, comment and save it.</p></div>
+            <div className="mt-4 rounded-2xl border border-white/[.07] bg-white/[.02] p-3.5"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/30">Sharing to Feed</p><p className="mt-1.5 text-xs leading-5 text-white/45">Your {type === 'reel' ? 'Reel' : 'post'} will appear in the community Feed where people can like, comment and save it.</p></div>
 
             {error && <p className="mt-3 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-xs leading-5 text-red-200">{error}</p>}
             <button type="button" onClick={publish} disabled={uploading || !file} className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3.5 text-sm font-bold text-ink-950 shadow-xl transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35">{uploading ? <><FiLoader className="animate-spin" /> Uploading & sharing...</> : <><FiSend /> Share {type === 'reel' ? 'Reel' : 'Post'}</>}</button>
