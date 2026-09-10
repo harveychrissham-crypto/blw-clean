@@ -54,10 +54,6 @@ export async function handleStories(request, env, url) {
   if (!email) return json({ error: 'Sign in required.' }, 401, headers);
 
   try {
-    // GET /api/stories -- every non-expired story, newest first, with the
-    // requesting member's own view state joined in. The profile join is
-    // deliberately LEFT JOINed so a valid story is never hidden just because
-    // its author does not yet have a matching users row.
     if (url.pathname === '/api/stories' && request.method === 'GET') {
       const rows = await db(env, (client) => client.query(
         `SELECT s.id, s.author_email, s.media_url, s.media_type, s.caption, s.created_at,
@@ -71,6 +67,28 @@ export async function handleStories(request, env, url) {
         [email],
       ));
       return json({ stories: rows.rows.map((row) => storyDto(row, email)) }, 200, headers);
+    }
+
+    const viewerMatch = url.pathname.match(/^\/api\/stories\/([^/]+)\/viewers$/);
+    if (viewerMatch && request.method === 'GET') {
+      const storyId = viewerMatch[1];
+      const rows = await db(env, (client) => client.query(
+        `SELECT v.viewer_email, v.created_at, u.full_name, u.avatar_url
+         FROM public.story_views v
+         JOIN public.stories s ON s.id = v.story_id
+         LEFT JOIN users u ON LOWER(u.email) = LOWER(v.viewer_email)
+         WHERE v.story_id = $1 AND LOWER(s.author_email) = LOWER($2)
+         ORDER BY v.created_at DESC`,
+        [storyId, email],
+      ));
+      return json({
+        viewers: rows.rows.map((row) => ({
+          email: row.viewer_email,
+          name: row.full_name || row.viewer_email,
+          avatarUrl: row.avatar_url || null,
+          viewedAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+        })),
+      }, 200, headers);
     }
 
     if (url.pathname === '/api/stories' && request.method === 'POST') {
