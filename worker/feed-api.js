@@ -37,6 +37,22 @@ function parseId(value) {
   return Number.isSafeInteger(id) && id > 0 ? id : 0;
 }
 
+function youtubeId(value) {
+  if (typeof value !== 'string') return '';
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=)([\w-]{11})/,
+    /(?:youtu\.be\/)([\w-]{11})/,
+    /(?:youtube\.com\/embed\/)([\w-]{11})/,
+    /(?:youtube\.com\/shorts\/)([\w-]{11})/,
+    /(?:youtube\.com\/live\/)([\w-]{11})/,
+  ];
+  for (const pattern of patterns) {
+    const match = value.match(pattern);
+    if (match) return match[1];
+  }
+  return '';
+}
+
 export async function handleFeed(request, env, url) {
   if (!url.pathname.startsWith('/api/feed')) return null;
   const headers = corsHeaders(request, env);
@@ -61,19 +77,13 @@ export async function handleFeed(request, env, url) {
                SELECT 1 FROM public.feed_saves x WHERE x.sermon_id = s.id AND LOWER(x.user_email) = $1
              ) THEN true ELSE false END AS saved
            FROM public.sermons s
-           LEFT JOIN (
-             SELECT sermon_id, COUNT(*) AS like_count FROM public.feed_likes GROUP BY sermon_id
-           ) l ON l.sermon_id = s.id
-           LEFT JOIN (
-             SELECT sermon_id, COUNT(*) AS comment_count FROM public.feed_comments GROUP BY sermon_id
-           ) c ON c.sermon_id = s.id
-           LEFT JOIN (
-             SELECT sermon_id, COUNT(*) AS save_count FROM public.feed_saves GROUP BY sermon_id
-           ) sa ON sa.sermon_id = s.id
+           LEFT JOIN (SELECT sermon_id, COUNT(*) AS like_count FROM public.feed_likes GROUP BY sermon_id) l ON l.sermon_id = s.id
+           LEFT JOIN (SELECT sermon_id, COUNT(*) AS comment_count FROM public.feed_comments GROUP BY sermon_id) c ON c.sermon_id = s.id
+           LEFT JOIN (SELECT sermon_id, COUNT(*) AS save_count FROM public.feed_saves GROUP BY sermon_id) sa ON sa.sermon_id = s.id
            ORDER BY s.created_at DESC, s.id DESC`,
           [email],
         );
-        return json({ posts: result.rows });
+        return json({ posts: result.rows.map((row) => ({ ...row, youtube_id: youtubeId(row.youtube_url) })) }, 200, headers);
       } finally {
         await client.end().catch(() => {});
       }
@@ -94,39 +104,31 @@ export async function handleFeed(request, env, url) {
       if (action === 'like' && request.method === 'POST') {
         if (!email) return json({ error: 'Sign in required to like posts.' }, 401, headers);
         const current = await client.query('SELECT 1 FROM public.feed_likes WHERE sermon_id = $1 AND LOWER(user_email) = $2 LIMIT 1', [sermonId, email]);
-        if (current.rows.length) {
-          await client.query('DELETE FROM public.feed_likes WHERE sermon_id = $1 AND LOWER(user_email) = $2', [sermonId, email]);
-        } else {
-          await client.query('INSERT INTO public.feed_likes (sermon_id, user_email) VALUES ($1, $2) ON CONFLICT (sermon_id, user_email) DO NOTHING', [sermonId, email]);
-        }
+        if (current.rows.length) await client.query('DELETE FROM public.feed_likes WHERE sermon_id = $1 AND LOWER(user_email) = $2', [sermonId, email]);
+        else await client.query('INSERT INTO public.feed_likes (sermon_id, user_email) VALUES ($1, $2) ON CONFLICT (sermon_id, user_email) DO NOTHING', [sermonId, email]);
         const count = await client.query('SELECT COUNT(*)::int AS count FROM public.feed_likes WHERE sermon_id = $1', [sermonId]);
         const liked = await client.query('SELECT 1 FROM public.feed_likes WHERE sermon_id = $1 AND LOWER(user_email) = $2 LIMIT 1', [sermonId, email]);
-        return json({ liked: liked.rows.length > 0, likeCount: count.rows[0].count });
+        return json({ liked: liked.rows.length > 0, likeCount: count.rows[0].count }, 200, headers);
       }
 
       if (action === 'save' && request.method === 'POST') {
         if (!email) return json({ error: 'Sign in required to save posts.' }, 401, headers);
         const current = await client.query('SELECT 1 FROM public.feed_saves WHERE sermon_id = $1 AND LOWER(user_email) = $2 LIMIT 1', [sermonId, email]);
-        if (current.rows.length) {
-          await client.query('DELETE FROM public.feed_saves WHERE sermon_id = $1 AND LOWER(user_email) = $2', [sermonId, email]);
-        } else {
-          await client.query('INSERT INTO public.feed_saves (sermon_id, user_email) VALUES ($1, $2) ON CONFLICT (sermon_id, user_email) DO NOTHING', [sermonId, email]);
-        }
+        if (current.rows.length) await client.query('DELETE FROM public.feed_saves WHERE sermon_id = $1 AND LOWER(user_email) = $2', [sermonId, email]);
+        else await client.query('INSERT INTO public.feed_saves (sermon_id, user_email) VALUES ($1, $2) ON CONFLICT (sermon_id, user_email) DO NOTHING', [sermonId, email]);
         const count = await client.query('SELECT COUNT(*)::int AS count FROM public.feed_saves WHERE sermon_id = $1', [sermonId]);
         const saved = await client.query('SELECT 1 FROM public.feed_saves WHERE sermon_id = $1 AND LOWER(user_email) = $2 LIMIT 1', [sermonId, email]);
-        return json({ saved: saved.rows.length > 0, saveCount: count.rows[0].count });
+        return json({ saved: saved.rows.length > 0, saveCount: count.rows[0].count }, 200, headers);
       }
 
       if (action === 'comments' && request.method === 'GET') {
         const result = await client.query(
           `SELECT id, user_email, author_name, body, created_at
-           FROM public.feed_comments
-           WHERE sermon_id = $1
-           ORDER BY created_at ASC, id ASC
-           LIMIT 100`,
+           FROM public.feed_comments WHERE sermon_id = $1
+           ORDER BY created_at ASC, id ASC LIMIT 100`,
           [sermonId],
         );
-        return json({ comments: result.rows });
+        return json({ comments: result.rows }, 200, headers);
       }
 
       if (action === 'comments' && request.method === 'POST') {
@@ -149,10 +151,7 @@ export async function handleFeed(request, env, url) {
         if (!email) return json({ error: 'Sign in required.' }, 401, headers);
         const commentId = parseId(url.searchParams.get('commentId'));
         if (!commentId) return json({ error: 'Invalid comment.' }, 400, headers);
-        const deleted = await client.query(
-          'DELETE FROM public.feed_comments WHERE id = $1 AND LOWER(user_email) = $2 RETURNING id',
-          [commentId, email],
-        );
+        const deleted = await client.query('DELETE FROM public.feed_comments WHERE id = $1 AND LOWER(user_email) = $2 RETURNING id', [commentId, email]);
         if (!deleted.rows.length) return json({ error: 'Comment not found, or it is not yours to delete.' }, 404, headers);
         return json({ ok: true }, 200, headers);
       }
