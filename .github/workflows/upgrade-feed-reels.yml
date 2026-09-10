@@ -1,0 +1,57 @@
+name: Upgrade Feed Reels keyboard navigation
+
+on:
+  push:
+    paths:
+      - '.github/workflows/upgrade-feed-reels.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch Feed Reels controls
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('client/src/pages/Feed.jsx')
+          s = p.read_text()
+
+          start = s.index('function Reels({posts,user,onUpdate,notificationId}) {')
+          end = s.index('\nfunction rootElement', start)
+          block = '''function Reels({posts,user,onUpdate,notificationId}) {
+  const ref=useRef(null); const [active,setActive]=useState(String(posts[0]?.id||''));
+  const scrollToReel=useCallback(direction=>{const root=ref.current;if(!root)return;const cards=[...root.querySelectorAll('[data-reel]')];if(!cards.length)return;const current=cards.findIndex(card=>card.dataset.reel===String(active));const next=Math.max(0,Math.min(cards.length-1,current+(direction==='next'?1:-1)));cards[next]?.scrollIntoView({block:'start',behavior:'smooth'});},[active]);
+  useEffect(()=>{const root=ref.current;if(!root)return;const cards=[...root.querySelectorAll('[data-reel]')];const obs=new IntersectionObserver(entries=>{const e=entries.filter(x=>x.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];if(e)setActive(e.target.dataset.reel);},{root,threshold:.6});cards.forEach(c=>obs.observe(c));return()=>obs.disconnect();},[posts.length]);
+  useEffect(()=>{if(!notificationId)return;const node=rootElement(ref.current,`[data-reel=\\\"${CSS.escape(notificationId)}\\\"]`);if(node)setTimeout(()=>node.scrollIntoView({block:'start',behavior:'instant'}),80);},[notificationId,posts.length]);
+  useEffect(()=>{const onKeyDown=e=>{if(e.defaultPrevented||e.metaKey||e.ctrlKey||e.altKey)return;const tag=String(e.target?.tagName||'').toLowerCase();if(tag==='input'||tag==='textarea'||tag==='select'||e.target?.isContentEditable)return;if(e.key==='ArrowDown'||e.key==='PageDown'){e.preventDefault();scrollToReel('next');}else if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();scrollToReel('prev');}};window.addEventListener('keydown',onKeyDown);return()=>window.removeEventListener('keydown',onKeyDown);},[scrollToReel]);
+  return <div ref={ref} className="relative h-[calc(100dvh-8.5rem)] snap-y snap-mandatory overflow-y-auto" style={{scrollbarWidth:'none'}}>{posts.map(p=><div key={p.id} data-reel={p.id} className="relative h-[calc(100dvh-8.5rem)]"><ReelCard post={p} user={user} onUpdate={onUpdate} active={active===String(p.id)} notificationId={notificationId}/>{active===String(p.id)&&<div className="pointer-events-none absolute right-4 top-4 z-20 hidden rounded-full bg-black/45 px-3 py-1 text-[10px] text-white/65 backdrop-blur-md lg:block">↑ ↓ navigate</div>}</div>)}</div>;
+}
+'''
+          s = s[:start] + block + s[end:]
+          p.write_text(s)
+
+      - name: Install and build
+        shell: bash
+        run: |
+          npm ci --no-audit --no-fund
+          npm --prefix client ci --no-audit --no-fund
+          npm --prefix client run build
+
+      - name: Commit patch and remove workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm -f .github/workflows/upgrade-feed-reels.yml
+          git add client/src/pages/Feed.jsx .github/workflows/upgrade-feed-reels.yml
+          git diff --cached --quiet && exit 0
+          git commit -m 'feat: add keyboard navigation to Feed Reels'
+          git push
