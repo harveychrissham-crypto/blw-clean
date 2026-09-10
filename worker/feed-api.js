@@ -18,28 +18,32 @@ export async function handleFeed(request, env, url) {
   try {
     const email = getEmail(request, env);
     if (url.pathname === '/api/feed' && request.method === 'GET') {
+      const rawLimit = Number.parseInt(url.searchParams.get('limit') || '20', 10);
+      const rawOffset = Number.parseInt(url.searchParams.get('offset') || '0', 10);
+      const limit = Math.min(Math.max(Number.isFinite(rawLimit) ? rawLimit : 20, 1), 30);
+      const offset = Math.max(Number.isFinite(rawOffset) ? rawOffset : 0, 0);
       const client = await getDb(env);
       try {
         const result = await client.query(`SELECT * FROM (
           SELECT CONCAT('s:',s.id) AS id,s.title,s.speaker AS author,s.description AS body,s.youtube_url,NULL::text AS media_url,NULL::text AS media_type,s.created_at,s.is_featured,'sermon' AS type,'sermon' AS source_type,false AS is_user_post,
-          COALESCE(l.like_count,0)::int AS like_count,COALESCE(c.comment_count,0)::int AS comment_count,COALESCE(sa.save_count,0)::int AS save_count,
+          (SELECT COUNT(*)::int FROM public.feed_likes x WHERE x.sermon_id=s.id) AS like_count,
+          (SELECT COUNT(*)::int FROM public.feed_comments x WHERE x.sermon_id=s.id) AS comment_count,
+          (SELECT COUNT(*)::int FROM public.feed_saves x WHERE x.sermon_id=s.id) AS save_count,
           CASE WHEN $1 <> '' AND EXISTS(SELECT 1 FROM public.feed_likes x WHERE x.sermon_id=s.id AND LOWER(x.user_email)=$1) THEN true ELSE false END AS liked,
           CASE WHEN $1 <> '' AND EXISTS(SELECT 1 FROM public.feed_saves x WHERE x.sermon_id=s.id AND LOWER(x.user_email)=$1) THEN true ELSE false END AS saved
           FROM public.sermons s
-          LEFT JOIN(SELECT sermon_id,COUNT(*) AS like_count FROM public.feed_likes GROUP BY sermon_id)l ON l.sermon_id=s.id
-          LEFT JOIN(SELECT sermon_id,COUNT(*) AS comment_count FROM public.feed_comments GROUP BY sermon_id)c ON c.sermon_id=s.id
-          LEFT JOIN(SELECT sermon_id,COUNT(*) AS save_count FROM public.feed_saves GROUP BY sermon_id)sa ON sa.sermon_id=s.id
           UNION ALL
           SELECT CONCAT('p:',p.id) AS id,p.title,p.author_name AS author,p.body,p.youtube_url,p.media_url,p.media_type,p.created_at,false AS is_featured,p.type,'user' AS source_type,true AS is_user_post,
-          COALESCE(l.like_count,0)::int AS like_count,COALESCE(c.comment_count,0)::int AS comment_count,COALESCE(sa.save_count,0)::int AS save_count,
+          (SELECT COUNT(*)::int FROM public.feed_post_likes x WHERE x.post_id=p.id) AS like_count,
+          (SELECT COUNT(*)::int FROM public.feed_post_comments x WHERE x.post_id=p.id) AS comment_count,
+          (SELECT COUNT(*)::int FROM public.feed_post_saves x WHERE x.post_id=p.id) AS save_count,
           CASE WHEN $1 <> '' AND EXISTS(SELECT 1 FROM public.feed_post_likes x WHERE x.post_id=p.id AND LOWER(x.user_email)=$1) THEN true ELSE false END AS liked,
           CASE WHEN $1 <> '' AND EXISTS(SELECT 1 FROM public.feed_post_saves x WHERE x.post_id=p.id AND LOWER(x.user_email)=$1) THEN true ELSE false END AS saved
           FROM public.feed_posts p
-          LEFT JOIN(SELECT post_id,COUNT(*) AS like_count FROM public.feed_post_likes GROUP BY post_id)l ON l.post_id=p.id
-          LEFT JOIN(SELECT post_id,COUNT(*) AS comment_count FROM public.feed_post_comments GROUP BY post_id)c ON c.post_id=p.id
-          LEFT JOIN(SELECT post_id,COUNT(*) AS save_count FROM public.feed_post_saves GROUP BY post_id)sa ON sa.post_id=p.id
-        ) feed_items ORDER BY created_at DESC,id DESC`,[email]);
-        return json({ posts: result.rows.map(row => ({ ...row, youtube_id: youtubeId(row.youtube_url) })) },200,headers);
+        ) feed_items ORDER BY created_at DESC,id DESC LIMIT $2 OFFSET $3`,[email,limit+1,offset]);
+        const hasMore = result.rows.length > limit;
+        const posts = result.rows.slice(0,limit).map(row => ({ ...row, youtube_id: youtubeId(row.youtube_url) }));
+        return json({ posts, hasMore, limit, offset },200,headers);
       } finally { await client.end().catch(()=>{}); }
     }
     if (url.pathname === '/api/feed/posts' && request.method === 'POST') {
