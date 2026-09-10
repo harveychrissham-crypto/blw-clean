@@ -73,15 +73,28 @@ export default function StoriesRow() {
       return aUnseen ? -1 : 1;
     });
 
-  const openGroup = (group, startIndex = 0) => {
+  const openGroup = (group, startIndex = 0, groupIndex = 0) => {
     hapticTap();
-    setViewerGroup({ stories: group, startIndex });
+    setViewerGroup({ stories: group, startIndex, groupIndex });
+  };
+
+  const orderedGroups = myGroup ? [myGroup, ...otherGroups] : otherGroups;
+
+  const openGroupByIndex = (groupIndex) => {
+    const nextGroup = orderedGroups[groupIndex];
+    if (!nextGroup) return false;
+    const firstUnseenIndex = nextGroup.findIndex((story) => !story.viewed);
+    setViewerGroup({
+      stories: nextGroup,
+      startIndex: firstUnseenIndex === -1 ? 0 : firstUnseenIndex,
+      groupIndex,
+    });
+    hapticTap();
+    return true;
   };
 
   const markViewedLocally = (storyId) => {
-    setStories((prev) => prev.map((story) => (
-      story.id === storyId ? { ...story, viewed: true } : story
-    )));
+    setStories((prev) => prev.map((story) => story.id === storyId ? { ...story, viewed: true } : story));
   };
 
   const removeLocally = (storyId) => {
@@ -108,8 +121,6 @@ export default function StoriesRow() {
     setUploading(true);
     setUploadError('');
     try {
-      // Large phone photos are automatically resized/compressed to WebP before
-      // upload, so normal camera/gallery images no longer fail the 5 MB server limit.
       const file = isVideo ? originalFile : await prepareImageForUpload(originalFile, {
         maxBytes: 5 * 1024 * 1024,
         maxDimension: 2200,
@@ -126,10 +137,7 @@ export default function StoriesRow() {
 
       const createRes = await apiFetch('/api/stories', {
         method: 'POST',
-        body: JSON.stringify({
-          mediaUrl: uploadBody.url,
-          mediaType: isVideo ? 'video' : 'image',
-        }),
+        body: JSON.stringify({ mediaUrl: uploadBody.url, mediaType: isVideo ? 'video' : 'image' }),
       });
       if (!createRes.ok) {
         const body = await createRes.json().catch(() => ({}));
@@ -151,51 +159,20 @@ export default function StoriesRow() {
       <div className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none]">
         <div className="flex shrink-0 flex-col items-center gap-1.5">
           <div className="relative h-16 w-16 shrink-0">
-            <button
-              type="button"
-              onClick={() => (myGroup ? openGroup(myGroup, 0) : fileInputRef.current?.click())}
-              className="h-full w-full rounded-full"
-              aria-label={myGroup ? 'View your story' : 'Add a story'}
-            >
+            <button type="button" onClick={() => (myGroup ? openGroup(myGroup, 0, 0) : fileInputRef.current?.click())} className="h-full w-full rounded-full" aria-label={myGroup ? 'View your story' : 'Add a story'}>
               {myGroup ? (
-                <div
-                  className="h-full w-full rounded-full p-[2px]"
-                  style={{
-                    background: myGroup.some((story) => !story.viewed)
-                      ? 'linear-gradient(135deg,#EC2FA8,#8A2BE2,#F2A31C)'
-                      : 'rgba(255,255,255,0.15)',
-                  }}
-                >
+                <div className="h-full w-full rounded-full p-[2px]" style={{ background: myGroup.some((story) => !story.viewed) ? 'linear-gradient(135deg,#EC2FA8,#8A2BE2,#F2A31C)' : 'rgba(255,255,255,0.15)' }}>
                   <div className="h-full w-full overflow-hidden rounded-full border-2 border-[#0d0c18] bg-white/5">
-                    {user.avatarUrl ? (
-                      <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">
-                        {(user.name || '?').charAt(0).toUpperCase()}
-                      </div>
-                    )}
+                    {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" /> : <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">{(user.name || '?').charAt(0).toUpperCase()}</div>}
                   </div>
                 </div>
               ) : (
                 <div className="grid h-full w-full place-items-center overflow-hidden rounded-full border-2 border-dashed border-white/20 bg-white/[0.04]">
-                  {user.avatarUrl ? (
-                    <img src={user.avatarUrl} alt="" className="h-full w-full object-cover opacity-60" />
-                  ) : (
-                    <span className="text-sm font-bold text-white/50">
-                      {(user.name || '?').charAt(0).toUpperCase()}
-                    </span>
-                  )}
+                  {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover opacity-60" /> : <span className="text-sm font-bold text-white/50">{(user.name || '?').charAt(0).toUpperCase()}</span>}
                 </div>
               )}
             </button>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              aria-label="Add a story"
-              className="absolute -bottom-0.5 -right-0.5 grid h-5 w-5 place-items-center rounded-full border-2 border-[#0d0c18] bg-[#EC2FA8] text-white"
-            >
-              {uploading ? <span className="h-2 w-2 animate-pulse rounded-full bg-white" /> : <FiPlus className="h-3 w-3" />}
-            </button>
+            <button type="button" onClick={() => fileInputRef.current?.click()} aria-label="Add a story" className="absolute -bottom-0.5 -right-0.5 grid h-5 w-5 place-items-center rounded-full border-2 border-[#0d0c18] bg-[#EC2FA8] text-white">{uploading ? <span className="h-2 w-2 animate-pulse rounded-full bg-white" /> : <FiPlus className="h-3 w-3" />}</button>
           </div>
           <span className="max-w-[4.5rem] truncate text-[11px] text-white/50">Your Story</span>
         </div>
@@ -204,30 +181,13 @@ export default function StoriesRow() {
           const first = group[0];
           const unseen = group.some((story) => !story.viewed);
           const firstUnseenIndex = group.findIndex((story) => !story.viewed);
+          const groupIndex = orderedGroups.indexOf(group);
           return (
             <div key={first.authorEmail} className="flex shrink-0 flex-col items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => openGroup(group, firstUnseenIndex === -1 ? 0 : firstUnseenIndex)}
-                className="h-16 w-16 shrink-0 rounded-full"
-                aria-label={`View ${first.authorName}'s story`}
-              >
-                <div
-                  className="h-full w-full rounded-full p-[2px]"
-                  style={{
-                    background: unseen
-                      ? 'linear-gradient(135deg,#EC2FA8,#8A2BE2,#F2A31C)'
-                      : 'rgba(255,255,255,0.15)',
-                  }}
-                >
+              <button type="button" onClick={() => openGroup(group, firstUnseenIndex === -1 ? 0 : firstUnseenIndex, groupIndex)} className="h-16 w-16 shrink-0 rounded-full" aria-label={`View ${first.authorName}'s story`}>
+                <div className="h-full w-full rounded-full p-[2px]" style={{ background: unseen ? 'linear-gradient(135deg,#EC2FA8,#8A2BE2,#F2A31C)' : 'rgba(255,255,255,0.15)' }}>
                   <div className="h-full w-full overflow-hidden rounded-full border-2 border-[#0d0c18] bg-white/5">
-                    {first.authorAvatarUrl ? (
-                      <img src={first.authorAvatarUrl} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">
-                        {(first.authorName || '?').charAt(0).toUpperCase()}
-                      </div>
-                    )}
+                    {first.authorAvatarUrl ? <img src={first.authorAvatarUrl} alt="" className="h-full w-full object-cover" /> : <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">{(first.authorName || '?').charAt(0).toUpperCase()}</div>}
                   </div>
                 </div>
               </button>
@@ -239,13 +199,7 @@ export default function StoriesRow() {
 
       {uploadError && <p className="mt-1 text-xs text-red-300">{uploadError}</p>}
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*,video/*"
-        onChange={handleFileChosen}
-        className="hidden"
-      />
+      <input ref={fileInputRef} type="file" accept="image/*,video/*" onChange={handleFileChosen} className="hidden" />
 
       {viewerGroup && (
         <StoryViewer
@@ -255,6 +209,10 @@ export default function StoriesRow() {
           onClose={() => setViewerGroup(null)}
           onViewed={markViewedLocally}
           onDeleted={removeLocally}
+          onSwipeGroup={(direction) => {
+            const nextIndex = viewerGroup.groupIndex + direction;
+            return openGroupByIndex(nextIndex);
+          }}
         />
       )}
     </div>
