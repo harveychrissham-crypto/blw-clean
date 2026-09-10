@@ -12,7 +12,7 @@ import Button from '../components/ui/Button';
 
 const navItems = [
   { name: 'Home', path: '/', icon: FiHome },
-  { name: 'Feed', path: '/sermons', icon: FiMic },
+  { name: 'Feed', path: '/feed', icon: FiMic },
   { name: 'Events', path: '/events', icon: FiCalendar },
   { name: 'Outreaches', path: '/outreaches', icon: FiTarget },
   { name: 'Live', path: '/live', icon: FiRadio },
@@ -40,25 +40,16 @@ export default function Layout({ children }) {
         <div className="flex items-center gap-2 px-4 py-2 sm:gap-3 sm:px-5 sm:py-2.5">
           <Link to="/" className="flex shrink-0 items-center gap-3">
             <img src="/logo.png" alt="BLW Logo" className="h-7 w-7 rounded-full object-cover ring-1 ring-white/10 sm:h-9 sm:w-9" />
-            <span className="hidden sm:block">
-              <span className="header-brand block leading-tight whitespace-nowrap" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 800, fontSize: '0.95rem', color: '#FFFFFF' }}>Believers' LoveWorld CM</span>
-              <span className="block whitespace-nowrap" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '6px', color: '#F2A31C' }}>Kenya Zone</span>
-            </span>
+            <span className="hidden sm:block"><span className="header-brand block leading-tight whitespace-nowrap" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 800, fontSize: '0.95rem', color: '#FFFFFF' }}>Believers' LoveWorld CM</span><span className="block whitespace-nowrap" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '6px', color: '#F2A31C' }}>Kenya Zone</span></span>
           </Link>
 
           <nav className="hidden min-w-0 flex-1 items-center gap-0.5 overflow-x-auto sm:flex" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return <NavLink key={`${item.path}-${item.name}`} to={item.path} end={item.path === '/'} className={({ isActive }) => `flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-[0.8rem] font-medium whitespace-nowrap transition-all duration-150 ${isActive ? 'bg-white/10 text-white' : 'text-white/55 hover:text-white/90 hover:bg-white/5'}`}><Icon className="h-3.5 w-3.5 shrink-0" />{item.name}</NavLink>;
-            })}
+            {navItems.map((item) => { const Icon = item.icon; return <NavLink key={`${item.path}-${item.name}`} to={item.path} end={item.path === '/'} className={({ isActive }) => `flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-[0.8rem] font-medium whitespace-nowrap transition-all duration-150 ${isActive ? 'bg-white/10 text-white' : 'text-white/55 hover:text-white/90 hover:bg-white/5'}`}><Icon className="h-3.5 w-3.5 shrink-0" />{item.name}</NavLink>; })}
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">
             <Button variant="custom" size="none" onClick={() => setSearchOpen(true)} className="rounded-lg p-2 text-white/50 transition hover:text-white hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" aria-label="Search"><FiSearch className="h-4 w-4" /></Button>
-            <Link to="/notifications" className="relative rounded-lg p-2 text-white/50 transition hover:text-white hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" aria-label="Notifications">
-              <FiBell className="h-4 w-4" />
-              {unreadCount > 0 && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-gold-500" aria-hidden="true" />}
-            </Link>
+            <Link to="/notifications" className="relative rounded-lg p-2 text-white/50 transition hover:text-white hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" aria-label="Notifications"><FiBell className="h-4 w-4" />{unreadCount > 0 && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-gold-500" aria-hidden="true" />}</Link>
             {user ? <Link to="/dashboard" className="hidden sm:inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105" style={{ background: 'linear-gradient(135deg,#EC2FA8,#8A2BE2)' }}><FiUser className="h-3.5 w-3.5" />My Account</Link> : <Link to="/auth" className="hidden sm:inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105" style={{ background: 'linear-gradient(135deg,#EC2FA8,#8A2BE2)' }}><FiLogIn className="h-3.5 w-3.5" />Sign In</Link>}
           </div>
         </div>
@@ -73,7 +64,7 @@ export default function Layout({ children }) {
       <footer className="hidden border-t border-white/[0.07] mt-8 sm:block" style={{ background: 'rgba(10,9,20,0.8)' }}>
         <div className="mx-auto grid max-w-6xl gap-8 px-5 py-10 sm:grid-cols-3">
           <div><div className="flex items-center gap-2.5 mb-3"><img src="/logo.png" alt="BLW Logo" className="h-8 w-8 rounded-full object-cover ring-1 ring-white/10" /><span className="font-semibold text-sm" style={{fontFamily:'Montserrat, sans-serif'}}><span style={{color:'#FFFFFF'}}>Believers' LoveWorld CM</span>{' '}<span style={{color:'#F2A31C'}}>Kenya Zone</span></span></div><p className="text-xs text-white/60 leading-relaxed">Fellowship Without Borders for students and young professionals across Kenya Zone.</p></div>
-          <div><h4 className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{color:'#F2A31C'}}>Quick Links</h4><div className="flex flex-col gap-2 text-sm text-white/50"><Link to="/sermons" className="hover:text-white transition">Feed</Link><Link to="/outreaches" className="hover:text-white transition">Outreaches</Link><Link to="/events" className="hover:text-white transition">Events</Link><Link to="/meetings" className="hover:text-white transition">Meetings</Link><Link to="/give" className="hover:text-white transition">Give</Link></div></div>
+          <div><h4 className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{color:'#F2A31C'}}>Quick Links</h4><div className="flex flex-col gap-2 text-sm text-white/50"><Link to="/feed" className="hover:text-white transition">Feed</Link><Link to="/outreaches" className="hover:text-white transition">Outreaches</Link><Link to="/events" className="hover:text-white transition">Events</Link><Link to="/meetings" className="hover:text-white transition">Meetings</Link><Link to="/give" className="hover:text-white transition">Give</Link></div></div>
           <div><h4 className="mb-3 text-xs font-semibold uppercase tracking-widest" style={{color:'#F2A31C'}}>Stay Connected</h4><div className="flex items-center gap-3 text-white/50"><a href="https://wa.me/254700000000" className="rounded-xl border border-white/10 p-3 transition hover:border-white/25 hover:text-white" aria-label="WhatsApp"><FiPhone className="h-4 w-4" /></a><Link to="/connect" className="rounded-xl border border-white/10 p-3 transition hover:border-white/25 hover:text-white" aria-label="Connect"><FiHeart className="h-4 w-4" /></Link></div></div>
         </div>
         <div className="border-t border-white/[0.05] py-4 text-center text-xs text-white/25">© {new Date().getFullYear()} Believers' LoveWorld CM Kenya Zone · Kenya Zone</div>
