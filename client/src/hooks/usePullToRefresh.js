@@ -57,9 +57,8 @@ export function usePullToRefresh(onRefresh, { enabled = true } = {}) {
       try {
         await onRefresh();
         hapticSuccess();
-      } catch (error) {
+      } catch {
         hapticError();
-        throw error;
       } finally {
         setRefreshing(false);
         setPullDistance(0);
