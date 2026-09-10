@@ -53,7 +53,7 @@ export default function Home() {
             </motion.p>
 
             <motion.div variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} className="mt-8 flex flex-wrap gap-3">
-              <Link to="/auth" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-white transition hover:brightness-105" style={{ background: 'linear-gradient(135deg,#A62574,#3C1464)', boxShadow: '0 12px 36px rgba(166,37,116,0.35)' }}>
+              <Link to="/auth" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-white transition hover:brightness-105" style={{ background: 'linear-gradient(135deg,#EC2FA8,#8A2BE2)', boxShadow: '0 12px 36px rgba(236,47,168,0.28)' }}>
                 Register Now <FiArrowRight className="h-4 w-4" />
               </Link>
               <Link to="/connect" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10">
