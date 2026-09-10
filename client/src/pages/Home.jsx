@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiHeart, FiUsers, FiBookOpen, FiGlobe, FiArrowRight, FiMapPin } from 'react-icons/fi';
 import { Card, Eyebrow } from '../components/ui/Card';
+import StoriesRow from '../components/StoriesRow';
 
 const features = [
   {
@@ -63,6 +64,8 @@ export default function Home() {
           </motion.div>
         </motion.div>
       </div>
+
+      <StoriesRow />
 
       <div className="mx-auto max-w-6xl px-5 py-16">
         <div className="grid gap-4 sm:grid-cols-3">
