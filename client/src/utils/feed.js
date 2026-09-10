@@ -7,6 +7,16 @@ export async function fetchFeed() {
   return Array.isArray(body?.posts) ? body.posts : [];
 }
 
+export async function createFeedPost({ type = 'post', title, body = '', imageUrl = '', youtubeUrl = '' }) {
+  const response = await apiFetch('/api/feed/posts', {
+    method: 'POST',
+    body: JSON.stringify({ type, title, body, imageUrl, youtubeUrl }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result?.error || 'Unable to publish your post.');
+  return result.post;
+}
+
 async function postAction(id, action) {
   const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/${action}`, { method: 'POST' });
   const body = await response.json().catch(() => ({}));
