@@ -6,6 +6,7 @@ import { handleFeed } from './feed-api.js';
 import { handleLive } from './live-api.js';
 import { handleOutreach } from './outreach-api.js';
 import { handleUpload } from './upload-api.js';
+import { handleStories, handleStoryUpload } from './stories-api.js';
 
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), {
   status,
@@ -146,6 +147,12 @@ export default {
       if (!rl.allowed) return json({ error: 'Too many authentication attempts. Please try again later.' }, 429, { ...headers, 'retry-after': String(rl.retryAfter) });
     }
     if (needsLeader(request, url) && !(await adminStatus(request, env)).isAdmin) return json({ error: 'Administrator authorization is required.' }, 403, headers);
+    if (url.pathname.startsWith('/api/stories')) {
+      const uploadResponse = await handleStoryUpload(request, env, url);
+      if (uploadResponse) return uploadResponse;
+      const response = await handleStories(request, env, url);
+      if (response) return response;
+    }
     if (url.pathname.startsWith('/api/sermons')) {
       const response = await handleSermons(request, env, url);
       if (response) return response;
