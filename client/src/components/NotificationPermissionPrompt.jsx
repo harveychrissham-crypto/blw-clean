@@ -82,11 +82,11 @@ export default function NotificationPermissionPrompt() {
 
         <div className="mt-6 flex gap-3">
           {!denied && (
-            <Button variant="custom" size="none"
+            <Button variant="primary" size="none"
               type="button"
               disabled={busy}
               onClick={handleAllow}
-              className="flex-1 rounded-full bg-gradient-to-r from-gold-500 to-[#FF8B5C] px-5 py-3 text-sm font-bold text-slate-950 transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+              className="flex-1 rounded-full px-5 py-3 text-sm"
             >
               {busy ? 'Requesting…' : 'Allow Notifications'}
             </Button>
