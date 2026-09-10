@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { FiSearch, FiPhone, FiMail, FiDownload, FiCheckCircle } from 'react-icons/fi';
+import { FiSearch, FiPhone, FiMail, FiDownload, FiCheckCircle, FiUser, FiCalendar, FiMapPin, FiUsers, FiGlobe, FiHome, FiUserPlus, FiHash, FiAward } from 'react-icons/fi';
 import { MdQrCodeScanner } from 'react-icons/md';
 import QRCode from 'qrcode';
 import { Capacitor } from '@capacitor/core';
@@ -265,7 +265,7 @@ export default function Checkin() {
           <Card variant="raised" className="p-4">
             <div className="flex flex-col gap-6 rounded-3xl border border-white/10 bg-[#121321]/80 p-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-[#A62574] to-[#3C1464] text-2xl font-black text-white shadow-xl shadow-purple-400/20">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-2 border-white/10 bg-gradient-to-br from-[#A62574] to-[#3C1464] text-2xl font-black text-white shadow-xl shadow-purple-400/20">
                   {foundProfile.name?.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
@@ -288,10 +288,10 @@ export default function Checkin() {
                 <Eyebrow className="mb-2 px-1">Profile details</Eyebrow>
                 <div className="grid gap-2.5 sm:grid-cols-2">
                   {[
-                    ['Phone', foundProfile.phone], ['Email', foundProfile.email], ['Gender', foundProfile.gender || '—'], ['Birthday', foundProfile.birthday || '—'],
-                    ['Campus Zone', foundProfile.campusZone || '—'], ['Chapter', foundProfile.chapter || '—'], ['Country', foundProfile.country || '—'], ['Residence', foundProfile.residence || '—'],
-                    ['Invited By', foundProfile.invitedBy || '—'], ['Date Joined', foundProfile.joinDate || '—'], ['Membership ID', foundProfile.membershipId], ['Badge', foundProfile.badge]
-                  ].map(([label, value]) => <InfoTile key={label} label={label} value={value} />)}
+                    ['Phone', foundProfile.phone, FiPhone], ['Email', foundProfile.email, FiMail], ['Gender', foundProfile.gender || '—', FiUser], ['Birthday', foundProfile.birthday || '—', FiCalendar],
+                    ['Campus Zone', foundProfile.campusZone || '—', FiMapPin], ['Chapter', foundProfile.chapter || '—', FiUsers], ['Country', foundProfile.country || '—', FiGlobe], ['Residence', foundProfile.residence || '—', FiHome],
+                    ['Invited By', foundProfile.invitedBy || '—', FiUserPlus], ['Date Joined', foundProfile.joinDate || '—', FiCalendar], ['Membership ID', foundProfile.membershipId, FiHash], ['Badge', foundProfile.badge, FiAward]
+                  ].map(([label, value, icon]) => <InfoTile key={label} label={label} value={value} icon={icon} />)}
                 </div>
               </div>
 

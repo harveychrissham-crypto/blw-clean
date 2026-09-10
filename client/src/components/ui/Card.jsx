@@ -99,7 +99,7 @@ export function InfoTile({ label, value, icon: Icon }) {
   return (
     <Card variant="subtle" className="p-3">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-950/60 border border-white/[0.06] text-pink-500">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[#EC2FA8]/15 bg-[#3C1464]/40 text-[#F04FB8]">
           {Icon && <Icon className="h-4 w-4" />}
         </div>
         <div className="min-w-0">
