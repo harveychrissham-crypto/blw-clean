@@ -7,4 +7,5 @@ END $$;
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('feed-media', 'feed-media', true)
 ON CONFLICT (id) DO UPDATE SET public = true;
+DROP POLICY IF EXISTS "Public can read feed media" ON storage.objects;
 CREATE POLICY "Public can read feed media" ON storage.objects FOR SELECT USING (bucket_id = 'feed-media');
