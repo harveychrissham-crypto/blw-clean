@@ -194,7 +194,7 @@ function Lobby({ participantName, onCancel, onJoin }) {
               </label>
             </div>
             {error && <p className="mt-3 rounded-xl border border-red-400/20 bg-red-500/10 px-3 py-2.5 text-xs text-red-200">{error}</p>}
-            <Button variant="custom" size="none" type="button" disabled={!ready} onClick={join} className="mt-5 w-full rounded-2xl bg-gradient-to-r from-[#A62574] to-[#3C1464] py-3 font-semibold text-white disabled:opacity-50">Join now</Button>
+            <Button variant="gradient" size="none" type="button" disabled={!ready} onClick={join} className="mt-5 w-full rounded-xl py-3 font-semibold disabled:opacity-50">Join now</Button>
             <Button variant="custom" size="none" type="button" onClick={() => { stopStream(); onCancel(); }} className="mt-2 w-full text-center text-sm text-white/50 hover:text-white">← Back</Button>
           </Card>
         </div>

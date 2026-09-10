@@ -3,6 +3,7 @@ import { Routes, Route, useLocation, useNavigate, useNavigationType } from 'reac
 import { motion, AnimatePresence } from 'framer-motion';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import Layout from './layouts/Layout';
+import Button from './components/ui/Button';
 import Home from './pages/Home';
 const Outreaches = lazy(() => import('./pages/Outreaches'));
 const Events = lazy(() => import('./pages/Events'));
@@ -27,8 +28,8 @@ const ContentAdminPanel = lazy(() => import('./pages/ContentAdminPanel'));
 import { useAuth } from './context/AuthContext'; import OfflineBanner from './components/OfflineBanner'; import NotificationPermissionPrompt from './components/NotificationPermissionPrompt'; import UpdateAvailablePrompt from './components/UpdateAvailablePrompt'; import { startOfflineSyncListeners } from './offlineSync';
 import ErrorBoundary from './components/ErrorBoundary';
 const RouteFallback = () => <div className="grid min-h-[60vh] place-items-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-gold-500" aria-label="Loading" role="status" /></div>;
-const FellowshipLocationsPage = () => { const navigate = useNavigate(); return <div className="relative"><div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8"><button type="button" onClick={() => navigate('/leaders-forum')} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/75">← Back to Leaders Forum</button></div><FellowshipLocationsAdminSecure /></div>; };
-const AdminContentPage = () => { const navigate = useNavigate(); return <div className="relative"><div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8"><button type="button" onClick={() => navigate('/leaders-forum')} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/75">← Back to Leaders Forum</button></div><ContentAdminPanel /></div>; };
+const FellowshipLocationsPage = () => { const navigate = useNavigate(); return <div className="relative"><div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8"><Button variant="ghost" size="none" type="button" onClick={() => navigate('/leaders-forum')} className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm">← Back to Leaders Forum</Button></div><FellowshipLocationsAdminSecure /></div>; };
+const AdminContentPage = () => { const navigate = useNavigate(); return <div className="relative"><div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8"><Button variant="ghost" size="none" type="button" onClick={() => navigate('/leaders-forum')} className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm">← Back to Leaders Forum</Button></div><ContentAdminPanel /></div>; };
 const BOTTOM_TAB_PATHS = ['/', '/events', '/checkin', '/live'];
 const notificationDestination = (notification) => { const data = notification?.data || notification?.extra || {}; const type = typeof data.type === 'string' ? data.type : 'announcement'; const id = typeof data.id === 'string' ? data.id.trim() : ''; if (type === 'event') return `/events${id ? `?notificationId=${encodeURIComponent(id)}` : ''}`; if (type === 'sermon') return `/sermons${id ? `?notificationId=${encodeURIComponent(id)}` : ''}`; if (type === 'outreach') return `/outreaches${id ? `?notificationId=${encodeURIComponent(id)}` : ''}`; if (type === 'venue') return `/venues${id ? `?chapter=${encodeURIComponent(id)}` : ''}`; return '/notifications'; };
 
