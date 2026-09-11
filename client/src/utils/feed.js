@@ -1,10 +1,15 @@
 import { apiFetch } from '../config/api';
 
 const FEED_CACHE_KEY = 'blw_feed_cache_v2';
+const FEED_COMMENTS_CACHE_KEY = 'blw_feed_comments_cache_v1';
 const FEED_ACTION_QUEUE_KEY = 'blw_feed_action_queue_v1';
 const PUBLIC_USER_STORAGE_KEY = 'blw_public_user_v1';
+const COMMENTS_CACHE_TTL = 15 * 60 * 1000;
+const COMMENTS_CACHE_MAX_POSTS = 30;
+const COMMENTS_CACHE_MAX_ITEMS = 50;
 const recordedFeedViews = new Set();
 const inFlightFeedViews = new Map();
+const inFlightCommentRefreshes = new Map();
 
 function formatFeedTime(value) {
   const date = value ? new Date(value) : null;
@@ -199,6 +204,89 @@ export function writeCachedFeed(posts) {
   try { localStorage.setItem(FEED_CACHE_KEY, JSON.stringify({ posts: posts.slice(0, 40), cachedAt: Date.now() })); } catch {}
 }
 
+function readCommentsCache() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(FEED_COMMENTS_CACHE_KEY) || 'null');
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch { return {}; }
+}
+
+function writeCommentsCache(cache) {
+  try { localStorage.setItem(FEED_COMMENTS_CACHE_KEY, JSON.stringify(cache)); } catch {}
+}
+
+function getCachedCommentsEntry(postId) {
+  const key = String(postId ?? '');
+  if (!key) return null;
+  const cache = readCommentsCache();
+  const entry = cache[key];
+  if (!entry || !Array.isArray(entry.comments)) return null;
+  return {
+    comments: entry.comments,
+    cachedAt: Number(entry.cachedAt || 0),
+    fresh: Date.now() - Number(entry.cachedAt || 0) < COMMENTS_CACHE_TTL,
+  };
+}
+
+export function readCachedComments(postId) {
+  return getCachedCommentsEntry(postId)?.comments || [];
+}
+
+function writeCachedComments(postId, comments) {
+  const key = String(postId ?? '');
+  if (!key || !Array.isArray(comments)) return;
+  const cache = readCommentsCache();
+  const trimmed = comments.slice(-COMMENTS_CACHE_MAX_ITEMS);
+  cache[key] = { comments: trimmed, cachedAt: Date.now() };
+  const keys = Object.keys(cache);
+  if (keys.length > COMMENTS_CACHE_MAX_POSTS) {
+    keys.sort((a, b) => Number(cache[a]?.cachedAt || 0) - Number(cache[b]?.cachedAt || 0));
+    for (const oldKey of keys.slice(0, keys.length - COMMENTS_CACHE_MAX_POSTS)) delete cache[oldKey];
+  }
+  writeCommentsCache(cache);
+}
+
+function updateCachedComments(postId, updater) {
+  const entry = getCachedCommentsEntry(postId);
+  if (!entry) return;
+  const next = updater(entry.comments);
+  if (Array.isArray(next)) writeCachedComments(postId, next);
+}
+
+async function refreshComments(postId) {
+  const key = String(postId ?? '');
+  if (!key || inFlightCommentRefreshes.has(key)) return inFlightCommentRefreshes.get(key);
+  const request = (async () => {
+    try {
+      const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(key)}/comments`);
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body?.error || 'Unable to load comments.');
+      const comments = Array.isArray(body?.comments) ? body.comments : [];
+      writeCachedComments(key, comments);
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('feed-comments-updated', { detail: { postId: key, comments } }));
+      return comments;
+    } finally {
+      inFlightCommentRefreshes.delete(key);
+    }
+  })();
+  inFlightCommentRefreshes.set(key, request);
+  return request;
+}
+
+export async function fetchComments(id) {
+  const key = String(id ?? '');
+  const cached = getCachedCommentsEntry(key);
+  const online = typeof navigator === 'undefined' || navigator.onLine !== false;
+
+  if (cached) {
+    if (online) refreshComments(key).catch(() => {});
+    return cached.comments;
+  }
+
+  if (!online) return [];
+  return refreshComments(key);
+}
+
 export async function prepareImageForUpload(file, { maxBytes = 5 * 1024 * 1024, maxDimension = 2200 } = {}) {
   if (!(file instanceof File) || !file.type.startsWith('image/')) return file;
   if (file.size <= maxBytes && file.type === 'image/webp') return file;
@@ -280,13 +368,6 @@ export async function toggleFollow(email) {
   return result;
 }
 
-export async function fetchComments(id) {
-  const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/comments`);
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body?.error || 'Unable to load comments.');
-  return Array.isArray(body?.comments) ? body.comments : [];
-}
-
 function makeQueuedComment(postId, body) {
   const text = String(body || '').trim();
   const author = readPublicUser();
@@ -308,17 +389,20 @@ export async function addComment(id, body) {
   if (typeof navigator !== 'undefined' && !navigator.onLine) {
     const optimistic = makeQueuedComment(id, text);
     queueAction({ action: 'comment', postId: String(id), body: text, clientId: optimistic.clientId });
+    updateCachedComments(id, (comments) => [...comments, optimistic]);
     return optimistic;
   }
   try {
     const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/comments`, { method: 'POST', body: JSON.stringify({ body: text }) });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) throw Object.assign(new Error(result?.error || 'Unable to add comment.'), { status: response.status });
+    if (result?.comment) updateCachedComments(id, (comments) => [...comments, result.comment]);
     return result.comment;
   } catch (error) {
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       const optimistic = makeQueuedComment(id, text);
       queueAction({ action: 'comment', postId: String(id), body: text, clientId: optimistic.clientId });
+      updateCachedComments(id, (comments) => [...comments, optimistic]);
       return optimistic;
     }
     throw error;
@@ -329,6 +413,7 @@ export async function deleteComment(id, commentId) {
   const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/comments?commentId=${encodeURIComponent(commentId)}`, { method: 'DELETE' });
   const result = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(result?.error || 'Unable to delete comment.');
+  updateCachedComments(id, (comments) => comments.filter((comment) => String(comment.id ?? comment.commentId ?? '') !== String(commentId)));
   return result;
 }
 
