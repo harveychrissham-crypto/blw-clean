@@ -93,10 +93,9 @@ jobs:
           if old not in text: raise SystemExit('Feed loadMore marker not found')
           text = text.replace(old, new, 1)
 
-          old = "  },[loading,loadingMore,hasMore,messagesOpen,posts.length]);"
-          new = "  },[loading,loadingMore,hasMore,messagesOpen,posts.length,tab]);"
-          if old not in text: raise SystemExit('Feed loadMore deps marker not found')
-          text = text.replace(old, new, 1)
+          marker = "messagesOpen,posts.length]);"
+          if marker not in text: raise SystemExit('Feed loadMore deps marker not found')
+          text = text.replace(marker, "messagesOpen,posts.length,tab]);", 1)
 
           old = "  useEffect(()=>{if(messagesOpen)return;const cached=readCachedFeed();if(cached.length){setPosts(cached.map(normalize));setLoading(false);}loadFirst({silent:Boolean(cached.length)});},[loadFirst,messagesOpen]);"
           new = "  useEffect(()=>{if(messagesOpen)return;if(tab==='All'){const cached=readCachedFeed();if(cached.length){setPosts(cached.map(normalize));setLoading(false);}loadFirst({silent:Boolean(cached.length)});}else{setPosts([]);setHasMore(true);loadFirst();}},[loadFirst,messagesOpen,tab]);"
