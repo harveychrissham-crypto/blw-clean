@@ -39,6 +39,9 @@ article[id^="feed-"] button { transition: transform 140ms ease, opacity 140ms ea
 .sticky.top-0.z-20 button { min-height: 38px; transition: color 160ms ease, transform 160ms ease; }
 article.relative.h-full.min-h-\[540px\] { background: #000; }
 
+/* Inline feed photos must preserve the full image before pinch-to-zoom. */
+article[id^="feed-"] .aspect-video > div.h-full > img { object-fit: contain; }
+
 /* Stories polish */
 .stories-row, [data-stories-row] { scrollbar-width: none; -ms-overflow-style: none; }
 .stories-row::-webkit-scrollbar, [data-stories-row]::-webkit-scrollbar { display: none; }
