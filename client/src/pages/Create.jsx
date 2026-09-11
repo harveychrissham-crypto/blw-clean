@@ -110,6 +110,8 @@ export default function Create() {
     if (!user) return;
     if (!file) return setError(type === 'reel' ? 'Choose a video for your Reel.' : 'Choose a photo or video first.');
     if (type === 'reel' && !file.type.startsWith('video/')) return setError('A Reel must be a video.');
+    if (uploading || published) return;
+    if (!window.confirm(`Ready to share this ${type === 'reel' ? 'Reel' : 'post'}?`)) return;
     setUploading(true);
     setUploadProgress(0);
     setUploadStage(file.type.startsWith('video/') ? 'Preparing Bunny Stream upload…' : 'Uploading image…');
@@ -138,7 +140,7 @@ export default function Create() {
         navigate(`/feed${type === 'reel' ? '?tab=reels' : ''}`, { replace: true, state: { createdPost: created } });
       }, 900);
     } catch (err) {
-      setError(err?.message || 'Unable to publish right now.');
+      setError(err?.message || 'Unable to publish right now. Your caption and media selection have been kept so you can retry.');
       hapticError();
     } finally {
       setUploading(false);
@@ -160,7 +162,7 @@ export default function Create() {
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-white/[0.07] bg-[#0d0c18]/90 px-3 backdrop-blur-2xl">
           <button type="button" onClick={back} className="grid h-10 w-10 place-items-center rounded-full text-white/75 transition hover:bg-white/[0.07]" aria-label="Back"><FiArrowLeft className="h-5 w-5" /></button>
           <div className="text-center"><h1 className="text-[15px] font-bold tracking-tight">Create</h1><p className="text-[9px] uppercase tracking-[0.18em] text-white/30">Share with the community</p></div>
-          <button type="button" onClick={publish} disabled={uploading || !file} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-ink-950 transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35">{uploading ? <FiLoader className="animate-spin" /> : <><FiCheck /> Share</>}</button>
+          <button type="button" onClick={publish} disabled={uploading || !file || published} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-ink-950 transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35">{uploading ? <FiLoader className="animate-spin" /> : <><FiCheck /> Share</>}</button>
         </header>
 
         <div className="grid grid-cols-2 border-b border-white/[0.07] bg-white/[0.015] p-1.5">
@@ -193,8 +195,8 @@ export default function Create() {
 
           <section className="border-t border-white/[0.07] p-4 sm:p-6 md:border-t-0">
             <div className="mb-4 flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-full border border-white/10 bg-white/[0.07] text-xs font-bold">{user?.email?.[0]?.toUpperCase() || 'U'}</div>
-              <div className="min-w-0"><p className="truncate text-sm font-bold">{user?.user_metadata?.full_name || user?.user_metadata?.name || 'Your profile'}</p><p className="text-[11px] text-white/35">Public community post</p></div>
+              <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-full border border-white/10 bg-white/[0.07] text-xs font-bold">{user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" /> : (user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()}</div>
+              <div className="min-w-0"><p className="truncate text-sm font-bold">{user?.name || 'Your profile'}</p><p className="text-[11px] text-white/35">Public community post</p></div>
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3.5 focus-within:border-white/20">
@@ -207,7 +209,7 @@ export default function Create() {
             <div className="mt-4 rounded-2xl border border-white/[.07] bg-white/[.02] p-3.5"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/30">Sharing to Feed</p><p className="mt-1.5 text-xs leading-5 text-white/45">Your {type === 'reel' ? 'Reel' : 'post'} will appear in the community Feed where people can like, comment and save it.</p>{isVideo&&<p className="mt-2 text-[10px] leading-4 text-white/25">Video delivery: Bunny Stream adaptive bitrate via HLS.</p>}</div>
 
             {error && <p className="mt-3 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-xs leading-5 text-red-200">{error}</p>}
-            <button type="button" onClick={publish} disabled={uploading || !file} className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3.5 text-sm font-bold text-ink-950 shadow-xl transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35">{uploading ? <><FiLoader className="animate-spin" /> {isVideo ? 'Uploading & sharing…' : 'Uploading & sharing...'}</> : <><FiSend /> Share {type === 'reel' ? 'Reel' : 'Post'}</>}</button>
+            <button type="button" onClick={publish} disabled={uploading || !file || published} className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3.5 text-sm font-bold text-ink-950 shadow-xl transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35">{uploading ? <><FiLoader className="animate-spin" /> {uploadStage || (isVideo ? 'Uploading & sharing…' : 'Uploading & sharing...')}</> : <><FiSend /> Share {type === 'reel' ? 'Reel' : 'Post'}</>}</button>
           </section>
         </div>
       </div>
