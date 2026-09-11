@@ -15,6 +15,9 @@ import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import Messages from './Messages';
 const PAGE_SIZE = 20;
 const tabs = ['All','Following','Ministry','Reels'];
+const REEL_MUTE_STORAGE_KEY = 'blw_reel_mute_preference_v1';
+const readReelMutePreference = () => { try { const value = localStorage.getItem(REEL_MUTE_STORAGE_KEY); return value === null ? true : value === 'true'; } catch { return true; } };
+const persistReelMutePreference = (muted) => { try { localStorage.setItem(REEL_MUTE_STORAGE_KEY, String(Boolean(muted))); window.dispatchEvent(new CustomEvent('blw-reel-mute-changed', { detail: Boolean(muted) })); } catch {} };
 const canViewPostInsights = (viewer) => Boolean(viewer?.isAdmin || /leader|secretary|coordinator|pastor|president|director|chair|supervisor|administrator/i.test(String(viewer?.title || '')));
 function formatNameList(names) {
   if (names.length <= 1) return names[0] || '';
@@ -56,11 +59,12 @@ function Actions({post,user,onUpdate,onComments}) {
 }
 
 function VideoMedia({post,active=false,reel=false,onDoubleTap}) {
-  const videoRef=useRef(null); const frameRef=useRef(null); const [muted,setMuted]=useState(true); const [playing,setPlaying]=useState(active); const [progress,setProgress]=useState(0); const isYoutube=Boolean(post.videoId);
+  const videoRef=useRef(null); const frameRef=useRef(null); const [muted,setMuted]=useState(readReelMutePreference); const [playing,setPlaying]=useState(active); const [progress,setProgress]=useState(0); const isYoutube=Boolean(post.videoId);
+  useEffect(()=>{const onMuteChanged=e=>setMuted(Boolean(e.detail));const onStorage=e=>{if(e.key===REEL_MUTE_STORAGE_KEY&&e.newValue!=null)setMuted(e.newValue==='true');};window.addEventListener('blw-reel-mute-changed',onMuteChanged);window.addEventListener('storage',onStorage);return()=>{window.removeEventListener('blw-reel-mute-changed',onMuteChanged);window.removeEventListener('storage',onStorage);};},[]);
   useEffect(()=>{if(!videoRef.current)return;videoRef.current.muted=muted;if(active){videoRef.current.play?.().then(()=>setPlaying(true)).catch(()=>setPlaying(false));}else{videoRef.current.pause?.();setPlaying(false);}},[active,muted]);
   useEffect(()=>{if(!isYoutube)return;const frame=frameRef.current;if(!frame)return;const send=()=>{frame.contentWindow?.postMessage(JSON.stringify({event:'command',func:active?'playVideo':'pauseVideo',args:[]}), '*');frame.contentWindow?.postMessage(JSON.stringify({event:'command',func:muted?'mute':'unMute',args:[]}), '*');};const timers=[0,350,900,1800].map(delay=>setTimeout(send,delay));setPlaying(active);return()=>timers.forEach(clearTimeout);},[active,muted,isYoutube]);
   useEffect(()=>{const v=videoRef.current;if(!v)return;const update=()=>setProgress(v.duration?Math.min(100,(v.currentTime/v.duration)*100):0);const onPlay=()=>setPlaying(true);const onPause=()=>setPlaying(false);v.addEventListener('timeupdate',update);v.addEventListener('play',onPlay);v.addEventListener('pause',onPause);return()=>{v.removeEventListener('timeupdate',update);v.removeEventListener('play',onPlay);v.removeEventListener('pause',onPause);};},[]);
-  const toggleMute=()=>setMuted(v=>!v);
+  const toggleMute=()=>setMuted(v=>{const next=!v;persistReelMutePreference(next);return next;});
   const togglePlayback=useCallback((e)=>{if(e?.target?.closest?.('button'))return;const v=videoRef.current;if(!v)return;if(v.paused){v.play?.().then(()=>setPlaying(true)).catch(()=>{});}else{v.pause?.();setPlaying(false);}},[]);
   const handleTap=useTapAction(onDoubleTap,togglePlayback);
   const media = isYoutube ? <iframe ref={frameRef} className="h-full w-full" src={`https://www.youtube-nocookie.com/embed/${post.videoId}?enablejsapi=1&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${post.videoId}`} title={post.title} allow="autoplay; encrypted-media; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen/> : <video ref={videoRef} src={post.mediaUrl} preload={active?'auto':'none'} autoPlay={active} muted={muted} loop playsInline controls={false} className="h-full w-full object-cover" onClick={handleTap} onTimeUpdate={e=>setProgress(e.currentTarget.duration?(e.currentTarget.currentTime/e.currentTarget.duration)*100:0)}/>;
@@ -158,7 +162,7 @@ function ReelCard({post,user,onUpdate,active,notificationId}) {
   const [comments,setComments]=useState(false); const [heart,setHeart]=useState(false); const [busyAction,setBusyAction]=useState(''); const actionBusy=useRef(false); const showViews=post.isOwner&&canViewPostInsights(user);
   const runAction=useCallback(async(name,request,optimistic,rollback)=>{if(!user)return hapticError();if(actionBusy.current)return;actionBusy.current=true;setBusyAction(name);const previous={liked:post.liked,saved:post.saved,likeCount:post.likeCount,saveCount:post.saveCount};onUpdate(post.id,optimistic());try{const r=await request();onUpdate(post.id,r);hapticSuccess();}catch{onUpdate(post.id,rollback(previous));hapticError();}finally{actionBusy.current=false;setBusyAction('');}},[user,post,onUpdate]);
   const like=useCallback(()=>runAction('like',()=>toggleLike(post.id),()=>{const wasLiked=post.liked;setHeart(!wasLiked);setTimeout(()=>setHeart(false),650);return {liked:!wasLiked,likeCount:Math.max(0,post.likeCount+(wasLiked?-1:1))};},previous=>({liked:previous.liked,likeCount:previous.likeCount})),[runAction,post]);
-  const save=useCallback(()=>runAction('save',()=>toggleSave(post.id),()=>({saved:!post.saved,saveCount:Math.max(0,post.saveCount+(post.saved?-1:1))}),previous=>({saved:previous.saved,saveCount:previous.saveCount})),[runAction,post]);
+  const save=useCallback(()=>runAction('save',()=>toggleSave(post.id),()=>({saved:!post.saved,saveCount:Math.max(0,post.saveCount+(post.saved?-1:1)})),previous=>({saved:previous.saved,saveCount:previous.saveCount})),[runAction,post]);
   const share=()=>shareContent({title:post.title,text:post.body||post.title,url:`${window.location.origin}/feed?tab=Reels&notificationId=${encodeURIComponent(post.id)}`});
   useEffect(()=>{if(!active||!post.isUserPost||!user)return;recordFeedView(post.id).catch(()=>{});},[active,post.id,post.isUserPost,user]);
   const doubleTap=useDoubleTap(like);
