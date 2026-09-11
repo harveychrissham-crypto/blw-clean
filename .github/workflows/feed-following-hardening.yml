@@ -47,66 +47,69 @@ jobs:
 
           util = Path('client/src/utils/feed.js')
           text = util.read_text()
-          old = "    isOwner: Boolean(row.is_owner ?? row.isOwner),\n    viewCount:"
-          new = "    isOwner: Boolean(row.is_owner ?? row.isOwner),\n    following: Boolean(row.following),\n    authorEmail: row.author_email || row.user_email || '',\n    viewCount:"
-          if old not in text: raise SystemExit('utils normalize marker not found')
-          text = text.replace(old, new, 1)
+          if 'following: Boolean(row.following)' not in text:
+            old = "    isOwner: Boolean(row.is_owner ?? row.isOwner),\n    viewCount:"
+            new = "    isOwner: Boolean(row.is_owner ?? row.isOwner),\n    following: Boolean(row.following),\n    authorEmail: row.author_email || row.user_email || '',\n    viewCount:"
+            if old not in text: raise SystemExit('utils normalize marker not found')
+            text = text.replace(old, new, 1)
           old = "export async function fetchFeed({ limit = 20, offset = 0 } = {}) {\n  const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });"
           new = "export async function fetchFeed({ limit = 20, offset = 0, followingOnly = false } = {}) {\n  const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });\n  if (followingOnly) params.set('following', '1');"
-          if old not in text: raise SystemExit('utils fetch marker not found')
-          text = text.replace(old, new, 1)
+          if old in text:
+            text = text.replace(old, new, 1)
+          elif 'followingOnly = false' not in text:
+            raise SystemExit('utils fetch marker not found')
           insert_before = "export const toggleLike = (id) => postAction(id, 'like');\nexport const toggleSave = (id) => postAction(id, 'save');\n"
-          follow_fn = insert_before + "\nexport async function toggleFollow(email) {\n  const target = String(email || '').trim();\n  if (!target) throw new Error('Member not found.');\n  const response = await apiFetch(`/api/feed/users/${encodeURIComponent(target)}/follow`, { method: 'POST' });\n  const result = await response.json().catch(() => ({}));\n  if (!response.ok) throw new Error(result?.error || 'Unable to update follow status.');\n  return result;\n}\n"
-          if insert_before not in text: raise SystemExit('utils action marker not found')
-          text = text.replace(insert_before, follow_fn, 1)
+          if 'export async function toggleFollow(email)' not in text:
+            follow_fn = insert_before + "\nexport async function toggleFollow(email) {\n  const target = String(email || '').trim();\n  if (!target) throw new Error('Member not found.');\n  const response = await apiFetch(`/api/feed/users/${encodeURIComponent(target)}/follow`, { method: 'POST' });\n  const result = await response.json().catch(() => ({}));\n  if (!response.ok) throw new Error(result?.error || 'Unable to update follow status.');\n  return result;\n}\n"
+            if insert_before not in text: raise SystemExit('utils action marker not found')
+            text = text.replace(insert_before, follow_fn, 1)
           util.write_text(text)
 
           feed = Path('client/src/pages/Feed.jsx')
           text = feed.read_text()
           old = "import { fetchFeed, toggleLike, toggleSave, fetchComments, addComment, deleteComment, reportPost, readCachedFeed, writeCachedFeed, recordFeedView } from '../utils/feed';"
           new = "import { fetchFeed, toggleLike, toggleSave, toggleFollow, fetchComments, addComment, deleteComment, reportPost, readCachedFeed, writeCachedFeed, recordFeedView } from '../utils/feed';"
-          if old not in text: raise SystemExit('Feed import marker not found')
-          text = text.replace(old, new, 1)
+          if old in text:
+            text = text.replace(old, new, 1)
+          elif 'toggleFollow' not in text:
+            raise SystemExit('Feed import marker not found')
 
           old = "function PostCard({post,user,onUpdate,notificationId}) {\n  const [comments,setComments]=useState(false);"
           new = "function PostCard({post,user,onUpdate,notificationId}) {\n  const [comments,setComments]=useState(false); const [followBusy,setFollowBusy]=useState(false);"
-          if old not in text: raise SystemExit('PostCard state marker not found')
-          text = text.replace(old, new, 1)
+          if old in text:
+            text = text.replace(old, new, 1)
 
           old = "  const doubleTap=useDoubleTap(like);\n  const previewSource=post.mediaUrl||post.image||'';"
           new = "  const doubleTap=useDoubleTap(like);\n  const follow=async()=>{if(!user||!post.authorEmail||post.isOwner||followBusy)return;setFollowBusy(true);const next=!post.following;onUpdate(post.id,{following:next});try{const r=await toggleFollow(post.authorEmail);onUpdate(post.id,r);hapticSuccess();}catch{onUpdate(post.id,{following:!next});hapticError();}finally{setFollowBusy(false);}};\n  const previewSource=post.mediaUrl||post.image||'';"
-          if old not in text: raise SystemExit('PostCard follow marker not found')
-          text = text.replace(old, new, 1)
+          if old in text:
+            text = text.replace(old, new, 1)
 
           old = "<div className=\"flex min-w-0 items-baseline gap-2\"><p className=\"max-w-[15rem] truncate text-sm font-bold\">{post.author}{post.isOfficial&&<span className=\"ml-1 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white text-[9px] text-ink-950\" aria-label=\"Official ministry\">✓</span>}</p><span className=\"shrink-0 text-[10px] text-white/35\">{post.time}</span></div>"
           new = "<div className=\"flex min-w-0 items-center gap-2\"><div className=\"flex min-w-0 items-baseline gap-2\"><p className=\"max-w-[15rem] truncate text-sm font-bold\">{post.author}{post.isOfficial&&<span className=\"ml-1 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white text-[9px] text-ink-950\" aria-label=\"Official ministry\">✓</span>}</p><span className=\"shrink-0 text-[10px] text-white/35\">{post.time}</span></div>{post.isUserPost&&!post.isOwner&&post.authorEmail&&<button type=\"button\" onClick={follow} disabled={followBusy} className=\"shrink-0 text-[10px] font-bold text-white/70 hover:text-white disabled:opacity-40\">{post.following?'Following':'Follow'}</button>}</div>"
-          if old not in text: raise SystemExit('PostCard header marker not found')
-          text = text.replace(old, new, 1)
+          if old in text:
+            text = text.replace(old, new, 1)
 
           old = "  const loadFirst=useCallback(async({silent=false}={})=>{if(!silent)setLoading(true);setError('');try{const result=await fetchFeed({limit:PAGE_SIZE,offset:0});"
           new = "  const loadFirst=useCallback(async({silent=false}={})=>{if(!silent)setLoading(true);setError('');try{const result=await fetchFeed({limit:PAGE_SIZE,offset:0,followingOnly:tab==='Following'});"
-          if old not in text: raise SystemExit('Feed loadFirst marker not found')
-          text = text.replace(old, new, 1)
-
+          if old in text:
+            text = text.replace(old, new, 1)
           old = "  const loadMore=useCallback(async()=>{if(loading||loadingMore||!hasMore||messagesOpen)return;setLoadingMore(true);try{const result=await fetchFeed({limit:PAGE_SIZE,offset:posts.length});"
           new = "  const loadMore=useCallback(async()=>{if(loading||loadingMore||!hasMore||messagesOpen)return;setLoadingMore(true);try{const result=await fetchFeed({limit:PAGE_SIZE,offset:posts.length,followingOnly:tab==='Following'});"
-          if old not in text: raise SystemExit('Feed loadMore marker not found')
-          text = text.replace(old, new, 1)
-
-          marker = "messagesOpen,posts.length]);"
-          if marker not in text: raise SystemExit('Feed loadMore deps marker not found')
-          text = text.replace(marker, "messagesOpen,posts.length,tab]);", 1)
-
+          if old in text:
+            text = text.replace(old, new, 1)
+          text = text.replace("messagesOpen,posts.length]);", "messagesOpen,posts.length,tab]);", 1)
           old = "  useEffect(()=>{if(messagesOpen)return;const cached=readCachedFeed();if(cached.length){setPosts(cached.map(normalize));setLoading(false);}loadFirst({silent:Boolean(cached.length)});},[loadFirst,messagesOpen]);"
           new = "  useEffect(()=>{if(messagesOpen)return;if(tab==='All'){const cached=readCachedFeed();if(cached.length){setPosts(cached.map(normalize));setLoading(false);}loadFirst({silent:Boolean(cached.length)});}else{setPosts([]);setHasMore(true);loadFirst();}},[loadFirst,messagesOpen,tab]);"
-          if old not in text: raise SystemExit('Feed initial load marker not found')
-          text = text.replace(old, new, 1)
+          if old in text:
+            text = text.replace(old, new, 1)
 
-          old = "function normalize(post,index=0){return {...post,id:post.id??`post-${index}`,type:post.type||'post',title:post.title||post.body||'Untitled',body:post.body||'',author:post.author||'BLW Kenya Zone',avatarUrl:post.avatarUrl||post.avatar_url||'',time:post.time||'',likeCount:Number(post.likeCount??post.like_count??0),commentCount:Number(post.commentCount??post.comment_count??0),saveCount:Number(post.saveCount??post.save_count??0),viewCount:Number(post.viewCount??post.view_count??0),isOwner:Boolean(post.isOwner??post.is_owner),liked:Boolean(post.liked),saved:Boolean(post.saved),following:post.following===true||post.following==='true',isOfficial:Boolean(post.isOfficial??post.is_official),sourceType:post.sourceType||post.source_type||'',isUserPost:Boolean(post.isUserPost??post.is_user_post),recentLikers:Array.isArray(post.recentLikers)?post.recentLikers:Array.isArray(post.recent_likers)?post.recent_likers:[]};}"
-          new = "function normalize(post,index=0){return {...post,id:post.id??`post-${index}`,type:post.type||'post',title:post.title||post.body||'Untitled',body:post.body||'',author:post.author||'BLW Kenya Zone',authorEmail:post.authorEmail||post.author_email||post.user_email||'',avatarUrl:post.avatarUrl||post.avatar_url||'',time:post.time||'',likeCount:Number(post.likeCount??post.like_count??0),commentCount:Number(post.commentCount??post.comment_count??0),saveCount:Number(post.saveCount??post.save_count??0),viewCount:Number(post.viewCount??post.view_count??0),isOwner:Boolean(post.isOwner??post.is_owner),liked:Boolean(post.liked),saved:Boolean(post.saved),following:post.following===true||post.following==='true',isOfficial:Boolean(post.isOfficial??post.is_official),sourceType:post.sourceType||post.source_type||'',isUserPost:Boolean(post.isUserPost??post.is_user_post),recentLikers:Array.isArray(post.recentLikers)?post.recentLikers:Array.isArray(post.recent_likers)?post.recent_likers:[]};}"
-          if old not in text: raise SystemExit('Feed normalize marker not found')
-          text = text.replace(old, new, 1)
+          marker = "author:post.author||'BLW Kenya Zone',avatarUrl:"
+          replacement = "author:post.author||'BLW Kenya Zone',authorEmail:post.authorEmail||post.author_email||post.user_email||'',avatarUrl:"
+          if "authorEmail:post.authorEmail||post.author_email||post.user_email||''" not in text:
+            if marker not in text: raise SystemExit('Feed author marker not found')
+            text = text.replace(marker, replacement, 1)
           feed.write_text(text)
+
       - name: Build client
         run: npm --prefix client install --no-audit --no-fund && npm --prefix client run build
       - name: Commit source changes
