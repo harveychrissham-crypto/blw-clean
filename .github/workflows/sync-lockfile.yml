@@ -18,7 +18,7 @@ jobs:
           fetch-depth: 0
 
       - name: One-time Feed CI repair
-        if: ${{ github.event_name == 'push' && github.event.head_commit.message == 'fix: simplify Feed repair workflow' }}
+        if: ${{ github.event_name == 'push' && github.event.head_commit.message == 'fix: trigger Feed CI repair' }}
         shell: bash
         run: |
           python - <<'PY'
