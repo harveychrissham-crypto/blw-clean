@@ -156,19 +156,20 @@ export default function StoriesRow() {
 
   return (
     <div className="w-full px-5 pt-2">
+      <style>{`@keyframes blwStoryRingSpin{to{transform:rotate(360deg)}}.story-ring-spin{animation:blwStoryRingSpin 4.5s linear infinite;transform-origin:center}.story-ring-spin-reverse{animation:blwStoryRingSpin 7s linear infinite reverse;transform-origin:center}@media (prefers-reduced-motion:reduce){.story-ring-spin,.story-ring-spin-reverse{animation:none}}`}</style>
       <div className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none]">
         <div className="flex shrink-0 flex-col items-center gap-1.5">
           <div className="relative h-16 w-16 shrink-0">
             <button type="button" onClick={() => (myGroup ? openGroup(myGroup, 0, 0) : fileInputRef.current?.click())} className="h-full w-full rounded-full" aria-label={myGroup ? 'View your story' : 'Add a story'}>
               {myGroup ? (
-                <div className="h-full w-full rounded-full p-[2px]" style={{ background: myGroup.some((story) => !story.viewed) ? 'linear-gradient(135deg,#EC2FA8,#8A2BE2,#F2A31C)' : 'rgba(255,255,255,0.15)' }}>
+                <div className={`h-full w-full rounded-full p-[2px] ${myGroup.some((story) => !story.viewed) ? 'story-ring-spin' : ''}`} style={{ background: myGroup.some((story) => !story.viewed) ? 'linear-gradient(135deg,#EC2FA8,#8A2BE2,#F2A31C)' : 'rgba(255,255,255,0.15)' }}>
                   <div className="h-full w-full overflow-hidden rounded-full border-2 border-[#0d0c18] bg-white/5">
-                    {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover"  loading="lazy" decoding="async"/> : <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">{(user.name || '?').charAt(0).toUpperCase()}</div>}
+                    {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async"/> : <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">{(user.name || '?').charAt(0).toUpperCase()}</div>}
                   </div>
                 </div>
               ) : (
                 <div className="grid h-full w-full place-items-center overflow-hidden rounded-full border-2 border-dashed border-white/20 bg-white/[0.04]">
-                  {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover opacity-60"  loading="lazy" decoding="async"/> : <span className="text-sm font-bold text-white/50">{(user.name || '?').charAt(0).toUpperCase()}</span>}
+                  {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover opacity-60" loading="lazy" decoding="async"/> : <span className="text-sm font-bold text-white/50">{(user.name || '?').charAt(0).toUpperCase()}</span>}
                 </div>
               )}
             </button>
@@ -185,9 +186,9 @@ export default function StoriesRow() {
           return (
             <div key={first.authorEmail} className="flex shrink-0 flex-col items-center gap-1.5">
               <button type="button" onClick={() => openGroup(group, firstUnseenIndex === -1 ? 0 : firstUnseenIndex, groupIndex)} className="h-16 w-16 shrink-0 rounded-full" aria-label={`View ${first.authorName}'s story`}>
-                <div className="h-full w-full rounded-full p-[2px]" style={{ background: unseen ? 'linear-gradient(135deg,#EC2FA8,#8A2BE2,#F2A31C)' : 'rgba(255,255,255,0.15)' }}>
+                <div className={`h-full w-full rounded-full p-[2px] ${unseen ? 'story-ring-spin-reverse' : ''}`} style={{ background: unseen ? 'linear-gradient(135deg,#EC2FA8,#8A2BE2,#F2A31C)' : 'rgba(255,255,255,0.15)' }}>
                   <div className="h-full w-full overflow-hidden rounded-full border-2 border-[#0d0c18] bg-white/5">
-                    {first.authorAvatarUrl ? <img src={first.authorAvatarUrl} alt="" className="h-full w-full object-cover"  loading="lazy" decoding="async"/> : <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">{(first.authorName || '?').charAt(0).toUpperCase()}</div>}
+                    {first.authorAvatarUrl ? <img src={first.authorAvatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async"/> : <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">{(first.authorName || '?').charAt(0).toUpperCase()}</div>}
                   </div>
                 </div>
               </button>
