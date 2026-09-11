@@ -4,8 +4,6 @@ on:
   push:
     branches: [main]
     paths:
-      - 'client/src/pages/Feed.jsx'
-      - 'worker/feed-api.js'
       - '.github/workflows/repair-feed-failures.yml'
 
 permissions:
@@ -13,7 +11,6 @@ permissions:
 
 jobs:
   repair:
-    if: ${{ !startsWith(github.event.head_commit.message, 'chore: remove temporary feed repair workflow') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -51,5 +48,3 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "fix: repair Feed CI regressions"
           git push
-
-# trigger repair
