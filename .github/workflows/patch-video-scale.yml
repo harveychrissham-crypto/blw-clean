@@ -1,6 +1,9 @@
 name: Patch video post scale-in
 
 on:
+  push:
+    paths:
+      - '.github/workflows/patch-video-scale.yml'
   workflow_dispatch:
 
 jobs:
@@ -37,7 +40,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add client/src/pages/Feed.jsx .github/workflows/patch-video-scale.yml
+          git add client/src/pages/Feed.jsx
           git commit -m 'feat: add subtle video post scale-in'
           git rm .github/workflows/patch-video-scale.yml
           git commit -m 'chore: remove one-time video scale patch workflow'
