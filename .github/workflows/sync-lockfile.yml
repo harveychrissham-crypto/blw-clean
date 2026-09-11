@@ -17,6 +17,39 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: One-time Feed CI repair
+        if: ${{ github.event_name == 'push' && github.event.head_commit.message == 'fix: simplify Feed repair workflow' }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          feed = Path('client/src/pages/Feed.jsx')
+          text = feed.read_text()
+          bad = "const save=useCallback(()=>runAction('save',()=>toggleSave(post.id),()=>({saved:!post.saved,saveCount:Math.max(0,post.saveCount+(post.saved?-1:1)})),previous=>({saved:previous.saved,saveCount:previous.saveCount})),[runAction,post]);"
+          good = "const save=useCallback(()=>runAction('save',()=>toggleSave(post.id),()=>({saved:!post.saved,saveCount:Math.max(0,post.saveCount+(post.saved?-1:1))}),previous=>({saved:previous.saved,saveCount:previous.saveCount})),[runAction,post]);"
+          if bad in text:
+              feed.write_text(text.replace(bad, good))
+
+          worker = Path('worker/feed-api.js')
+          text = worker.read_text()
+          bad = "const updated = await client.query(`UPDATE public.feed_content_reports SET status='dismissed' WHERE id=$1 RETURNING id`);"
+          good = "const updated = await client.query(`UPDATE public.feed_content_reports SET status='dismissed' WHERE id=$1 RETURNING id`,[reportId]);"
+          if bad in text:
+              worker.write_text(text.replace(bad, good))
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add client/src/pages/Feed.jsx worker/feed-api.js
+          git rm -f .github/workflows/repair-feed-failures.yml
+          if git diff --cached --quiet; then
+            echo "Feed repair already applied"
+            exit 0
+          fi
+          git commit -m "fix: repair Feed CI regressions"
+          git push
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
