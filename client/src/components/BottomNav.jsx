@@ -1,9 +1,10 @@
 import { NavLink, Link } from 'react-router-dom';
-import { FiHome, FiGrid, FiUser, FiPlusSquare, FiBell } from 'react-icons/fi';
+import { FiHome, FiGrid, FiUser, FiPlusSquare, FiBell, FiPlay } from 'react-icons/fi';
 
 const tabs = [
   { name: 'Home', path: '/', icon: FiHome, end: true },
   { name: 'Feed', path: '/feed', icon: FiGrid },
+  { name: 'Reels', path: '/feed?tab=Reels', icon: FiPlay },
   { name: 'Create', path: '/create', icon: FiPlusSquare },
   { name: 'Notifications', path: '/notifications', icon: FiBell },
 ];
@@ -20,7 +21,7 @@ export default function BottomNav() {
             </NavLink>
           );
         })}
-        <Link to="/dashboard" className="flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium text-white/45 transition hover:text-white">
+        <Link to="/dashboard" className="hidden flex-col items-center gap-1 py-2.5 text-[10px] font-medium text-white/45 transition hover:text-white">
           <span className="flex h-[21px] w-[21px] items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/5"><FiUser className="h-[15px] w-[15px]" /></span>
           Profile
         </Link>
