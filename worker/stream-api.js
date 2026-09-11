@@ -44,7 +44,6 @@ export async function handleStream(request, env, url) {
     const body = await request.json().catch(() => ({}));
     const requestedDuration = Number(body?.maxDurationSeconds || 1200);
     const maxDurationSeconds = Math.min(Math.max(Number.isFinite(requestedDuration) ? requestedDuration : 1200, 1), 36000);
-
     const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/stream/direct_upload`, {
       method: 'POST',
       headers: {
@@ -52,46 +51,33 @@ export async function handleStream(request, env, url) {
         'Content-Type': 'application/json',
         'Upload-Creator': email.slice(0, 64),
       },
-      body: JSON.stringify({
-        maxDurationSeconds,
-        meta: { app: 'blw-kenya-zone', creator: email },
-      }),
+      body: JSON.stringify({ maxDurationSeconds, meta: { app: 'blw-kenya-zone', creator: email } }),
     });
-
     const payload = await response.json().catch(() => ({}));
     if (!response.ok || !payload?.success || !payload?.result?.uploadURL) {
-      console.error('[worker] Cloudflare Stream direct upload creation failed', {
-        status: response.status,
-        errors: payload?.errors,
-      });
+      console.error('[worker] Cloudflare Stream direct upload creation failed', { status: response.status, errors: payload?.errors });
       return json({ error: 'Unable to start the video upload right now.' }, response.status >= 400 && response.status < 500 ? response.status : 502, headers);
     }
-
     const uid = String(payload.result.uid || payload.result.id || '').trim();
     if (!uid) return json({ error: 'Cloudflare Stream did not return a video ID.' }, 502, headers);
-
-    const playerUrl = `https://customer-${customerCode}.cloudflarestream.com/${encodeURIComponent(uid)}/iframe?autoplay=true&muted=true&controls=true`;
-    return json({ uploadURL: payload.result.uploadURL, uid, playerUrl, mediaType: 'stream' }, 200, headers);
+    const base = `https://customer-${customerCode}.cloudflarestream.com/${encodeURIComponent(uid)}`;
+    return json({
+      uploadURL: payload.result.uploadURL,
+      uid,
+      playerUrl: `${base}/iframe`,
+      manifestUrl: `${base}/manifest/video.m3u8`,
+      mediaType: 'stream',
+    }, 200, headers);
   }
 
   const statusMatch = url.pathname.match(/^\/api\/stream\/videos\/([^/]+)$/);
   if (statusMatch && request.method === 'GET') {
     const uid = decodeURIComponent(statusMatch[1] || '').trim();
     if (!uid || uid.length > 64) return json({ error: 'Invalid Stream video ID.' }, 400, headers);
-
-    const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/stream/${encodeURIComponent(uid)}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/stream/${encodeURIComponent(uid)}`, { headers: { Authorization: `Bearer ${token}` } });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok || !payload?.success) return json({ error: 'Unable to read the video status.' }, response.status >= 400 && response.status < 500 ? response.status : 502, headers);
-
-    return json({
-      uid,
-      readyToStream: Boolean(payload.result?.readyToStream),
-      state: payload.result?.status?.state || 'unknown',
-      duration: payload.result?.duration ?? null,
-      thumbnail: payload.result?.thumbnail || null,
-    }, 200, headers);
+    return json({ uid, readyToStream: Boolean(payload.result?.readyToStream), state: payload.result?.status?.state || 'unknown', duration: payload.result?.duration ?? null, thumbnail: payload.result?.thumbnail || null }, 200, headers);
   }
 
   return json({ error: 'Not found.' }, 404, headers);
