@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiAlertCircle, FiBookmark, FiHeart, FiLoader, FiMessageCircle, FiMoreHorizontal, FiSend, FiShare2, FiVolume2, FiVolumeX, FiWifiOff, FiX, FiFlag, FiLink2 } from 'react-icons/fi';
+import { FiAlertCircle, FiBookmark, FiHeart, FiLoader, FiMessageCircle, FiMoreHorizontal, FiSend, FiShare2, FiVolume2, FiVolumeX, FiWifiOff, FiX, FiFlag, FiLink2, FiTrash2 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
-import { fetchFeed, toggleLike, toggleSave, fetchComments, addComment, readCachedFeed, writeCachedFeed, recordFeedView } from '../utils/feed';
+import { fetchFeed, toggleLike, toggleSave, fetchComments, addComment, deleteComment, reportPost, readCachedFeed, writeCachedFeed, recordFeedView } from '../utils/feed';
 import { shareContent } from '../utils/share';
 import { hapticTap, hapticSuccess, hapticError } from '../utils/haptics';
 import StoriesRow from '../components/StoriesRow';
@@ -16,19 +16,31 @@ import Messages from './Messages';
 const PAGE_SIZE = 20;
 const tabs = ['All','Following','Ministry','Reels'];
 const canViewPostInsights = (viewer) => Boolean(viewer?.isAdmin || /leader|secretary|coordinator|pastor|president|director|chair|supervisor|administrator/i.test(String(viewer?.title || '')));
+function formatNameList(names) {
+  if (names.length <= 1) return names[0] || '';
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
 function formatLikeLine(post) {
   if (!post.likeCount || post.likeCount <= 0) return '';
   const names = (post.recentLikers || []).filter(Boolean);
   if (!names.length) return `${post.likeCount} ${post.likeCount === 1 ? 'like' : 'likes'}`;
   const others = post.likeCount - names.length;
-  if (others <= 0) return `Liked by ${names.join(' and ')}`;
+  if (others <= 0) return `Liked by ${formatNameList(names)}`;
   return `Liked by ${names[0]}${names[1] ? `, ${names[1]}` : ''} and ${others} other${others === 1 ? '' : 's'}`;
 }
 
+const REPORT_REASONS = ['Spam', 'Inappropriate', 'Harassment', 'False information', 'Other'];
+
 function ActionMenu({post}) {
-  const [open,setOpen]=useState(false);
+  const [open,setOpen]=useState(false); const [reporting,setReporting]=useState(false); const [reported,setReported]=useState(false);
   const copy=async()=>{try{await navigator.clipboard?.writeText(`${window.location.origin}/feed?${post.type==='reel'?'tab=Reels&':''}notificationId=${encodeURIComponent(post.id)}`);hapticSuccess();}catch{hapticError();}setOpen(false);};
-  return <div className="relative"><button type="button" onClick={()=>setOpen(v=>!v)} className="grid h-9 w-9 place-items-center rounded-full text-white/45 hover:bg-white/[.06]" aria-label="More options"><FiMoreHorizontal/></button><AnimatePresence>{open&&<motion.div initial={{opacity:0,scale:.96,y:-4}} animate={{opacity:1,scale:1,y:0}} exit={{opacity:0,scale:.96,y:-4}} className="absolute right-0 top-10 z-30 min-w-40 overflow-hidden rounded-xl border border-white/10 bg-[#171526]/95 p-1 shadow-2xl backdrop-blur-xl"><button type="button" onClick={copy} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-white/80 hover:bg-white/[.06]"><FiLink2/>Copy link</button><button type="button" onClick={()=>{setOpen(false);hapticTap();}} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-white/80 hover:bg-white/[.06]"><FiFlag/>Report</button></motion.div>}</AnimatePresence></div>;
+  const submitReport=async(reason)=>{try{await reportPost(post.id,reason);setReported(true);hapticSuccess();setTimeout(()=>{setOpen(false);setReporting(false);setReported(false);},1200);}catch{hapticError();}};
+  return <div className="relative"><button type="button" onClick={()=>setOpen(v=>!v)} className="grid h-9 w-9 place-items-center rounded-full text-white/45 hover:bg-white/[.06]" aria-label="More options"><FiMoreHorizontal/></button><AnimatePresence>{open&&<motion.div initial={{opacity:0,scale:.96,y:-4}} animate={{opacity:1,scale:1,y:0}} exit={{opacity:0,scale:.96,y:-4}} className="absolute right-0 top-10 z-30 min-w-44 overflow-hidden rounded-xl border border-white/10 bg-[#171526]/95 p-1 shadow-2xl backdrop-blur-xl">
+    {reported ? <div className="px-3 py-3 text-center text-xs text-white/70">Thanks — this has been reported.</div>
+    : reporting ? <div className="p-1">{REPORT_REASONS.map(reason=><button key={reason} type="button" onClick={()=>submitReport(reason)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-white/80 hover:bg-white/[.06]">{reason}</button>)}</div>
+    : <><button type="button" onClick={copy} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-white/80 hover:bg-white/[.06]"><FiLink2/>Copy link</button><button type="button" onClick={()=>{setReporting(true);hapticTap();}} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-white/80 hover:bg-white/[.06]"><FiFlag/>Report</button></>}
+  </motion.div>}</AnimatePresence></div>;
 }
 
 function useDoubleTap(action,delay=280){const last=useRef(0);return useCallback((e)=>{const now=Date.now();if(now-last.current<delay){last.current=0;action(e);}else last.current=now;},[action,delay]);}
@@ -151,12 +163,13 @@ function Reels({posts,user,onUpdate,notificationId}) {
 function rootElement(root,selector){try{return root?.querySelector(selector)||null;}catch{return null;}}
 
 function Comments({post,user,onUpdate,open,onClose}) {
-  const [items,setItems]=useState([]); const [text,setText]=useState(''); const [loading,setLoading]=useState(false); const listRef=useRef(null);
+  const [items,setItems]=useState([]); const [text,setText]=useState(''); const [loading,setLoading]=useState(false); const [removingId,setRemovingId]=useState(''); const listRef=useRef(null);
   useEffect(()=>{if(!open)return;setLoading(true);fetchComments(post.id).then(setItems).catch(()=>setItems([])).finally(()=>setLoading(false));},[open,post.id]);
   useEffect(()=>{if(open&&listRef.current)listRef.current.scrollTop=listRef.current.scrollHeight;},[open,items.length]);
   const submit=async e=>{e.preventDefault();if(!user||!text.trim())return;const body=text.trim();setText('');try{const created=await addComment(post.id,body);setItems(v=>[...v,created]);onUpdate(post.id,{commentCount:post.commentCount+1});hapticSuccess();}catch{hapticError();}};
+  const remove=async(commentId)=>{setRemovingId(commentId);try{await deleteComment(post.id,commentId);setItems(v=>v.filter(c=>c.id!==commentId));onUpdate(post.id,{commentCount:Math.max(0,post.commentCount-1)});hapticSuccess();}catch{hapticError();}finally{setRemovingId('');}};
   if(!open)return null;
-  return <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60 p-0 sm:p-6" onClick={onClose}><motion.div initial={{y:'100%'}} animate={{y:0}} onClick={e=>e.stopPropagation()} className="flex h-[78dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[28px] border border-white/10 bg-[#12111f] shadow-2xl sm:rounded-[28px]"><div className="flex justify-center pt-3"><span className="h-1 w-12 rounded-full bg-white/20"/></div><div className="flex items-center justify-between border-b border-white/10 px-4 py-3"><h3 className="font-bold">Comments</h3><button type="button" onClick={onClose} aria-label="Close comments" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/[.06]"><FiX/></button></div><div ref={listRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">{loading?<div className="flex items-center justify-center py-10 text-white/50"><FiLoader className="animate-spin"/></div>:items.length?items.map(c=><div key={c.id} className="flex gap-3"><div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[.08]"><img src={c.avatarUrl||'/logo.png'} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async"/></div><div><p className="text-sm font-semibold">{c.author}</p><p className="text-sm text-white/70">{c.body}</p></div></div>):<EmptyState title="No comments yet" description="Be the first to add a comment."/>}</div>{user&&<form onSubmit={submit} className="flex gap-2 border-t border-white/10 p-3"><input value={text} onChange={e=>setText(e.target.value)} placeholder="Add a comment..." className="min-w-0 flex-1 rounded-full bg-white/[.06] px-4 py-3 text-sm outline-none"/><button className="rounded-full bg-white px-4 py-2 text-sm font-bold text-black">Post</button></form>}</motion.div></div>;
+  return <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60 p-0 sm:p-6" onClick={onClose}><motion.div initial={{y:'100%'}} animate={{y:0}} onClick={e=>e.stopPropagation()} className="flex h-[78dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[28px] border border-white/10 bg-[#12111f] shadow-2xl sm:rounded-[28px]"><div className="flex justify-center pt-3"><span className="h-1 w-12 rounded-full bg-white/20"/></div><div className="flex items-center justify-between border-b border-white/10 px-4 py-3"><h3 className="font-bold">Comments</h3><button type="button" onClick={onClose} aria-label="Close comments" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/[.06]"><FiX/></button></div><div ref={listRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">{loading?<div className="flex items-center justify-center py-10 text-white/50"><FiLoader className="animate-spin"/></div>:items.length?items.map(c=><div key={c.id} className="flex items-start gap-3"><div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[.08]"><img src={c.avatarUrl||'/logo.png'} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async"/></div><div className="min-w-0 flex-1"><p className="text-sm font-semibold">{c.author}</p><p className="text-sm text-white/70">{c.body}</p></div>{user&&c.user_email&&c.user_email.toLowerCase()===user.email?.toLowerCase()&&<button type="button" onClick={()=>remove(c.id)} disabled={removingId===c.id} aria-label="Delete comment" className="shrink-0 rounded-full p-1.5 text-white/30 hover:bg-white/[.06] hover:text-red-300 disabled:opacity-40"><FiTrash2 className="h-3.5 w-3.5"/></button>}</div>):<EmptyState title="No comments yet" description="Be the first to add a comment."/>}</div>{user&&<form onSubmit={submit} className="flex gap-2 border-t border-white/10 p-3"><input value={text} onChange={e=>setText(e.target.value)} placeholder="Add a comment..." className="min-w-0 flex-1 rounded-full bg-white/[.06] px-4 py-3 text-sm outline-none"/><button className="rounded-full bg-white px-4 py-2 text-sm font-bold text-black">Post</button></form>}</motion.div></div>;
 }
 
 export default function Feed(){

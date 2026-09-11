@@ -300,3 +300,10 @@ export async function deleteComment(id, commentId) {
   if (!response.ok) throw new Error(result?.error || 'Unable to delete comment.');
   return result;
 }
+
+export async function reportPost(id, reason) {
+  const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/report`, { method: 'POST', body: JSON.stringify({ reason }) });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result?.error || 'Unable to report this right now.');
+  return result;
+}

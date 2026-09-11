@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FiCalendar, FiFilm, FiImage, FiMapPin, FiSave, FiTrash2, FiX, FiShield, FiUpload } from 'react-icons/fi';
+import { FiCalendar, FiFilm, FiImage, FiMapPin, FiSave, FiTrash2, FiX, FiShield, FiUpload, FiFlag } from 'react-icons/fi';
 import { useIsAdmin } from '../hooks/useIsAdmin';
 import { Card, Eyebrow } from '../components/ui/Card';
 import Button, { IconButton } from '../components/ui/Button';
@@ -7,6 +7,7 @@ import { fetchEvents, createEvent, updateEvent, deleteEvent } from '../utils/eve
 import { fetchOutreachStories, createOutreachStory, updateOutreachStory, deleteOutreachStory, uploadOutreachImage } from '../utils/outreachStories';
 import { fetchSermons, createSermon, updateSermon, deleteSermon, setFeaturedSermon } from '../utils/sermons';
 import { fetchVenues, saveVenue, deleteVenue } from '../utils/venues';
+import { apiFetch } from '../config/api';
 
 const EMPTY = {
   events: { title: '', category: 'General', date: '', time: '', location: '', description: '' },
@@ -15,7 +16,7 @@ const EMPTY = {
   venues: { chapter: '', venue: '', serviceTime: '' },
 };
 
-const TABS = [['events', 'Events', FiCalendar], ['outreach', 'Outreach', FiImage], ['sermons', 'Sermons', FiFilm], ['venues', 'Service Venues', FiMapPin]];
+const TABS = [['events', 'Events', FiCalendar], ['outreach', 'Outreach', FiImage], ['sermons', 'Sermons', FiFilm], ['venues', 'Service Venues', FiMapPin], ['reports', 'Reported Content', FiFlag]];
 
 function Field({ label, value, onChange, multiline = false, type = 'text', placeholder = '', disabled = false }) {
   const common = {
@@ -30,6 +31,58 @@ function Field({ label, value, onChange, multiline = false, type = 'text', place
 
 function EditRow({ title, meta, onEdit, onDelete, extra }) {
   return <Card variant="custom" className="flex flex-col gap-3 rounded-2xl border border-white/8 bg-white/[0.03] p-4 sm:flex-row sm:items-center"><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-white">{title || 'Untitled'}</p>{meta && <p className="mt-1 text-xs text-white/50">{meta}</p>}</div>{extra}<div className="flex shrink-0 gap-2">{onEdit && <Button variant="custom" size="none" onClick={onEdit} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 hover:bg-white/10">Edit</Button>}<Button variant="custom" size="none" onClick={onDelete} className="inline-flex items-center gap-1 rounded-xl border border-red-400/15 px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-500/10"><FiTrash2/> Delete</Button></div></Card>;
+}
+
+// Reports don't fit the generic create/edit/delete form below (there's
+// nothing to "create" or "edit" -- just a queue to review and clear), so
+// this bypasses that shared layout entirely rather than forcing it into
+// EMPTY/form/submit/remove, which are all shaped around the other 4 tabs.
+function ReportsPanel() {
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [dismissingId, setDismissingId] = useState('');
+
+  const load = async () => {
+    setLoading(true); setError('');
+    try {
+      const res = await apiFetch('/api/feed/reports');
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || 'Unable to load reports.');
+      setReports(Array.isArray(body.reports) ? body.reports : []);
+    } catch (e) { setError(e.message || 'Unable to load reports.'); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { void load(); }, []);
+
+  const dismiss = async (id) => {
+    setDismissingId(id);
+    try {
+      const res = await apiFetch(`/api/feed/reports/${encodeURIComponent(id)}/dismiss`, { method: 'POST' });
+      if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.error || 'Unable to dismiss report.'); }
+      setReports((current) => current.filter((r) => r.id !== id));
+    } catch (e) { setError(e.message || 'Unable to dismiss report.'); }
+    finally { setDismissingId(''); }
+  };
+
+  return <Card variant="raised" className="p-5">
+    <div className="flex items-center justify-between"><div><Eyebrow>Moderation queue</Eyebrow><h3 className="mt-1 text-xl font-bold text-white">Reported Content</h3></div><span className="rounded-full bg-white/5 px-3 py-1 text-xs text-white/45">{reports.length}</span></div>
+    {error && <p className="mt-4 rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
+    <div className="mt-5 space-y-3">
+      {loading ? <p className="py-8 text-center text-sm text-white/50">Loading...</p>
+        : !reports.length ? <p className="py-8 text-center text-sm text-white/50">Nothing reported right now.</p>
+        : reports.map((r) => (
+          <Card key={r.id} variant="custom" className="flex flex-col gap-3 rounded-2xl border border-white/8 bg-white/[0.03] p-4 sm:flex-row sm:items-center">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-white">{r.reason}{r.detail && <span className="font-normal text-white/50"> — {r.detail}</span>}</p>
+              <p className="mt-1 text-xs text-white/50">Post {r.feed_item_id} · reported by {r.reporter_name || r.reporter_email} · {new Date(r.created_at).toLocaleString()}</p>
+            </div>
+            <Button variant="custom" size="none" disabled={dismissingId === r.id} onClick={() => dismiss(r.id)} className="shrink-0 rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 hover:bg-white/10 disabled:opacity-50">{dismissingId === r.id ? 'Dismissing...' : 'Dismiss'}</Button>
+          </Card>
+        ))}
+    </div>
+  </Card>;
 }
 
 export default function ContentAdminPanel({ initialTab = 'events', onClose }) {
@@ -49,6 +102,7 @@ export default function ContentAdminPanel({ initialTab = 'events', onClose }) {
   }, [initialTab, tab]);
 
   const load = async (section = tab) => {
+    if (section === 'reports') return; // ReportsPanel manages its own fetch/state
     setLoading(true); setError('');
     try {
       const value = section === 'events' ? await fetchEvents() : section === 'outreach' ? await fetchOutreachStories() : section === 'sermons' ? await fetchSermons() : await fetchVenues();
@@ -57,7 +111,7 @@ export default function ContentAdminPanel({ initialTab = 'events', onClose }) {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { if (isAdmin) { setForm(EMPTY[tab]); setEditingId(null); setNotice(''); setError(''); void load(tab); } }, [tab, isAdmin]);
+  useEffect(() => { if (isAdmin) { setForm(EMPTY[tab] || {}); setEditingId(null); setNotice(''); setError(''); void load(tab); } }, [tab, isAdmin]);
   const setField = (name, value) => setForm((current) => ({ ...current, [name]: value }));
   const reset = () => { setForm(EMPTY[tab]); setEditingId(null); };
 
@@ -111,7 +165,7 @@ export default function ContentAdminPanel({ initialTab = 'events', onClose }) {
     <div className="mb-6 flex items-start justify-between gap-4"><div><Eyebrow>Content administration</Eyebrow><h2 className="mt-2 text-3xl font-extrabold text-white">Manage {tabTitle}</h2><p className="mt-2 text-sm text-white/45">Create, edit, and remove the content shown to members. All writes use the existing administrator-protected APIs.</p></div>{onClose && <IconButton onClick={onClose} aria-label="Back to Leadership Tools"><FiX/></IconButton>}</div>
     <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-4">{TABS.map(([key, label, Icon]) => <Button variant="custom" size="none" key={key} onClick={() => setTab(key)} className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-semibold transition ${tab === key ? 'border-[#EC2FA8]/40 bg-[#EC2FA8]/10 text-[#F04FB8]' : 'border-white/10 bg-white/[0.03] text-white/55 hover:bg-white/[0.06] hover:text-white'}`}><Icon/> {label}</Button>)}</div>
     {(error || notice) && <p className={`mb-5 rounded-2xl px-4 py-3 text-sm ${error ? 'bg-red-500/10 text-red-300' : 'bg-emerald-500/10 text-emerald-300'}`}>{error || notice}</p>}
-    <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+    {tab === 'reports' ? <ReportsPanel /> : <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
       <Card variant="raised" className="p-5"><div className="flex items-center justify-between"><div><Eyebrow>{editingId ? 'Edit' : 'Create'}</Eyebrow><h3 className="mt-1 text-xl font-bold text-white">{editingId ? `Edit ${tabTitle}` : `New ${tabTitle}`}</h3></div>{editingId && <IconButton onClick={reset} aria-label="Cancel edit"><FiX/></IconButton>}</div>
         <form onSubmit={submit} className="mt-5 space-y-4">
           {tab === 'events' && <><Field label="Title" value={form.title} onChange={(v) => setField('title', v)} /><Field label="Category" value={form.category} onChange={(v) => setField('category', v)} /><div className="grid gap-4 sm:grid-cols-2"><Field label="Date" type="date" value={form.date} onChange={(v) => setField('date', v)} /><Field label="Time" type="time" value={form.time} onChange={(v) => setField('time', v)} /></div><Field label="Location" value={form.location} onChange={(v) => setField('location', v)} /><Field label="Description" multiline value={form.description} onChange={(v) => setField('description', v)} /></>}
@@ -122,6 +176,6 @@ export default function ContentAdminPanel({ initialTab = 'events', onClose }) {
         </form>
       </Card>
       <Card variant="raised" className="p-5"><div className="flex items-center justify-between"><div><Eyebrow>Existing</Eyebrow><h3 className="mt-1 text-xl font-bold text-white">{tabTitle}</h3></div><span className="rounded-full bg-white/5 px-3 py-1 text-xs text-white/45">{items.length}</span></div><div className="mt-5 space-y-3">{loading ? <p className="py-8 text-center text-sm text-white/50">Loading...</p> : !items.length ? <p className="py-8 text-center text-sm text-white/50">No {tabTitle.toLowerCase()} yet.</p> : items.map((item) => <EditRow key={item.id || item.chapter} title={tab === 'venues' ? item.chapter : item.title} meta={tab === 'events' ? `${item.date || 'No date'} · ${item.location || 'No location'}` : tab === 'sermons' ? item.speaker : tab === 'outreach' ? item.tag : `${item.venue} · ${item.serviceTime || 'No service time'}`} onEdit={() => edit(item)} onDelete={() => void remove(item)} extra={tab === 'sermons' && <Button variant="custom" size="none" onClick={async () => { try { await setFeaturedSermon(item.id); await load('sermons'); setNotice('Featured sermon updated.'); } catch (e) { setError(e.message || 'Unable to feature sermon.'); } }} className={`rounded-xl border px-3 py-2 text-xs font-semibold ${item.isFeatured ? 'border-[#EC2FA8]/40 text-[#F04FB8]' : 'border-white/10 text-white/45 hover:text-white'}`}>{item.isFeatured ? 'Featured' : 'Feature'}</Button>} />)}</div></Card>
-    </div>
+    </div>}
   </section>;
 }
