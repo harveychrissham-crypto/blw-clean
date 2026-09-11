@@ -1,106 +1,10 @@
 name: Apply Feed audit fixes
 
 on:
-  push:
-    branches: [main]
-    paths: ['.github/workflows/apply-feed-audit.yml']
-
-permissions:
-  contents: write
+  workflow_dispatch: {}
 
 jobs:
-  fix:
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Apply fixes
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-
-          def patch(path, replacements):
-              p = Path(path)
-              s = p.read_text()
-              original = s
-              for old, new in replacements:
-                  if old not in s:
-                      print(f'SKIP {path}: pattern not found:', old[:120].replace('\\n','\\\\n'))
-                      continue
-                  s = s.replace(old, new, 1)
-              if s != original:
-                  p.write_text(s)
-                  print('UPDATED', path)
-
-          patch('client/src/pages/Create.jsx', [
-              ("{user?.email?.[0]?.toUpperCase() || 'U'}", "{user?.avatarUrl ? <img src={user.avatarUrl} alt=\"\" className=\"h-full w-full object-cover\" /> : (user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()}") ,
-              ("{user?.user_metadata?.full_name || user?.user_metadata?.name || 'Your profile'}", "{user?.name || 'Your profile'}"),
-              ("  const publish = async () => {\n    if (!user) return;", "  const publish = async () => {\n    if (!user) return;\n    if (uploading || published) return;\n    if (!window.confirm(`Ready to share this ${type === 'reel' ? 'Reel' : 'post'}?`)) return;"),
-          ])
-
-          patch('client/src/pages/Messages.jsx', [
-              ("import { useCallback, useEffect, useMemo, useState } from 'react';", "import { useCallback, useEffect, useMemo, useRef, useState } from 'react';"),
-              ("  const [error, setError] = useState('');", "  const [error, setError] = useState('');\n  const messageListRef = useRef(null);"),
-              ("  useEffect(() => {\n    if (!conversationId) { setMessages([]); return undefined; }", "  useEffect(() => {\n    if (!conversationId) { setMessages([]); return undefined; }"),
-              ("  }, [conversationId, loadConversations, loadThread]);", "  }, [conversationId, loadConversations, loadThread]);\n\n  useEffect(() => {\n    const node = messageListRef.current;\n    if (!node) return;\n    requestAnimationFrame(() => { node.scrollTop = node.scrollHeight; });\n  }, [conversationId, messages.length]);"),
-              ("<div className=\"flex-1 overflow-y-auto px-4 py-5 sm:px-6\">", "<div ref={messageListRef} className=\"flex-1 overflow-y-auto px-4 py-5 sm:px-6\">")
-          ])
-
-          patch('client/src/pages/Feed.jsx', [
-              ("function ActionMenu({post}) {\n  const [open,setOpen]=useState(false);", "function ActionMenu({post}) {\n  const [open,setOpen]=useState(false);\n  const menuRef=useRef(null);"),
-              ("  const submitReport=async(reason)=>{try{await reportPost(post.id,reason);", "  useEffect(()=>{if(!open)return;const onDoc=e=>{if(menuRef.current&&!menuRef.current.contains(e.target))setOpen(false);};const onKey=e=>{if(e.key==='Escape')setOpen(false);};document.addEventListener('pointerdown',onDoc);document.addEventListener('keydown',onKey);return()=>{document.removeEventListener('pointerdown',onDoc);document.removeEventListener('keydown',onKey);};},[open]);\n  const submitReport=async(reason)=>{try{await reportPost(post.id,reason);"),
-              ("  return <div className=\"relative\"><button", "  return <div ref={menuRef} className=\"relative\"><button"),
-              ("useEffect(()=>{if(!isYoutube)return;const frame=frameRef.current;if(!frame)return;const send=()=>{frame.contentWindow?.postMessage(JSON.stringify({event:'command',func:active?'playVideo':'pauseVideo',args:[]}), '*');frame.contentWindow?.postMessage(JSON.stringify({event:'command',func:muted?'mute':'unMute',args:[]}), '*');};send();setPlaying(active);const retry=setTimeout(send,500);return()=>clearTimeout(retry);},[active,muted,isYoutube]);", "useEffect(()=>{if(!isYoutube)return;const frame=frameRef.current;if(!frame)return;const send=()=>{frame.contentWindow?.postMessage(JSON.stringify({event:'command',func:active?'playVideo':'pauseVideo',args:[]}), '*');frame.contentWindow?.postMessage(JSON.stringify({event:'command',func:muted?'mute':'unMute',args:[]}), '*');};const timers=[0,350,900,1800].map(delay=>setTimeout(send,delay));setPlaying(active);return()=>timers.forEach(clearTimeout);},[active,muted,isYoutube]);"),
-              ("className=\"h-full w-full select-none object-cover\" style={{transform:", "className=\"h-full w-full select-none object-contain bg-black\" style={{transform:"),
-              ("  const like=useCallback(async()=>{if(!user)return hapticError();if(post.liked)return;setHeart(true);setTimeout(()=>setHeart(false),650);onUpdate(post.id,{liked:true,likeCount:post.likeCount+1});try{const r=await toggleLike(post.id);onUpdate(post.id,r);}catch{onUpdate(post.id,{liked:false,likeCount:Math.max(0,post.likeCount)});hapticError();}},[post,user,onUpdate]);", "  const likeBusy=useRef(false); const like=useCallback(async()=>{if(!user||likeBusy.current)return hapticError();if(post.liked)return;likeBusy.current=true;setHeart(true);setTimeout(()=>setHeart(false),650);onUpdate(post.id,{liked:true,likeCount:post.likeCount+1});try{const r=await toggleLike(post.id);onUpdate(post.id,r);}catch{onUpdate(post.id,{liked:false,likeCount:Math.max(0,post.likeCount)});hapticError();}finally{likeBusy.current=false;}},[post,user,onUpdate]);"),
-              ("const tabs = ['All','Following','Ministry','Reels'];", "const tabs = ['All','Following','Ministry','Reels'];\nconst compactCount=(value)=>{const n=Number(value||0);if(n<1000)return String(n);if(n<1000000)return `${(n/1000).toFixed(n<10000?1:0).replace(/\\.0$/,'')}K`;return `${(n/1000000).toFixed(n<10000000?1:0).replace(/\\.0$/,'')}M`;};"),
-              ("const filtered=useMemo(()=>tab==='Reels'?posts.filter(p=>p.type==='reel'&&(p.videoId||(p.mediaUrl&&p.mediaType==='video'))):tab==='Following'?posts.filter(p=>p.following!==false):tab==='Ministry'?posts.filter(p=>p.sourceType==='sermon'||p.sourceType==='devotional'||p.sourceType==='testimony'||p.ministry!==false):posts,[tab,posts]);", "const filtered=useMemo(()=>tab==='Reels'?posts.filter(p=>p.type==='reel'&&(p.videoId||(p.mediaUrl&&p.mediaType==='video'))):tab==='Following'?posts.filter(p=>p.following===true):tab==='Ministry'?posts.filter(p=>['sermon','devotional','testimony'].includes(String(p.sourceType||'').toLowerCase())||p.isOfficial):posts,[tab,posts]);"),
-              ("  const {pullDistance,refreshing,bind}=usePullToRefresh(async()=>{hapticTap();await loadFirst();hapticSuccess();});", "  const [refreshNotice,setRefreshNotice]=useState(''); const [queueNotice,setQueueNotice]=useState(''); const [showTop,setShowTop]=useState(false);\n  const {pullDistance,refreshing,bind}=usePullToRefresh(async()=>{hapticTap();await loadFirst();hapticSuccess();setRefreshNotice('Feed updated');window.setTimeout(()=>setRefreshNotice(''),1800);});\n  useEffect(()=>{const onQueued=e=>{const action=e.detail?.action;setQueueNotice(action==='comment'?'Saved — will sync when you\'re back online':'Saved — will sync when you\'re back online');window.setTimeout(()=>setQueueNotice(''),2200);};const onSynced=()=>{setQueueNotice('Back online — your Feed action was synced.');window.setTimeout(()=>setQueueNotice(''),1800);};const onDropped=()=>{setQueueNotice('Couldn\'t sync your Feed action. Please try again.');window.setTimeout(()=>setQueueNotice(''),2600);};window.addEventListener('feed-action-queued',onQueued);window.addEventListener('feed-action-synced',onSynced);window.addEventListener('feed-action-dropped',onDropped);return()=>{window.removeEventListener('feed-action-queued',onQueued);window.removeEventListener('feed-action-synced',onSynced);window.removeEventListener('feed-action-dropped',onDropped);};},[]);\n  useEffect(()=>{const onScroll=()=>setShowTop(window.scrollY>Math.max(window.innerHeight*2,1200));window.addEventListener('scroll',onScroll,{passive:true});onScroll();return()=>window.removeEventListener('scroll',onScroll);},[]);"),
-              ("{pullDistance>0&&<PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing}/>}\n", "{pullDistance>0&&<PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing}/>}\n{(refreshNotice||queueNotice)&&<div className=\"fixed left-1/2 top-[4.6rem] z-[70] -translate-x-1/2 rounded-full border border-white/10 bg-[#171526]/95 px-4 py-2 text-xs font-semibold text-white shadow-2xl backdrop-blur-xl\">{refreshNotice||queueNotice}</div>}\n{showTop&&<button type=\"button\" onClick={()=>window.scrollTo({top:0,behavior:'smooth'})} className=\"fixed bottom-24 right-4 z-[60] grid h-11 w-11 place-items-center rounded-full bg-white text-black shadow-xl active:scale-95\" aria-label=\"Jump to top\">↑</button>}\n"),
-              ("h-[3px] w-5", "h-[2px] w-5"),
-              ("count!=null&&<span className=\"text-[10px]\">{count}</span>", "count!=null&&<span className=\"text-[10px]\">{compactCount(count)}</span>"),
-              ("className={`grid min-w-10 place-items-center rounded-full bg-black/35 p-2.5 backdrop-blur-md transition hover:bg-black/55 disabled:opacity-50", "className={`grid min-w-10 place-items-center rounded-full bg-black/35 p-2.5 backdrop-blur-md transition hover:bg-black/55 active:scale-95 disabled:opacity-50"),
-              ("className={`grid h-9 w-9 place-items-center rounded-full ${post.liked?", "className={`grid h-9 w-9 place-items-center rounded-full active:scale-95 ${post.liked?"),
-          ])
-
-          p=Path('client/src/pages/Feed.jsx')
-          s=p.read_text()
-          # Add post owner delete permission in the comment action button.
-          s=s.replace("{user&&c.user_email&&c.user_email.toLowerCase()===user.email?.toLowerCase()&&<button", "{user&&c.user_email&&(c.user_email.toLowerCase()===user.email?.toLowerCase()||post.isOwner)&&<button", 1)
-          # Cache comment threads locally by post id.
-          old="useEffect(()=>{if(!open)return;setLoading(true);fetchComments(post.id).then(setItems).catch(()=>setItems([])).finally(()=>setLoading(false));},[open,post.id]);"
-          new="useEffect(()=>{if(!open)return;const key=`blw_feed_comments_${post.id}`;try{const cached=JSON.parse(localStorage.getItem(key)||'null');if(Array.isArray(cached)){setItems(cached);setLoading(false);}}catch{}setLoading(true);fetchComments(post.id).then(next=>{setItems(next);try{localStorage.setItem(key,JSON.stringify(next));}catch{}}).catch(()=>{}).finally(()=>setLoading(false));},[open,post.id]);"
-          if old in s:s=s.replace(old,new,1)
-          # Correct optimistic offline comment author/avatar immediately.
-          old="const created=await addComment(post.id,body);setItems(v=>[...v,created]);"
-          new="const created=await addComment(post.id,body);const safeCreated=created?.queued?{...created,author:user.name||'You',avatarUrl:user.avatarUrl||''}:created;setItems(v=>[...v,safeCreated]);"
-          if old in s:s=s.replace(old,new,1)
-          p.write_text(s)
-
-          # Normalize additional feed fields.
-          p=Path('client/src/utils/feed.js'); s=p.read_text()
-          s=s.replace("    isOwner: Boolean(row.is_owner ?? row.isOwner),", "    isOwner: Boolean(row.is_owner ?? row.isOwner),\n    authorEmail: row.author_email || row.authorEmail || row.user_email || '',\n    following: row.following === true || row.following === 'true',")
-          p.write_text(s)
-
-          # Allow post-owner moderation in both post and sermon delete paths.
-          p=Path('worker/feed-api.js'); s=p.read_text()
-          s=s.replace("const deleted=await client.query('DELETE FROM public.feed_post_comments WHERE id=$1 AND LOWER(user_email)=$2 RETURNING id',[commentId,email]);", "const deleted=await client.query('DELETE FROM public.feed_post_comments WHERE id=$1 AND (LOWER(user_email)=LOWER($2) OR EXISTS(SELECT 1 FROM public.feed_posts p WHERE p.id=feed_post_comments.post_id AND LOWER(p.user_email)=LOWER($2))) RETURNING id',[commentId,email]);")
-          s=s.replace("const deleted=await client.query('DELETE FROM public.feed_comments WHERE id=$1 AND LOWER(user_email)=$2 RETURNING id',[commentId,email]);", "const deleted=await client.query('DELETE FROM public.feed_comments WHERE id=$1 AND (LOWER(user_email)=LOWER($2) OR EXISTS(SELECT 1 FROM public.sermons ss WHERE ss.id=feed_comments.sermon_id AND LOWER(ss.created_by)=LOWER($2))) RETURNING id',[commentId,email]);")
-          p.write_text(s)
-          PY
-      - name: Verify build
-        run: npm run build
-      - name: Commit changes and remove this workflow
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add client/src/pages/Feed.jsx client/src/pages/Create.jsx client/src/pages/Messages.jsx client/src/utils/feed.js worker/feed-api.js
-          git rm .github/workflows/apply-feed-audit.yml
-          git commit -m 'fix: harden Feed audit issues'
-          git push origin main
+      - run: echo "disabled"
