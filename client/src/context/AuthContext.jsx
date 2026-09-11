@@ -4,6 +4,20 @@ import { setToken, clearToken, getToken } from '../utils/authToken';
 import { setUpPushNotifications } from '../native';
 
 const AuthContext = createContext(null);
+const PUBLIC_USER_STORAGE_KEY = 'blw_public_user_v1';
+
+function persistPublicUser(user) {
+  try {
+    if (!user) {
+      localStorage.removeItem(PUBLIC_USER_STORAGE_KEY);
+      return;
+    }
+    localStorage.setItem(PUBLIC_USER_STORAGE_KEY, JSON.stringify({
+      name: user.name || user.full_name || user.fullName || user.email?.split('@')[0] || 'Member',
+      avatarUrl: user.avatarUrl || user.avatar_url || user.photoURL || user.photo_url || '',
+    }));
+  } catch {}
+}
 
 /**
  * Session strategy:
@@ -35,6 +49,7 @@ export function AuthProvider({ children }) {
     try {
       const existingToken = await getToken();
       if (!existingToken) {
+        persistPublicUser(null);
         setUser(null);
         return;
       }
@@ -43,6 +58,7 @@ export function AuthProvider({ children }) {
 
       if (!res.ok) {
         await clearToken();
+        persistPublicUser(null);
         setUser(null);
         return;
       }
@@ -50,6 +66,7 @@ export function AuthProvider({ children }) {
       const body = await res.json();
       if (body.token) await setToken(body.token);
       setUser(body.user || null);
+      persistPublicUser(body.user || null);
       if (body.user) setUpPushNotifications();
     } catch {
       setUser(null);
@@ -67,6 +84,7 @@ export function AuthProvider({ children }) {
     // userData/token come straight from the login/register API response
     if (token) await setToken(token);
     setUser(userData);
+    persistPublicUser(userData);
     if (userData) setUpPushNotifications();
   }, []);
 
@@ -77,6 +95,7 @@ export function AuthProvider({ children }) {
       console.error('Logout request failed', err);
     }
     await clearToken();
+    persistPublicUser(null);
     setUser(null);
   }, []);
 
