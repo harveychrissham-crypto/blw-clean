@@ -78,8 +78,8 @@ jobs:
           if old not in text: raise SystemExit('PostCard follow marker not found')
           text = text.replace(old, new, 1)
 
-          old = "<p className=\"max-w-[15rem] truncate text-sm font-bold\">{post.author}{post.isOfficial&&<span className=\"ml-1 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white text-[9px] text-ink-950\" aria-label=\"Official ministry\">✓</span>}</p>"
-          new = "<div className=\"flex min-w-0 items-center gap-2\"><p className=\"max-w-[15rem] truncate text-sm font-bold\">{post.author}{post.isOfficial&&<span className=\"ml-1 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white text-[9px] text-ink-950\" aria-label=\"Official ministry\">✓</span>}</p>{post.isUserPost&&!post.isOwner&&post.authorEmail&&<button type=\"button\" onClick={follow} disabled={followBusy} className=\"shrink-0 text-[10px] font-bold text-white/70 hover:text-white disabled:opacity-40\">{post.following?'Following':'Follow'}</button>}</div>"
+          old = "<div className=\"flex min-w-0 items-baseline gap-2\"><p className=\"max-w-[15rem] truncate text-sm font-bold\">{post.author}{post.isOfficial&&<span className=\"ml-1 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white text-[9px] text-ink-950\" aria-label=\"Official ministry\">✓</span>}</p><span className=\"shrink-0 text-[10px] text-white/35\">{post.time}</span></div>"
+          new = "<div className=\"flex min-w-0 items-center gap-2\"><div className=\"flex min-w-0 items-baseline gap-2\"><p className=\"max-w-[15rem] truncate text-sm font-bold\">{post.author}{post.isOfficial&&<span className=\"ml-1 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white text-[9px] text-ink-950\" aria-label=\"Official ministry\">✓</span>}</p><span className=\"shrink-0 text-[10px] text-white/35\">{post.time}</span></div>{post.isUserPost&&!post.isOwner&&post.authorEmail&&<button type=\"button\" onClick={follow} disabled={followBusy} className=\"shrink-0 text-[10px] font-bold text-white/70 hover:text-white disabled:opacity-40\">{post.following?'Following':'Follow'}</button>}</div>"
           if old not in text: raise SystemExit('PostCard header marker not found')
           text = text.replace(old, new, 1)
 
@@ -110,8 +110,6 @@ jobs:
       - name: Build client
         run: npm --prefix client install --no-audit --no-fund && npm --prefix client run build
       - name: Commit source changes
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
