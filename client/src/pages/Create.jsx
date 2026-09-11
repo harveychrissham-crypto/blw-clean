@@ -112,14 +112,14 @@ export default function Create() {
     if (type === 'reel' && !file.type.startsWith('video/')) return setError('A Reel must be a video.');
     setUploading(true);
     setUploadProgress(0);
-    setUploadStage(file.type.startsWith('video/') ? 'Preparing Cloudflare Stream upload…' : 'Uploading image…');
+    setUploadStage(file.type.startsWith('video/') ? 'Preparing Bunny Stream upload…' : 'Uploading image…');
     setError('');
     try {
       let uploaded;
       if (file.type.startsWith('video/')) {
         const direct = await createStreamDirectUpload(1200);
         setUploadStage('Uploading video…');
-        await uploadToStream(direct.uploadURL, file, setUploadProgress);
+        await uploadToStream(direct, file, setUploadProgress);
         uploaded = { url: direct.manifestUrl, mediaType: 'video', streamUid: direct.uid };
         setUploadStage('Video uploaded. Publishing…');
       } else {
@@ -188,7 +188,7 @@ export default function Create() {
               </button>
             )}
             {!file && <div className="mt-3 flex gap-2"><button type="button" onClick={() => choose('post')} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] py-3 text-xs font-semibold text-white/65 transition hover:bg-white/[0.07]"><FiImage /> Gallery</button><button type="button" onClick={() => choose('reel')} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] py-3 text-xs font-semibold text-white/65 transition hover:bg-white/[0.07]"><FiFilm /> Video</button></div>}
-            {uploading && isVideo && <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.035] p-3.5"><div className="flex items-center justify-between gap-3 text-xs"><span className="text-white/60">{uploadStage || 'Uploading video…'}</span><span className="font-semibold text-white">{uploadProgress}%</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-white transition-[width] duration-200" style={{ width: `${uploadProgress}%` }} /></div><p className="mt-2 text-[10px] leading-4 text-white/30">Cloudflare Stream will transcode this video and deliver adaptive bitrate playback after upload.</p></div>}
+            {uploading && isVideo && <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.035] p-3.5"><div className="flex items-center justify-between gap-3 text-xs"><span className="text-white/60">{uploadStage || 'Uploading video…'}</span><span className="font-semibold text-white">{uploadProgress}%</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-white transition-[width] duration-200" style={{ width: `${uploadProgress}%` }} /></div><p className="mt-2 text-[10px] leading-4 text-white/30">Bunny Stream will process this video and deliver adaptive bitrate playback after upload.</p></div>}
           </section>
 
           <section className="border-t border-white/[0.07] p-4 sm:p-6 md:border-t-0">
@@ -204,7 +204,7 @@ export default function Create() {
 
             <div className="mt-3 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.025] px-3.5 py-2.5"><FiMapPin className="shrink-0 text-white/35" /><input value={location} onChange={(event) => setLocation(event.target.value)} maxLength={100} placeholder="Add location (optional)" className="min-w-0 flex-1 bg-transparent text-xs text-white outline-none placeholder:text-white/25" /></div>
 
-            <div className="mt-4 rounded-2xl border border-white/[.07] bg-white/[.02] p-3.5"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/30">Sharing to Feed</p><p className="mt-1.5 text-xs leading-5 text-white/45">Your {type === 'reel' ? 'Reel' : 'post'} will appear in the community Feed where people can like, comment and save it.</p>{isVideo&&<p className="mt-2 text-[10px] leading-4 text-white/25">Video delivery: Cloudflare Stream adaptive bitrate via HLS.</p>}</div>
+            <div className="mt-4 rounded-2xl border border-white/[.07] bg-white/[.02] p-3.5"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/30">Sharing to Feed</p><p className="mt-1.5 text-xs leading-5 text-white/45">Your {type === 'reel' ? 'Reel' : 'post'} will appear in the community Feed where people can like, comment and save it.</p>{isVideo&&<p className="mt-2 text-[10px] leading-4 text-white/25">Video delivery: Bunny Stream adaptive bitrate via HLS.</p>}</div>
 
             {error && <p className="mt-3 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-xs leading-5 text-red-200">{error}</p>}
             <button type="button" onClick={publish} disabled={uploading || !file} className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3.5 text-sm font-bold text-ink-950 shadow-xl transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35">{uploading ? <><FiLoader className="animate-spin" /> {isVideo ? 'Uploading & sharing…' : 'Uploading & sharing...'}</> : <><FiSend /> Share {type === 'reel' ? 'Reel' : 'Post'}</>}</button>
