@@ -72,21 +72,28 @@ export async function handleStream(request, env, url) {
     }
 
     const videoId = String(payload.guid).trim();
-    const expires = Math.floor(Date.now() / 1000) + 15 * 60;
-    const signature = await sha256Hex(`${libraryId}${apiKey}${expires}${videoId}`);
-    const manifestUrl = `https://${cdnHostname}/${encodeURIComponent(videoId)}/playlist.m3u8`;
+    const expirationTime = Math.floor(Date.now() / 1000) + 15 * 60;
+    const signature = await sha256Hex(`${libraryId}${apiKey}${expirationTime}${videoId}`);
+    const manifestUrl = `/api/stream/videos/${encodeURIComponent(videoId)}/manifest/video.m3u8`;
+    const directManifestUrl = `https://${cdnHostname}/${encodeURIComponent(videoId)}/playlist.m3u8`;
     const thumbnailUrl = `https://${cdnHostname}/${encodeURIComponent(videoId)}/thumbnail.jpg`;
 
     return json({
-      uploadURL: BUNNY_TUS_ENDPOINT,
+      uploadURL: {
+        endpoint: BUNNY_TUS_ENDPOINT,
+        signature,
+        expirationTime,
+        videoId,
+        libraryId,
+      },
       endpoint: BUNNY_TUS_ENDPOINT,
       signature,
-      expirationTime: expires,
+      expirationTime,
       videoId,
       uid: videoId,
       libraryId,
-      manifestUrl: `/api/stream/videos/${encodeURIComponent(videoId)}/manifest/video.m3u8`,
-      directManifestUrl: manifestUrl,
+      manifestUrl,
+      directManifestUrl,
       thumbnail: thumbnailUrl,
       mediaType: 'video',
     }, 200, headers);
@@ -96,8 +103,7 @@ export async function handleStream(request, env, url) {
   if (manifestMatch && request.method === 'GET') {
     const videoId = decodeURIComponent(manifestMatch[1] || '').trim();
     if (!videoId || videoId.length > 100) return json({ error: 'Invalid Bunny video ID.' }, 400, headers);
-    const target = `https://${cdnHostname}/${encodeURIComponent(videoId)}/playlist.m3u8`;
-    return Response.redirect(target, 302);
+    return Response.redirect(`https://${cdnHostname}/${encodeURIComponent(videoId)}/playlist.m3u8`, 302);
   }
 
   const statusMatch = url.pathname.match(/^\/api\/stream\/videos\/([^/]+)$/);
