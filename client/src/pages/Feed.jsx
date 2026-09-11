@@ -121,7 +121,7 @@ function ZoomableImage({src,onDoubleTap}) {
     if(zoom.scale<=1.02)setZoom({scale:1,x:0,y:0});
   };
   const onWheel=e=>{if(!e.ctrlKey)return;e.preventDefault();const scale=Math.max(1,Math.min(4,zoom.scale-(e.deltaY*.01)));const offset=clampOffset(zoom.x,zoom.y,scale);setZoom({scale,...offset});};
-  return <div className="h-full w-full overflow-hidden" style={{touchAction:'pan-y'}} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endPointer} onPointerCancel={endPointer} onWheel={onWheel} onDoubleClick={onDoubleTap}><img src={src} alt="" draggable={false} className="h-full w-full select-none object-cover" style={{transform:`translate3d(${zoom.x}px,${zoom.y}px,0) scale(${zoom.scale})`,transformOrigin:'center center',transition:gesture.current.mode?'none':'transform 120ms ease-out'}} loading="lazy" decoding="async"/></div>;
+  return <div className="h-full w-full overflow-hidden" style={{touchAction:'pan-y'}} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endPointer} onPointerCancel={endPointer} onWheel={onWheel} onDoubleClick={onDoubleTap}><img src={src} alt="" draggable={false} className="h-full w-full select-none object-contain" style={{transform:`translate3d(${zoom.x}px,${zoom.y}px,0) scale(${zoom.scale})`,transformOrigin:'center center',transition:gesture.current.mode?'none':'transform 120ms ease-out'}} loading="lazy" decoding="async"/></div>;
 }
 
 function MediaPreview({src,type,title,onClose}) {
