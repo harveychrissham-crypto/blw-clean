@@ -4,10 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiArrowLeft, FiCamera, FiCheck, FiFilm, FiImage, FiLoader, FiMapPin, FiSend, FiSmile, FiX } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { createFeedPost, uploadFeedMedia } from '../utils/feed';
+import { createStreamDirectUpload, uploadToStream } from '../utils/stream';
 import { hapticError, hapticSuccess, hapticTap } from '../utils/haptics';
 
 const MAX_IMAGE = 5 * 1024 * 1024;
-const MAX_VIDEO = 30 * 1024 * 1024;
+const MAX_VIDEO = 200 * 1024 * 1024;
 
 export default function Create() {
   const { user } = useAuth();
@@ -19,6 +20,8 @@ export default function Create() {
   const [caption, setCaption] = useState('');
   const [location, setLocation] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStage, setUploadStage] = useState('');
   const [error, setError] = useState('');
   const [published, setPublished] = useState(false);
 
@@ -66,8 +69,8 @@ export default function Create() {
     setError('');
     if (inputRef.current) {
       inputRef.current.accept = mode === 'reel'
-        ? 'video/mp4,video/webm,video/quicktime'
-        : 'image/*,video/mp4,video/webm,video/quicktime';
+        ? 'video/mp4,video/webm,video/quicktime,video/x-matroska,video/avi,video/x-flv,video/mpeg'
+        : 'image/*,video/mp4,video/webm,video/quicktime,video/x-matroska,video/avi,video/x-flv,video/mpeg';
       inputRef.current.click();
     }
   };
@@ -77,6 +80,8 @@ export default function Create() {
     setType(mode);
     setFile(null);
     setError('');
+    setUploadProgress(0);
+    setUploadStage('');
   };
 
   const onFile = (event) => {
@@ -97,6 +102,8 @@ export default function Create() {
     }
     setFile(next);
     setError('');
+    setUploadProgress(0);
+    setUploadStage('');
   };
 
   const publish = async () => {
@@ -104,9 +111,22 @@ export default function Create() {
     if (!file) return setError(type === 'reel' ? 'Choose a video for your Reel.' : 'Choose a photo or video first.');
     if (type === 'reel' && !file.type.startsWith('video/')) return setError('A Reel must be a video.');
     setUploading(true);
+    setUploadProgress(0);
+    setUploadStage(file.type.startsWith('video/') ? 'Preparing Cloudflare Stream upload…' : 'Uploading image…');
     setError('');
     try {
-      const uploaded = await uploadFeedMedia(file);
+      let uploaded;
+      if (file.type.startsWith('video/')) {
+        const direct = await createStreamDirectUpload(1200);
+        setUploadStage('Uploading video…');
+        await uploadToStream(direct.uploadURL, file, setUploadProgress);
+        uploaded = { url: direct.playerUrl, mediaType: 'stream', streamUid: direct.uid };
+        setUploadStage('Video uploaded. Publishing…');
+      } else {
+        uploaded = await uploadFeedMedia(file);
+        setUploadProgress(100);
+        setUploadStage('Publishing…');
+      }
       const cleanCaption = caption.trim();
       const cleanLocation = location.trim();
       const title = cleanCaption.slice(0, 160) || (type === 'reel' ? 'New Reel' : 'New post');
@@ -120,7 +140,10 @@ export default function Create() {
     } catch (err) {
       setError(err?.message || 'Unable to publish right now.');
       hapticError();
-    } finally { setUploading(false); }
+    } finally {
+      setUploading(false);
+      setUploadStage('');
+    }
   };
 
   const back = () => {
@@ -128,6 +151,8 @@ export default function Create() {
   };
 
   if (!user) return <div className="min-h-[70vh] grid place-items-center px-6 text-center"><div><p className="text-lg font-bold text-white">Sign in to create</p><p className="mt-2 text-sm text-white/50">Create posts and Reels for the community.</p><Link to="/auth" className="mt-5 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-bold text-ink-950">Sign in</Link></div></div>;
+
+  const isVideo = Boolean(file?.type?.startsWith('video/'));
 
   return (
     <div className="min-h-screen bg-[#090812] text-white sm:py-8">
@@ -148,7 +173,7 @@ export default function Create() {
             <input ref={inputRef} type="file" className="hidden" onChange={onFile} />
             {preview ? (
               <div className={`group relative overflow-hidden rounded-[26px] bg-black ring-1 ring-white/10 ${type === 'reel' ? 'aspect-[9/15] max-h-[68vh]' : 'aspect-square'}`}>
-                {file?.type.startsWith('video/') ? <video src={preview} className="h-full w-full object-cover" controls playsInline /> : <img src={preview} alt="Preview" className="h-full w-full object-cover" />}
+                {isVideo ? <video src={preview} className="h-full w-full object-cover" controls playsInline /> : <img src={preview} alt="Preview" className="h-full w-full object-cover" />}
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/45 to-transparent" />
                 <button type="button" onClick={() => setFile(null)} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-black/60 text-white backdrop-blur-xl transition hover:bg-black/80" aria-label="Remove media"><FiX /></button>
                 <button type="button" onClick={() => choose(type)} className="absolute bottom-3 left-3 rounded-full bg-black/65 px-3.5 py-2 text-xs font-semibold backdrop-blur-xl transition hover:bg-black/80">Change media</button>
@@ -163,6 +188,7 @@ export default function Create() {
               </button>
             )}
             {!file && <div className="mt-3 flex gap-2"><button type="button" onClick={() => choose('post')} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] py-3 text-xs font-semibold text-white/65 transition hover:bg-white/[0.07]"><FiImage /> Gallery</button><button type="button" onClick={() => choose('reel')} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] py-3 text-xs font-semibold text-white/65 transition hover:bg-white/[0.07]"><FiFilm /> Video</button></div>}
+            {uploading && isVideo && <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.035] p-3.5"><div className="flex items-center justify-between gap-3 text-xs"><span className="text-white/60">{uploadStage || 'Uploading video…'}</span><span className="font-semibold text-white">{uploadProgress}%</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-white transition-[width] duration-200" style={{ width: `${uploadProgress}%` }} /></div><p className="mt-2 text-[10px] leading-4 text-white/30">Cloudflare Stream will encode this video for adaptive playback after upload.</p></div>}
           </section>
 
           <section className="border-t border-white/[0.07] p-4 sm:p-6 md:border-t-0">
@@ -178,30 +204,18 @@ export default function Create() {
 
             <div className="mt-3 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.025] px-3.5 py-2.5"><FiMapPin className="shrink-0 text-white/35" /><input value={location} onChange={(event) => setLocation(event.target.value)} maxLength={100} placeholder="Add location (optional)" className="min-w-0 flex-1 bg-transparent text-xs text-white outline-none placeholder:text-white/25" /></div>
 
-            <div className="mt-4 rounded-2xl border border-white/[.07] bg-white/[.02] p-3.5"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/30">Sharing to Feed</p><p className="mt-1.5 text-xs leading-5 text-white/45">Your {type === 'reel' ? 'Reel' : 'post'} will appear in the community Feed where people can like, comment and save it.</p></div>
+            <div className="mt-4 rounded-2xl border border-white/[.07] bg-white/[.02] p-3.5"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/30">Sharing to Feed</p><p className="mt-1.5 text-xs leading-5 text-white/45">Your {type === 'reel' ? 'Reel' : 'post'} will appear in the community Feed where people can like, comment and save it.</p>{isVideo&&<p className="mt-2 text-[10px] leading-4 text-white/25">Video delivery: Cloudflare Stream adaptive bitrate.</p>}</div>
 
             {error && <p className="mt-3 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-xs leading-5 text-red-200">{error}</p>}
-            <button type="button" onClick={publish} disabled={uploading || !file} className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3.5 text-sm font-bold text-ink-950 shadow-xl transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35">{uploading ? <><FiLoader className="animate-spin" /> Uploading & sharing...</> : <><FiSend /> Share {type === 'reel' ? 'Reel' : 'Post'}</>}</button>
+            <button type="button" onClick={publish} disabled={uploading || !file} className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3.5 text-sm font-bold text-ink-950 shadow-xl transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35">{uploading ? <><FiLoader className="animate-spin" /> {isVideo ? 'Uploading & sharing…' : 'Uploading & sharing...'}</> : <><FiSend /> Share {type === 'reel' ? 'Reel' : 'Post'}</>}</button>
           </section>
         </div>
       </div>
       <AnimatePresence>
         {published && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[90] grid place-items-center bg-[#090812]/95 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.4, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 340, damping: 18 }}
-              className="flex flex-col items-center gap-3"
-            >
-              <div className="grid h-20 w-20 place-items-center rounded-full bg-gradient-to-br from-[#A62574] to-[#3C1464] shadow-2xl shadow-purple-400/30">
-                <FiCheck className="h-10 w-10 text-white" />
-              </div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[90] grid place-items-center bg-[#090812]/95 backdrop-blur-sm">
+            <motion.div initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 340, damping: 18 }} className="flex flex-col items-center gap-3">
+              <div className="grid h-20 w-20 place-items-center rounded-full bg-gradient-to-br from-[#A62574] to-[#3C1464] shadow-2xl shadow-purple-400/30"><FiCheck className="h-10 w-10 text-white" /></div>
               <p className="text-sm font-bold text-white">{type === 'reel' ? 'Reel shared!' : 'Posted!'}</p>
             </motion.div>
           </motion.div>
