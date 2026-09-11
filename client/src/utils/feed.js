@@ -31,6 +31,8 @@ function normalizePost(row = {}) {
     isOfficial: Boolean(row.is_official ?? row.isOfficial ?? row.is_featured),
     isUserPost: Boolean(row.is_user_post ?? row.isUserPost),
     isOwner: Boolean(row.is_owner ?? row.isOwner),
+    following: Boolean(row.following),
+    authorEmail: row.author_email || row.user_email || '',
     viewCount: Number(row.view_count ?? row.viewCount ?? 0),
     videoId: row.youtube_id || row.video_id || row.videoId || '',
     mediaUrl: row.media_url || row.mediaUrl || row.image_url || row.image || '',
@@ -137,8 +139,9 @@ if (typeof window !== 'undefined') {
   if (navigator.onLine) flushWhenAvailable();
 }
 
-export async function fetchFeed({ limit = 20, offset = 0 } = {}) {
+export async function fetchFeed({ limit = 20, offset = 0, followingOnly = false } = {}) {
   const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+  if (followingOnly) params.set('following', '1');
   const response = await apiFetch(`/api/feed?${params.toString()}`, { method: 'GET' });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body?.error || 'Unable to load the Feed.');
@@ -253,6 +256,15 @@ async function postAction(id, action) {
 }
 export const toggleLike = (id) => postAction(id, 'like');
 export const toggleSave = (id) => postAction(id, 'save');
+
+export async function toggleFollow(email) {
+  const target = String(email || '').trim();
+  if (!target) throw new Error('Member not found.');
+  const response = await apiFetch(`/api/feed/users/${encodeURIComponent(target)}/follow`, { method: 'POST' });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result?.error || 'Unable to update follow status.');
+  return result;
+}
 
 export async function fetchComments(id) {
   const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/comments`);

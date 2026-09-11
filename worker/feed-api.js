@@ -24,11 +24,12 @@ export async function handleFeed(request, env, url) {
       const rawOffset = Number.parseInt(url.searchParams.get('offset') || '0', 10);
       const limit = Math.min(Math.max(Number.isFinite(rawLimit) ? rawLimit : 20, 1), 30);
       const offset = Math.max(Number.isFinite(rawOffset) ? rawOffset : 0, 0);
+      const followingOnly = url.searchParams.get('following') === '1' && Boolean(email);
       const client = await getDb(env);
       try {
         const canSeeViews = await canViewOwnPostInsights(client,email);
         const result = await client.query(`SELECT * FROM (
-          SELECT CONCAT('s:',s.id) AS id,s.title,s.speaker AS author,s.description AS body,s.youtube_url,NULL::text AS media_url,NULL::text AS media_type,s.created_at,s.is_featured,'sermon' AS type,'sermon' AS source_type,false AS is_user_post,false AS is_owner,0::int AS view_count,
+          SELECT CONCAT('s:',s.id) AS id,s.title,s.speaker AS author,s.description AS body,s.youtube_url,NULL::text AS media_url,NULL::text AS media_type,s.created_at,s.is_featured,'sermon' AS type,'sermon' AS source_type,false AS is_user_post,false AS is_owner,false AS following,NULL::text AS author_email,0::int AS view_count,
           (SELECT COUNT(*)::int FROM public.feed_likes x WHERE x.sermon_id=s.id) AS like_count,
           (SELECT COUNT(*)::int FROM public.feed_comments x WHERE x.sermon_id=s.id) AS comment_count,
           (SELECT COUNT(*)::int FROM public.feed_saves x WHERE x.sermon_id=s.id) AS save_count,
@@ -39,6 +40,8 @@ export async function handleFeed(request, env, url) {
           UNION ALL
           SELECT CONCAT('p:',p.id) AS id,p.title,p.author_name AS author,p.body,p.youtube_url,p.media_url,p.media_type,p.created_at,false AS is_featured,p.type,'user' AS source_type,true AS is_user_post,
           CASE WHEN $1 <> '' AND LOWER(p.user_email)=LOWER($1) THEN true ELSE false END AS is_owner,
+          CASE WHEN $1 <> '' AND EXISTS(SELECT 1 FROM public.feed_user_follows f WHERE LOWER(f.follower_email)=LOWER($1) AND LOWER(f.followed_email)=LOWER(p.user_email)) THEN true ELSE false END AS following,
+          p.user_email AS author_email,
           CASE WHEN $1 <> '' AND LOWER(p.user_email)=LOWER($1) AND $4 THEN (SELECT COUNT(*)::int FROM public.feed_post_views x WHERE x.post_id=p.id AND LOWER(x.user_email)<>LOWER(p.user_email)) ELSE 0 END AS view_count,
           (SELECT COUNT(*)::int FROM public.feed_post_likes x WHERE x.post_id=p.id) AS like_count,
           (SELECT COUNT(*)::int FROM public.feed_post_comments x WHERE x.post_id=p.id) AS comment_count,
@@ -47,7 +50,7 @@ export async function handleFeed(request, env, url) {
           CASE WHEN $1 <> '' AND EXISTS(SELECT 1 FROM public.feed_post_saves x WHERE x.post_id=p.id AND LOWER(x.user_email)=$1) THEN true ELSE false END AS saved,
           (SELECT COALESCE(array_agg(name),'{}') FROM (SELECT u.full_name AS name FROM public.feed_post_likes x JOIN public.users u ON LOWER(u.email)=LOWER(x.user_email) WHERE x.post_id=p.id ORDER BY x.created_at DESC LIMIT 2) t) AS recent_likers
           FROM public.feed_posts p
-        ) feed_items ORDER BY created_at DESC,id DESC LIMIT $2 OFFSET $3`,[email,limit+1,offset,canSeeViews]);
+        ) feed_items WHERE $5 = false OR following = true ORDER BY created_at DESC,id DESC LIMIT $2 OFFSET $3`,[email,limit+1,offset,canSeeViews,followingOnly]);
         const hasMore = result.rows.length > limit;
         const posts = result.rows.slice(0,limit).map(row => ({ ...row, youtube_id: youtubeId(row.youtube_url) }));
         return json({ posts, hasMore, limit, offset },200,headers);
@@ -72,6 +75,22 @@ export async function handleFeed(request, env, url) {
         const inserted = await client.query(`INSERT INTO public.feed_posts (user_email,author_name,type,title,body,image_url,youtube_url,media_url,media_type) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id,user_email,author_name,type,title,body,image_url,youtube_url,media_url,media_type,created_at`,[email,name,type,title,text,imageUrl,youtubeUrl,mediaUrl,mediaType || null]);
         const post = inserted.rows[0];
         return json({ post:{...post,id:`p:${post.id}`,source_type:'user',is_user_post:true,is_owner:true,youtube_id:youtubeId(post.youtube_url),like_count:0,save_count:0,comment_count:0,view_count:0,liked:false,saved:false} },201,headers);
+      } finally { await client.end().catch(()=>{}); }
+    }
+    const followMatch = url.pathname.match(/^\/api\/feed\/users\/([^/]+)\/follow$/);
+    if (followMatch && request.method === 'POST') {
+      if (!email) return json({ error:'Sign in required to follow members.' },401,headers);
+      const followedEmail = decodeURIComponent(followMatch[1] || '').trim().toLowerCase();
+      if (!followedEmail || followedEmail === email) return json({ error:'You cannot follow yourself.' },400,headers);
+      const client = await getDb(env);
+      try {
+        const target = await client.query('SELECT 1 FROM public.users WHERE LOWER(email)=LOWER($1) LIMIT 1',[followedEmail]);
+        if (!target.rows.length) return json({ error:'Member not found.' },404,headers);
+        const current = await client.query('SELECT 1 FROM public.feed_user_follows WHERE LOWER(follower_email)=LOWER($1) AND LOWER(followed_email)=LOWER($2) LIMIT 1',[email,followedEmail]);
+        if (current.rows.length) await client.query('DELETE FROM public.feed_user_follows WHERE LOWER(follower_email)=LOWER($1) AND LOWER(followed_email)=LOWER($2)',[email,followedEmail]);
+        else await client.query('INSERT INTO public.feed_user_follows(follower_email,followed_email) VALUES($1,$2) ON CONFLICT DO NOTHING',[email,followedEmail]);
+        const following = !(current.rows.length > 0);
+        return json({ following },200,headers);
       } finally { await client.end().catch(()=>{}); }
     }
     const viewMatch = url.pathname.match(/^\/api\/feed\/posts\/([^/]+)\/view$/);
