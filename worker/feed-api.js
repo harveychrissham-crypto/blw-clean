@@ -85,9 +85,30 @@ export async function handleFeed(request, env, url) {
         return json({ ok:true,recorded:inserted.rows.length>0 },200,headers);
       } finally { await client.end().catch(()=>{}); }
     }
-    const match = url.pathname.match(/^\/api\/feed\/posts\/([^/]+)(?:\/(like|save|comments))?$/);
+    if (url.pathname === '/api/feed/reports' && request.method === 'GET') {
+      if (!email) return json({ error:'Sign in required.' },401,headers);
+      const client = await getDb(env);
+      try {
+        if (!(await canViewOwnPostInsights(client,email))) return json({ error:'Admins only.' },403,headers);
+        const result = await client.query(`SELECT r.id,r.feed_item_id,r.reporter_email,r.reason,r.detail,r.created_at,u.full_name AS reporter_name FROM public.feed_content_reports r LEFT JOIN public.users u ON LOWER(u.email)=LOWER(r.reporter_email) WHERE r.status='open' ORDER BY r.created_at DESC LIMIT 100`);
+        return json({ reports: result.rows },200,headers);
+      } finally { await client.end().catch(()=>{}); }
+    }
+    const dismissMatch = url.pathname.match(/^\/api\/feed\/reports\/([^/]+)\/dismiss$/);
+    if (dismissMatch && request.method === 'POST') {
+      if (!email) return json({ error:'Sign in required.' },401,headers);
+      const reportId = parseId(dismissMatch[1]); if (!reportId) return json({ error:'Invalid report.' },400,headers);
+      const client = await getDb(env);
+      try {
+        if (!(await canViewOwnPostInsights(client,email))) return json({ error:'Admins only.' },403,headers);
+        const updated = await client.query(`UPDATE public.feed_content_reports SET status='dismissed' WHERE id=$1 RETURNING id`,[reportId]);
+        if (!updated.rows.length) return json({ error:'Report not found.' },404,headers);
+        return json({ ok:true },200,headers);
+      } finally { await client.end().catch(()=>{}); }
+    }
+    const match = url.pathname.match(/^\/api\/feed\/posts\/([^/]+)(?:\/(like|save|comments|report))?$/);
     if (!match) return json({error:'Not found.'},404,headers);
-    const feedId = parseFeedId(match[1]); if (!feedId.id) return json({error:'Invalid post.'},400,headers); const action=match[2]||''; const client=await getDb(env);
+    const feedId = parseFeedId(match[1]); if (!feedId.id) return json({error:'Invalid post.'},400,headers); const action=match[2]||''; const client=await getDb(env); const canonicalId=`${feedId.kind==='post'?'p':'s'}:${feedId.id}`;
     try {
       if (feedId.kind === 'post') {
         const exists=await client.query('SELECT id FROM public.feed_posts WHERE id=$1 LIMIT 1',[feedId.id]); if(!exists.rows.length)return json({error:'Post not found.'},404,headers);
@@ -96,6 +117,7 @@ export async function handleFeed(request, env, url) {
         if(action==='comments'&&request.method==='GET'){const result=await client.query('SELECT id,user_email,author_name,body,created_at FROM public.feed_post_comments WHERE post_id=$1 ORDER BY created_at ASC,id ASC LIMIT 100',[feedId.id]);return json({comments:result.rows},200,headers);}
         if(action==='comments'&&request.method==='POST'){if(!email)return json({error:'Sign in required to comment.'},401,headers);const body=await request.json().catch(()=>({}));const text=typeof body?.body==='string'?body.body.trim().slice(0,1000):'';if(!text)return json({error:'Comment cannot be empty.'},400,headers);const name=await authorName(client,email);const inserted=await client.query('INSERT INTO public.feed_post_comments(post_id,user_email,author_name,body) VALUES($1,$2,$3,$4) RETURNING id,user_email,author_name,body,created_at',[feedId.id,email,name,text]);return json({comment:inserted.rows[0]},201,headers);}
         if(action==='comments'&&request.method==='DELETE'){if(!email)return json({error:'Sign in required.'},401,headers);const commentId=parseId(url.searchParams.get('commentId'));if(!commentId)return json({error:'Invalid comment.'},400,headers);const deleted=await client.query('DELETE FROM public.feed_post_comments WHERE id=$1 AND LOWER(user_email)=$2 RETURNING id',[commentId,email]);if(!deleted.rows.length)return json({error:'Comment not found, or it is not yours to delete.'},404,headers);return json({ok:true},200,headers);}
+        if(action==='report'&&request.method==='POST'){if(!email)return json({error:'Sign in required to report content.'},401,headers);const body=await request.json().catch(()=>({}));const reason=typeof body?.reason==='string'?body.reason.trim().slice(0,60):'';const detail=typeof body?.detail==='string'?body.detail.trim().slice(0,500):'';if(!reason)return json({error:'Please choose a reason.'},400,headers);await client.query('INSERT INTO public.feed_content_reports(feed_item_id,reporter_email,reason,detail) VALUES($1,$2,$3,$4) ON CONFLICT(feed_item_id,reporter_email) DO NOTHING',[canonicalId,email,reason,detail||null]);return json({ok:true},200,headers);}
         return json({error:'Method not allowed.'},405,headers);
       }
       const exists=await client.query('SELECT id FROM public.sermons WHERE id=$1 LIMIT 1',[feedId.id]);if(!exists.rows.length)return json({error:'Post not found.'},404,headers);
@@ -104,6 +126,7 @@ export async function handleFeed(request, env, url) {
       if(action==='comments'&&request.method==='GET'){const result=await client.query('SELECT id,user_email,author_name,body,created_at FROM public.feed_comments WHERE sermon_id=$1 ORDER BY created_at ASC,id ASC LIMIT 100',[feedId.id]);return json({comments:result.rows},200,headers);}
       if(action==='comments'&&request.method==='POST'){if(!email)return json({error:'Sign in required to comment.'},401,headers);const body=await request.json().catch(()=>({}));const text=typeof body?.body==='string'?body.body.trim().slice(0,1000):'';if(!text)return json({error:'Comment cannot be empty.'},400,headers);const name=await authorName(client,email);const inserted=await client.query('INSERT INTO public.feed_comments(sermon_id,user_email,author_name,body) VALUES($1,$2,$3,$4) RETURNING id,user_email,author_name,body,created_at',[feedId.id,email,name,text]);return json({comment:inserted.rows[0]},201,headers);}
       if(action==='comments'&&request.method==='DELETE'){if(!email)return json({error:'Sign in required.'},401,headers);const commentId=parseId(url.searchParams.get('commentId'));if(!commentId)return json({error:'Invalid comment.'},400,headers);const deleted=await client.query('DELETE FROM public.feed_comments WHERE id=$1 AND LOWER(user_email)=$2 RETURNING id',[commentId,email]);if(!deleted.rows.length)return json({error:'Comment not found, or it is not yours to delete.'},404,headers);return json({ok:true},200,headers);}
+      if(action==='report'&&request.method==='POST'){if(!email)return json({error:'Sign in required to report content.'},401,headers);const body=await request.json().catch(()=>({}));const reason=typeof body?.reason==='string'?body.reason.trim().slice(0,60):'';const detail=typeof body?.detail==='string'?body.detail.trim().slice(0,500):'';if(!reason)return json({error:'Please choose a reason.'},400,headers);await client.query('INSERT INTO public.feed_content_reports(feed_item_id,reporter_email,reason,detail) VALUES($1,$2,$3,$4) ON CONFLICT(feed_item_id,reporter_email) DO NOTHING',[canonicalId,email,reason,detail||null]);return json({ok:true},200,headers);}
       return json({error:'Method not allowed.'},405,headers);
     } finally { await client.end().catch(()=>{}); }
   } catch(error) { console.error('[worker] feed API failed',{message:error?.message,path:url.pathname}); return json({error:'Unable to load Feed right now.'},503,headers); }
