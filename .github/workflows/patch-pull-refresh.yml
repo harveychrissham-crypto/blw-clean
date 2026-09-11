@@ -1,0 +1,48 @@
+name: Patch pull refresh spinner
+
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-pull-refresh.yml'
+  workflow_dispatch:
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Patch pull refresh UI
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('client/src/pages/Feed.jsx')
+          s = p.read_text()
+          old = "<PullToRefreshIndicator state={pullState} />"
+          new = "<motion.div animate={pullState === 'refreshing' ? { rotate: 360 } : { rotate: 0 }} transition={pullState === 'refreshing' ? { repeat: Infinity, duration: 0.85, ease: 'linear' } : { duration: 0.2 }}><PullToRefreshIndicator state={pullState} /></motion.div>"
+          if old not in s:
+              raise SystemExit('PullToRefreshIndicator usage not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+      - name: Build
+        run: npm --prefix client install && npm --prefix client run build
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add client/src/pages/Feed.jsx
+          git commit -m "feat: add Instagram-style pull refresh spinner"
+          git push
+      - name: Remove temporary workflow
+        if: success()
+        run: |
+          rm .github/workflows/patch-pull-refresh.yml
+          git add .github/workflows/patch-pull-refresh.yml
+          git commit -m "chore: remove pull refresh patch workflow"
+          git push
