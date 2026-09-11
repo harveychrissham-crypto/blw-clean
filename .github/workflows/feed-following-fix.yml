@@ -1,53 +1,23 @@
 name: Patch Feed Following dependency
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   patch:
-    if: ${{ github.event.head_commit.message != 'fix: Feed Following tab request dependency' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: Patch Feed.jsx
         shell: python
         run: |
           from pathlib import Path
           path = Path('client/src/pages/Feed.jsx')
           text = path.read_text()
-          old = "writeCachedFeed(normalized);}}catch(e)"
-          new = "if(tab==='All')writeCachedFeed(normalized);}}catch(e)"
-          if old in text:
-              text = text.replace(old, new, 1)
-          elif new not in text:
-              raise SystemExit('Feed cache marker not found')
-
-          old = "}},[]);\n  const loadMore=useCallback"
-          new = "}},[tab]);\n  const loadMore=useCallback"
-          if old in text:
-              text = text.replace(old, new, 1)
-          elif "}},[tab]);\n  const loadMore=useCallback" not in text:
-              raise SystemExit('Feed loadFirst dependency marker not found')
+          text = text.replace("writeCachedFeed(normalized);}}catch(e)", "if(tab==='All')writeCachedFeed(normalized);}}catch(e)", 1)
+          text = text.replace("}},[]);\n  const loadMore=useCallback", "}},[tab]);\n  const loadMore=useCallback", 1)
           path.write_text(text)
-
-      - name: Build client
-        run: npm --prefix client install --no-audit --no-fund && npm --prefix client run build
-
-      - name: Remove patch workflow
-        run: rm -f .github/workflows/feed-following-fix.yml
-
-      - name: Commit source fix and cleanup
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add client/src/pages/Feed.jsx .github/workflows/feed-following-fix.yml
-          git commit -m "fix: Feed Following tab request dependency"
-          git push
