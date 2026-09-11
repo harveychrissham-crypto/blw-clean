@@ -2,6 +2,7 @@ import { apiFetch } from '../config/api';
 
 const FEED_CACHE_KEY = 'blw_feed_cache_v2';
 const FEED_ACTION_QUEUE_KEY = 'blw_feed_action_queue_v1';
+const PUBLIC_USER_STORAGE_KEY = 'blw_public_user_v1';
 const recordedFeedViews = new Set();
 const inFlightFeedViews = new Map();
 
@@ -45,6 +46,19 @@ function normalizePost(row = {}) {
     saved: Boolean(row.saved),
     time: row.time || formatFeedTime(row.created_at),
   };
+}
+
+function readPublicUser() {
+  try {
+    const user = JSON.parse(localStorage.getItem(PUBLIC_USER_STORAGE_KEY) || 'null');
+    if (!user || typeof user !== 'object') return { name: 'Member', avatarUrl: '' };
+    return {
+      name: user.name || 'Member',
+      avatarUrl: user.avatarUrl || '',
+    };
+  } catch {
+    return { name: 'Member', avatarUrl: '' };
+  }
 }
 
 function readActionQueue() {
@@ -273,34 +287,39 @@ export async function fetchComments(id) {
   return Array.isArray(body?.comments) ? body.comments : [];
 }
 
+function makeQueuedComment(postId, body) {
+  const text = String(body || '').trim();
+  const author = readPublicUser();
+  const clientId = `queued-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return {
+    id: null,
+    clientId,
+    postId: String(postId),
+    body: text,
+    author: author.name,
+    avatarUrl: author.avatarUrl,
+    queued: true,
+  };
+}
+
 export async function addComment(id, body) {
+  const text = String(body || '').trim();
+  if (!text) throw new Error('Comment cannot be empty.');
   if (typeof navigator !== 'undefined' && !navigator.onLine) {
-    queueAction({ action: 'comment', postId: String(id), body: String(body || '').trim() });
-    return {
-      id: `queued-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      postId: String(id),
-      body: String(body || '').trim(),
-      author: 'You',
-      avatarUrl: '',
-      queued: true,
-    };
+    const optimistic = makeQueuedComment(id, text);
+    queueAction({ action: 'comment', postId: String(id), body: text, clientId: optimistic.clientId });
+    return optimistic;
   }
   try {
-    const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/comments`, { method: 'POST', body: JSON.stringify({ body }) });
+    const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/comments`, { method: 'POST', body: JSON.stringify({ body: text }) });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) throw Object.assign(new Error(result?.error || 'Unable to add comment.'), { status: response.status });
     return result.comment;
   } catch (error) {
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      queueAction({ action: 'comment', postId: String(id), body: String(body || '').trim() });
-      return {
-        id: `queued-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        postId: String(id),
-        body: String(body || '').trim(),
-        author: 'You',
-        avatarUrl: '',
-        queued: true,
-      };
+      const optimistic = makeQueuedComment(id, text);
+      queueAction({ action: 'comment', postId: String(id), body: text, clientId: optimistic.clientId });
+      return optimistic;
     }
     throw error;
   }
