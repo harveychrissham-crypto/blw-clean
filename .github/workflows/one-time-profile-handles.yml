@@ -1,0 +1,55 @@
+name: One-time profile handles patch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-time-profile-handles.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Add profile handles to Feed identity
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('client/src/pages/Feed.jsx')
+          text = path.read_text(encoding='utf-8')
+
+          marker = "function formatNameList(names) { if (names.length <= 1) return names[0] || ''; if (names.length === 2) return `${names[0]} and ${names[1]}`; return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`; }"
+          addition = marker + "\nfunction getPostHandle(post) { const explicit = String(post.authorHandle || post.handle || post.username || '').trim().replace(/^@+/, ''); if (explicit) return `@${explicit}`; const emailLocal = String(post.authorEmail || '').split('@')[0].trim(); const source = emailLocal || String(post.authorName || post.author || '').trim(); const handle = source.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 30); return handle ? `@${handle}` : '@member'; }"
+          if 'function getPostHandle(post)' not in text:
+              if marker not in text:
+                  raise SystemExit('formatNameList marker not found')
+              text = text.replace(marker, addition, 1)
+
+          old = '<div className="text-[11px] text-white/40">{post.createdAt?new Date(post.createdAt).toLocaleString():\'\'}</div>'
+          new = '<div className="mt-0.5 truncate text-[10px] font-medium text-white/40">{getPostHandle(post)}</div><div className="text-[11px] text-white/40">{post.createdAt?new Date(post.createdAt).toLocaleString():\'\'}</div>'
+          if 'getPostHandle(post)' not in text:
+              raise SystemExit('handle function was not inserted')
+          if old not in text:
+              raise SystemExit('createdAt marker not found')
+          text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Commit Feed change and remove one-time workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add client/src/pages/Feed.jsx
+          git commit -m "feat: add profile handles to Feed identities"
+          git rm .github/workflows/one-time-profile-handles.yml
+          git commit -m "chore: remove one-time profile handles workflow"
+          git push
