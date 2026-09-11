@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FiArrowLeft, FiMessageCircle, FiSearch, FiSend, FiX } from 'react-icons/fi';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -17,7 +17,7 @@ const formatTime = (value) => {
 
 function Avatar({ person, size = 'h-12 w-12' }) {
   return <div className={`${size} grid shrink-0 place-items-center overflow-hidden rounded-full border border-white/10 bg-white/[0.07] text-xs font-bold text-white`}>
-    {person?.avatarUrl ? <img src={person.avatarUrl} alt="" className="h-full w-full object-cover"  loading="lazy" decoding="async"/> : initials(person?.name)}
+    {person?.avatarUrl ? <img src={person.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async"/> : initials(person?.name)}
   </div>;
 }
 
@@ -34,6 +34,7 @@ export default function Messages() {
   const [sending, setSending] = useState(false);
   const [searchingPeople, setSearchingPeople] = useState(false);
   const [error, setError] = useState('');
+  const messageListRef = useRef(null);
 
   const conversationId = params.get('conversation');
 
@@ -71,6 +72,13 @@ export default function Messages() {
     const timer = window.setInterval(() => { loadThread(conversationId, true); loadConversations(); }, 5000);
     return () => window.clearInterval(timer);
   }, [conversationId, loadConversations, loadThread]);
+
+  useEffect(() => {
+    const node = messageListRef.current;
+    if (!node) return;
+    const frame = window.requestAnimationFrame(() => { node.scrollTop = node.scrollHeight; });
+    return () => window.cancelAnimationFrame(frame);
+  }, [conversationId, messages.length]);
 
   useEffect(() => {
     if (!query.trim() || query.trim().length < 2 || !user) { setPeople([]); setSearchingPeople(false); return undefined; }
@@ -154,7 +162,7 @@ export default function Messages() {
       <main className={`min-w-0 flex-1 flex-col bg-[#08080d]/35 ${selected ? 'flex' : 'hidden sm:flex'}`}>
         {selected ? <>
           <header className="flex items-center gap-3 border-b border-white/[0.07] px-4 py-3.5"><button onClick={() => { setSelected(null); setParams({ messages: '1' }); }} className="grid h-9 w-9 place-items-center rounded-full text-white/60 hover:bg-white/[0.06] sm:hidden" aria-label="Back to conversations"><FiArrowLeft /></button><Avatar person={selected.other} size="h-10 w-10" /><div className="min-w-0"><h2 className="truncate text-sm font-bold text-white">{selected.other?.name}</h2><p className="truncate text-xs text-white/35">{selected.other?.title || selected.other?.chapter || 'BLW Kenya Zone member'}</p></div></header>
-          <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">{messages.length ? <div className="mx-auto flex max-w-2xl flex-col gap-2">{messages.map((message) => { const mine = message.senderEmail?.toLowerCase() === user.email?.toLowerCase(); return <div key={message.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${mine ? 'rounded-br-md bg-white text-[#0d0c18]' : 'rounded-bl-md border border-white/[0.08] bg-white/[0.055] text-white/90'}`}><p className="whitespace-pre-wrap break-words">{message.body}</p><p className={`mt-1 text-[9px] ${mine ? 'text-[#0d0c18]/45' : 'text-white/25'}`}>{formatTime(message.createdAt)}</p></div></div>; })}</div> : <div className="grid h-full place-items-center text-center"><div><Avatar person={selected.other} size="h-16 w-16 mx-auto" /><h3 className="mt-4 font-bold text-white">{selected.other?.name}</h3><p className="mt-1 text-xs text-white/35">Send the first message.</p></div></div>}</div>
+          <div ref={messageListRef} className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">{messages.length ? <div className="mx-auto flex max-w-2xl flex-col gap-2">{messages.map((message) => { const mine = message.senderEmail?.toLowerCase() === user.email?.toLowerCase(); return <div key={message.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${mine ? 'rounded-br-md bg-white text-[#0d0c18]' : 'rounded-bl-md border border-white/[0.08] bg-white/[0.055] text-white/90'}`}><p className="whitespace-pre-wrap break-words">{message.body}</p><p className={`mt-1 text-[9px] ${mine ? 'text-[#0d0c18]/45' : 'text-white/25'}`}>{formatTime(message.createdAt)}</p></div></div>; })}</div> : <div className="grid h-full place-items-center text-center"><div><Avatar person={selected.other} size="h-16 w-16 mx-auto" /><h3 className="mt-4 font-bold text-white">{selected.other?.name}</h3><p className="mt-1 text-xs text-white/35">Send the first message.</p></div></div>}</div>
           <form onSubmit={sendMessage} className="border-t border-white/[0.07] p-3 sm:p-4"><div className="mx-auto flex max-w-2xl items-end gap-2 rounded-2xl border border-white/10 bg-white/[0.045] p-2"><textarea value={composer} onChange={(event) => setComposer(event.target.value.slice(0, 2000))} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} rows={1} placeholder="Message…" className="max-h-28 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm text-white outline-none placeholder:text-white/30" /><button disabled={!composer.trim() || sending} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-[#0d0c18] transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-30" aria-label="Send message"><FiSend className="h-4 w-4" /></button></div></form>
         </> : <div className="hidden h-full place-items-center text-center sm:grid"><div><FiMessageCircle className="mx-auto h-9 w-9 text-white/20" /><h2 className="mt-4 font-bold text-white">Select a conversation</h2><p className="mt-1 text-sm text-white/35">Choose a member from your inbox.</p></div></div>}
       </main>
