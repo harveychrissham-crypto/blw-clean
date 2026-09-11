@@ -18,9 +18,13 @@ jobs:
           fetch-depth: 0
 
       - name: One-time Feed CI repair
-        if: ${{ github.event_name == 'push' && github.event.head_commit.message == 'fix: trigger Feed CI repair' }}
         shell: bash
         run: |
+          if [ "$GITHUB_EVENT_NAME" != "push" ] || [ "$(git log -1 --pretty=%s)" != "fix: trigger Feed CI repair" ]; then
+            echo "Skipping one-time Feed repair"
+            exit 0
+          fi
+
           python - <<'PY'
           from pathlib import Path
 
