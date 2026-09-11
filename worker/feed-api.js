@@ -120,7 +120,7 @@ export async function handleFeed(request, env, url) {
       const client = await getDb(env);
       try {
         if (!(await canViewOwnPostInsights(client,email))) return json({ error:'Admins only.' },403,headers);
-        const updated = await client.query(`UPDATE public.feed_content_reports SET status='dismissed' WHERE id=$1 RETURNING id`);
+        const updated = await client.query(`UPDATE public.feed_content_reports SET status='dismissed' WHERE id=$1 RETURNING id`,[reportId]);
         if (!updated.rows.length) return json({ error:'Report not found.' },404,headers);
         return json({ ok:true },200,headers);
       } finally { await client.end().catch(()=>{}); }
