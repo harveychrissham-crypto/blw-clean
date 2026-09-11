@@ -1,0 +1,53 @@
+name: Repair Feed CI regressions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'client/src/pages/Feed.jsx'
+      - 'worker/feed-api.js'
+      - '.github/workflows/repair-feed-failures.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: !startsWith(github.event.head_commit.message, 'chore: remove temporary feed repair workflow')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Repair exact regressions
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          feed = Path('client/src/pages/Feed.jsx')
+          text = feed.read_text()
+          bad = "const save=useCallback(()=>runAction('save',()=>toggleSave(post.id),()=>({saved:!post.saved,saveCount:Math.max(0,post.saveCount+(post.saved?-1:1)})),previous=>({saved:previous.saved,saveCount:previous.saveCount})),[runAction,post]);"
+          good = "const save=useCallback(()=>runAction('save',()=>toggleSave(post.id),()=>({saved:!post.saved,saveCount:Math.max(0,post.saveCount+(post.saved?-1:1))}),previous=>({saved:previous.saved,saveCount:previous.saveCount})),[runAction,post]);"
+          if bad in text:
+              feed.write_text(text.replace(bad, good))
+
+          worker = Path('worker/feed-api.js')
+          text = worker.read_text()
+          bad = "const updated = await client.query(`UPDATE public.feed_content_reports SET status='dismissed' WHERE id=$1 RETURNING id`);"
+          good = "const updated = await client.query(`UPDATE public.feed_content_reports SET status='dismissed' WHERE id=$1 RETURNING id`,[reportId]);"
+          if bad in text:
+              worker.write_text(text.replace(bad, good))
+          PY
+
+      - name: Commit repair
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add client/src/pages/Feed.jsx worker/feed-api.js
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: repair Feed CI regressions"
+          git push
