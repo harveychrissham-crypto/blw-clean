@@ -45,8 +45,10 @@ async function tusPatch(url, chunk, offset, uploadConfig, onProgress) {
     };
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
-        const nextOffset = Number(xhr.getResponseHeader('Upload-Offset'));
-        resolve(Number.isFinite(nextOffset) ? nextOffset : offset + chunk.size);
+        const rawOffset = xhr.getResponseHeader('Upload-Offset');
+        const parsedOffset = rawOffset == null || rawOffset.trim() === '' ? NaN : Number(rawOffset);
+        const nextOffset = Number.isFinite(parsedOffset) ? parsedOffset : offset + chunk.size;
+        resolve(nextOffset);
       } else {
         reject(new Error(`Video upload failed (${xhr.status}).`));
       }
