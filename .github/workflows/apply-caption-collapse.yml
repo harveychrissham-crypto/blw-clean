@@ -1,0 +1,59 @@
+name: Apply caption collapse
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-caption-collapse.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-feed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add caption expand/collapse
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('client/src/pages/Feed.jsx')
+          text = path.read_text(encoding='utf-8')
+
+          marker = "function PostCard({post,user,onUpdate,notificationId}) {"
+          component = r'''function CaptionText({text}) {
+            const [expanded, setExpanded] = useState(false);
+            const value = String(text || '');
+            if (!value) return null;
+            const shouldCollapse = value.length > 180 || value.split('\\n').length > 4;
+            return <div className="mt-2 text-sm leading-6">
+              <span className="text-white/70" style={!expanded && shouldCollapse ? {display:'-webkit-box',WebkitLineClamp:4,WebkitBoxOrient:'vertical',overflow:'hidden'} : undefined}>{value}</span>
+              {shouldCollapse && <button type="button" onClick={()=>setExpanded(v=>!v)} className="ml-1 font-semibold text-white/90 hover:text-white">{expanded?'less':'more'}</button>}
+            </div>;
+          }
+
+          '''
+
+          if 'function CaptionText({text}) {' not in text:
+              if marker not in text:
+                  raise SystemExit('PostCard marker not found')
+              text = text.replace(marker, component + marker, 1)
+
+          old = '<p className="mt-2 text-sm leading-6"><b>{post.author}</b>{post.body&&<> <span className="text-white/70">{post.body}</span></>}</p>'
+          new = '<p className="mt-2 text-sm leading-6"><b>{post.author}</b>{post.body&&<> <CaptionText text={post.body}/></>}</p>'
+          if old not in text:
+              raise SystemExit('Caption markup not found')
+          text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Commit Feed change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add client/src/pages/Feed.jsx
+          git commit -m "feat: add feed caption expand collapse"
+          git push
