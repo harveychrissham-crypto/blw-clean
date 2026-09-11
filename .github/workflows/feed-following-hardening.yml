@@ -1,5 +1,7 @@
 name: feed-following-hardening
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -23,12 +25,12 @@ jobs:
           text = text.replace(old, new, 1)
 
           old = "SELECT * FROM (\n          SELECT CONCAT('s:',s.id) AS id,s.title,s.speaker AS author,s.description AS body,s.youtube_url,NULL::text AS media_url,NULL::text AS media_type,s.created_at,s.is_featured,'sermon' AS type,'sermon' AS source_type,false AS is_user_post,false AS is_owner,0::int AS view_count,"
-          new = "SELECT * FROM (\n          SELECT CONCAT('s:',s.id) AS id,s.title,s.speaker AS author,s.description AS body,s.youtube_url,NULL::text AS media_url,NULL::text AS media_type,s.created_at,s.is_featured,'sermon' AS type,'sermon' AS source_type,false AS is_user_post,false AS is_owner,false AS following,0::int AS view_count,"
+          new = "SELECT * FROM (\n          SELECT CONCAT('s:',s.id) AS id,s.title,s.speaker AS author,s.description AS body,s.youtube_url,NULL::text AS media_url,NULL::text AS media_type,s.created_at,s.is_featured,'sermon' AS type,'sermon' AS source_type,false AS is_user_post,false AS is_owner,false AS following,NULL::text AS author_email,0::int AS view_count,"
           if old not in text: raise SystemExit('worker sermon marker not found')
           text = text.replace(old, new, 1)
 
           old = "SELECT CONCAT('p:',p.id) AS id,p.title,p.author_name AS author,p.body,p.youtube_url,p.media_url,p.media_type,p.created_at,false AS is_featured,p.type,'user' AS source_type,true AS is_user_post,\n          CASE WHEN $1 <> '' AND LOWER(p.user_email)=LOWER($1) THEN true ELSE false END AS is_owner,"
-          new = "SELECT CONCAT('p:',p.id) AS id,p.title,p.author_name AS author,p.body,p.youtube_url,p.media_url,p.media_type,p.created_at,false AS is_featured,p.type,'user' AS source_type,true AS is_user_post,\n          CASE WHEN $1 <> '' AND LOWER(p.user_email)=LOWER($1) THEN true ELSE false END AS is_owner,\n          CASE WHEN $1 <> '' AND EXISTS(SELECT 1 FROM public.feed_user_follows f WHERE LOWER(f.follower_email)=LOWER($1) AND LOWER(f.followed_email)=LOWER(p.user_email)) THEN true ELSE false END AS following,"
+          new = "SELECT CONCAT('p:',p.id) AS id,p.title,p.author_name AS author,p.body,p.youtube_url,p.media_url,p.media_type,p.created_at,false AS is_featured,p.type,'user' AS source_type,true AS is_user_post,\n          CASE WHEN $1 <> '' AND LOWER(p.user_email)=LOWER($1) THEN true ELSE false END AS is_owner,\n          CASE WHEN $1 <> '' AND EXISTS(SELECT 1 FROM public.feed_user_follows f WHERE LOWER(f.follower_email)=LOWER($1) AND LOWER(f.followed_email)=LOWER(p.user_email)) THEN true ELSE false END AS following,\n          p.user_email AS author_email,"
           if old not in text: raise SystemExit('worker post marker not found')
           text = text.replace(old, new, 1)
 
@@ -80,10 +82,6 @@ jobs:
           new = "<div className=\"flex min-w-0 items-center gap-2\"><p className=\"max-w-[15rem] truncate text-sm font-bold\">{post.author}{post.isOfficial&&<span className=\"ml-1 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white text-[9px] text-ink-950\" aria-label=\"Official ministry\">✓</span>}</p>{post.isUserPost&&!post.isOwner&&post.authorEmail&&<button type=\"button\" onClick={follow} disabled={followBusy} className=\"shrink-0 text-[10px] font-bold text-white/70 hover:text-white disabled:opacity-40\">{post.following?'Following':'Follow'}</button>}</div>"
           if old not in text: raise SystemExit('PostCard header marker not found')
           text = text.replace(old, new, 1)
-
-          old = "  const update=useCallback((id,patch)=>{"
-          # no-op marker used only to avoid accidental edits below
-          if old not in text: raise SystemExit('Feed update marker not found')
 
           old = "  const loadFirst=useCallback(async({silent=false}={})=>{if(!silent)setLoading(true);setError('');try{const result=await fetchFeed({limit:PAGE_SIZE,offset:0});"
           new = "  const loadFirst=useCallback(async({silent=false}={})=>{if(!silent)setLoading(true);setError('');try{const result=await fetchFeed({limit:PAGE_SIZE,offset:0,followingOnly:tab==='Following'});"
