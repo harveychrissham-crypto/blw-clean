@@ -1,5 +1,61 @@
-import { Upload } from 'tus-js-client';
 import { apiFetch } from '../config/api';
+
+const TUS_VERSION = '1.0.0';
+const DEFAULT_CHUNK_SIZE = 10 * 1024 * 1024;
+
+function encodeMetadata(metadata) {
+  return Object.entries(metadata)
+    .filter(([, value]) => value !== undefined && value !== null && value !== '')
+    .map(([key, value]) => `${key} ${btoa(unescape(encodeURIComponent(String(value))))}`)
+    .join(',');
+}
+
+async function tusCreate(uploadConfig, file) {
+  const response = await fetch(uploadConfig.endpoint, {
+    method: 'POST',
+    headers: {
+      'Tus-Resumable': TUS_VERSION,
+      'Upload-Length': String(file.size),
+      AuthorizationSignature: uploadConfig.signature,
+      AuthorizationExpire: String(uploadConfig.expirationTime),
+      VideoId: uploadConfig.videoId,
+      LibraryId: String(uploadConfig.libraryId),
+      'Upload-Metadata': encodeMetadata({ filename: file.name || 'video', filetype: file.type || 'video/mp4' }),
+    },
+  });
+  if (!response.ok) throw new Error(`Unable to initialize video upload (${response.status}).`);
+  const location = response.headers.get('Location');
+  if (!location) throw new Error('Bunny Stream did not return an upload location.');
+  return location;
+}
+
+async function tusPatch(url, chunk, offset, uploadConfig, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PATCH', url, true);
+    xhr.setRequestHeader('Tus-Resumable', TUS_VERSION);
+    xhr.setRequestHeader('Content-Type', 'application/offset+octet-stream');
+    xhr.setRequestHeader('Upload-Offset', String(offset));
+    xhr.setRequestHeader('AuthorizationSignature', uploadConfig.signature);
+    xhr.setRequestHeader('AuthorizationExpire', String(uploadConfig.expirationTime));
+    xhr.setRequestHeader('VideoId', uploadConfig.videoId);
+    xhr.setRequestHeader('LibraryId', String(uploadConfig.libraryId));
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress?.(event.loaded, chunk.size, offset);
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const nextOffset = Number(xhr.getResponseHeader('Upload-Offset'));
+        resolve(Number.isFinite(nextOffset) ? nextOffset : offset + chunk.size);
+      } else {
+        reject(new Error(`Video upload failed (${xhr.status}).`));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Video upload failed. Check your connection and try again.'));
+    xhr.onabort = () => reject(new Error('Video upload was cancelled.'));
+    xhr.send(chunk);
+  });
+}
 
 export async function createStreamDirectUpload(maxDurationSeconds = 1200, title = 'BLW Feed Video') {
   const response = await apiFetch('/api/stream/direct-upload', {
@@ -18,39 +74,27 @@ export async function uploadToStream(uploadConfig, file, onProgress) {
   }
   if (!file) throw new Error('Choose a video first.');
 
-  return new Promise((resolve, reject) => {
-    const upload = new Upload(file, {
-      endpoint: uploadConfig.endpoint,
-      retryDelays: [0, 3000, 5000, 10000, 20000, 60000],
-      chunkSize: 10 * 1024 * 1024,
-      headers: {
-        AuthorizationSignature: uploadConfig.signature,
-        AuthorizationExpire: String(uploadConfig.expirationTime),
-        VideoId: uploadConfig.videoId,
-        LibraryId: String(uploadConfig.libraryId),
-      },
-      metadata: {
-        filename: file.name || 'video',
-        filetype: file.type || 'video/mp4',
-      },
-      onError: (error) => reject(new Error(error?.message || 'Video upload failed.')),
-      onProgress: (bytesUploaded, bytesTotal) => {
-        const percent = bytesTotal ? Math.round((bytesUploaded / bytesTotal) * 100) : 0;
-        onProgress?.(percent);
-      },
-      onSuccess: () => resolve({
-        uid: uploadConfig.videoId,
-        url: uploadConfig.manifestUrl,
-        mediaType: 'video',
-        manifestUrl: uploadConfig.manifestUrl,
-      }),
-    });
+  const uploadUrl = await tusCreate(uploadConfig, file);
+  let offset = 0;
+  const chunkSize = Math.min(DEFAULT_CHUNK_SIZE, file.size || DEFAULT_CHUNK_SIZE);
 
-    upload.findPreviousUploads().then((previousUploads) => {
-      if (previousUploads?.length) upload.resumeFromPreviousUpload(previousUploads[0]);
-      upload.start();
-    }).catch(() => upload.start());
-  });
+  while (offset < file.size) {
+    const chunk = file.slice(offset, Math.min(offset + chunkSize, file.size));
+    const nextOffset = await tusPatch(uploadUrl, chunk, offset, uploadConfig, (loaded) => {
+      const totalUploaded = offset + loaded;
+      onProgress?.(Math.round((totalUploaded / file.size) * 100));
+    });
+    if (nextOffset <= offset) throw new Error('Bunny Stream returned an invalid upload offset.');
+    offset = nextOffset;
+  }
+
+  onProgress?.(100);
+  return {
+    uid: uploadConfig.videoId,
+    url: uploadConfig.manifestUrl,
+    mediaType: 'video',
+    manifestUrl: uploadConfig.manifestUrl,
+  };
 }
 
 export async function getStreamVideoStatus(uid) {
