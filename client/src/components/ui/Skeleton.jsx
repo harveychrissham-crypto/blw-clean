@@ -1,12 +1,20 @@
-// Loading skeletons — used instead of a blank flash while async data
-// (venue lookups, member search, sermon/event lists, etc) resolves.
-// Shapes stay within the same rounding scale as the rest of the app.
+// Loading skeletons — used instead of a blank flash while async data resolves.
+// The shimmer is intentionally subtle so it feels native to the dark feed UI.
 
 const shimmerBg =
-  'bg-[linear-gradient(90deg,rgba(255,255,255,0.04)_25%,rgba(255,255,255,0.09)_37%,rgba(255,255,255,0.04)_63%)] bg-[length:200%_100%] animate-shimmer';
+  'bg-[linear-gradient(90deg,rgba(255,255,255,0.035)_0%,rgba(255,255,255,0.075)_45%,rgba(255,255,255,0.035)_70%)] bg-[length:220%_100%]';
 
 export function Skeleton({ className = '' }) {
-  return <div className={`rounded-xl ${shimmerBg} ${className}`} />;
+  return (
+    <>
+      <style>{`@keyframes blwSkeletonShimmer{0%{background-position:120% 0}100%{background-position:-120% 0}}@media(prefers-reduced-motion:reduce){.blw-skeleton-shimmer{animation:none!important}}`}</style>
+      <div
+        aria-hidden="true"
+        className={`blw-skeleton-shimmer rounded-xl ${shimmerBg} ${className}`}
+        style={{ animation: 'blwSkeletonShimmer 1.8s ease-in-out infinite' }}
+      />
+    </>
+  );
 }
 
 // A raised-weight card skeleton — mirrors <Card variant="raised"> proportions.
