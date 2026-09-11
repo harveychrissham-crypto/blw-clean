@@ -28,8 +28,6 @@
     "SUPABASE_URL": "https://eyybjbfxgfugjjfyoirq.supabase.co",
     "SUPABASE_STORAGE_BUCKET": "outreach-photos",
     "SUPABASE_AVATARS_BUCKET": "avatars",
-    "BUNNY_STREAM_LIBRARY_ID": "",
-    "BUNNY_STREAM_CDN_HOSTNAME": "",
     "ALLOWED_ORIGIN": "",
     "APP_LATEST_VERSION": "1.0.0",
     "APP_MIN_VERSION": "",
