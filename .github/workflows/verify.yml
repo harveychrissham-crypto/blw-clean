@@ -6,131 +6,28 @@ on:
   pull_request:
     branches: [main]
 
-permissions:
-  contents: write
-
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Apply unified meeting dock
-        shell: python
-        run: |
-          from pathlib import Path
-
-          path = Path('client/src/pages/Meetings.jsx')
-          text = path.read_text()
-
-          start = text.index('          <ReactionsBar liveRoom={roomRef.current} localParticipant={local} participants={participants} />', text.index('  return (\n    <section ref={containerRef}'))
-          end = text.index('          {error &&', start)
-          controls = '''          <ReactionsBar liveRoom={roomRef.current} localParticipant={local} participants={participants} />
-          {showMutedHint && (
-            <div className="pointer-events-none fixed bottom-24 left-1/2 z-40 -translate-x-1/2 rounded-full border border-white/10 bg-[#202124]/95 px-4 py-1.5 text-xs text-white/80 shadow-lg backdrop-blur">🔇 You are muted</div>
-          )}
-          <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center px-2 pb-[max(0.65rem,env(safe-area-inset-bottom))] sm:px-4 sm:pb-4">
-            <div className="flex w-fit max-w-[calc(100vw-1rem)] items-center gap-1.5 overflow-x-auto rounded-full border border-white/10 bg-[#111216]/95 p-1.5 shadow-[0_18px_60px_rgba(0,0,0,.55)] backdrop-blur-2xl sm:gap-2 sm:p-2">
-              <ControlButton active={mic} onClick={toggleMic} onIcon={FiMic} offIcon={FiMicOff} label="Microphone"/>
-              <ControlButton active={camera} onClick={toggleCamera} onIcon={FiCamera} offIcon={FiCameraOff} label="Camera"/>
-              <Button variant="custom" size="none" type="button" onClick={() => window.dispatchEvent(new CustomEvent('blw-meeting-raise-hand'))} aria-label="Raise hand" title="Raise hand" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white">✋</Button>
-              <Button variant="custom" size="none" type="button" onClick={() => window.dispatchEvent(new CustomEvent('blw-meeting-toggle-reactions'))} aria-label="Reactions" title="Reactions" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white">🙂</Button>
-              <ControlButton active={sharing} onClick={toggleShare} onIcon={FiMonitor} offIcon={FiMonitor} label="Present" disabled={!screenShareSupported}/>
-              <ControlButton active={showChat} onClick={openChat} onIcon={FiMessageSquare} offIcon={FiMessageSquare} label="Chat"/>
-              {isHost && <ControlButton active={showHost} onClick={openHost} onIcon={FiUsers} offIcon={FiUsers} label="Participants"/>}
-              <div className="relative">
-                <ControlButton active={showMore} onClick={openMore} onIcon={FiMoreHorizontal} offIcon={FiMoreHorizontal} label="More options"/>
-                {showMore && (
-                  <>
-                    <Button variant="custom" size="none" type="button" aria-label="Close menu" onClick={() => setShowMore(false)} className="fixed inset-0 z-30 cursor-default !bg-transparent !border-0 !p-0" />
-                    <Card variant="custom" className="absolute bottom-full left-1/2 z-40 mb-3 w-60 -translate-x-1/2 overflow-hidden rounded-2xl border border-white/10 bg-[#15161b]/98 p-1 shadow-2xl backdrop-blur-xl">
-                      <Button variant="custom" size="none" type="button" onClick={() => { toggleBlur(); setShowMore(false); }} disabled={blurBusy || !camera} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-white/85 hover:bg-white/5 disabled:text-white/30"><FiDroplet className="h-4 w-4"/><span className="flex-1">{blurBusy ? 'Loading blur…' : blurOn ? 'Turn off blur' : 'Blur background'}</span>{blurOn && <FiCheck className="h-4 w-4 text-white/60"/>}</Button>
-                      <Button variant="custom" size="none" type="button" onClick={() => { toggleFullscreen(); setShowMore(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-white/85 hover:bg-white/5"><FiMaximize2 className="h-4 w-4"/><span>Full screen</span></Button>
-                      <Button variant="custom" size="none" type="button" onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/meetings?room=${encodeURIComponent(roomName)}`); setShowMore(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-white/85 hover:bg-white/5"><FiCopy className="h-4 w-4"/><span>Copy meeting link</span></Button>
-                    </Card>
-                  </>
-                )}
-              </div>
-              <div className="mx-0.5 h-6 w-px shrink-0 bg-white/10" />
-              <Button variant="custom" size="none" onClick={leaveVoluntarily} aria-label="Leave meeting" title="Leave meeting" className="grid h-11 w-12 shrink-0 place-items-center rounded-full bg-red-500 text-white shadow-lg shadow-red-950/20 hover:bg-red-600"><FiPhoneOff/></Button>
-            </div>
-          </div>
-'''
-          text = text[:start] + controls + text[end:]
-
-          marker = '  const toggleHand = () => {\n'
-          insertion = '''  useEffect(() => {
-    const raise = () => toggleHand();
-    const reactions = () => setShowPicker((v) => !v);
-    window.addEventListener('blw-meeting-raise-hand', raise);
-    window.addEventListener('blw-meeting-toggle-reactions', reactions);
-    return () => {
-      window.removeEventListener('blw-meeting-raise-hand', raise);
-      window.removeEventListener('blw-meeting-toggle-reactions', reactions);
-    };
-  }, [handRaised, liveRoom, localParticipant]);
-
-  const toggleHand = () => {
-'''
-          if marker not in text:
-              raise SystemExit('toggleHand marker not found')
-          text = text.replace(marker, insertion, 1)
-
-          picker_start = text.index('      <div className="mx-auto mt-3 flex w-fit items-center gap-2">')
-          picker_end = text.index('      <style>{`', picker_start)
-          picker = '''      {showPicker && (
-        <>
-          <Button variant="custom" size="none" type="button" aria-label="Close reaction picker" onClick={() => setShowPicker(false)} className="fixed inset-0 z-40 cursor-default !bg-transparent !border-0 !p-0" />
-          <Card variant="custom" className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-full border border-white/10 bg-[#111216]/98 p-1.5 shadow-2xl backdrop-blur-xl sm:bottom-24">
-            <div className="flex items-center gap-1">
-              {REACTION_EMOJIS.map((emoji) => (
-                <Button variant="custom" size="none" key={emoji} type="button" onClick={() => react(emoji)} aria-label={`React with ${emoji}`} className="grid h-10 w-10 place-items-center rounded-full bg-white/[0.06] px-0 py-0 text-lg shadow-inner ring-1 ring-white/5 transition hover:scale-105 hover:bg-white/10">{emoji}</Button>
-              ))}
-            </div>
-          </Card>
-        </>
-      )}
-'''
-          text = text[:picker_start] + picker + text[picker_end:]
-
-          text = text.replace('''        @keyframes reaction-float { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-140px); opacity: 0; } }
-        .reaction-bubble { animation: reaction-float 2.5s ease-out forwards; }''','''        @keyframes reaction-float { 0% { transform: translateY(0) scale(.92); opacity: 0; } 12% { opacity: 1; } 100% { transform: translateY(-180px) scale(1.06); opacity: 0; } }
-        .reaction-bubble { animation: reaction-float 2.5s cubic-bezier(.2,.75,.25,1) forwards; }''', 1)
-          path.write_text(text)
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            client/package-lock.json
 
       - name: Install root dependencies
         run: npm ci
 
       - name: Install client dependencies
-        working-directory: client
-        run: npm ci
+        run: npm --prefix client ci
 
       - name: Build client
-        working-directory: client
-        run: npm run build
+        run: npm --prefix client run build
 
-      - name: Commit meeting UI patch
-        shell: bash
-        run: |
-          if git diff --quiet -- client/src/pages/Meetings.jsx; then
-            echo "Meeting dock already applied."
-          else
-            git config user.name "Code Audit"
-            git config user.email "audit@local"
-            git add -A
-            git commit -m "feat: unify meeting control dock"
-            git push
-          fi
-
-      - name: Validate Worker configuration
-        run: npx wrangler deploy --dry-run --outdir .wrangler-dry-run
+      - name: Validate Worker bundle
+        run: npx wrangler deploy --dry-run --outdir .wrangler/verify
