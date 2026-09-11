@@ -48,4 +48,4 @@ article[id^="feed-"] .aspect-video > div.h-full > img { object-fit: contain; }
 [role="dialog"][aria-modal="true"] { overscroll-behavior: contain; }
 [role="dialog"][aria-modal="true"] video, [role="dialog"][aria-modal="true"] img { max-height: 100%; }
 
-@media (max-width: 639px) { article[id^="feed-"] { border-color: rgba(255,255,255,0.055) !important; } article[id^="feed-"] > div:first-child { padding-top: 12px; padding-bottom: 12px; } }
+@media (max-width: 639px) { article[id^="feed-"] { border-color: rgba(255,255,255,0.09) !important; } article[id^="feed-"] > div:first-child { padding-top: 12px; padding-bottom: 12px; } }
