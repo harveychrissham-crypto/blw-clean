@@ -1,6 +1,8 @@
 import jwt from 'jsonwebtoken';
 import { corsHeaders } from './security.js';
 
+const BUNNY_TUS_ENDPOINT = 'https://video.bunnycdn.com/tusupload';
+
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), {
   status,
   headers: { 'content-type': 'application/json; charset=utf-8', ...headers },
@@ -19,12 +21,23 @@ function getEmail(request, env) {
   }
 }
 
-function streamConfig(env) {
+function bunnyConfig(env) {
   return {
-    accountId: typeof env.CLOUDFLARE_ACCOUNT_ID === 'string' ? env.CLOUDFLARE_ACCOUNT_ID.trim() : '',
-    token: typeof env.CLOUDFLARE_STREAM_TOKEN === 'string' ? env.CLOUDFLARE_STREAM_TOKEN.trim() : '',
-    customerCode: typeof env.CLOUDFLARE_STREAM_CUSTOMER_CODE === 'string' ? env.CLOUDFLARE_STREAM_CUSTOMER_CODE.trim() : '',
+    libraryId: typeof env.BUNNY_STREAM_LIBRARY_ID === 'string' ? env.BUNNY_STREAM_LIBRARY_ID.trim() : '',
+    apiKey: typeof env.BUNNY_STREAM_API_KEY === 'string' ? env.BUNNY_STREAM_API_KEY.trim() : '',
+    cdnHostname: typeof env.BUNNY_STREAM_CDN_HOSTNAME === 'string' ? env.BUNNY_STREAM_CDN_HOSTNAME.trim().replace(/^https?:\/\//, '').replace(/\/$/, '') : '',
   };
+}
+
+async function sha256Hex(value) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function safeTitle(value, email) {
+  const title = String(value || '').trim().replace(/[\u0000-\u001f\u007f]/g, ' ').slice(0, 180);
+  return title || `BLW Feed Video — ${email}`;
 }
 
 export async function handleStream(request, env, url) {
@@ -35,49 +48,82 @@ export async function handleStream(request, env, url) {
   const email = getEmail(request, env);
   if (!email) return json({ error: 'Sign in required to upload videos.' }, 401, headers);
 
-  const { accountId, token, customerCode } = streamConfig(env);
-  if (!accountId || !token || !customerCode) {
-    return json({ error: 'Cloudflare Stream is not configured on the server yet.' }, 503, headers);
+  const { libraryId, apiKey, cdnHostname } = bunnyConfig(env);
+  if (!libraryId || !apiKey || !cdnHostname) {
+    return json({ error: 'Bunny Stream is not configured on the server yet.' }, 503, headers);
   }
 
   if (url.pathname === '/api/stream/direct-upload' && request.method === 'POST') {
     const body = await request.json().catch(() => ({}));
-    const requestedDuration = Number(body?.maxDurationSeconds || 1200);
-    const maxDurationSeconds = Math.min(Math.max(Number.isFinite(requestedDuration) ? requestedDuration : 1200, 1), 36000);
-    const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/stream/direct_upload`, {
+    const title = safeTitle(body?.title, email);
+    const response = await fetch(`https://video.bunnycdn.com/library/${encodeURIComponent(libraryId)}/videos`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${token}`,
+        AccessKey: apiKey,
+        Accept: 'application/json',
         'Content-Type': 'application/json',
-        'Upload-Creator': email.slice(0, 64),
       },
-      body: JSON.stringify({ maxDurationSeconds, meta: { app: 'blw-kenya-zone', creator: email } }),
+      body: JSON.stringify({ title }),
     });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok || !payload?.success || !payload?.result?.uploadURL) {
-      console.error('[worker] Cloudflare Stream direct upload creation failed', { status: response.status, errors: payload?.errors });
+    if (!response.ok || !payload?.guid) {
+      console.error('[worker] Bunny Stream video creation failed', { status: response.status, payload });
       return json({ error: 'Unable to start the video upload right now.' }, response.status >= 400 && response.status < 500 ? response.status : 502, headers);
     }
-    const uid = String(payload.result.uid || payload.result.id || '').trim();
-    if (!uid) return json({ error: 'Cloudflare Stream did not return a video ID.' }, 502, headers);
-    const base = `https://customer-${customerCode}.cloudflarestream.com/${encodeURIComponent(uid)}`;
+
+    const videoId = String(payload.guid).trim();
+    const expires = Math.floor(Date.now() / 1000) + 15 * 60;
+    const signature = await sha256Hex(`${libraryId}${apiKey}${expires}${videoId}`);
+    const manifestUrl = `https://${cdnHostname}/${encodeURIComponent(videoId)}/playlist.m3u8`;
+    const thumbnailUrl = `https://${cdnHostname}/${encodeURIComponent(videoId)}/thumbnail.jpg`;
+
     return json({
-      uploadURL: payload.result.uploadURL,
-      uid,
-      playerUrl: `${base}/iframe`,
-      manifestUrl: `${base}/manifest/video.m3u8`,
-      mediaType: 'stream',
+      uploadURL: BUNNY_TUS_ENDPOINT,
+      endpoint: BUNNY_TUS_ENDPOINT,
+      signature,
+      expirationTime: expires,
+      videoId,
+      uid: videoId,
+      libraryId,
+      manifestUrl: `/api/stream/videos/${encodeURIComponent(videoId)}/manifest/video.m3u8`,
+      directManifestUrl: manifestUrl,
+      thumbnail: thumbnailUrl,
+      mediaType: 'video',
     }, 200, headers);
+  }
+
+  const manifestMatch = url.pathname.match(/^\/api\/stream\/videos\/([^/]+)\/manifest\/video\.m3u8$/);
+  if (manifestMatch && request.method === 'GET') {
+    const videoId = decodeURIComponent(manifestMatch[1] || '').trim();
+    if (!videoId || videoId.length > 100) return json({ error: 'Invalid Bunny video ID.' }, 400, headers);
+    const target = `https://${cdnHostname}/${encodeURIComponent(videoId)}/playlist.m3u8`;
+    return Response.redirect(target, 302);
   }
 
   const statusMatch = url.pathname.match(/^\/api\/stream\/videos\/([^/]+)$/);
   if (statusMatch && request.method === 'GET') {
-    const uid = decodeURIComponent(statusMatch[1] || '').trim();
-    if (!uid || uid.length > 64) return json({ error: 'Invalid Stream video ID.' }, 400, headers);
-    const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/stream/${encodeURIComponent(uid)}`, { headers: { Authorization: `Bearer ${token}` } });
+    const videoId = decodeURIComponent(statusMatch[1] || '').trim();
+    if (!videoId || videoId.length > 100) return json({ error: 'Invalid Bunny video ID.' }, 400, headers);
+    const response = await fetch(`https://video.bunnycdn.com/library/${encodeURIComponent(libraryId)}/videos/${encodeURIComponent(videoId)}`, {
+      headers: { AccessKey: apiKey, Accept: 'application/json' },
+    });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok || !payload?.success) return json({ error: 'Unable to read the video status.' }, response.status >= 400 && response.status < 500 ? response.status : 502, headers);
-    return json({ uid, readyToStream: Boolean(payload.result?.readyToStream), state: payload.result?.status?.state || 'unknown', duration: payload.result?.duration ?? null, thumbnail: payload.result?.thumbnail || null }, 200, headers);
+    if (!response.ok || !payload?.guid) {
+      return json({ error: 'Unable to read the video status.' }, response.status >= 400 && response.status < 500 ? response.status : 502, headers);
+    }
+    const status = Number(payload.status);
+    const readyToStream = status >= 3 && Number(payload.encodeProgress || 0) >= 100;
+    return json({
+      uid: videoId,
+      readyToStream,
+      state: Number.isFinite(status) ? status : 'unknown',
+      encodeProgress: Number(payload.encodeProgress || 0),
+      duration: payload.length ?? null,
+      width: payload.width ?? null,
+      height: payload.height ?? null,
+      thumbnail: `https://${cdnHostname}/${encodeURIComponent(videoId)}/thumbnail.jpg`,
+      manifestUrl: `/api/stream/videos/${encodeURIComponent(videoId)}/manifest/video.m3u8`,
+    }, 200, headers);
   }
 
   return json({ error: 'Not found.' }, 404, headers);
