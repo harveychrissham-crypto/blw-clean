@@ -1,0 +1,60 @@
+name: Feed hardening
+on:
+  push:
+    branches: [main]
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch exact Feed patterns
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('client/src/pages/Feed.jsx')
+          text = p.read_text()
+          replacements = [
+            (
+              "function ActionMenu({post}) {\n  const [open,setOpen]=useState(false); const [reporting,setReporting]=useState(false); const [reported,setReported]=useState(false);",
+              "function ActionMenu({post}) {\n  const [open,setOpen]=useState(false); const [reporting,setReporting]=useState(false); const [reported,setReported]=useState(false); const menuRef=useRef(null);\n  useEffect(()=>{if(!open)return;const onDoc=e=>{if(menuRef.current&&!menuRef.current.contains(e.target))setOpen(false);};const onKey=e=>{if(e.key==='Escape')setOpen(false);};document.addEventListener('pointerdown',onDoc);document.addEventListener('keydown',onKey);return()=>{document.removeEventListener('pointerdown',onDoc);document.removeEventListener('keydown',onKey);};},[open]);"
+            ),
+            (
+              "return <div className=\"relative\"><button type=\"button\" onClick={()=>setOpen(v=>!v)}",
+              "return <div ref={menuRef} className=\"relative\"><button type=\"button\" onClick={()=>setOpen(v=>!v)}"
+            ),
+            (
+              "useEffect(()=>{if(!isYoutube)return;const frame=frameRef.current;if(!frame)return;const send=()=>{frame.contentWindow?.postMessage(JSON.stringify({event:'command',func:active?'playVideo':'pauseVideo',args:[]}), '*');frame.contentWindow?.postMessage(JSON.stringify({event:'command',func:muted?'mute':'unMute',args:[]}), '*');};send();setPlaying(active);const retry=setTimeout(send,500);return()=>clearTimeout(retry);},[active,muted,isYoutube]);",
+              "useEffect(()=>{if(!isYoutube)return;const frame=frameRef.current;if(!frame)return;const send=()=>{frame.contentWindow?.postMessage(JSON.stringify({event:'command',func:active?'playVideo':'pauseVideo',args:[]}), '*');frame.contentWindow?.postMessage(JSON.stringify({event:'command',func:muted?'mute':'unMute',args:[]}), '*');};const timers=[0,350,900,1800].map(delay=>setTimeout(send,delay));setPlaying(active);return()=>timers.forEach(clearTimeout);},[active,muted,isYoutube]);"
+            ),
+            (
+              "const filtered=useMemo(()=>tab==='Reels'?posts.filter(p=>p.type==='reel'&&(p.videoId||(p.mediaUrl&&p.mediaType==='video'))):tab==='Following'?posts.filter(p=>p.following!==false):tab==='Ministry'?posts.filter(p=>p.sourceType==='sermon'||p.sourceType==='devotional'||p.sourceType==='testimony'||p.ministry!==false):posts,[tab,posts]);",
+              "const filtered=useMemo(()=>tab==='Reels'?posts.filter(p=>p.type==='reel'&&(p.videoId||(p.mediaUrl&&p.mediaType==='video'))):tab==='Following'?posts.filter(p=>p.following===true):tab==='Ministry'?posts.filter(p=>['sermon','devotional','testimony'].includes(String(p.sourceType||'').toLowerCase())||p.isOfficial):posts,[tab,posts]);"
+            ),
+            (
+              "function normalize(post,index=0){return {...post,id:post.id??`post-${index}`,type:post.type||'post',title:post.title||post.body||'Untitled',body:post.body||'',author:post.author||'BLW Kenya Zone',avatarUrl:post.avatarUrl||post.avatar_url||'',time:post.time||'',likeCount:Number(post.likeCount??post.like_count??0),commentCount:Number(post.commentCount??post.comment_count??0),saveCount:Number(post.saveCount??post.save_count??0),viewCount:Number(post.viewCount??post.view_count??0),isOwner:Boolean(post.isOwner??post.is_owner),liked:Boolean(post.liked),saved:Boolean(post.saved),recentLikers:Array.isArray(post.recentLikers)?post.recentLikers:Array.isArray(post.recent_likers)?post.recent_likers:[]};",
+              "function normalize(post,index=0){return {...post,id:post.id??`post-${index}`,type:post.type||'post',title:post.title||post.body||'Untitled',body:post.body||'',author:post.author||'BLW Kenya Zone',avatarUrl:post.avatarUrl||post.avatar_url||'',time:post.time||'',likeCount:Number(post.likeCount??post.like_count??0),commentCount:Number(post.commentCount??post.comment_count??0),saveCount:Number(post.saveCount??post.save_count??0),viewCount:Number(post.viewCount??post.view_count??0),isOwner:Boolean(post.isOwner??post.is_owner),liked:Boolean(post.liked),saved:Boolean(post.saved),following:post.following===true||post.following==='true',isOfficial:Boolean(post.isOfficial??post.is_official),sourceType:post.sourceType||post.source_type||'',isUserPost:Boolean(post.isUserPost??post.is_user_post),recentLikers:Array.isArray(post.recentLikers)?post.recentLikers:Array.isArray(post.recent_likers)?post.recent_likers:[]};"
+            )
+          ]
+          for old, new in replacements:
+            if old not in text:
+              raise SystemExit(f'pattern not found: {old[:90]}')
+            text = text.replace(old, new, 1)
+          p.write_text(text)
+          PY
+      - name: Verify build
+        run: npm run build
+      - name: Commit and remove workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add client/src/pages/Feed.jsx
+          git commit -m "fix: harden Feed filtering and interactions"
+          git rm .github/workflows/feed-hardening.yml
+          git commit -m "chore: remove Feed hardening workflow"
+          git push
