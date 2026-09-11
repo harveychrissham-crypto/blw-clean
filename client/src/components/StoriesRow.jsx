@@ -163,12 +163,12 @@ export default function StoriesRow() {
               {myGroup ? (
                 <div className="h-full w-full rounded-full p-[2px]" style={{ background: myGroup.some((story) => !story.viewed) ? 'linear-gradient(135deg,#EC2FA8,#8A2BE2,#F2A31C)' : 'rgba(255,255,255,0.15)' }}>
                   <div className="h-full w-full overflow-hidden rounded-full border-2 border-[#0d0c18] bg-white/5">
-                    {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" /> : <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">{(user.name || '?').charAt(0).toUpperCase()}</div>}
+                    {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover"  loading="lazy" decoding="async"/> : <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">{(user.name || '?').charAt(0).toUpperCase()}</div>}
                   </div>
                 </div>
               ) : (
                 <div className="grid h-full w-full place-items-center overflow-hidden rounded-full border-2 border-dashed border-white/20 bg-white/[0.04]">
-                  {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover opacity-60" /> : <span className="text-sm font-bold text-white/50">{(user.name || '?').charAt(0).toUpperCase()}</span>}
+                  {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover opacity-60"  loading="lazy" decoding="async"/> : <span className="text-sm font-bold text-white/50">{(user.name || '?').charAt(0).toUpperCase()}</span>}
                 </div>
               )}
             </button>
@@ -187,7 +187,7 @@ export default function StoriesRow() {
               <button type="button" onClick={() => openGroup(group, firstUnseenIndex === -1 ? 0 : firstUnseenIndex, groupIndex)} className="h-16 w-16 shrink-0 rounded-full" aria-label={`View ${first.authorName}'s story`}>
                 <div className="h-full w-full rounded-full p-[2px]" style={{ background: unseen ? 'linear-gradient(135deg,#EC2FA8,#8A2BE2,#F2A31C)' : 'rgba(255,255,255,0.15)' }}>
                   <div className="h-full w-full overflow-hidden rounded-full border-2 border-[#0d0c18] bg-white/5">
-                    {first.authorAvatarUrl ? <img src={first.authorAvatarUrl} alt="" className="h-full w-full object-cover" /> : <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">{(first.authorName || '?').charAt(0).toUpperCase()}</div>}
+                    {first.authorAvatarUrl ? <img src={first.authorAvatarUrl} alt="" className="h-full w-full object-cover"  loading="lazy" decoding="async"/> : <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">{(first.authorName || '?').charAt(0).toUpperCase()}</div>}
                   </div>
                 </div>
               </button>

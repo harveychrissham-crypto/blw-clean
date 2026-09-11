@@ -17,7 +17,7 @@ const formatTime = (value) => {
 
 function Avatar({ person, size = 'h-12 w-12' }) {
   return <div className={`${size} grid shrink-0 place-items-center overflow-hidden rounded-full border border-white/10 bg-white/[0.07] text-xs font-bold text-white`}>
-    {person?.avatarUrl ? <img src={person.avatarUrl} alt="" className="h-full w-full object-cover" /> : initials(person?.name)}
+    {person?.avatarUrl ? <img src={person.avatarUrl} alt="" className="h-full w-full object-cover"  loading="lazy" decoding="async"/> : initials(person?.name)}
   </div>;
 }
 
