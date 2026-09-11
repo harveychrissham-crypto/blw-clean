@@ -1,0 +1,44 @@
+name: Patch video post scale-in
+
+on:
+  workflow_dispatch:
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch Feed video media
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('client/src/pages/Feed.jsx')
+          s = p.read_text()
+          old = 'return <div className="relative h-full w-full" onDoubleClick={onDoubleTap}>{media}'
+          new = 'return <motion.div initial={{ scale: 0.985, opacity: 0.98 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }} className="relative h-full w-full" onDoubleClick={onDoubleTap}>{media}'
+          if old not in s:
+              raise SystemExit('target not found or patch already applied')
+          s = s.replace(old, new, 1)
+          old2 = '</div>; }\nfunction ZoomableImage'
+          new2 = '</motion.div>; }\nfunction ZoomableImage'
+          if old2 not in s:
+              raise SystemExit('closing target not found')
+          s = s.replace(old2, new2, 1)
+          p.write_text(s)
+          PY
+          grep -q 'initial={{ scale: 0.985' client/src/pages/Feed.jsx
+      - name: Validate client build
+        run: npm --prefix client install && npm --prefix client run build
+      - name: Commit patch and remove workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add client/src/pages/Feed.jsx .github/workflows/patch-video-scale.yml
+          git commit -m 'feat: add subtle video post scale-in'
+          git rm .github/workflows/patch-video-scale.yml
+          git commit -m 'chore: remove one-time video scale patch workflow'
+          git push
