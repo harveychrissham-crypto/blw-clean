@@ -23,10 +23,10 @@ jobs:
           from pathlib import Path
           p = Path('client/src/pages/Feed.jsx')
           s = p.read_text()
-          old = "<PullToRefreshIndicator state={pullState} />"
-          new = "<motion.div animate={pullState === 'refreshing' ? { rotate: 360 } : { rotate: 0 }} transition={pullState === 'refreshing' ? { repeat: Infinity, duration: 0.85, ease: 'linear' } : { duration: 0.2 }}><PullToRefreshIndicator state={pullState} /></motion.div>"
+          old = '<PullToRefreshIndicator distance={pullDistance} refreshing={refreshing||pullRefreshing}/>'
+          new = '<motion.div animate={refreshing||pullRefreshing ? { rotate: 360 } : { rotate: 0 }} transition={refreshing||pullRefreshing ? { repeat: Infinity, duration: 0.85, ease: "linear" } : { duration: 0.2 }}><PullToRefreshIndicator distance={pullDistance} refreshing={refreshing||pullRefreshing}/></motion.div>'
           if old not in s:
-              raise SystemExit('PullToRefreshIndicator usage not found')
+              raise SystemExit('Current PullToRefreshIndicator usage not found')
           s = s.replace(old, new, 1)
           p.write_text(s)
           PY
