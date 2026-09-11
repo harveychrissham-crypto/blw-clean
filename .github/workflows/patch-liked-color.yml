@@ -1,0 +1,49 @@
+name: Patch shared liked-state color
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-liked-color.yml'
+  workflow_dispatch:
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch Feed.jsx
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('client/src/pages/Feed.jsx')
+          s = p.read_text()
+          if 'const LIKED_STATE_COLOR' not in s:
+              s = s.replace("const PAGE_SIZE = 20;", "const PAGE_SIZE = 20;\nconst LIKED_STATE_COLOR = '#EC2FA8';", 1)
+          s = s.replace("post.liked?'text-[#EC2FA8]'", "post.liked?'text-[var(--feed-liked-color)]'", 1)
+          p.write_text(s)
+          PY
+          if ! grep -q 'const LIKED_STATE_COLOR' client/src/pages/Feed.jsx; then exit 1; fi
+          if ! grep -q 'var(--feed-liked-color)' client/src/pages/Feed.jsx; then exit 1; fi
+      - name: Add shared CSS variable
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('client/src/index.css')
+          s = p.read_text()
+          if '--feed-liked-color' not in s:
+              s = ':root { --feed-liked-color: #EC2FA8; }\n' + s
+          p.write_text(s)
+          PY
+      - name: Build
+        run: npm --prefix client install && npm --prefix client run build
+      - name: Commit and remove workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add client/src/pages/Feed.jsx client/src/index.css
+          git commit -m 'feat: share liked-state color across feed'
+          git push
+          git rm .github/workflows/patch-liked-color.yml
+          git commit -m 'chore: remove one-time liked color patch workflow'
+          git push
