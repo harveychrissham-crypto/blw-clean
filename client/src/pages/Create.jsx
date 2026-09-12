@@ -24,6 +24,7 @@ export default function Create() {
   const [uploadStage, setUploadStage] = useState('');
   const [error, setError] = useState('');
   const [published, setPublished] = useState(false);
+  const pendingUploadRef = useRef(null); // { direct } from a prior attempt that finished uploading but timed out waiting on Bunny to finish processing -- retrying should resume from here, not re-upload the whole file again.
 
   const isDirty = Boolean(file || caption.trim() || location.trim());
   const confirmLeave = () => !isDirty || window.confirm('You have unsaved content. Leave Create and discard it?');
@@ -34,6 +35,12 @@ export default function Create() {
     setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [file]);
+
+  // A pending Bunny upload only makes sense for the file it was uploaded
+  // for. Any time the selected file changes (new pick, removed, swapped),
+  // forget it -- retrying publish should always mean a fresh upload for
+  // whatever is currently selected, never resuming a stale one.
+  useEffect(() => { pendingUploadRef.current = null; }, [file]);
 
   useEffect(() => {
     if (!isDirty) return undefined;
@@ -114,14 +121,24 @@ export default function Create() {
     if (!window.confirm(`Ready to share this ${type === 'reel' ? 'Reel' : 'post'}?`)) return;
     setUploading(true);
     setUploadProgress(0);
-    setUploadStage(file.type.startsWith('video/') ? 'Preparing Bunny Stream upload…' : 'Uploading image…');
+    setUploadStage(file.type.startsWith('video/') ? (pendingUploadRef.current ? 'Resuming — checking if your video is ready…' : 'Preparing Bunny Stream upload…') : 'Uploading image…');
     setError('');
     try {
       let uploaded;
       if (file.type.startsWith('video/')) {
-        const direct = await createStreamDirectUpload(1200);
-        setUploadStage('Uploading video…');
-        await uploadToStream(direct, file, setUploadProgress);
+        let direct = pendingUploadRef.current;
+        if (direct) {
+          setUploadStage('Resuming — checking if your video is ready…');
+          setUploadProgress(100);
+        } else {
+          direct = await createStreamDirectUpload(1200);
+          setUploadStage('Uploading video…');
+          await uploadToStream(direct, file, setUploadProgress);
+          // Uploaded successfully -- remember this so that if the
+          // processing-status wait below times out, retrying publish()
+          // resumes from here instead of uploading the entire file again.
+          pendingUploadRef.current = direct;
+        }
         setUploadStage('Processing video…');
         // Bunny needs a short window to finish transcoding after the upload
         // completes — publishing before it's ready would point the post at
@@ -146,6 +163,7 @@ export default function Create() {
       const title = cleanCaption.slice(0, 160) || (type === 'reel' ? 'New Reel' : 'New post');
       const body = cleanLocation ? `${cleanCaption}${cleanCaption ? '\n\n' : ''}📍 ${cleanLocation}` : cleanCaption;
       const created = await createFeedPost({ type, title, body, mediaUrl: uploaded.url, mediaType: uploaded.mediaType, thumbnailUrl: uploaded.thumbnailUrl || '' });
+      pendingUploadRef.current = null;
       hapticSuccess();
       setPublished(true);
       setTimeout(() => {
