@@ -137,7 +137,7 @@ function CaptionText({text}) {
   const [expanded, setExpanded] = useState(false);
   const value = String(text || '');
   if (!value) return null;
-  const shouldCollapse = value.length > 180 || value.split('\\n').length > 4;
+  const shouldCollapse = value.length > 180 || value.split('\n').length > 4;
   return <div className="mt-2 text-sm leading-6">
     <span className="text-white/70" style={!expanded && shouldCollapse ? {display:'-webkit-box',WebkitLineClamp:4,WebkitBoxOrient:'vertical',overflow:'hidden'} : undefined}>{value}</span>
     {shouldCollapse && <button type="button" onClick={()=>setExpanded(v=>!v)} className="ml-1 font-semibold text-white/90 hover:text-white">{expanded?'less':'more'}</button>}
