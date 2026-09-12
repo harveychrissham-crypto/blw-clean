@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FiX, FiVolume2, FiVolumeX, FiTrash2, FiSend, FiLoader, FiEye } from 'react-icons/fi';
 import { apiFetch } from '../config/api';
 import { hapticError, hapticSuccess, hapticTap } from '../utils/haptics';
@@ -26,6 +27,7 @@ function ViewerAvatar({ viewer, size = 'h-7 w-7' }) {
 }
 
 export default function StoryViewer({ stories, initialIndex = 0, viewerEmail, onClose, onViewed, onDeleted, onSwipeGroup }) {
+  const navigate = useNavigate();
   const [index, setIndex] = useState(initialIndex);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -172,7 +174,8 @@ export default function StoryViewer({ stories, initialIndex = 0, viewerEmail, on
 
       setReply('');
       hapticSuccess();
-      window.location.assign(`/feed?messages=1&conversation=${encodeURIComponent(conversationBody.conversationId)}`);
+      onClose?.();
+      navigate(`/feed?messages=1&conversation=${encodeURIComponent(conversationBody.conversationId)}`);
     } catch {
       setPaused(false);
       hapticError();
