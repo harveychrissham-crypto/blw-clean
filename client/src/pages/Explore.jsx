@@ -100,7 +100,7 @@ export default function Explore() {
                 ) : (
                   <div className="flex h-full w-full flex-col justify-end bg-gradient-to-br from-[#251b38] via-[#161426] to-[#0d0c18] p-3"><span className="line-clamp-4 text-xs font-medium leading-relaxed text-white/85 sm:text-sm">{post.title || post.body || 'Community update'}</span></div>
                 )}
-                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/75 to-transparent px-2 pb-2 pt-6 opacity-0 transition group-hover:opacity-100">
+                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/70 to-transparent px-2 pb-1.5 pt-5">
                   <span className="max-w-[70%] truncate text-[10px] text-white/85">{post.author || 'BLW Kenya Zone'}</span>
                   {tileLabel(post) && <span className="text-[10px] text-white/65">{tileLabel(post)}</span>}
                 </div>
