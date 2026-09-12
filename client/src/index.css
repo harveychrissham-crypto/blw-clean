@@ -1,4 +1,3 @@
-:root { --feed-liked-color: #EC2FA8; }
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap');
 @import './meetings.css';
 
@@ -10,6 +9,7 @@
   --bg-page: #0d0c18;
   --bg-navbar: rgba(13,12,24,0.92);
   --text-gold: #F2A31C;
+  --feed-liked-color: #EC2FA8;
   color-scheme: dark;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   line-height: 1.5;
