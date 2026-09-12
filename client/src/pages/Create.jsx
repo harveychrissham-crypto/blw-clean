@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiArrowLeft, FiCamera, FiCheck, FiFilm, FiImage, FiLoader, FiMapPin, FiSend, FiSmile, FiX } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { createFeedPost, uploadFeedMedia } from '../utils/feed';
-import { createStreamDirectUpload, uploadToStream } from '../utils/stream';
+import { createStreamDirectUpload, uploadToStream, getStreamVideoStatus } from '../utils/stream';
 import { hapticError, hapticSuccess, hapticTap } from '../utils/haptics';
 
 const MAX_IMAGE = 5 * 1024 * 1024;
@@ -122,8 +122,20 @@ export default function Create() {
         const direct = await createStreamDirectUpload(1200);
         setUploadStage('Uploading video…');
         await uploadToStream(direct, file, setUploadProgress);
+        setUploadStage('Processing video…');
+        // Bunny needs a short window to finish transcoding after the upload
+        // completes — publishing before it's ready would point the post at
+        // a manifest that isn't actually playable yet.
+        const deadline = Date.now() + 120_000;
+        let ready = false;
+        while (Date.now() < deadline) {
+          const status = await getStreamVideoStatus(direct.uid).catch(() => null);
+          if (status?.readyToStream) { ready = true; break; }
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+        }
+        if (!ready) throw new Error('Video is still processing — please try publishing again in a minute.');
         uploaded = { url: direct.manifestUrl, mediaType: 'video', streamUid: direct.uid };
-        setUploadStage('Video uploaded. Publishing…');
+        setUploadStage('Video ready. Publishing…');
       } else {
         uploaded = await uploadFeedMedia(file);
         setUploadProgress(100);
