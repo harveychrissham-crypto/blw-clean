@@ -25,9 +25,17 @@ export default function Create() {
   const [error, setError] = useState('');
   const [published, setPublished] = useState(false);
   const pendingUploadRef = useRef(null); // { direct } from a prior attempt that finished uploading but timed out waiting on Bunny to finish processing -- retrying should resume from here, not re-upload the whole file again.
+  const cancelledRef = useRef(false); // set true when the user confirms leaving mid-upload; publish() checks this at each step so a post can never get created after the user thought they'd cancelled.
 
   const isDirty = Boolean(file || caption.trim() || location.trim());
-  const confirmLeave = () => !isDirty || window.confirm('You have unsaved content. Leave Create and discard it?');
+  const confirmLeave = () => {
+    if (uploading) {
+      const proceed = window.confirm('An upload is still in progress. Leaving now will cancel it and nothing will be posted — continue?');
+      if (proceed) cancelledRef.current = true;
+      return proceed;
+    }
+    return !isDirty || window.confirm('You have unsaved content. Leave Create and discard it?');
+  };
 
   useEffect(() => {
     if (!file) { setPreview(''); return undefined; }
@@ -59,7 +67,7 @@ export default function Create() {
     let acceptingLeave = false;
     const onPopState = () => {
       if (acceptingLeave) return;
-      if (window.confirm('You have unsaved content. Leave Create and discard it?')) {
+      if (confirmLeave()) {
         acceptingLeave = true;
         navigate(-1);
       } else {
@@ -68,7 +76,7 @@ export default function Create() {
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, [isDirty, navigate]);
+  }, [isDirty, uploading, navigate]);
 
   const choose = (mode = type) => {
     hapticTap();
@@ -119,6 +127,7 @@ export default function Create() {
     if (type === 'reel' && !file.type.startsWith('video/')) return setError('A Reel must be a video.');
     if (uploading || published) return;
     if (!window.confirm(`Ready to share this ${type === 'reel' ? 'Reel' : 'post'}?`)) return;
+    cancelledRef.current = false;
     setUploading(true);
     setUploadProgress(0);
     setUploadStage(file.type.startsWith('video/') ? (pendingUploadRef.current ? 'Resuming — checking if your video is ready…' : 'Preparing Bunny Stream upload…') : 'Uploading image…');
@@ -139,6 +148,7 @@ export default function Create() {
           // resumes from here instead of uploading the entire file again.
           pendingUploadRef.current = direct;
         }
+        if (cancelledRef.current) return;
         setUploadStage('Processing video…');
         // Bunny needs a short window to finish transcoding after the upload
         // completes — publishing before it's ready would point the post at
@@ -146,18 +156,25 @@ export default function Create() {
         const deadline = Date.now() + 120_000;
         let ready = false;
         while (Date.now() < deadline) {
+          if (cancelledRef.current) return;
           const status = await getStreamVideoStatus(direct.uid).catch(() => null);
           if (status?.readyToStream) { ready = true; break; }
           await new Promise((resolve) => setTimeout(resolve, 3000));
         }
+        if (cancelledRef.current) return;
         if (!ready) throw new Error('Video is still processing — please try publishing again in a minute.');
         uploaded = { url: direct.manifestUrl, mediaType: 'video', streamUid: direct.uid };
         setUploadStage('Video ready. Publishing…');
       } else {
         uploaded = await uploadFeedMedia(file);
+        if (cancelledRef.current) return;
         setUploadProgress(100);
         setUploadStage('Publishing…');
       }
+      // Final gate: no matter what path got us here, a cancelled upload must
+      // never reach createFeedPost — that's the one call that actually
+      // publishes something visible to everyone else.
+      if (cancelledRef.current) return;
       const cleanCaption = caption.trim();
       const cleanLocation = location.trim();
       const title = cleanCaption.slice(0, 160) || (type === 'reel' ? 'New Reel' : 'New post');
@@ -170,6 +187,7 @@ export default function Create() {
         navigate(`/feed${type === 'reel' ? '?tab=reels' : ''}`, { replace: true, state: { createdPost: created } });
       }, 900);
     } catch (err) {
+      if (cancelledRef.current) return;
       setError(err?.message || 'Unable to publish right now. Your caption and media selection have been kept so you can retry.');
       hapticError();
     } finally {

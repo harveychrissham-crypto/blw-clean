@@ -159,9 +159,10 @@ if (typeof window !== 'undefined') {
   if (navigator.onLine) flushWhenAvailable();
 }
 
-export async function fetchFeed({ limit = 20, offset = 0, followingOnly = false } = {}) {
+export async function fetchFeed({ limit = 20, offset = 0, followingOnly = false, feedType = '' } = {}) {
   const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
   if (followingOnly) params.set('following', '1');
+  if (feedType === 'reel' || feedType === 'ministry') params.set('type', feedType);
   const response = await apiFetch(`/api/feed?${params.toString()}`, { method: 'GET' });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body?.error || 'Unable to load the Feed.');
