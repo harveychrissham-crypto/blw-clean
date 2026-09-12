@@ -36,7 +36,7 @@ export default function Explore() {
       if (filter === 'Photos' && isVideo) return false;
       if (filter === 'Videos' && !isVideo) return false;
       if (!needle) return true;
-      return [post.title, post.body, post.author, post.authorName, post.authorHandle]
+      return [post.title, post.body, post.author]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(needle));
     });
