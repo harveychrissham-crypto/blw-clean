@@ -24,11 +24,12 @@ export async function handleFeed(request, env, url) {
       const rawOffset = Number.parseInt(url.searchParams.get('offset') || '0', 10);
       const limit = Math.min(Math.max(Number.isFinite(rawLimit) ? rawLimit : 20, 1), 30);
       const offset = Math.max(Number.isFinite(rawOffset) ? rawOffset : 0, 0);
+      const followingOnly = url.searchParams.get('following') === '1' && Boolean(email);
       const client = await getDb(env);
       try {
         const canSeeViews = await canViewOwnPostInsights(client,email);
         const result = await client.query(`SELECT * FROM (
-          SELECT CONCAT('s:',s.id) AS id,s.title,s.speaker AS author,s.description AS body,s.youtube_url,NULL::text AS media_url,NULL::text AS media_type,s.created_at,s.is_featured,'sermon' AS type,'sermon' AS source_type,false AS is_user_post,false AS is_owner,0::int AS view_count,
+          SELECT CONCAT('s:',s.id) AS id,s.title,s.speaker AS author,s.description AS body,s.youtube_url,NULL::text AS media_url,NULL::text AS media_type,s.created_at,s.is_featured,'sermon' AS type,'sermon' AS source_type,false AS is_user_post,false AS is_owner,false AS following,NULL::text AS author_email,0::int AS view_count,
           (SELECT COUNT(*)::int FROM public.feed_likes x WHERE x.sermon_id=s.id) AS like_count,
           (SELECT COUNT(*)::int FROM public.feed_comments x WHERE x.sermon_id=s.id) AS comment_count,
           (SELECT COUNT(*)::int FROM public.feed_saves x WHERE x.sermon_id=s.id) AS save_count,
@@ -39,6 +40,8 @@ export async function handleFeed(request, env, url) {
           UNION ALL
           SELECT CONCAT('p:',p.id) AS id,p.title,p.author_name AS author,p.body,p.youtube_url,p.media_url,p.media_type,p.created_at,false AS is_featured,p.type,'user' AS source_type,true AS is_user_post,
           CASE WHEN $1 <> '' AND LOWER(p.user_email)=LOWER($1) THEN true ELSE false END AS is_owner,
+          CASE WHEN $1 <> '' AND EXISTS(SELECT 1 FROM public.feed_user_follows f WHERE LOWER(f.follower_email)=LOWER($1) AND LOWER(f.followed_email)=LOWER(p.user_email)) THEN true ELSE false END AS following,
+          p.user_email AS author_email,
           CASE WHEN $1 <> '' AND LOWER(p.user_email)=LOWER($1) AND $4 THEN (SELECT COUNT(*)::int FROM public.feed_post_views x WHERE x.post_id=p.id AND LOWER(x.user_email)<>LOWER(p.user_email)) ELSE 0 END AS view_count,
           (SELECT COUNT(*)::int FROM public.feed_post_likes x WHERE x.post_id=p.id) AS like_count,
           (SELECT COUNT(*)::int FROM public.feed_post_comments x WHERE x.post_id=p.id) AS comment_count,
@@ -47,7 +50,7 @@ export async function handleFeed(request, env, url) {
           CASE WHEN $1 <> '' AND EXISTS(SELECT 1 FROM public.feed_post_saves x WHERE x.post_id=p.id AND LOWER(x.user_email)=$1) THEN true ELSE false END AS saved,
           (SELECT COALESCE(array_agg(name),'{}') FROM (SELECT u.full_name AS name FROM public.feed_post_likes x JOIN public.users u ON LOWER(u.email)=LOWER(x.user_email) WHERE x.post_id=p.id ORDER BY x.created_at DESC LIMIT 2) t) AS recent_likers
           FROM public.feed_posts p
-        ) feed_items ORDER BY created_at DESC,id DESC LIMIT $2 OFFSET $3`,[email,limit+1,offset,canSeeViews]);
+        ) feed_items WHERE $5 = false OR following = true ORDER BY created_at DESC,id DESC LIMIT $2 OFFSET $3`,[email,limit+1,offset,canSeeViews,followingOnly]);
         const hasMore = result.rows.length > limit;
         const posts = result.rows.slice(0,limit).map(row => ({ ...row, youtube_id: youtubeId(row.youtube_url) }));
         return json({ posts, hasMore, limit, offset },200,headers);
@@ -74,6 +77,22 @@ export async function handleFeed(request, env, url) {
         return json({ post:{...post,id:`p:${post.id}`,source_type:'user',is_user_post:true,is_owner:true,youtube_id:youtubeId(post.youtube_url),like_count:0,save_count:0,comment_count:0,view_count:0,liked:false,saved:false} },201,headers);
       } finally { await client.end().catch(()=>{}); }
     }
+    const followMatch = url.pathname.match(/^\/api\/feed\/users\/([^/]+)\/follow$/);
+    if (followMatch && request.method === 'POST') {
+      if (!email) return json({ error:'Sign in required to follow members.' },401,headers);
+      const followedEmail = decodeURIComponent(followMatch[1] || '').trim().toLowerCase();
+      if (!followedEmail || followedEmail === email) return json({ error:'You cannot follow yourself.' },400,headers);
+      const client = await getDb(env);
+      try {
+        const target = await client.query('SELECT 1 FROM public.users WHERE LOWER(email)=LOWER($1) LIMIT 1',[followedEmail]);
+        if (!target.rows.length) return json({ error:'Member not found.' },404,headers);
+        const current = await client.query('SELECT 1 FROM public.feed_user_follows WHERE LOWER(follower_email)=LOWER($1) AND LOWER(followed_email)=LOWER($2) LIMIT 1',[email,followedEmail]);
+        if (current.rows.length) await client.query('DELETE FROM public.feed_user_follows WHERE LOWER(follower_email)=LOWER($1) AND LOWER(followed_email)=LOWER($2)',[email,followedEmail]);
+        else await client.query('INSERT INTO public.feed_user_follows(follower_email,followed_email) VALUES($1,$2) ON CONFLICT DO NOTHING',[email,followedEmail]);
+        const following = !(current.rows.length > 0);
+        return json({ following },200,headers);
+      } finally { await client.end().catch(()=>{}); }
+    }
     const viewMatch = url.pathname.match(/^\/api\/feed\/posts\/([^/]+)\/view$/);
     if (viewMatch && request.method === 'POST') {
       const feedId = parseFeedId(viewMatch[1]);
@@ -85,9 +104,30 @@ export async function handleFeed(request, env, url) {
         return json({ ok:true,recorded:inserted.rows.length>0 },200,headers);
       } finally { await client.end().catch(()=>{}); }
     }
-    const match = url.pathname.match(/^\/api\/feed\/posts\/([^/]+)(?:\/(like|save|comments))?$/);
+    if (url.pathname === '/api/feed/reports' && request.method === 'GET') {
+      if (!email) return json({ error:'Sign in required.' },401,headers);
+      const client = await getDb(env);
+      try {
+        if (!(await canViewOwnPostInsights(client,email))) return json({ error:'Admins only.' },403,headers);
+        const result = await client.query(`SELECT r.id,r.feed_item_id,r.reporter_email,r.reason,r.detail,r.created_at,u.full_name AS reporter_name FROM public.feed_content_reports r LEFT JOIN public.users u ON LOWER(u.email)=LOWER(r.reporter_email) WHERE r.status='open' ORDER BY r.created_at DESC LIMIT 100`);
+        return json({ reports: result.rows },200,headers);
+      } finally { await client.end().catch(()=>{}); }
+    }
+    const dismissMatch = url.pathname.match(/^\/api\/feed\/reports\/([^/]+)\/dismiss$/);
+    if (dismissMatch && request.method === 'POST') {
+      if (!email) return json({ error:'Sign in required.' },401,headers);
+      const reportId = parseId(dismissMatch[1]); if (!reportId) return json({ error:'Invalid report.' },400,headers);
+      const client = await getDb(env);
+      try {
+        if (!(await canViewOwnPostInsights(client,email))) return json({ error:'Admins only.' },403,headers);
+        const updated = await client.query(`UPDATE public.feed_content_reports SET status='dismissed' WHERE id=$1 RETURNING id`,[reportId]);
+        if (!updated.rows.length) return json({ error:'Report not found.' },404,headers);
+        return json({ ok:true },200,headers);
+      } finally { await client.end().catch(()=>{}); }
+    }
+    const match = url.pathname.match(/^\/api\/feed\/posts\/([^/]+)(?:\/(like|save|comments|report))?$/);
     if (!match) return json({error:'Not found.'},404,headers);
-    const feedId = parseFeedId(match[1]); if (!feedId.id) return json({error:'Invalid post.'},400,headers); const action=match[2]||''; const client=await getDb(env);
+    const feedId = parseFeedId(match[1]); if (!feedId.id) return json({error:'Invalid post.'},400,headers); const action=match[2]||''; const client=await getDb(env); const canonicalId=`${feedId.kind==='post'?'p':'s'}:${feedId.id}`;
     try {
       if (feedId.kind === 'post') {
         const exists=await client.query('SELECT id FROM public.feed_posts WHERE id=$1 LIMIT 1',[feedId.id]); if(!exists.rows.length)return json({error:'Post not found.'},404,headers);
@@ -95,7 +135,8 @@ export async function handleFeed(request, env, url) {
         if(action==='save'&&request.method==='POST'){if(!email)return json({error:'Sign in required to save posts.'},401,headers);const current=await client.query('SELECT 1 FROM public.feed_post_saves WHERE post_id=$1 AND LOWER(user_email)=$2 LIMIT 1',[feedId.id,email]);if(current.rows.length)await client.query('DELETE FROM public.feed_post_saves WHERE post_id=$1 AND LOWER(user_email)=$2',[feedId.id,email]);else await client.query('INSERT INTO public.feed_post_saves(post_id,user_email) VALUES($1,$2) ON CONFLICT(post_id,user_email) DO NOTHING',[feedId.id,email]);return json(await postSocialCounts(client,feedId.id,email),200,headers);}
         if(action==='comments'&&request.method==='GET'){const result=await client.query('SELECT id,user_email,author_name,body,created_at FROM public.feed_post_comments WHERE post_id=$1 ORDER BY created_at ASC,id ASC LIMIT 100',[feedId.id]);return json({comments:result.rows},200,headers);}
         if(action==='comments'&&request.method==='POST'){if(!email)return json({error:'Sign in required to comment.'},401,headers);const body=await request.json().catch(()=>({}));const text=typeof body?.body==='string'?body.body.trim().slice(0,1000):'';if(!text)return json({error:'Comment cannot be empty.'},400,headers);const name=await authorName(client,email);const inserted=await client.query('INSERT INTO public.feed_post_comments(post_id,user_email,author_name,body) VALUES($1,$2,$3,$4) RETURNING id,user_email,author_name,body,created_at',[feedId.id,email,name,text]);return json({comment:inserted.rows[0]},201,headers);}
-        if(action==='comments'&&request.method==='DELETE'){if(!email)return json({error:'Sign in required.'},401,headers);const commentId=parseId(url.searchParams.get('commentId'));if(!commentId)return json({error:'Invalid comment.'},400,headers);const deleted=await client.query('DELETE FROM public.feed_post_comments WHERE id=$1 AND LOWER(user_email)=$2 RETURNING id',[commentId,email]);if(!deleted.rows.length)return json({error:'Comment not found, or it is not yours to delete.'},404,headers);return json({ok:true},200,headers);}
+        if(action==='comments'&&request.method==='DELETE'){if(!email)return json({error:'Sign in required.'},401,headers);const commentId=parseId(url.searchParams.get('commentId'));if(!commentId)return json({error:'Invalid comment.'},400,headers);const deleted=await client.query('DELETE FROM public.feed_post_comments c WHERE c.id=$1 AND (LOWER(c.user_email)=$2 OR EXISTS(SELECT 1 FROM public.feed_posts p WHERE p.id=c.post_id AND LOWER(p.user_email)=$2)) RETURNING c.id',[commentId,email]);if(!deleted.rows.length)return json({error:'Comment not found, or you are not allowed to delete it.'},404,headers);return json({ok:true},200,headers);}
+        if(action==='report'&&request.method==='POST'){if(!email)return json({error:'Sign in required to report content.'},401,headers);const body=await request.json().catch(()=>({}));const reason=typeof body?.reason==='string'?body.reason.trim().slice(0,60):'';const detail=typeof body?.detail==='string'?body.detail.trim().slice(0,500):'';if(!reason)return json({error:'Please choose a reason.'},400,headers);await client.query('INSERT INTO public.feed_content_reports(feed_item_id,reporter_email,reason,detail) VALUES($1,$2,$3,$4) ON CONFLICT(feed_item_id,reporter_email) DO NOTHING',[canonicalId,email,reason,detail||null]);return json({ok:true},200,headers);}
         return json({error:'Method not allowed.'},405,headers);
       }
       const exists=await client.query('SELECT id FROM public.sermons WHERE id=$1 LIMIT 1',[feedId.id]);if(!exists.rows.length)return json({error:'Post not found.'},404,headers);
@@ -104,6 +145,7 @@ export async function handleFeed(request, env, url) {
       if(action==='comments'&&request.method==='GET'){const result=await client.query('SELECT id,user_email,author_name,body,created_at FROM public.feed_comments WHERE sermon_id=$1 ORDER BY created_at ASC,id ASC LIMIT 100',[feedId.id]);return json({comments:result.rows},200,headers);}
       if(action==='comments'&&request.method==='POST'){if(!email)return json({error:'Sign in required to comment.'},401,headers);const body=await request.json().catch(()=>({}));const text=typeof body?.body==='string'?body.body.trim().slice(0,1000):'';if(!text)return json({error:'Comment cannot be empty.'},400,headers);const name=await authorName(client,email);const inserted=await client.query('INSERT INTO public.feed_comments(sermon_id,user_email,author_name,body) VALUES($1,$2,$3,$4) RETURNING id,user_email,author_name,body,created_at',[feedId.id,email,name,text]);return json({comment:inserted.rows[0]},201,headers);}
       if(action==='comments'&&request.method==='DELETE'){if(!email)return json({error:'Sign in required.'},401,headers);const commentId=parseId(url.searchParams.get('commentId'));if(!commentId)return json({error:'Invalid comment.'},400,headers);const deleted=await client.query('DELETE FROM public.feed_comments WHERE id=$1 AND LOWER(user_email)=$2 RETURNING id',[commentId,email]);if(!deleted.rows.length)return json({error:'Comment not found, or it is not yours to delete.'},404,headers);return json({ok:true},200,headers);}
+      if(action==='report'&&request.method==='POST'){if(!email)return json({error:'Sign in required to report content.'},401,headers);const body=await request.json().catch(()=>({}));const reason=typeof body?.reason==='string'?body.reason.trim().slice(0,60):'';const detail=typeof body?.detail==='string'?body.detail.trim().slice(0,500):'';if(!reason)return json({error:'Please choose a reason.'},400,headers);await client.query('INSERT INTO public.feed_content_reports(feed_item_id,reporter_email,reason,detail) VALUES($1,$2,$3,$4) ON CONFLICT(feed_item_id,reporter_email) DO NOTHING',[canonicalId,email,reason,detail||null]);return json({ok:true},200,headers);}
       return json({error:'Method not allowed.'},405,headers);
     } finally { await client.end().catch(()=>{}); }
   } catch(error) { console.error('[worker] feed API failed',{message:error?.message,path:url.pathname}); return json({error:'Unable to load Feed right now.'},503,headers); }

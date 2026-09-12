@@ -1,9 +1,15 @@
 import { apiFetch } from '../config/api';
 
 const FEED_CACHE_KEY = 'blw_feed_cache_v2';
+const FEED_COMMENTS_CACHE_KEY = 'blw_feed_comments_cache_v1';
 const FEED_ACTION_QUEUE_KEY = 'blw_feed_action_queue_v1';
+const PUBLIC_USER_STORAGE_KEY = 'blw_public_user_v1';
+const COMMENTS_CACHE_TTL = 15 * 60 * 1000;
+const COMMENTS_CACHE_MAX_POSTS = 30;
+const COMMENTS_CACHE_MAX_ITEMS = 50;
 const recordedFeedViews = new Set();
 const inFlightFeedViews = new Map();
+const inFlightCommentRefreshes = new Map();
 
 function formatFeedTime(value) {
   const date = value ? new Date(value) : null;
@@ -31,6 +37,8 @@ function normalizePost(row = {}) {
     isOfficial: Boolean(row.is_official ?? row.isOfficial ?? row.is_featured),
     isUserPost: Boolean(row.is_user_post ?? row.isUserPost),
     isOwner: Boolean(row.is_owner ?? row.isOwner),
+    following: Boolean(row.following),
+    authorEmail: row.author_email || row.user_email || '',
     viewCount: Number(row.view_count ?? row.viewCount ?? 0),
     videoId: row.youtube_id || row.video_id || row.videoId || '',
     mediaUrl: row.media_url || row.mediaUrl || row.image_url || row.image || '',
@@ -44,6 +52,19 @@ function normalizePost(row = {}) {
     saved: Boolean(row.saved),
     time: row.time || formatFeedTime(row.created_at),
   };
+}
+
+function readPublicUser() {
+  try {
+    const user = JSON.parse(localStorage.getItem(PUBLIC_USER_STORAGE_KEY) || 'null');
+    if (!user || typeof user !== 'object') return { name: 'Member', avatarUrl: '' };
+    return {
+      name: user.name || 'Member',
+      avatarUrl: user.avatarUrl || '',
+    };
+  } catch {
+    return { name: 'Member', avatarUrl: '' };
+  }
 }
 
 function readActionQueue() {
@@ -138,8 +159,9 @@ if (typeof window !== 'undefined') {
   if (navigator.onLine) flushWhenAvailable();
 }
 
-export async function fetchFeed({ limit = 20, offset = 0 } = {}) {
+export async function fetchFeed({ limit = 20, offset = 0, followingOnly = false } = {}) {
   const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+  if (followingOnly) params.set('following', '1');
   const response = await apiFetch(`/api/feed?${params.toString()}`, { method: 'GET' });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body?.error || 'Unable to load the Feed.');
@@ -204,6 +226,89 @@ function drawToCanvas(bitmap, maxDimension) {
   if (!context) return null;
   context.drawImage(bitmap, 0, 0, width, height);
   return canvas;
+}
+
+function readCommentsCache() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(FEED_COMMENTS_CACHE_KEY) || 'null');
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch { return {}; }
+}
+
+function writeCommentsCache(cache) {
+  try { localStorage.setItem(FEED_COMMENTS_CACHE_KEY, JSON.stringify(cache)); } catch {}
+}
+
+function getCachedCommentsEntry(postId) {
+  const key = String(postId ?? '');
+  if (!key) return null;
+  const cache = readCommentsCache();
+  const entry = cache[key];
+  if (!entry || !Array.isArray(entry.comments)) return null;
+  return {
+    comments: entry.comments,
+    cachedAt: Number(entry.cachedAt || 0),
+    fresh: Date.now() - Number(entry.cachedAt || 0) < COMMENTS_CACHE_TTL,
+  };
+}
+
+export function readCachedComments(postId) {
+  return getCachedCommentsEntry(postId)?.comments || [];
+}
+
+function writeCachedComments(postId, comments) {
+  const key = String(postId ?? '');
+  if (!key || !Array.isArray(comments)) return;
+  const cache = readCommentsCache();
+  const trimmed = comments.slice(-COMMENTS_CACHE_MAX_ITEMS);
+  cache[key] = { comments: trimmed, cachedAt: Date.now() };
+  const keys = Object.keys(cache);
+  if (keys.length > COMMENTS_CACHE_MAX_POSTS) {
+    keys.sort((a, b) => Number(cache[a]?.cachedAt || 0) - Number(cache[b]?.cachedAt || 0));
+    for (const oldKey of keys.slice(0, keys.length - COMMENTS_CACHE_MAX_POSTS)) delete cache[oldKey];
+  }
+  writeCommentsCache(cache);
+}
+
+function updateCachedComments(postId, updater) {
+  const entry = getCachedCommentsEntry(postId);
+  if (!entry) return;
+  const next = updater(entry.comments);
+  if (Array.isArray(next)) writeCachedComments(postId, next);
+}
+
+async function refreshComments(postId) {
+  const key = String(postId ?? '');
+  if (!key || inFlightCommentRefreshes.has(key)) return inFlightCommentRefreshes.get(key);
+  const request = (async () => {
+    try {
+      const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(key)}/comments`);
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body?.error || 'Unable to load comments.');
+      const comments = Array.isArray(body?.comments) ? body.comments : [];
+      writeCachedComments(key, comments);
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('feed-comments-updated', { detail: { postId: key, comments } }));
+      return comments;
+    } finally {
+      inFlightCommentRefreshes.delete(key);
+    }
+  })();
+  inFlightCommentRefreshes.set(key, request);
+  return request;
+}
+
+export async function fetchComments(id) {
+  const key = String(id ?? '');
+  const cached = getCachedCommentsEntry(key);
+  const online = typeof navigator === 'undefined' || navigator.onLine !== false;
+
+  if (cached) {
+    if (online) refreshComments(key).catch(() => {});
+    return cached.comments;
+  }
+
+  if (!online) return [];
+  return refreshComments(key);
 }
 
 export async function prepareImageForUpload(file, { maxBytes = 5 * 1024 * 1024, maxDimension = 2200 } = {}) {
@@ -307,41 +412,51 @@ async function postAction(id, action) {
 export const toggleLike = (id) => postAction(id, 'like');
 export const toggleSave = (id) => postAction(id, 'save');
 
-export async function fetchComments(id) {
-  const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/comments`);
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body?.error || 'Unable to load comments.');
-  return Array.isArray(body?.comments) ? body.comments : [];
+export async function toggleFollow(email) {
+  const target = String(email || '').trim();
+  if (!target) throw new Error('Member not found.');
+  const response = await apiFetch(`/api/feed/users/${encodeURIComponent(target)}/follow`, { method: 'POST' });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result?.error || 'Unable to update follow status.');
+  return result;
+}
+
+function makeQueuedComment(postId, body) {
+  const text = String(body || '').trim();
+  const author = readPublicUser();
+  const clientId = `queued-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return {
+    id: null,
+    clientId,
+    postId: String(postId),
+    body: text,
+    author: author.name,
+    avatarUrl: author.avatarUrl,
+    queued: true,
+  };
 }
 
 export async function addComment(id, body) {
+  const text = String(body || '').trim();
+  if (!text) throw new Error('Comment cannot be empty.');
   if (typeof navigator !== 'undefined' && !navigator.onLine) {
-    queueAction({ action: 'comment', postId: String(id), body: String(body || '').trim() });
-    return {
-      id: `queued-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      postId: String(id),
-      body: String(body || '').trim(),
-      author: 'You',
-      avatarUrl: '',
-      queued: true,
-    };
+    const optimistic = makeQueuedComment(id, text);
+    queueAction({ action: 'comment', postId: String(id), body: text, clientId: optimistic.clientId });
+    updateCachedComments(id, (comments) => [...comments, optimistic]);
+    return optimistic;
   }
   try {
-    const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/comments`, { method: 'POST', body: JSON.stringify({ body }) });
+    const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/comments`, { method: 'POST', body: JSON.stringify({ body: text }) });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) throw Object.assign(new Error(result?.error || 'Unable to add comment.'), { status: response.status });
+    if (result?.comment) updateCachedComments(id, (comments) => [...comments, result.comment]);
     return result.comment;
   } catch (error) {
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      queueAction({ action: 'comment', postId: String(id), body: String(body || '').trim() });
-      return {
-        id: `queued-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        postId: String(id),
-        body: String(body || '').trim(),
-        author: 'You',
-        avatarUrl: '',
-        queued: true,
-      };
+      const optimistic = makeQueuedComment(id, text);
+      queueAction({ action: 'comment', postId: String(id), body: text, clientId: optimistic.clientId });
+      updateCachedComments(id, (comments) => [...comments, optimistic]);
+      return optimistic;
     }
     throw error;
   }
@@ -351,5 +466,13 @@ export async function deleteComment(id, commentId) {
   const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/comments?commentId=${encodeURIComponent(commentId)}`, { method: 'DELETE' });
   const result = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(result?.error || 'Unable to delete comment.');
+  updateCachedComments(id, (comments) => comments.filter((comment) => String(comment.id ?? comment.commentId ?? '') !== String(commentId)));
+  return result;
+}
+
+export async function reportPost(id, reason) {
+  const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}/report`, { method: 'POST', body: JSON.stringify({ reason }) });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result?.error || 'Unable to report this right now.');
   return result;
 }

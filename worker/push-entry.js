@@ -12,6 +12,7 @@ import { handleLiveKitToken, handleVideoApi } from './livekit-token.js';
 import { handleAppVersion } from './app-version-api.js';
 import { handleStories, handleStoryUpload } from './stories-api.js';
 import { handleFeedUpload } from './upload-api.js';
+import { handleStream } from './stream-api.js';
 import { handleMessages } from './messages-api.js';
 
 function normalizeResponse(request, env, response) {
@@ -34,6 +35,7 @@ export default {
     if (url.pathname === '/api/push/send' && request.method === 'POST') return normalizeResponse(request, env, await sendPushNotification(request, env));
     if (url.pathname === '/api/livekit/token') return normalizeResponse(request, env, await handleLiveKitToken(request, env, corsHeaders(request, env)));
     if (url.pathname.startsWith('/api/video')) { const response = await handleVideoApi(request, env, url, corsHeaders(request, env)); if (response) return normalizeResponse(request, env, response); }
+    if (url.pathname.startsWith('/api/stream')) { const response = await handleStream(request, env, url); if (response) return normalizeResponse(request, env, response); }
     if (url.pathname === '/api/feed/upload') { const response = await handleFeedUpload(request, env, url); if (response) return normalizeResponse(request, env, response); }
     if (url.pathname === '/api/stories/upload') { const response = await handleStoryUpload(request, env, url); if (response) return normalizeResponse(request, env, response); }
     if (url.pathname.startsWith('/api/stories')) { const response = await handleStories(request, env, url); if (response) return normalizeResponse(request, env, response); }

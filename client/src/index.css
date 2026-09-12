@@ -9,6 +9,7 @@
   --bg-page: #0d0c18;
   --bg-navbar: rgba(13,12,24,0.92);
   --text-gold: #F2A31C;
+  --feed-liked-color: #EC2FA8;
   color-scheme: dark;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   line-height: 1.5;
@@ -39,10 +40,13 @@ article[id^="feed-"] button { transition: transform 140ms ease, opacity 140ms ea
 .sticky.top-0.z-20 button { min-height: 38px; transition: color 160ms ease, transform 160ms ease; }
 article.relative.h-full.min-h-\[540px\] { background: #000; }
 
+/* Inline feed photos must preserve the full image before pinch-to-zoom. */
+article[id^="feed-"] .aspect-video > div.h-full > img { object-fit: contain; }
+
 /* Stories polish */
 .stories-row, [data-stories-row] { scrollbar-width: none; -ms-overflow-style: none; }
 .stories-row::-webkit-scrollbar, [data-stories-row]::-webkit-scrollbar { display: none; }
 [role="dialog"][aria-modal="true"] { overscroll-behavior: contain; }
 [role="dialog"][aria-modal="true"] video, [role="dialog"][aria-modal="true"] img { max-height: 100%; }
 
-@media (max-width: 639px) { article[id^="feed-"] { border-color: rgba(255,255,255,0.055) !important; } article[id^="feed-"] > div:first-child { padding-top: 12px; padding-bottom: 12px; } }
+@media (max-width: 639px) { article[id^="feed-"] { border-color: rgba(255,255,255,0.09) !important; } article[id^="feed-"] > div:first-child { padding-top: 12px; padding-bottom: 12px; } }

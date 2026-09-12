@@ -50,6 +50,19 @@ function markQrCameraSessions() {
     const original = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
     navigator.mediaDevices.getUserMedia = async (...args) => {
       sessionStorage.setItem('blw_qr_scan_active', '1');
+      const [constraints] = args;
+      if (constraints && typeof constraints === 'object' && constraints.video) {
+        const video = constraints.video === true ? {} : { ...constraints.video };
+        args[0] = {
+          ...constraints,
+          video: {
+            ...video,
+            width: video.width ?? { ideal: 1920 },
+            height: video.height ?? { ideal: 1080 },
+            frameRate: video.frameRate ?? { ideal: 30, max: 30 },
+          },
+        };
+      }
       return original(...args);
     };
   } catch (error) {

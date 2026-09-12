@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import { FiSearch, FiX } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
 import { Card } from './ui/Card';
 import { IconButton } from './ui/Button';
 
 const content = [
+  { title: 'Explore Feed', path: '/explore', description: 'Search community posts, photos, and videos in a visual grid.' },
   { title: 'Home', path: '/', description: 'Welcome to Believers\' LoveWorld Campus Ministry Kenya Zone Region and our vision for fellowship.' },
   { title: 'Outreaches', path: '/outreaches', description: 'See upcoming opportunities to serve and participate.' },
   { title: 'Events', path: '/events', description: 'Explore the calendar of services, outreaches, and ministry events.' },
@@ -28,26 +30,14 @@ export default function SearchPanel({ open, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[70] flex items-end justify-center bg-[#121321]/85 px-2 pb-2 backdrop-blur sm:items-start sm:px-4 sm:py-8">
-      <Card
-        variant="raised"
-        className="max-h-[85vh] w-full animate-sheet-in overflow-y-auto overscroll-contain p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-soft sm:max-w-2xl sm:pb-6"
-      >
+      <Card variant="raised" className="max-h-[85vh] w-full animate-sheet-in overflow-y-auto overscroll-contain p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-soft sm:max-w-2xl sm:pb-6">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-fuchsia-300">
-            <FiSearch />
-            <span className="text-sm font-semibold uppercase tracking-[0.2em]">Search</span>
-          </div>
+          <div className="flex items-center gap-2 text-fuchsia-300"><FiSearch /><span className="text-sm font-semibold uppercase tracking-[0.2em]">Search</span></div>
           <IconButton onClick={onClose} aria-label="Close search"><FiX /></IconButton>
         </div>
         <Card variant="subtle" className="mt-4 flex items-center gap-2 px-4 py-3">
           <FiSearch className="text-slate-400" />
-          <input
-            autoFocus
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            className="flex-1 bg-transparent text-sm text-white outline-none"
-            placeholder="Search ministry pages, events, and resources"
-          />
+          <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} className="flex-1 bg-transparent text-sm text-white outline-none" placeholder="Search ministry pages, events, and resources" />
         </Card>
         <div className="mt-5 space-y-3">
           {results.length === 0 ? (
@@ -60,6 +50,9 @@ export default function SearchPanel({ open, onClose }) {
               </Card>
             ))
           )}
+        </div>
+        <div className="mt-4 border-t border-white/[.06] pt-4 text-center">
+          <Link to="/explore" onClick={onClose} className="text-xs font-semibold text-fuchsia-300 hover:text-white">Open visual Feed Explore →</Link>
         </div>
       </Card>
     </div>
