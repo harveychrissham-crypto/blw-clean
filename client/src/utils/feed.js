@@ -35,6 +35,7 @@ function normalizePost(row = {}) {
     videoId: row.youtube_id || row.video_id || row.videoId || '',
     mediaUrl: row.media_url || row.mediaUrl || row.image_url || row.image || '',
     mediaType: row.media_type || row.mediaType || (row.image_url || row.image ? 'image' : ''),
+    thumbnailUrl: row.thumbnail_url || row.thumbnailUrl || '',
     avatarUrl: row.avatar_url || row.avatarUrl || '',
     likeCount: Number(row.like_count ?? row.likeCount ?? 0),
     commentCount: Number(row.comment_count ?? row.commentCount ?? 0),
@@ -182,29 +183,39 @@ export function writeCachedFeed(posts) {
   try { localStorage.setItem(FEED_CACHE_KEY, JSON.stringify({ posts: posts.slice(0, 40), cachedAt: Date.now() })); } catch {}
 }
 
+async function encodeCanvas(canvas, maxBytes, startQuality) {
+  let quality = startQuality;
+  let blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', quality));
+  while (blob && blob.size > maxBytes && quality > 0.5) {
+    quality -= 0.08;
+    blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', quality));
+  }
+  return blob;
+}
+
+function drawToCanvas(bitmap, maxDimension) {
+  const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+  const width = Math.max(1, Math.round(bitmap.width * scale));
+  const height = Math.max(1, Math.round(bitmap.height * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d', { alpha: true });
+  if (!context) return null;
+  context.drawImage(bitmap, 0, 0, width, height);
+  return canvas;
+}
+
 export async function prepareImageForUpload(file, { maxBytes = 5 * 1024 * 1024, maxDimension = 2200 } = {}) {
   if (!(file instanceof File) || !file.type.startsWith('image/')) return file;
   if (file.size <= maxBytes && file.type === 'image/webp') return file;
 
   try {
     const bitmap = await createImageBitmap(file);
-    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
-    const width = Math.max(1, Math.round(bitmap.width * scale));
-    const height = Math.max(1, Math.round(bitmap.height * scale));
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext('2d', { alpha: true });
-    if (!context) return file;
-    context.drawImage(bitmap, 0, 0, width, height);
+    const canvas = drawToCanvas(bitmap, maxDimension);
     bitmap.close?.();
-
-    let quality = 0.84;
-    let blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', quality));
-    while (blob && blob.size > maxBytes && quality > 0.5) {
-      quality -= 0.08;
-      blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', quality));
-    }
+    if (!canvas) return file;
+    const blob = await encodeCanvas(canvas, maxBytes, 0.84);
     if (!blob || blob.size > maxBytes) return file;
     const base = file.name.replace(/\.[^.]+$/, '') || 'image';
     return new File([blob], `${base}.webp`, { type: 'image/webp', lastModified: Date.now() });
@@ -213,20 +224,62 @@ export async function prepareImageForUpload(file, { maxBytes = 5 * 1024 * 1024, 
   }
 }
 
+// Produces both a feed-display-sized image and a small thumbnail from a
+// single decode of the source file, so the feed's scrolling list can load
+// the much smaller thumbnail instead of downloading/decoding the full
+// image for every post — the full version is only fetched when someone
+// actually opens the media preview.
+export async function prepareFeedImageVariants(file) {
+  const full = await prepareImageForUpload(file);
+  if (!(full instanceof File) || !full.type.startsWith('image/')) return { full, thumb: null };
+  try {
+    const bitmap = await createImageBitmap(file instanceof File ? file : full);
+    const canvas = drawToCanvas(bitmap, 720);
+    bitmap.close?.();
+    if (!canvas) return { full, thumb: null };
+    const blob = await encodeCanvas(canvas, 400 * 1024, 0.78);
+    if (!blob) return { full, thumb: null };
+    const base = file.name.replace(/\.[^.]+$/, '') || 'image';
+    return { full, thumb: new File([blob], `${base}-thumb.webp`, { type: 'image/webp', lastModified: Date.now() }) };
+  } catch {
+    return { full, thumb: null };
+  }
+}
+
 export async function uploadFeedMedia(file) {
-  const uploadFile = file?.type?.startsWith('image/') ? await prepareImageForUpload(file) : file;
+  if (file?.type?.startsWith('image/')) {
+    const { full, thumb } = await prepareFeedImageVariants(file);
+    const form = new FormData();
+    form.append('media', full || file);
+    const response = await apiFetch('/api/feed/upload', { method: 'POST', body: form });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body?.error || 'Unable to upload that media.');
+    if (thumb) {
+      try {
+        const thumbForm = new FormData();
+        thumbForm.append('media', thumb);
+        const thumbResponse = await apiFetch('/api/feed/upload', { method: 'POST', body: thumbForm });
+        const thumbBody = await thumbResponse.json().catch(() => ({}));
+        if (thumbResponse.ok && thumbBody?.url) return { ...body, thumbnailUrl: thumbBody.url };
+      } catch {
+        // Thumbnail upload failing shouldn't block publishing — the feed
+        // just falls back to the full image for this one post.
+      }
+    }
+    return body;
+  }
   const form = new FormData();
-  form.append('media', uploadFile);
+  form.append('media', file);
   const response = await apiFetch('/api/feed/upload', { method: 'POST', body: form });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body?.error || 'Unable to upload that media.');
   return body;
 }
 
-export async function createFeedPost({ type = 'post', title, body = '', imageUrl = '', youtubeUrl = '', mediaUrl = '', mediaType = '' }) {
+export async function createFeedPost({ type = 'post', title, body = '', imageUrl = '', youtubeUrl = '', mediaUrl = '', mediaType = '', thumbnailUrl = '' }) {
   const response = await apiFetch('/api/feed/posts', {
     method: 'POST',
-    body: JSON.stringify({ type, title, body, imageUrl, youtubeUrl, mediaUrl, mediaType }),
+    body: JSON.stringify({ type, title, body, imageUrl, youtubeUrl, mediaUrl, mediaType, thumbnailUrl }),
   });
   const result = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(result?.error || 'Unable to publish your post.');

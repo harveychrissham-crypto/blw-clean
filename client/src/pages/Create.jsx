@@ -111,7 +111,7 @@ export default function Create() {
       const cleanLocation = location.trim();
       const title = cleanCaption.slice(0, 160) || (type === 'reel' ? 'New Reel' : 'New post');
       const body = cleanLocation ? `${cleanCaption}${cleanCaption ? '\n\n' : ''}📍 ${cleanLocation}` : cleanCaption;
-      const created = await createFeedPost({ type, title, body, mediaUrl: uploaded.url, mediaType: uploaded.mediaType });
+      const created = await createFeedPost({ type, title, body, mediaUrl: uploaded.url, mediaType: uploaded.mediaType, thumbnailUrl: uploaded.thumbnailUrl || '' });
       hapticSuccess();
       setPublished(true);
       setTimeout(() => {
