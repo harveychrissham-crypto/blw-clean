@@ -228,7 +228,7 @@ export default function StoryViewer({ stories, initialIndex = 0, viewerEmail, on
         </div>
       </div>
 
-      <div className="relative flex-1 select-none" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+      <div className="relative min-h-0 flex-1 select-none" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         {story.mediaType === 'video' ? <video ref={videoRef} src={story.mediaUrl} muted={muted} playsInline autoPlay className="h-full w-full object-contain" /> : <img src={story.mediaUrl} alt="" className="h-full w-full object-contain" />}
         {story.caption && <p className={`absolute inset-x-0 bg-gradient-to-t from-black/70 to-transparent px-4 pb-6 pt-10 text-center text-sm text-white ${isOwn ? 'bottom-16' : 'bottom-20'}`}>{story.caption}</p>}
 
