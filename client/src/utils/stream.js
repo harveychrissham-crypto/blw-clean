@@ -2,6 +2,10 @@ import { apiFetch } from '../config/api';
 
 const TUS_VERSION = '1.0.0';
 const DEFAULT_CHUNK_SIZE = 10 * 1024 * 1024;
+const MAX_CHUNK_ATTEMPTS = 4;
+const RETRY_BASE_DELAY_MS = 1000;
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function encodeMetadata(metadata) {
   return Object.entries(metadata)
@@ -57,6 +61,29 @@ async function tusPatch(url, chunk, offset, uploadConfig, onProgress) {
   });
 }
 
+// Queried before retrying a failed chunk. If the server actually received
+// the bytes we think failed (the PATCH succeeded but the response never
+// reached us, a common failure mode on flaky mobile connections), resuming
+// from a stale local offset would resend and misalign data. TUS uploads
+// are resumable specifically so a client can ask "how far did we get?"
+// instead of guessing.
+async function tusHead(url, uploadConfig) {
+  const response = await fetch(url, {
+    method: 'HEAD',
+    headers: {
+      'Tus-Resumable': TUS_VERSION,
+      AuthorizationSignature: uploadConfig.signature,
+      AuthorizationExpire: String(uploadConfig.expirationTime),
+      VideoId: uploadConfig.videoId,
+      LibraryId: String(uploadConfig.libraryId),
+    },
+  });
+  if (!response.ok) throw new Error(`Unable to check upload progress (${response.status}).`);
+  const offset = Number(response.headers.get('Upload-Offset'));
+  if (!Number.isFinite(offset)) throw new Error('Bunny Stream did not report an upload offset.');
+  return offset;
+}
+
 export async function createStreamDirectUpload(maxDurationSeconds = 1200, title = 'BLW Feed Video') {
   const response = await apiFetch('/api/stream/direct-upload', {
     method: 'POST',
@@ -79,13 +106,29 @@ export async function uploadToStream(uploadConfig, file, onProgress) {
   const chunkSize = Math.min(DEFAULT_CHUNK_SIZE, file.size || DEFAULT_CHUNK_SIZE);
 
   while (offset < file.size) {
-    const chunk = file.slice(offset, Math.min(offset + chunkSize, file.size));
-    const nextOffset = await tusPatch(uploadUrl, chunk, offset, uploadConfig, (loaded) => {
-      const totalUploaded = offset + loaded;
-      onProgress?.(Math.round((totalUploaded / file.size) * 100));
-    });
-    if (nextOffset <= offset) throw new Error('Bunny Stream returned an invalid upload offset.');
-    offset = nextOffset;
+    let lastError = null;
+    let succeeded = false;
+    for (let attempt = 1; attempt <= MAX_CHUNK_ATTEMPTS && !succeeded; attempt += 1) {
+      try {
+        const chunk = file.slice(offset, Math.min(offset + chunkSize, file.size));
+        const nextOffset = await tusPatch(uploadUrl, chunk, offset, uploadConfig, (loaded) => {
+          const totalUploaded = offset + loaded;
+          onProgress?.(Math.round((totalUploaded / file.size) * 100));
+        });
+        if (nextOffset <= offset) throw new Error('Bunny Stream returned an invalid upload offset.');
+        offset = nextOffset;
+        succeeded = true;
+      } catch (err) {
+        lastError = err;
+        if (attempt >= MAX_CHUNK_ATTEMPTS) break;
+        // A dropped connection mid-chunk is exactly what TUS resumability
+        // is for -- check what the server actually has before blindly
+        // resending, then back off a little longer each retry.
+        try { offset = await tusHead(uploadUrl, uploadConfig); } catch { /* retry from what we already have */ }
+        await wait(RETRY_BASE_DELAY_MS * 2 ** (attempt - 1));
+      }
+    }
+    if (!succeeded) throw lastError || new Error('Video upload failed. Check your connection and try again.');
   }
 
   onProgress?.(100);
