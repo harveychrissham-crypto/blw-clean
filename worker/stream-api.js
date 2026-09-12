@@ -72,7 +72,14 @@ export async function handleStream(request, env, url) {
     }
 
     const videoId = String(payload.guid).trim();
-    const expirationTime = Math.floor(Date.now() / 1000) + 15 * 60;
+    // 24 hours, matching Bunny's own documented default for TUS uploads.
+    // The whole upload (including every chunk retry the client makes on a
+    // slow connection) has to complete inside this one window -- 15
+    // minutes was nowhere near enough for a larger sermon/reel video on a
+    // weak connection, and an expired signature here surfaces to Bunny as
+    // a hard 401, not a retryable network error, so the client's own
+    // exponential-backoff retry logic couldn't recover from it either way.
+    const expirationTime = Math.floor(Date.now() / 1000) + 24 * 60 * 60;
     const signature = await sha256Hex(`${libraryId}${apiKey}${expirationTime}${videoId}`);
     const manifestUrl = `/api/stream/videos/${encodeURIComponent(videoId)}/manifest/video.m3u8`;
     const directManifestUrl = `https://${cdnHostname}/${encodeURIComponent(videoId)}/playlist.m3u8`;
