@@ -67,7 +67,18 @@ function VideoMedia({post,active=false,reel=false,onDoubleTap}) {
   const toggleMute=()=>setMuted(v=>{const next=!v;persistReelMutePreference(next);return next;});
   const togglePlayback=useCallback((e)=>{if(e?.target?.closest?.('button'))return;const v=videoRef.current;if(!v)return;if(v.paused){v.play?.().then(()=>setPlaying(true)).catch(()=>{});}else{v.pause?.();setPlaying(false);}},[]);
   const handleTap=useTapAction(onDoubleTap,togglePlayback);
-  const media = isYoutube ? <iframe ref={frameRef} className="h-full w-full" src={`https://www.youtube-nocookie.com/embed/${post.videoId}?enablejsapi=1&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${post.videoId}`} title={post.title} allow="autoplay; encrypted-media; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen/> : <video ref={videoRef} src={post.mediaUrl} preload={active?'auto':'none'} autoPlay={active} muted={muted} loop playsInline controls={false} className="h-full w-full object-cover" onClick={handleTap} onTimeUpdate={e=>setProgress(e.currentTarget.duration?(e.currentTarget.currentTime/e.currentTarget.duration)*100:0)}/>;
+  const media = isYoutube ? (reel ? (
+    <div className="relative h-full w-full overflow-hidden bg-black">
+      <div className="absolute inset-0 bg-cover bg-center" style={{backgroundImage:`url(https://img.youtube.com/vi/${post.videoId}/hqdefault.jpg)`,filter:'blur(38px) brightness(.45)',transform:'scale(1.15)'}} aria-hidden="true"/>
+      <div className="absolute inset-0 flex items-center justify-center p-0">
+        <div className="aspect-video max-h-full w-full">
+          <iframe ref={frameRef} className="h-full w-full" src={`https://www.youtube-nocookie.com/embed/${post.videoId}?enablejsapi=1&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${post.videoId}`} title={post.title} allow="autoplay; encrypted-media; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen/>
+        </div>
+      </div>
+    </div>
+  ) : (
+    <iframe ref={frameRef} className="h-full w-full" src={`https://www.youtube-nocookie.com/embed/${post.videoId}?enablejsapi=1&playsinline=1&rel=0&modestbranding=1&loop=1&playlist=${post.videoId}`} title={post.title} allow="autoplay; encrypted-media; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen/>
+  )) : <video ref={videoRef} src={post.mediaUrl} preload={active?'auto':'none'} autoPlay={active} muted={muted} loop playsInline controls={false} className="h-full w-full object-cover" onClick={handleTap} onTimeUpdate={e=>setProgress(e.currentTarget.duration?(e.currentTarget.currentTime/e.currentTarget.duration)*100:0)}/>;
   return <div className="relative h-full w-full" onDoubleClick={onDoubleTap}>{media}<div className="pointer-events-none absolute inset-x-0 bottom-0 h-1 bg-white/10"><div className="h-full bg-white/80" style={{width:`${progress}%`}}/></div>{(reel||!isYoutube)&&<button type="button" onClick={toggleMute} className="absolute bottom-4 right-4 z-10 rounded-full bg-black/55 p-2.5 text-white backdrop-blur-xl" aria-label={muted?'Unmute video':'Mute video'}>{muted?<FiVolumeX/>:<FiVolume2/>}</button>}</div>;
 }
 
