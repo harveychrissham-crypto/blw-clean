@@ -150,10 +150,13 @@ export default function Create() {
         }
         if (cancelledRef.current) return;
         setUploadStage('Processing video…');
-        // Bunny needs a short window to finish transcoding after the upload
-        // completes — publishing before it's ready would point the post at
-        // a manifest that isn't actually playable yet.
-        const deadline = Date.now() + 120_000;
+        // Bunny needs time to finish transcoding after the upload
+        // completes -- publishing before it's ready would point the post at
+        // a manifest that isn't actually playable yet. How long that takes
+        // scales with the video's length, so this needs real headroom for
+        // anything longer than a very short clip, not just a couple of
+        // minutes.
+        const deadline = Date.now() + 480_000;
         let ready = false;
         while (Date.now() < deadline) {
           if (cancelledRef.current) return;
@@ -162,7 +165,7 @@ export default function Create() {
           await new Promise((resolve) => setTimeout(resolve, 3000));
         }
         if (cancelledRef.current) return;
-        if (!ready) throw new Error('Video is still processing — please try publishing again in a minute.');
+        if (!ready) throw new Error('Your video is taking longer than usual to process. Tap publish again in a few minutes -- it will pick up right where it left off, not re-upload.');
         uploaded = { url: direct.manifestUrl, mediaType: 'video', streamUid: direct.uid };
         setUploadStage('Video ready. Publishing…');
       } else {
