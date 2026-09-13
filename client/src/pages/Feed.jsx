@@ -204,6 +204,12 @@ export default function Feed(){
   const [params]=useSearchParams(); const notificationId=params.get('notificationId')||''; const messagesOpen=params.get('messages')==='1'; const requestedTab=params.get('tab');
   const {user}=useAuth(); const online=useOnlineStatus(); const [tab,setTab]=useState(tabs.includes(requestedTab)?requestedTab:'All'); const [posts,setPosts]=useState([]); const [loading,setLoading]=useState(true); const [loadingMore,setLoadingMore]=useState(false); const [hasMore,setHasMore]=useState(true); const [error,setError]=useState(''); const [newPosts,setNewPosts]=useState(0); const sentinel=useRef(null); const pendingUpdates=useRef([]); const updateFrame=useRef(0);
   const scrollKey=`feed-scroll:${tab}`;
+  // App.jsx skips its normal scroll-to-top reset for this route entirely,
+  // deferring to Feed's own tab-aware, sessionStorage-backed restoration
+  // below. That effect only runs once posts have loaded, so this covers
+  // the gap between mounting (e.g. arriving from a scrolled-down page) and
+  // the loading skeleton resolving.
+  useEffect(()=>{window.scrollTo({top:0,left:0,behavior:'instant'});},[]);
   const update=useCallback((id,patch)=>{pendingUpdates.current.push({id,patch});if(updateFrame.current)return;updateFrame.current=requestAnimationFrame(()=>{updateFrame.current=0;const queued=pendingUpdates.current;pendingUpdates.current=[];setPosts(v=>{let next=v;for(const item of queued){next=next.map(p=>String(p.id)===String(item.id)?{...p,...item.patch,likeCount:Number(item.patch.likeCount??p.likeCount),commentCount:Number(item.patch.commentCount??p.commentCount),saveCount:Number(item.patch.saveCount??p.saveCount),viewCount:Number(item.patch.viewCount??p.viewCount)}:p);}return next;});});},[]);
   // Follow state is per-author, not per-post: an author can have several
   // posts visible in the feed at once, and following them from any one of
@@ -219,7 +225,7 @@ export default function Feed(){
   useEffect(()=>{if(messagesOpen||!notificationId||loading)return;const node=document.getElementById(`feed-${notificationId}`);if(node)setTimeout(()=>node.scrollIntoView({block:'center',behavior:'smooth'}),120);},[messagesOpen,notificationId,loading,posts.length,tab]);
   useEffect(()=>{const next=tabs.find(t=>t.toLowerCase()===String(requestedTab||'').toLowerCase());if(next)setTab(next);},[requestedTab]);
   useEffect(()=>{if(messagesOpen||notificationId)return;let frame=0;const save=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{try{sessionStorage.setItem(scrollKey,String(window.scrollY));}catch{}});};const persist=()=>{try{sessionStorage.setItem(scrollKey,String(window.scrollY));}catch{}};window.addEventListener('scroll',save,{passive:true});window.addEventListener('pagehide',persist);return()=>{window.removeEventListener('scroll',save);window.removeEventListener('pagehide',persist);cancelAnimationFrame(frame);persist();};},[messagesOpen,notificationId,scrollKey]);
-  useEffect(()=>{if(messagesOpen||notificationId||loading||!posts.length)return;let frame=0;try{const saved=Number(sessionStorage.getItem(scrollKey));if(!Number.isFinite(saved)||saved<1)return;frame=requestAnimationFrame(()=>{requestAnimationFrame(()=>window.scrollTo({top:saved,behavior:'instant'}));});}catch{}return()=>cancelAnimationFrame(frame);},[messagesOpen,notificationId,loading,posts.length,scrollKey]);
+  useEffect(()=>{if(messagesOpen||notificationId||loading||!posts.length)return;let frame=0;let saved=0;try{const stored=Number(sessionStorage.getItem(scrollKey));if(Number.isFinite(stored)&&stored>=1)saved=stored;}catch{}frame=requestAnimationFrame(()=>{requestAnimationFrame(()=>window.scrollTo({top:saved,behavior:'instant'}));});return()=>cancelAnimationFrame(frame);},[messagesOpen,notificationId,loading,posts.length,scrollKey]);
   const {pullDistance,refreshing,bind}=usePullToRefresh(async()=>{hapticTap();await loadFirst();hapticSuccess();});
   // Filtering now happens server-side (see loadFirst/loadMore's feedType
   // param) so pagination pulls the right kind of content per page instead
