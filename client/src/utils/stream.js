@@ -49,7 +49,15 @@ async function tusPatch(url, chunk, offset, uploadConfig, onProgress) {
     };
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
-        const nextOffset = Number(xhr.getResponseHeader('Upload-Offset'));
+        const rawOffset = xhr.getResponseHeader('Upload-Offset');
+        // getResponseHeader returns null when a header exists on the wire
+        // but isn't exposed to JS for a cross-origin request (missing
+        // Access-Control-Expose-Headers on Bunny's end) -- Number(null) is
+        // 0, not NaN, so checking isFinite alone treats "header not
+        // readable" the same as "header says offset zero", which then
+        // fails every chunk after the first with a bogus invalid-offset
+        // error even though the upload actually succeeded.
+        const nextOffset = rawOffset == null || rawOffset === '' ? NaN : Number(rawOffset);
         resolve(Number.isFinite(nextOffset) ? nextOffset : offset + chunk.size);
       } else {
         reject(new Error(`Video upload failed (${xhr.status}).`));
@@ -79,7 +87,8 @@ async function tusHead(url, uploadConfig) {
     },
   });
   if (!response.ok) throw new Error(`Unable to check upload progress (${response.status}).`);
-  const offset = Number(response.headers.get('Upload-Offset'));
+  const rawOffset = response.headers.get('Upload-Offset');
+  const offset = rawOffset == null || rawOffset === '' ? NaN : Number(rawOffset);
   if (!Number.isFinite(offset)) throw new Error('Bunny Stream did not report an upload offset.');
   return offset;
 }
