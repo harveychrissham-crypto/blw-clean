@@ -227,7 +227,7 @@ export default function Feed(){
   useEffect(()=>{const next=tabs.find(t=>t.toLowerCase()===String(requestedTab||'').toLowerCase());if(next)setTab(next);},[requestedTab]);
   useEffect(()=>{if(messagesOpen||notificationId)return;let frame=0;const save=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{try{sessionStorage.setItem(scrollKey,String(window.scrollY));}catch{}});};const persist=()=>{try{sessionStorage.setItem(scrollKey,String(window.scrollY));}catch{}};window.addEventListener('scroll',save,{passive:true});window.addEventListener('pagehide',persist);return()=>{window.removeEventListener('scroll',save);window.removeEventListener('pagehide',persist);cancelAnimationFrame(frame);persist();};},[messagesOpen,notificationId,scrollKey]);
   useEffect(()=>{if(messagesOpen||notificationId||loading||!posts.length)return;let frame=0;let saved=0;try{const stored=Number(sessionStorage.getItem(scrollKey));if(Number.isFinite(stored)&&stored>=1)saved=stored;}catch{}frame=requestAnimationFrame(()=>{requestAnimationFrame(()=>window.scrollTo({top:saved,behavior:'instant'}));});return()=>cancelAnimationFrame(frame);},[messagesOpen,notificationId,loading,posts.length,scrollKey]);
-  const {pullDistance,refreshing,bind}=usePullToRefresh(async()=>{hapticTap();await loadFirst();hapticSuccess();});
+  const {pullDistance,refreshing,bind}=usePullToRefresh(async()=>{hapticTap();await loadFirst();hapticSuccess();},{enabled:tab!=='Reels'});
   // Filtering now happens server-side (see loadFirst/loadMore's feedType
   // param) so pagination pulls the right kind of content per page instead
   // of the general feed being filtered down client-side after the fact,
