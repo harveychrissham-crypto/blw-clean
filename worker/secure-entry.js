@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'node:crypto';
 import { corsHeaders, rateLimit } from './security.js';
+import { handlePasswordReset } from './password-reset-api.js';
 import { handleSermons } from './sermon-api.js';
 import { handleFeed } from './feed-api.js';
 import { handleLive } from './live-api.js';
@@ -138,6 +139,10 @@ export default {
     const headers = corsHeaders(request, env);
     if (!url.pathname.startsWith('/api/')) return json({ error: 'API route not found.' }, 404, headers);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
+    if (url.pathname === '/api/auth/forgot-password' || url.pathname === '/api/auth/reset-password') {
+      const passwordResetResponse = await handlePasswordReset(request, env);
+      if (passwordResetResponse) return passwordResetResponse;
+    }
     if (url.pathname === '/api/auth/admin-status' && request.method === 'GET') return json(await adminStatus(request, env), 200, headers);
     if (url.pathname === '/api/push/register' && request.method === 'POST') return registerPushToken(request, env, headers);
     if (url.pathname === '/api/push/test' && request.method === 'POST') return sendSelfPushTest(request, env, headers);
