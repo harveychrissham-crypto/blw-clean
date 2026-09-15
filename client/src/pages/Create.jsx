@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiArrowLeft, FiCamera, FiCheck, FiFilm, FiImage, FiLoader, FiMapPin, FiSend, FiSmile, FiX } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { createFeedPost, uploadFeedMedia } from '../utils/feed';
+import { cancelActiveFeedVideoUpload } from '../utils/uploadProgress';
 import { hapticError, hapticSuccess, hapticTap } from '../utils/haptics';
 
 const MAX_IMAGE = 5 * 1024 * 1024;
@@ -22,13 +23,16 @@ export default function Create() {
   const [uploadStage, setUploadStage] = useState('');
   const [error, setError] = useState('');
   const [published, setPublished] = useState(false);
-  const cancelledRef = useRef(false); // set true when the user confirms leaving mid-upload; publish() checks this at each step so a post can never get created after the user thought they'd cancelled.
+  const cancelledRef = useRef(false);
 
   const isDirty = Boolean(file || caption.trim() || location.trim());
   const confirmLeave = () => {
     if (uploading) {
       const proceed = window.confirm('An upload is still in progress. Leaving now will cancel it and nothing will be posted — continue?');
-      if (proceed) cancelledRef.current = true;
+      if (proceed) {
+        cancelledRef.current = true;
+        cancelActiveFeedVideoUpload();
+      }
       return proceed;
     }
     return !isDirty || window.confirm('You have unsaved content. Leave Create and discard it?');
@@ -110,6 +114,15 @@ export default function Create() {
     setUploadStage('');
   };
 
+  const cancelUpload = () => {
+    if (!uploading) return;
+    cancelledRef.current = true;
+    cancelActiveFeedVideoUpload();
+    setUploadStage('');
+    setError('Upload cancelled. Your media and caption are still here — you can retry when ready.');
+    hapticTap();
+  };
+
   const publish = async () => {
     if (!user) return;
     if (!file) return setError(type === 'reel' ? 'Choose a video for your Reel.' : 'Choose a photo or video first.');
@@ -124,9 +137,6 @@ export default function Create() {
       const uploaded = await uploadFeedMedia(file);
       if (cancelledRef.current) return;
       setUploadStage('Publishing…');
-      // Final gate: no matter what path got us here, a cancelled upload must
-      // never reach createFeedPost — that's the one call that actually
-      // publishes something visible to everyone else.
       if (cancelledRef.current) return;
       const cleanCaption = caption.trim();
       const cleanLocation = location.trim();
@@ -162,7 +172,7 @@ export default function Create() {
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-white/[0.07] bg-[#0d0c18]/90 px-3 backdrop-blur-2xl">
           <button type="button" onClick={back} className="grid h-10 w-10 place-items-center rounded-full text-white/75 transition hover:bg-white/[0.07]" aria-label="Back"><FiArrowLeft className="h-5 w-5" /></button>
           <div className="text-center"><h1 className="text-[15px] font-bold tracking-tight">Create</h1><p className="text-[9px] uppercase tracking-[0.18em] text-white/30">Share with the community</p></div>
-          <button type="button" onClick={publish} disabled={uploading || !file || published} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-ink-950 transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35">{uploading ? <FiLoader className="animate-spin" /> : <><FiCheck /> Share</>}</button>
+          {uploading ? <button type="button" onClick={cancelUpload} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-full border border-red-400/20 bg-red-400/10 px-3.5 py-2 text-xs font-bold text-red-200 transition hover:bg-red-400/20"><FiX /> Cancel</button> : <button type="button" onClick={publish} disabled={!file || published} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-ink-950 transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35"><FiCheck /> Share</button>}
         </header>
 
         <div className="grid grid-cols-2 border-b border-white/[0.07] bg-white/[0.015] p-1.5">
@@ -190,7 +200,7 @@ export default function Create() {
               </button>
             )}
             {!file && <div className="mt-3 flex gap-2"><button type="button" onClick={() => choose('post')} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] py-3 text-xs font-semibold text-white/65 transition hover:bg-white/[0.07]"><FiImage /> Gallery</button><button type="button" onClick={() => choose('reel')} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] py-3 text-xs font-semibold text-white/65 transition hover:bg-white/[0.07]"><FiFilm /> Video</button></div>}
-            {uploading && isVideo && <div className="mt-3 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.035] p-3.5 text-xs"><FiLoader className="h-4 w-4 shrink-0 animate-spin text-white/50" /><span className="text-white/60">{uploadStage || 'Uploading video…'}</span></div>}
+            {uploading && isVideo && <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.035] p-3.5 text-xs"><div className="flex items-center gap-3"><FiLoader className="h-4 w-4 shrink-0 animate-spin text-white/50" /><span className="text-white/60">{uploadStage || 'Uploading video…'}</span></div><button type="button" onClick={cancelUpload} className="mt-3 w-full rounded-xl border border-red-400/20 bg-red-400/10 py-2 text-xs font-bold text-red-200 transition hover:bg-red-400/20">Cancel upload</button></div>}
           </section>
 
           <section className="border-t border-white/[0.07] p-4 sm:p-6 md:border-t-0">
@@ -209,7 +219,7 @@ export default function Create() {
             <div className="mt-4 rounded-2xl border border-white/[.07] bg-white/[.02] p-3.5"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/30">Sharing to Feed</p><p className="mt-1.5 text-xs leading-5 text-white/45">Your {type === 'reel' ? 'Reel' : 'post'} will appear in the community Feed where people can like, comment and save it.</p></div>
 
             {error && <p className="mt-3 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-xs leading-5 text-red-200">{error}</p>}
-            <button type="button" onClick={publish} disabled={uploading || !file || published} className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3.5 text-sm font-bold text-ink-950 shadow-xl transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35">{uploading ? <><FiLoader className="animate-spin" /> {uploadStage || (isVideo ? 'Uploading & sharing…' : 'Uploading & sharing...')}</> : <><FiSend /> Share {type === 'reel' ? 'Reel' : 'Post'}</>}</button>
+            <button type="button" onClick={uploading ? cancelUpload : publish} disabled={!file || published} className={`mt-4 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold shadow-xl transition disabled:cursor-not-allowed disabled:opacity-35 ${uploading ? 'border border-red-400/20 bg-red-400/10 text-red-200 hover:bg-red-400/20' : 'bg-white text-ink-950 hover:bg-white/90'}`}>{uploading ? <><FiX /> Cancel upload</> : <><FiSend /> {error ? 'Retry share' : `Share ${type === 'reel' ? 'Reel' : 'Post'}`}</>}</button>
           </section>
         </div>
       </div>
