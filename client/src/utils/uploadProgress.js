@@ -1,6 +1,12 @@
 import { getToken } from './authToken';
 import { apiUrl } from '../config/api';
 
+let activeVideoUpload = null;
+
+export function cancelActiveFeedVideoUpload() {
+  if (activeVideoUpload) activeVideoUpload.abort();
+}
+
 export function uploadFeedVideoWithProgress(file, { onProgress, onStage } = {}) {
   if (!(file instanceof File)) return Promise.reject(new Error('No video file selected.'));
   const form = new FormData();
@@ -10,9 +16,14 @@ export function uploadFeedVideoWithProgress(file, { onProgress, onStage } = {}) 
   return new Promise(async (resolve, reject) => {
     const xhr = new XMLHttpRequest();
     let settled = false;
+    activeVideoUpload = xhr;
+    const clearActive = () => {
+      if (activeVideoUpload === xhr) activeVideoUpload = null;
+    };
     const fail = (error) => {
       if (settled) return;
       settled = true;
+      clearActive();
       reject(error instanceof Error ? error : new Error('Unable to upload that video.'));
     };
 
@@ -35,6 +46,7 @@ export function uploadFeedVideoWithProgress(file, { onProgress, onStage } = {}) 
         return;
       }
       settled = true;
+      clearActive();
       onProgress?.({ percent: 100, loaded: file.size, total: file.size, loadedMB: file.size / 1024 / 1024, totalMB: file.size / 1024 / 1024 });
       onStage?.('processing');
       resolve(body);
@@ -42,6 +54,7 @@ export function uploadFeedVideoWithProgress(file, { onProgress, onStage } = {}) 
 
     try {
       const token = await getToken();
+      if (settled) return;
       xhr.open('POST', apiUrl('/api/feed/upload'), true);
       if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
       xhr.timeout = 15 * 60 * 1000;
