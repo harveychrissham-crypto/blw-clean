@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { FiCpu, FiSend, FiX } from 'react-icons/fi';
 import { Card } from './ui/Card';
 import Button from './ui/Button';
@@ -27,6 +28,7 @@ function answerForQuestion(question) {
 }
 
 export default function AIChatWidget() {
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState(answers.region);
@@ -47,7 +49,14 @@ export default function AIChatWidget() {
     setQuestion('');
   };
 
-  if (hidden) return null;
+  // Auth flow pages use a compact, centered form that sits close to the
+  // bottom of short viewports -- the fixed bottom-right widget was
+  // overlapping/obscuring the "Don't have an account? Register" link.
+  // Simplest fix, same approach as the meeting-call collision fix: hide
+  // it entirely here rather than try to dodge around the form.
+  const onAuthFlow = ['/auth', '/forgot-password', '/reset-password'].includes(location.pathname);
+
+  if (hidden || onAuthFlow) return null;
 
   return (
     <div className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-[60] sm:bottom-4">
