@@ -131,7 +131,10 @@ export default function StoriesRow() {
 
       const form = new FormData();
       form.append('media', file);
-      const uploadRes = await apiFetch('/api/stories/upload', { method: 'POST', body: form });
+      // Video stories can be up to 30MB -- the default apiFetch timeout
+      // (30s) is sized for ordinary JSON calls and would false-positive on
+      // a legitimately slow upload, so give this one more room.
+      const uploadRes = await apiFetch('/api/stories/upload', { method: 'POST', body: form, timeoutMs: isVideo ? 5 * 60 * 1000 : 30000 });
       const uploadBody = await uploadRes.json().catch(() => ({}));
       if (!uploadRes.ok) throw new Error(uploadBody.error || 'Upload failed.');
 
