@@ -4,11 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiArrowLeft, FiCamera, FiCheck, FiFilm, FiImage, FiLoader, FiMapPin, FiSend, FiSmile, FiX } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { createFeedPost, uploadFeedMedia } from '../utils/feed';
-import { createStreamDirectUpload, uploadToStream, getStreamVideoStatus } from '../utils/stream';
 import { hapticError, hapticSuccess, hapticTap } from '../utils/haptics';
 
 const MAX_IMAGE = 5 * 1024 * 1024;
-const MAX_VIDEO = 200 * 1024 * 1024;
+const MAX_VIDEO = 50 * 1024 * 1024;
 
 export default function Create() {
   const { user } = useAuth();
@@ -20,11 +19,9 @@ export default function Create() {
   const [caption, setCaption] = useState('');
   const [location, setLocation] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStage, setUploadStage] = useState('');
   const [error, setError] = useState('');
   const [published, setPublished] = useState(false);
-  const pendingUploadRef = useRef(null); // { direct } from a prior attempt that finished uploading but timed out waiting on Bunny to finish processing -- retrying should resume from here, not re-upload the whole file again.
   const cancelledRef = useRef(false); // set true when the user confirms leaving mid-upload; publish() checks this at each step so a post can never get created after the user thought they'd cancelled.
 
   const isDirty = Boolean(file || caption.trim() || location.trim());
@@ -43,12 +40,6 @@ export default function Create() {
     setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [file]);
-
-  // A pending Bunny upload only makes sense for the file it was uploaded
-  // for. Any time the selected file changes (new pick, removed, swapped),
-  // forget it -- retrying publish should always mean a fresh upload for
-  // whatever is currently selected, never resuming a stale one.
-  useEffect(() => { pendingUploadRef.current = null; }, [file]);
 
   useEffect(() => {
     if (!isDirty) return undefined;
@@ -95,7 +86,6 @@ export default function Create() {
     setType(mode);
     setFile(null);
     setError('');
-    setUploadProgress(0);
     setUploadStage('');
   };
 
@@ -117,7 +107,6 @@ export default function Create() {
     }
     setFile(next);
     setError('');
-    setUploadProgress(0);
     setUploadStage('');
   };
 
@@ -129,51 +118,12 @@ export default function Create() {
     if (!window.confirm(`Ready to share this ${type === 'reel' ? 'Reel' : 'post'}?`)) return;
     cancelledRef.current = false;
     setUploading(true);
-    setUploadProgress(0);
-    setUploadStage(file.type.startsWith('video/') ? (pendingUploadRef.current ? 'Resuming — checking if your video is ready…' : 'Preparing Bunny Stream upload…') : 'Uploading image…');
+    setUploadStage(isVideo ? 'Uploading video…' : 'Uploading image…');
     setError('');
     try {
-      let uploaded;
-      if (file.type.startsWith('video/')) {
-        let direct = pendingUploadRef.current;
-        if (direct) {
-          setUploadStage('Resuming — checking if your video is ready…');
-          setUploadProgress(100);
-        } else {
-          direct = await createStreamDirectUpload(1200);
-          setUploadStage('Uploading video…');
-          await uploadToStream(direct, file, setUploadProgress);
-          // Uploaded successfully -- remember this so that if the
-          // processing-status wait below times out, retrying publish()
-          // resumes from here instead of uploading the entire file again.
-          pendingUploadRef.current = direct;
-        }
-        if (cancelledRef.current) return;
-        setUploadStage('Processing video…');
-        // Bunny needs time to finish transcoding after the upload
-        // completes -- publishing before it's ready would point the post at
-        // a manifest that isn't actually playable yet. How long that takes
-        // scales with the video's length, so this needs real headroom for
-        // anything longer than a very short clip, not just a couple of
-        // minutes.
-        const deadline = Date.now() + 480_000;
-        let ready = false;
-        while (Date.now() < deadline) {
-          if (cancelledRef.current) return;
-          const status = await getStreamVideoStatus(direct.uid).catch(() => null);
-          if (status?.readyToStream) { ready = true; break; }
-          await new Promise((resolve) => setTimeout(resolve, 3000));
-        }
-        if (cancelledRef.current) return;
-        if (!ready) throw new Error('Your video is taking longer than usual to process. Tap publish again in a few minutes -- it will pick up right where it left off, not re-upload.');
-        uploaded = { url: direct.manifestUrl, mediaType: 'video', streamUid: direct.uid };
-        setUploadStage('Video ready. Publishing…');
-      } else {
-        uploaded = await uploadFeedMedia(file);
-        if (cancelledRef.current) return;
-        setUploadProgress(100);
-        setUploadStage('Publishing…');
-      }
+      const uploaded = await uploadFeedMedia(file);
+      if (cancelledRef.current) return;
+      setUploadStage('Publishing…');
       // Final gate: no matter what path got us here, a cancelled upload must
       // never reach createFeedPost — that's the one call that actually
       // publishes something visible to everyone else.
@@ -183,7 +133,6 @@ export default function Create() {
       const title = cleanCaption.slice(0, 160) || (type === 'reel' ? 'New Reel' : 'New post');
       const body = cleanLocation ? `${cleanCaption}${cleanCaption ? '\n\n' : ''}📍 ${cleanLocation}` : cleanCaption;
       const created = await createFeedPost({ type, title, body, mediaUrl: uploaded.url, mediaType: uploaded.mediaType, thumbnailUrl: uploaded.thumbnailUrl || '' });
-      pendingUploadRef.current = null;
       hapticSuccess();
       setPublished(true);
       setTimeout(() => {
@@ -241,7 +190,7 @@ export default function Create() {
               </button>
             )}
             {!file && <div className="mt-3 flex gap-2"><button type="button" onClick={() => choose('post')} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] py-3 text-xs font-semibold text-white/65 transition hover:bg-white/[0.07]"><FiImage /> Gallery</button><button type="button" onClick={() => choose('reel')} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] py-3 text-xs font-semibold text-white/65 transition hover:bg-white/[0.07]"><FiFilm /> Video</button></div>}
-            {uploading && isVideo && <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.035] p-3.5"><div className="flex items-center justify-between gap-3 text-xs"><span className="text-white/60">{uploadStage || 'Uploading video…'}</span><span className="font-semibold text-white">{uploadProgress}%</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-white transition-[width] duration-200" style={{ width: `${uploadProgress}%` }} /></div><p className="mt-2 text-[10px] leading-4 text-white/30">Bunny Stream will process this video and deliver adaptive bitrate playback after upload.</p></div>}
+            {uploading && isVideo && <div className="mt-3 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.035] p-3.5 text-xs"><FiLoader className="h-4 w-4 shrink-0 animate-spin text-white/50" /><span className="text-white/60">{uploadStage || 'Uploading video…'}</span></div>}
           </section>
 
           <section className="border-t border-white/[0.07] p-4 sm:p-6 md:border-t-0">
@@ -257,7 +206,7 @@ export default function Create() {
 
             <div className="mt-3 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.025] px-3.5 py-2.5"><FiMapPin className="shrink-0 text-white/35" /><input value={location} onChange={(event) => setLocation(event.target.value)} maxLength={100} placeholder="Add location (optional)" className="min-w-0 flex-1 bg-transparent text-xs text-white outline-none placeholder:text-white/25" /></div>
 
-            <div className="mt-4 rounded-2xl border border-white/[.07] bg-white/[.02] p-3.5"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/30">Sharing to Feed</p><p className="mt-1.5 text-xs leading-5 text-white/45">Your {type === 'reel' ? 'Reel' : 'post'} will appear in the community Feed where people can like, comment and save it.</p>{isVideo&&<p className="mt-2 text-[10px] leading-4 text-white/25">Video delivery: Bunny Stream adaptive bitrate via HLS.</p>}</div>
+            <div className="mt-4 rounded-2xl border border-white/[.07] bg-white/[.02] p-3.5"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/30">Sharing to Feed</p><p className="mt-1.5 text-xs leading-5 text-white/45">Your {type === 'reel' ? 'Reel' : 'post'} will appear in the community Feed where people can like, comment and save it.</p></div>
 
             {error && <p className="mt-3 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-xs leading-5 text-red-200">{error}</p>}
             <button type="button" onClick={publish} disabled={uploading || !file || published} className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3.5 text-sm font-bold text-ink-950 shadow-xl transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35">{uploading ? <><FiLoader className="animate-spin" /> {uploadStage || (isVideo ? 'Uploading & sharing…' : 'Uploading & sharing...')}</> : <><FiSend /> Share {type === 'reel' ? 'Reel' : 'Post'}</>}</button>
