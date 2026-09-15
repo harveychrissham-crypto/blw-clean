@@ -38,7 +38,7 @@ async function adminStatus(request, env) {
     const connectionString = env.HYPERDRIVE?.connectionString || env.DATABASE_URL || '';
     if (!connectionString) return { authenticated: true, isAdmin: false };
     const { Client } = await import('pg');
-    const client = new Client({ connectionString });
+    const client = new Client({ connectionString, connectionTimeoutMillis: 8000, query_timeout: 10000 });
     await client.connect();
     try {
       const result = await client.query('SELECT is_admin FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1', [email]);
@@ -62,7 +62,7 @@ async function registerPushToken(request, env, headers) {
   const connectionString = env.HYPERDRIVE?.connectionString || env.DATABASE_URL || '';
   if (!connectionString) return json({ error: 'Database connection is not configured.' }, 503, headers);
   try {
-    const { Client } = await import('pg'); const client = new Client({ connectionString }); await client.connect();
+    const { Client } = await import('pg'); const client = new Client({ connectionString, connectionTimeoutMillis: 8000, query_timeout: 10000 }); await client.connect();
     try {
       await client.query(`CREATE TABLE IF NOT EXISTS push_tokens (id SERIAL PRIMARY KEY,user_email TEXT NOT NULL,token TEXT NOT NULL UNIQUE,platform TEXT NOT NULL DEFAULT 'android',created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW())`);
       await client.query(`INSERT INTO push_tokens (user_email, token, platform, updated_at) VALUES ($1, $2, $3, NOW()) ON CONFLICT (token) DO UPDATE SET user_email = EXCLUDED.user_email, platform = EXCLUDED.platform, updated_at = NOW()`, [email, deviceToken, platform]);
@@ -103,7 +103,7 @@ async function sendSelfPushTest(request, env, headers) {
   if (typeof incomingData.chapter === 'string' && incomingData.chapter.trim()) data.chapter = incomingData.chapter.trim().slice(0, 200);
   const connectionString = env.HYPERDRIVE?.connectionString || env.DATABASE_URL || ''; if (!connectionString) return json({ error: 'Database connection is not configured.' }, 503, headers);
   try {
-    const { Client } = await import('pg'); const client = new Client({ connectionString }); await client.connect(); let tokens;
+    const { Client } = await import('pg'); const client = new Client({ connectionString, connectionTimeoutMillis: 8000, query_timeout: 10000 }); await client.connect(); let tokens;
     try { const result = await client.query("SELECT token FROM push_tokens WHERE LOWER(user_email) = $1 AND token IS NOT NULL AND token <> ''", [email]); tokens = [...new Set(result.rows.map((row) => typeof row.token === 'string' ? row.token.trim() : '').filter(Boolean))]; } finally { await client.end().catch(() => {}); }
     if (!tokens.length) return json({ status: 'no_token', message: 'No FCM token is registered for this account yet.' }, 404, headers);
     const { projectId } = firebaseConfig(env); const accessToken = await getFirebaseAccessToken(env); let sent = 0; let failed = 0; const failures = [];

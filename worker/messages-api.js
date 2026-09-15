@@ -27,7 +27,7 @@ async function getDb(env) {
   const connectionString = env.HYPERDRIVE?.connectionString || env.DATABASE_URL || '';
   if (!connectionString) throw new Error('Database connection is not configured.');
   const { Client } = await import('pg');
-  const client = new Client({ connectionString });
+  const client = new Client({ connectionString, connectionTimeoutMillis: 8000, query_timeout: 10000 });
   await client.connect();
   return client;
 }

@@ -18,7 +18,7 @@ async function verifyAdmin(request, env) {
     if (!email) return { ok: false, status: 403, error: 'Administrator authorization is required.' };
     const connectionString = env.HYPERDRIVE?.connectionString || env.DATABASE_URL || '';
     if (!connectionString) return { ok: false, status: 503, error: 'Database connection is not configured.' };
-    const { Client } = await import('pg'); const client = new Client({ connectionString }); await client.connect();
+    const { Client } = await import('pg'); const client = new Client({ connectionString, connectionTimeoutMillis: 8000, query_timeout: 10000 }); await client.connect();
     try { const result = await client.query('SELECT is_admin FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1', [email]); if (result.rows[0]?.is_admin !== true) return { ok: false, status: 403, error: 'Administrator authorization is required.' }; }
     finally { await client.end().catch(() => {}); }
     return { ok: true };
@@ -72,7 +72,7 @@ export async function sendPushNotification(request, env) {
   if (!broadcast && !userEmails.length) return json({ error: 'Specify broadcast: true or provide at least one user email.' }, 400, headers);
   const connectionString = env.HYPERDRIVE?.connectionString || env.DATABASE_URL || ''; if (!connectionString) return json({ error: 'Database connection is not configured.' }, 503, headers);
   try {
-    const { Client } = await import('pg'); const client = new Client({ connectionString }); await client.connect(); let tokens = [];
+    const { Client } = await import('pg'); const client = new Client({ connectionString, connectionTimeoutMillis: 8000, query_timeout: 10000 }); await client.connect(); let tokens = [];
     try {
       const sql = broadcast ? `SELECT token FROM push_tokens WHERE token IS NOT NULL AND token <> ''` : `SELECT token FROM push_tokens WHERE LOWER(user_email) = ANY($1::text[]) AND token IS NOT NULL AND token <> ''`;
       const result = broadcast ? await client.query(sql) : await client.query(sql, [userEmails]); tokens = [...new Set(result.rows.map((row) => typeof row.token === 'string' ? row.token.trim() : '').filter(Boolean))];
@@ -84,7 +84,7 @@ export async function sendPushNotification(request, env) {
       if (result.ok) { sent += 1; continue; }
       failed += 1; const errorString = JSON.stringify(result.body || {}); failures.push({ status: result.status, error: result.body?.error?.status || result.body?.error?.message || 'FCM send failed' });
       if (/UNREGISTERED|registration-token-not-registered|INVALID_ARGUMENT/i.test(errorString)) {
-        const cleanup = new Client({ connectionString }); await cleanup.connect(); try { await cleanup.query('DELETE FROM push_tokens WHERE token = $1', [token]); } finally { await cleanup.end().catch(() => {}); } removed += 1;
+        const cleanup = new Client({ connectionString, connectionTimeoutMillis: 8000, query_timeout: 10000 }); await cleanup.connect(); try { await cleanup.query('DELETE FROM push_tokens WHERE token = $1', [token]); } finally { await cleanup.end().catch(() => {}); } removed += 1;
       }
     }
     console.log('[worker] push send result', { sent, failed, removed, totalTokens: tokens.length, data, failures });
