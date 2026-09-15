@@ -14,6 +14,21 @@ initNative();
 initAppUpdateChecker();
 bindGlobalTapHaptics();
 
+// hls.js was previously loaded from an external CDN via a classic <script>
+// tag in index.html for Feed's reel/video HLS fallback (most Android
+// WebViews lack native HLS support). That tag blocked HTML parsing on a
+// live network request every cold start — directly against this app's own
+// design goal of shipping fully inside the bundle so it opens instantly
+// offline (see capacitor.config.ts) — and could stall the whole app on a
+// blank white screen if that request was slow or failed. hls.js is already
+// a proper bundled dependency (used in Live.jsx); expose the same bundled
+// copy as window.Hls here instead. The inline HLS-attach script in
+// index.html watches the DOM via MutationObserver, so it picks this up
+// fine even though it technically loads after that script's initial scan —
+// no video elements exist yet at that point anyway, since React hasn't
+// mounted.
+import('hls.js').then((mod) => { window.Hls = mod.default; }).catch(() => {});
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
