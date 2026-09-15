@@ -14,8 +14,13 @@ const normalizeEmail = (value) => typeof value === 'string' ? value.trim().toLow
 async function db(env, fn) {
   const connectionString = env.HYPERDRIVE?.connectionString || env.DATABASE_URL || '';
   if (!connectionString) throw new Error('Database connection is not configured.');
+  // Node's pg Client has no connection timeout by default -- if the
+  // database is slow or unreachable, client.connect() hangs indefinitely
+  // instead of failing, which is exactly what turns "Send reset link"
+  // into a spinner that never resolves. Bound both connecting and query
+  // execution so a DB problem surfaces as a clear, fast error instead.
   const { Client } = await import('pg');
-  const client = new Client({ connectionString });
+  const client = new Client({ connectionString, connectionTimeoutMillis: 8000, query_timeout: 10000 });
   await client.connect();
   try { return await fn(client); } finally { await client.end().catch(() => {}); }
 }

@@ -25,7 +25,7 @@ async function isAdmin(request, env) {
     const connectionString = env.HYPERDRIVE?.connectionString || env.DATABASE_URL || '';
     if (!connectionString) return false;
     const { Client } = await import('pg');
-    const client = new Client({ connectionString });
+    const client = new Client({ connectionString, connectionTimeoutMillis: 8000, query_timeout: 10000 });
     await client.connect();
     try {
       const result = await client.query('SELECT is_admin FROM users WHERE LOWER(email)=LOWER($1) LIMIT 1', [email]);
@@ -38,7 +38,7 @@ async function db(env, fn) {
   const connectionString = env.HYPERDRIVE?.connectionString || env.DATABASE_URL || '';
   if (!connectionString) throw new Error('Database connection is not configured.');
   const { Client } = await import('pg');
-  const client = new Client({ connectionString });
+  const client = new Client({ connectionString, connectionTimeoutMillis: 8000, query_timeout: 10000 });
   await client.connect();
   try { return await fn(client); } finally { await client.end().catch(() => {}); }
 }
