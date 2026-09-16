@@ -113,25 +113,31 @@ export default function Explore() {
 
       {filter === 'People' ? (
         accountsLoading ? (
-          <div className="mt-5 space-y-2">
-            {Array.from({ length: 8 }).map((_, index) => <Skeleton key={index} className="h-16 w-full rounded-2xl" />)}
+          <div className="mt-4">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div key={index} className="flex items-center gap-3 py-2.5">
+                <Skeleton className="h-14 w-14 shrink-0 rounded-full" />
+                <div className="min-w-0 flex-1 space-y-1.5"><Skeleton className="h-3.5 w-28 rounded" /><Skeleton className="h-3 w-20 rounded" /></div>
+              </div>
+            ))}
           </div>
         ) : accounts.length ? (
-          <div className="mt-5 space-y-2">
+          <div className="mt-2">
+            {!query.trim() && <p className="px-1 pb-1 pt-3 text-xs font-semibold text-white/45">Suggested for you</p>}
             {accounts.map((account) => (
-              <div key={account.email} className="flex items-center gap-3 rounded-2xl border border-white/[.06] bg-white/[.035] p-3">
-                <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white/[.07]">
+              <div key={account.email} className="flex items-center gap-3 py-2.5">
+                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-white/[.07]">
                   <img src={account.avatarUrl || '/logo.png'} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-white">{account.name}</p>
-                  <p className="truncate text-xs text-white/45">{[account.title, account.chapter].filter(Boolean).join(' · ') || 'BLW Kenya Zone'}</p>
+                  <p className="truncate text-xs text-white/40">{[account.title, account.chapter].filter(Boolean).join(' · ') || 'Suggested for you'}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => follow(account)}
                   disabled={followBusy === account.email}
-                  className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition disabled:opacity-50 ${account.following ? 'bg-white/[.08] text-white/70 hover:bg-white/[.12]' : 'bg-white text-black hover:bg-white/90'}`}
+                  className={`shrink-0 rounded-lg px-4 py-1.5 text-sm font-semibold transition disabled:opacity-50 ${account.following ? 'border border-white/15 text-white/70 hover:bg-white/[.06]' : 'bg-[#EC2FA8] text-white hover:bg-[#F04FB8]'}`}
                 >
                   {account.following ? 'Following' : 'Follow'}
                 </button>
