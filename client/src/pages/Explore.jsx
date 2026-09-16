@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { FiArrowLeft, FiSearch, FiX } from 'react-icons/fi';
-import { fetchFeed } from '../utils/feed';
+import { fetchFeed, searchAccounts, toggleFollow } from '../utils/feed';
 import { Skeleton } from '../components/ui/Skeleton';
 
-const FILTERS = ['All', 'Photos', 'Videos'];
+const FILTERS = ['All', 'Photos', 'Videos', 'People'];
 
 function tileLabel(post) {
   if (post.type === 'reel') return 'Reel';
@@ -18,6 +18,9 @@ export default function Explore() {
   const [filter, setFilter] = useState(searchParams.get('type') || 'All');
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [accounts, setAccounts] = useState([]);
+  const [accountsLoading, setAccountsLoading] = useState(false);
+  const [followBusy, setFollowBusy] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -28,6 +31,32 @@ export default function Explore() {
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    if (filter !== 'People') return undefined;
+    let active = true;
+    setAccountsLoading(true);
+    const timer = setTimeout(() => {
+      searchAccounts(query)
+        .then((next) => { if (active) setAccounts(next); })
+        .catch(() => { if (active) setAccounts([]); })
+        .finally(() => { if (active) setAccountsLoading(false); });
+    }, query.trim() ? 300 : 0);
+    return () => { active = false; clearTimeout(timer); };
+  }, [filter, query]);
+
+  const follow = async (account) => {
+    setFollowBusy(account.email);
+    const next = !account.following;
+    setAccounts((v) => v.map((a) => (a.email === account.email ? { ...a, following: next } : a)));
+    try {
+      await toggleFollow(account.email);
+    } catch {
+      setAccounts((v) => v.map((a) => (a.email === account.email ? { ...a, following: !next } : a)));
+    } finally {
+      setFollowBusy('');
+    }
+  };
 
   const results = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -70,7 +99,7 @@ export default function Explore() {
 
       <label className="flex h-11 items-center gap-2 rounded-2xl border border-white/10 bg-white/[.045] px-3 text-white/55 focus-within:border-white/20">
         <FiSearch className="shrink-0" />
-        <input value={query} onChange={(event) => updateSearch(event.target.value)} placeholder="Search posts, people or topics" className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/35" aria-label="Search Feed" />
+        <input value={query} onChange={(event) => updateSearch(event.target.value)} placeholder={filter === 'People' ? 'Search people by name or chapter' : 'Search posts, people or topics'} className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/35" aria-label="Search Feed" />
         {query && <button type="button" onClick={() => updateSearch('')} className="grid h-7 w-7 place-items-center rounded-full text-white/50 hover:bg-white/[.08]" aria-label="Clear search"><FiX /></button>}
       </label>
 
@@ -82,7 +111,41 @@ export default function Explore() {
         ))}
       </div>
 
-      {loading ? (
+      {filter === 'People' ? (
+        accountsLoading ? (
+          <div className="mt-5 space-y-2">
+            {Array.from({ length: 8 }).map((_, index) => <Skeleton key={index} className="h-16 w-full rounded-2xl" />)}
+          </div>
+        ) : accounts.length ? (
+          <div className="mt-5 space-y-2">
+            {accounts.map((account) => (
+              <div key={account.email} className="flex items-center gap-3 rounded-2xl border border-white/[.06] bg-white/[.035] p-3">
+                <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white/[.07]">
+                  <img src={account.avatarUrl || '/logo.png'} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-white">{account.name}</p>
+                  <p className="truncate text-xs text-white/45">{[account.title, account.chapter].filter(Boolean).join(' · ') || 'BLW Kenya Zone'}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => follow(account)}
+                  disabled={followBusy === account.email}
+                  className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition disabled:opacity-50 ${account.following ? 'bg-white/[.08] text-white/70 hover:bg-white/[.12]' : 'bg-white text-black hover:bg-white/90'}`}
+                >
+                  {account.following ? 'Following' : 'Follow'}
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-12 rounded-2xl border border-white/10 bg-white/[.035] px-6 py-12 text-center">
+            <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-white/[.06] text-white/55"><FiSearch /></div>
+            <h2 className="mt-4 text-sm font-semibold text-white">No one found</h2>
+            <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-white/45">Try a different name or chapter.</p>
+          </div>
+        )
+      ) : loading ? (
         <div className="mt-5 grid grid-cols-3 gap-1 sm:gap-2">
           {Array.from({ length: 12 }).map((_, index) => <Skeleton key={index} className="aspect-square rounded-lg" />)}
         </div>

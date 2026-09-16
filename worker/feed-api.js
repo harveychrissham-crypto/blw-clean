@@ -95,6 +95,32 @@ export async function handleFeed(request, env, url) {
         return json({ following },200,headers);
       } finally { await client.end().catch(()=>{}); }
     }
+    if (url.pathname === '/api/feed/users/search' && request.method === 'GET') {
+      // Purpose-built for "who to follow" — distinct from /api/members/search
+      // (admin-only, returns phone/email/checkin data for church check-in).
+      // This only ever returns what's needed for a follow card: name,
+      // avatar, chapter, and whether the current viewer already follows
+      // them. No contact details.
+      const raw = (url.searchParams.get('q') || '').trim().slice(0, 80);
+      const client = await getDb(env);
+      try {
+        const viewerEmail = email || '';
+        const params = [viewerEmail];
+        let sql = `SELECT u.full_name,u.email,u.avatar_url,u.chapter,u.title,
+          EXISTS(SELECT 1 FROM public.feed_user_follows f WHERE LOWER(f.follower_email)=LOWER($1) AND LOWER(f.followed_email)=LOWER(u.email)) AS following
+          FROM public.users u
+          WHERE u.full_name IS NOT NULL AND u.full_name <> ''
+          AND ($1 = '' OR LOWER(u.email) <> LOWER($1))`;
+        if (raw) {
+          params.push(`%${raw.toLowerCase()}%`);
+          sql += ` AND (LOWER(u.full_name) LIKE $2 OR LOWER(u.chapter) LIKE $2) ORDER BY u.full_name ASC LIMIT 20`;
+        } else {
+          sql += ` ORDER BY random() LIMIT 12`;
+        }
+        const result = await client.query(sql, params);
+        return json({ users: result.rows.map((row) => ({ name: row.full_name, email: row.email, avatarUrl: row.avatar_url || '', chapter: row.chapter || '', title: row.title || '', following: Boolean(row.following) })) }, 200, headers);
+      } finally { await client.end().catch(()=>{}); }
+    }
     const viewMatch = url.pathname.match(/^\/api\/feed\/posts\/([^/]+)\/view$/);
     if (viewMatch && request.method === 'POST') {
       const feedId = parseFeedId(viewMatch[1]);

@@ -413,6 +413,14 @@ async function postAction(id, action) {
 export const toggleLike = (id) => postAction(id, 'like');
 export const toggleSave = (id) => postAction(id, 'save');
 
+export async function searchAccounts(query = '') {
+  const params = query.trim() ? `?q=${encodeURIComponent(query.trim())}` : '';
+  const response = await apiFetch(`/api/feed/users/search${params}`);
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result?.error || 'Unable to load accounts right now.');
+  return Array.isArray(result?.users) ? result.users : [];
+}
+
 export async function toggleFollow(email) {
   const target = String(email || '').trim();
   if (!target) throw new Error('Member not found.');
