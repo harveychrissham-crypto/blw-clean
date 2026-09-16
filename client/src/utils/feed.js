@@ -477,3 +477,10 @@ export async function reportPost(id, reason) {
   if (!response.ok) throw new Error(result?.error || 'Unable to report this right now.');
   return result;
 }
+
+export async function deletePost(id) {
+  const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result?.error || 'Unable to delete this post right now.');
+  return result;
+}
