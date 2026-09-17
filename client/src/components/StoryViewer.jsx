@@ -243,7 +243,7 @@ export default function StoryViewer({ stories, initialIndex = 0, viewerEmail, on
               onPointerDown={(event) => event.stopPropagation()}
               aria-expanded={viewersOpen}
               aria-label="See who viewed your story"
-              className="flex items-center gap-2 rounded-full border border-white/20 bg-black/55 px-3 py-2 backdrop-blur-xl"
+              className="flex items-center gap-2 rounded-full border border-white/20 bg-black/55 px-3 py-2 backdrop-blur-xl transition hover:bg-black/70"
             >
               <FiEye className="h-4 w-4 text-white/70" />
               {viewers.length > 0 ? (
@@ -290,7 +290,7 @@ export default function StoryViewer({ stories, initialIndex = 0, viewerEmail, on
               aria-label="Reply to story"
               disabled={sendingReply}
             />
-            <button type="submit" disabled={!reply.trim() || sendingReply} aria-label="Send story reply" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-[#0d0c18] disabled:cursor-not-allowed disabled:opacity-35">
+            <button type="submit" disabled={!reply.trim() || sendingReply} aria-label="Send story reply" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-[#0d0c18] transition hover:bg-white/90 active:scale-90 disabled:cursor-not-allowed disabled:opacity-35">
               {sendingReply ? <FiLoader className="h-4 w-4 animate-spin" /> : <FiSend className="h-4 w-4" />}
             </button>
           </form>
