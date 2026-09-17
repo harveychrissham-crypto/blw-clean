@@ -31,7 +31,8 @@ export default {
           500: '#F2A31C'
         },
         ink: {
-          900: '#0d0c18'
+          900: '#0d0c18',
+          950: '#08070f'
         }
       },
       boxShadow: {
