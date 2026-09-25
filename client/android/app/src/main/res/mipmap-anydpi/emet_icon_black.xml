@@ -5,83 +5,30 @@
     android:viewportWidth="128"
     android:viewportHeight="128">
 
+    <!-- Launcher background -->
     <path
         android:fillColor="#FF0B0F14"
         android:pathData="M20,0h88c11.046,0 20,8.954 20,20v88c0,11.046 -8.954,20 -20,20H20c-11.046,0 -20,-8.954 -20,-20V20C0,8.954 8.954,0 20,0Z"/>
 
-    <!-- Approved Emet speech/conversation mark -->
+    <!-- Exact Emet mark from the approved logo -->
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M93,31
-            C89,25 82,21 74,21
-            H54
-            C34,21 19,36 19,56
-            C19,70 27,82 39,88
-            L34,105
-            C33.5,107 35.7,108.2 37.2,107
-            L52,95
-            H74
-            C84,95 92,90 97,83
-            H76
-            C64,83 54,83 49,80
-            C41,76 36,68 36,58
-            C36,44 46,34 59,34
-            H78
-            C84,34 89,37 93,42
-            C98,48 101,55 101,64
-            C101,67 100.5,70 99.5,73
-            H82
-            C78.7,73 76,70.3 76,67
-            C76,63.7 78.7,61 82,61
-            H96
-            C96.8,59 97,57 97,55
-            C97,46 95.5,37 93,31Z"/>
+        android:pathData="M22,18h65c16.57,0 30,13.43 30,30v25c0,16.57 -13.43,30 -30,30H53l-25,17 5,-19C18,96.7 12,86.9 12,75V48c0,-16.57 13.43,-30 30,-30Z"/>
 
-    <!-- Inner conversation opening -->
     <path
         android:fillColor="#FF0B0F14"
-        android:pathData="M54,44
-            H80
-            C88,44 94,50 94,58
-            C94,61 93,64 91,66
-            H80
-            C76.7,66 74,63.3 74,60
-            C74,56.7 76.7,54 80,54
-            H88
-            C86,51 83,50 79,50
-            H54
-            C48,50 43,54 43,60
-            C43,66 48,70 54,70
-            H80
-            C83,70 86,69 88,67
-            H91
-            C88,73 83,76 76,76
-            H54
-            C44,76 36,69 36,60
-            C36,51 44,44 54,44Z"/>
+        android:pathData="M87,35c-2.8,-7.7 -10.1,-13 -19,-13H49c-17.1,0 -31,13.9 -31,31s13.9,31 31,31h24c8.9,0 16.2,-5.3 19,-13H52c-10,0 -18,-8.1 -18,-18s8,-18 18,-18h35Z"/>
 
-    <!-- Three horizontal conversation dots -->
+    <!-- Three dots, converted from SVG circles to Vector Drawable paths -->
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M52,56
-            C54.2,56 56,57.8 56,60
-            C56,62.2 54.2,64 52,64
-            C49.8,64 48,62.2 48,60
-            C48,57.8 49.8,56 52,56Z"/>
+        android:pathData="M51,48.3c2.596,0 4.7,2.104 4.7,4.7s-2.104,4.7 -4.7,4.7 -4.7,-2.104 -4.7,-4.7 2.104,-4.7 4.7,-4.7Z"/>
 
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M65,56
-            C67.2,56 69,57.8 69,60
-            C69,62.2 67.2,64 65,64
-            C62.8,64 61,62.2 61,60
-            C61,57.8 62.8,56 65,56Z"/>
+        android:pathData="M65,48.3c2.596,0 4.7,2.104 4.7,4.7s-2.104,4.7 -4.7,4.7 -4.7,-2.104 -4.7,-4.7 2.104,-4.7 4.7,-4.7Z"/>
 
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M78,56
-            C80.2,56 82,57.8 82,60
-            C82,62.2 80.2,64 78,64
-            C75.8,64 74,62.2 74,60
-            C74,57.8 75.8,56 78,56Z"/>
+        android:pathData="M79,48.3c2.596,0 4.7,2.104 4.7,4.7s-2.104,4.7 -4.7,4.7 -4.7,-2.104 -4.7,-4.7 2.104,-4.7 4.7,-4.7Z"/>
 </vector>
