@@ -56,7 +56,7 @@ public class ApkInstallerPlugin extends Plugin {
         }
 
         new Thread(() -> {
-            File apkFile = new File(getContext().getCacheDir(), "blw-campus-ministry-update.apk");
+            File apkFile = new File(getContext().getCacheDir(), "emet-update.apk");
             HttpURLConnection connection = null;
 
             try {

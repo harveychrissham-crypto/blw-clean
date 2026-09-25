@@ -1,11 +1,12 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
 
-export const UPDATE_AVAILABLE_EVENT = 'blw:update-available';
+export const UPDATE_AVAILABLE_EVENT = 'emet:update-available';
 
 const REPO = 'harveychrissham-crypto/blw-clean';
 const RELEASE_TAG = 'latest-android';
 const FALLBACK_APK_URL = `https://github.com/${REPO}/releases/download/${RELEASE_TAG}/blw-campus-ministry.apk`;
 const CHECK_INTERVAL_MS = 5 * 60 * 1000;
+const DISMISSED_UPDATE_KEY = 'emet:dismissed-update-version';
 
 const ApkInstaller = registerPlugin('ApkInstaller');
 let lastCheckAt = 0;
@@ -42,6 +43,15 @@ export function clearPendingAppUpdate() {
   pendingUpdate = null;
 }
 
+export function getDismissedUpdateVersion() {
+  try { return localStorage.getItem(DISMISSED_UPDATE_KEY) || ''; } catch { return ''; }
+}
+
+export function dismissAppUpdate(version) {
+  try { localStorage.setItem(DISMISSED_UPDATE_KEY, String(version || '')); } catch {}
+  pendingUpdate = null;
+}
+
 export async function checkForAppUpdate({ force = false } = {}) {
   if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return null;
   if (!force && Date.now() - lastCheckAt < CHECK_INTERVAL_MS) return null;
@@ -75,7 +85,10 @@ export async function checkForAppUpdate({ force = false } = {}) {
 
       console.log('[appUpdater] installed/latest versions:', currentVersion, latestVersion || '(missing)');
 
-      if (!latestVersion || compareVersions(currentVersion, latestVersion) >= 0) return null;
+      if (!latestVersion || compareVersions(currentVersion, latestVersion) >= 0) {
+        pendingUpdate = null;
+        return null;
+      }
 
       const asset = Array.isArray(release?.assets)
         ? release.assets.find((item) => item?.name === 'blw-campus-ministry.apk')

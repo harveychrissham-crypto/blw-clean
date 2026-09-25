@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FiDownload, FiX } from 'react-icons/fi';
-import { UPDATE_AVAILABLE_EVENT, clearPendingAppUpdate, getPendingAppUpdate, installApk } from '../appUpdater';
+import { UPDATE_AVAILABLE_EVENT, clearPendingAppUpdate, dismissAppUpdate, getPendingAppUpdate, installApk, checkForAppUpdate } from '../appUpdater';
 import Button, { IconButton } from './ui/Button';
 
 export default function UpdateAvailablePrompt() {
@@ -37,10 +37,11 @@ export default function UpdateAvailablePrompt() {
     try {
       const result = await installApk(details.updateUrl);
       if (result?.requiresPermission) {
-        setError('Allow BLW Kenya Zone to install apps from this source in Android settings, then tap Install update again.');
+        setError('Allow Emet to install apps from this source in Android settings, then tap Install update again.');
+        setInstalling(false);
         return;
       }
-      dismiss();
+      setError('Android opened the installer. Finish the installation there. Emet will verify the new version when you return.');
     } catch (installError) {
       setError(installError?.message || 'The update could not be installed. Please try again.');
     } finally {
@@ -50,13 +51,13 @@ export default function UpdateAvailablePrompt() {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[2147483647] grid place-items-center bg-slate-950/85 px-5 backdrop-blur-md"
+      className="fixed inset-0 z-[2147483647] grid place-items-center bg-[#0B0F14]/90 px-5 backdrop-blur-md"
       role="dialog"
       aria-modal="true"
       aria-labelledby="update-available-title"
       style={{ zIndex: 2147483647 }}
     >
-      <div className="relative w-full max-w-md rounded-[2rem] border border-white/10 bg-[#151322] p-6 shadow-2xl">
+      <div className="relative w-full max-w-md rounded-[2rem] border border-white/10 bg-[#111820] p-6 shadow-2xl">
         <IconButton
           variant="ghost"
           size="sm"
@@ -69,16 +70,16 @@ export default function UpdateAvailablePrompt() {
           <FiX className="h-4 w-4" />
         </IconButton>
 
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gold-500/15 text-gold-500">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#3B82F6]/15 text-[#3B82F6]">
           <FiDownload className="h-7 w-7" />
         </div>
 
-        <p className="mt-6 text-xs font-bold uppercase tracking-[0.25em] text-gold-500">New app version</p>
+        <p className="mt-6 text-xs font-bold uppercase tracking-[0.25em] text-[#3B82F6]">New app version</p>
         <h2 id="update-available-title" className="mt-2 text-2xl font-extrabold text-white">
-          Please install the latest app
+          An update is available
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-white/55">
-          You're on version {details.currentVersion}. Version {details.latestVersion} is ready with the latest features and fixes.
+          You're on version {details.currentVersion}. Version {details.latestVersion} is ready with the latest features and fixes. Install it to keep using the newest version of Emet.
         </p>
 
         {error && (
@@ -96,7 +97,7 @@ export default function UpdateAvailablePrompt() {
             disabled={installing}
             className="flex-1"
           >
-            {installing ? 'Preparing update…' : 'Install update'}
+            {installing ? 'Opening installer…' : 'Install update'}
           </Button>
           <Button
             variant="custom"
