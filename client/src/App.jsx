@@ -3,7 +3,6 @@ import { Routes, Route, useLocation, useNavigate, useNavigationType } from 'reac
 import { motion, AnimatePresence } from 'framer-motion';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import Layout from './layouts/Layout';
-import Button from './components/ui/Button';
 import Home from './pages/Home';
 const Feed = lazy(() => import('./pages/Feed'));
 const Explore = lazy(() => import('./pages/Explore'));
@@ -23,7 +22,7 @@ import { useAuth } from './context/AuthContext'; import OfflineBanner from './co
 import { bindGlobalTapHaptics } from './utils/haptics';
 import ErrorBoundary from './components/ErrorBoundary';
 const RouteFallback = () => <div className="grid min-h-[60vh] place-items-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-gold-500" aria-label="Loading" role="status" /></div>;
-const AdminContentPage = () => { const navigate = useNavigate(); return <div className="relative"><div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8"><Button variant="ghost" size="none" type="button" onClick={() => navigate('/leaders-forum')} className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm">← Back to Leaders Forum</Button></div><ContentAdminPanel /></div>; };
+const AdminContentPage = () => <ContentAdminPanel />;
 const BOTTOM_TAB_PATHS = ['/', '/feed'];
 const notificationDestination = (notification) => { const data = notification?.data || notification?.extra || {}; const type = typeof data.type === 'string' ? data.type : 'announcement'; const id = typeof data.id === 'string' ? data.id.trim() : ''; if (type === 'sermon' || type === 'post' || type === 'reel') return `/feed${id ? `?notificationId=${encodeURIComponent(id)}` : ''}`; if (type === 'venue') return `/venues${id ? `?chapter=${encodeURIComponent(id)}` : ''}`; return '/notifications'; };
 const MeetingPiP = registerPlugin('MeetingPiP');
