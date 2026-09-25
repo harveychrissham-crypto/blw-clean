@@ -153,6 +153,36 @@ export async function handleFeed(request, env, url) {
         return json({ ok:true },200,headers);
       } finally { await client.end().catch(()=>{}); }
     }
+    const singleMatch = url.pathname.match(/^\\/api\\/feed\\/posts\\/([^/]+)$/);
+    if (singleMatch && request.method === 'GET') {
+      const feedId = parseFeedId(singleMatch[1]);
+      if (!feedId.id) return json({ error:'Invalid post.' },400,headers);
+      const client = await getDb(env);
+      try {
+        if (feedId.kind === 'post') {
+          const result = await client.query(`SELECT p.id,p.title,p.body,p.author_name,p.user_email,p.type,p.youtube_url,p.media_url,p.media_type,p.created_at,
+            (SELECT COUNT(*)::int FROM public.feed_post_likes x WHERE x.post_id=p.id) AS like_count,
+            (SELECT COUNT(*)::int FROM public.feed_post_comments x WHERE x.post_id=p.id) AS comment_count,
+            (SELECT COUNT(*)::int FROM public.feed_post_saves x WHERE x.post_id=p.id) AS save_count,
+            CASE WHEN $2 <> '' AND EXISTS(SELECT 1 FROM public.feed_post_likes x WHERE x.post_id=p.id AND LOWER(x.user_email)=LOWER($2)) THEN true ELSE false END AS liked,
+            CASE WHEN $2 <> '' AND EXISTS(SELECT 1 FROM public.feed_post_saves x WHERE x.post_id=p.id AND LOWER(x.user_email)=LOWER($2)) THEN true ELSE false END AS saved
+            FROM public.feed_posts p WHERE p.id=$1 LIMIT 1`,[feedId.id,email]);
+          if (!result.rows.length) return json({error:'Post not found.'},404,headers);
+          const row=result.rows[0];
+          return json({post:{...row,id:`p:${row.id}`,source_type:'user',is_user_post:true,is_owner:Boolean(email && row.user_email?.toLowerCase()===email),youtube_id:youtubeId(row.youtube_url),view_count:0}},200,headers);
+        }
+        const result = await client.query(`SELECT s.id,s.title,s.speaker AS author,s.description AS body,s.youtube_url,s.created_at,s.is_featured,
+          (SELECT COUNT(*)::int FROM public.feed_likes x WHERE x.sermon_id=s.id) AS like_count,
+          (SELECT COUNT(*)::int FROM public.feed_comments x WHERE x.sermon_id=s.id) AS comment_count,
+          (SELECT COUNT(*)::int FROM public.feed_saves x WHERE x.sermon_id=s.id) AS save_count,
+          CASE WHEN $2 <> '' AND EXISTS(SELECT 1 FROM public.feed_likes x WHERE x.sermon_id=s.id AND LOWER(x.user_email)=LOWER($2)) THEN true ELSE false END AS liked,
+          CASE WHEN $2 <> '' AND EXISTS(SELECT 1 FROM public.feed_saves x WHERE x.sermon_id=s.id AND LOWER(x.user_email)=LOWER($2)) THEN true ELSE false END AS saved
+          FROM public.sermons s WHERE s.id=$1 LIMIT 1`,[feedId.id,email]);
+        if (!result.rows.length) return json({error:'Post not found.'},404,headers);
+        const row=result.rows[0];
+        return json({post:{...row,id:`s:${row.id}`,type:'sermon',source_type:'sermon',is_user_post:false,is_owner:false,youtube_id:youtubeId(row.youtube_url),view_count:0}},200,headers);
+      } finally { await client.end().catch(()=>{}); }
+    }
     if (url.pathname === '/api/feed/saved' && request.method === 'GET') {
       if (!email) return json({ error: 'Sign in required to view your bookmarks.' }, 401, headers);
       const rawLimit = Number.parseInt(url.searchParams.get('limit') || '30', 10);

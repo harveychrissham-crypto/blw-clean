@@ -180,6 +180,15 @@ export async function fetchFeed({ limit = 20, offset = 0, followingOnly = false,
   };
 }
 
+export async function fetchPost(id) {
+  const key = String(id ?? '').trim();
+  if (!key) throw new Error('Post not found.');
+  const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(key)}`);
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body?.error || 'Unable to load this post.');
+  return normalizePost(body.post || {});
+}
+
 export async function recordFeedView(id) {
   const key = String(id ?? '');
   if (!key) return {};
