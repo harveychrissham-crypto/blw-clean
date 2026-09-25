@@ -1,6 +1,6 @@
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { FiMenu, FiX, FiHome, FiMic, FiHeart, FiPhone, FiSearch, FiUser, FiLogIn, FiBell, FiVideo, FiMessageCircle, FiCamera, FiUsers } from 'react-icons/fi';
+import { FiMoreHorizontal, FiX, FiHome, FiMic, FiHeart, FiPhone, FiSearch, FiUser, FiLogIn, FiBell, FiVideo, FiMessageCircle, FiCamera, FiUsers } from 'react-icons/fi';
 import AIChatWidget from '../components/AIChatWidget';
 import SearchPanel from '../components/SearchPanel';
 import BottomNav from '../components/BottomNav';
@@ -22,7 +22,7 @@ export default function Layout({ children }) {
   const desktopLink=(path,Icon,label,end=false)=><NavLink to={path} end={end} className={({isActive})=>`flex items-center gap-4 rounded-2xl px-4 py-3.5 text-[0.95rem] font-semibold transition ${isActive?'bg-white/[.09] text-white':'text-white/55 hover:bg-white/[.05] hover:text-white'}`}><Icon className="h-[21px] w-[21px] shrink-0"/>{label}</NavLink>;
   return <div className="min-h-screen text-white" style={{background:'#0B0F14'}}>
     <header className="sticky top-0 z-40 border-b border-white/[0.07]" style={{background:'rgba(11,15,20,0.94)',backdropFilter:'blur(20px)'}}>
-      <div className="flex items-center justify-between px-4 py-2.5 sm:px-5"><Button variant="custom" size="none" onClick={()=>setSidebarOpen(true)} className="hidden rounded-lg p-2 text-white/60 hover:bg-white/5 hover:text-white lg:inline-flex" aria-label="Open navigation"><FiMenu className="h-5 w-5"/></Button>
+      <div className="flex items-center justify-between px-4 py-2.5 sm:px-5"><Button variant="custom" size="none" onClick={()=>setSidebarOpen(true)} className="hidden rounded-lg p-2 text-white/60 hover:bg-white/5 hover:text-white lg:inline-flex" aria-label="Open navigation"><FiMoreHorizontal className="h-5 w-5"/></Button>
         <Link to="/" className="flex items-center lg:hidden"><img src="/emet-mark-white.svg" alt="Emet" className="h-8 w-8"/></Link>
         <div className="ml-auto flex items-center gap-1"><Button variant="custom" size="none" onClick={()=>setSearchOpen(true)} className="rounded-lg p-2 text-white/50 hover:text-white hover:bg-white/5" aria-label="Search"><FiSearch className="h-4 w-4"/></Button>{user&&<Link to="/notifications" className="rounded-lg p-2 text-white/50 hover:text-white lg:hidden"><FiBell className="h-4 w-4"/></Link>}{user?<Link to="/profile" className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden">Profile</Link>:<Link to="/auth" className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden">Sign In</Link>}</div>
       </div>
