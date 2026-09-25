@@ -1,24 +1,33 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { FiArrowLeft, FiSearch, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiHash, FiImage, FiSearch, FiUsers, FiX } from 'react-icons/fi';
 import { fetchFeed, searchAccounts, toggleFollow } from '../utils/feed';
 import { Skeleton } from '../components/ui/Skeleton';
 
-const FILTERS = ['All', 'Photos', 'Videos', 'People'];
+const TABS = ['For you', 'Posts', 'People', 'Media'];
 
-function tileLabel(post) {
-  if (post.type === 'reel') return 'Reel';
-  if (post.videoId) return 'Video';
-  return '';
+function Avatar({ src, name, size = 'h-10 w-10' }) {
+  return src ? (
+    <img src={src} alt="" className={`${size} shrink-0 rounded-full object-cover`} />
+  ) : (
+    <div className={`${size} shrink-0 grid place-items-center rounded-full bg-white/[.08] text-sm font-bold text-white/70`}>
+      {String(name || 'E').trim().charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
+function timeLabel(value) {
+  if (!value) return '';
+  return String(value);
 }
 
 export default function Explore() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') || '');
-  const [filter, setFilter] = useState(searchParams.get('type') || 'All');
+  const [tab, setTab] = useState(searchParams.get('tab') || 'For you');
   const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [accountsLoading, setAccountsLoading] = useState(false);
   const [followBusy, setFollowBusy] = useState('');
 
@@ -33,7 +42,10 @@ export default function Explore() {
   }, []);
 
   useEffect(() => {
-    if (filter !== 'People') return undefined;
+    if (tab !== 'People') {
+      setAccounts([]);
+      return undefined;
+    }
     let active = true;
     setAccountsLoading(true);
     const timer = setTimeout(() => {
@@ -43,147 +55,206 @@ export default function Explore() {
         .finally(() => { if (active) setAccountsLoading(false); });
     }, query.trim() ? 300 : 0);
     return () => { active = false; clearTimeout(timer); };
-  }, [filter, query]);
+  }, [tab, query]);
 
-  const follow = async (account) => {
-    setFollowBusy(account.email);
-    const next = !account.following;
-    setAccounts((v) => v.map((a) => (a.email === account.email ? { ...a, following: next } : a)));
-    try {
-      await toggleFollow(account.email);
-    } catch {
-      setAccounts((v) => v.map((a) => (a.email === account.email ? { ...a, following: !next } : a)));
-    } finally {
-      setFollowBusy('');
-    }
-  };
-
-  const results = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return posts.filter((post) => {
-      const isVideo = Boolean(post.videoId || post.type === 'reel' || String(post.mediaType).startsWith('video'));
-      if (filter === 'Photos' && isVideo) return false;
-      if (filter === 'Videos' && !isVideo) return false;
-      if (!needle) return true;
-      return [post.title, post.body, post.author]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(needle));
-    });
-  }, [posts, query, filter]);
-
-  const updateSearch = (value) => {
+  const updateQuery = (value) => {
     setQuery(value);
     const next = new URLSearchParams(searchParams);
     if (value.trim()) next.set('q', value.trim()); else next.delete('q');
     setSearchParams(next, { replace: true });
   };
 
-  const updateFilter = (value) => {
-    setFilter(value);
+  const updateTab = (value) => {
+    setTab(value);
     const next = new URLSearchParams(searchParams);
-    if (value === 'All') next.delete('type'); else next.set('type', value);
+    if (value === 'For you') next.delete('tab'); else next.set('tab', value);
     setSearchParams(next, { replace: true });
   };
 
+  const follow = async (account) => {
+    const email = account.email;
+    if (!email) return;
+    const nextFollowing = !account.following;
+    setFollowBusy(email);
+    setAccounts((items) => items.map((item) => item.email === email ? { ...item, following: nextFollowing } : item));
+    try {
+      await toggleFollow(email);
+    } catch {
+      setAccounts((items) => items.map((item) => item.email === email ? { ...item, following: !nextFollowing } : item));
+    } finally {
+      setFollowBusy('');
+    }
+  };
+
+  const normalizedQuery = query.trim().toLowerCase();
+
+  const results = useMemo(() => {
+    return posts.filter((post) => {
+      const isMedia = Boolean(post.mediaUrl || post.videoId || post.thumbnailUrl);
+      const matchesQuery = !normalizedQuery || [post.title, post.body, post.author]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(normalizedQuery));
+      if (!matchesQuery) return false;
+      if (tab === 'Media') return isMedia;
+      return true;
+    });
+  }, [posts, normalizedQuery, tab]);
+
+  const trends = useMemo(() => {
+    const counts = new Map();
+    for (const post of posts) {
+      const text = `${post.title || ''} ${post.body || ''}`;
+      const tags = text.match(/#[a-z0-9_]+/gi) || [];
+      for (const tag of tags) counts.set(tag.toLowerCase(), (counts.get(tag.toLowerCase()) || 0) + 1);
+    }
+    const derived = [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count }));
+    const fallback = ['#Faith', '#Jesus', '#Prayer', '#Testimony', '#Emet'];
+    return [...derived, ...fallback.filter((tag) => !derived.some((item) => item.name === tag.toLowerCase())).map((name) => ({ name, count: 0 }))].slice(0, 5);
+  }, [posts]);
+
+  const people = accounts.length ? accounts : posts.reduce((list, post) => {
+    if (post.author && !list.some((item) => item.name === post.author)) {
+      list.push({ name: post.author, avatarUrl: post.avatarUrl, email: post.authorEmail, following: post.following });
+    }
+    return list;
+  }, []).slice(0, 6);
+
   return (
-    <main className="mx-auto min-h-screen w-full max-w-6xl px-3 pb-28 pt-5 sm:px-6 sm:pt-8">
-      <div className="mb-5 flex items-center gap-3">
-        <Link to="/feed" aria-label="Back to Feed" className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[.04] text-white/75 transition hover:bg-white/[.08]">
-          <FiArrowLeft />
-        </Link>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-semibold text-white">Explore</h1>
-          <p className="text-xs text-white/45">Discover posts and videos from the community</p>
+    <main className="mx-auto min-h-screen w-full max-w-6xl pb-28 sm:border-x sm:border-white/[.06]">
+      <header className="sticky top-0 z-20 border-b border-white/[.07] bg-[#0b0b0d]/90 px-4 py-3 backdrop-blur-xl sm:px-6">
+        <div className="flex items-center gap-3">
+          <Link to="/" aria-label="Back to Home" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-white/70 transition hover:bg-white/[.08] hover:text-white"><FiArrowLeft /></Link>
+          <div>
+            <h1 className="text-lg font-bold text-white">Explore</h1>
+            <p className="text-[11px] text-white/35">Find conversations, people and topics</p>
+          </div>
         </div>
-      </div>
+      </header>
 
-      <label className="flex h-11 items-center gap-2 rounded-2xl border border-white/10 bg-white/[.045] px-3 text-white/55 focus-within:border-white/20">
-        <FiSearch className="shrink-0" />
-        <input value={query} onChange={(event) => updateSearch(event.target.value)} placeholder={filter === 'People' ? 'Search people by name or chapter' : 'Search posts, people or topics'} className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/35" aria-label="Search Feed" />
-        {query && <button type="button" onClick={() => updateSearch('')} className="grid h-7 w-7 place-items-center rounded-full text-white/50 hover:bg-white/[.08]" aria-label="Clear search"><FiX /></button>}
-      </label>
+      <div className="mx-auto max-w-3xl px-4 py-4 sm:px-6">
+        <label className="flex h-12 items-center gap-3 rounded-full border border-white/[.08] bg-white/[.045] px-4 transition focus-within:border-white/20 focus-within:bg-white/[.06]">
+          <FiSearch className="shrink-0 text-white/45" />
+          <input
+            value={query}
+            onChange={(event) => updateQuery(event.target.value)}
+            placeholder="Search Emet"
+            aria-label="Search Emet"
+            className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/35"
+          />
+          {query && <button type="button" onClick={() => updateQuery('')} aria-label="Clear search" className="grid h-7 w-7 place-items-center rounded-full text-white/45 hover:bg-white/[.08]"><FiX /></button>}
+        </label>
 
-      <div className="mt-4 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Explore filters">
-        {FILTERS.map((item) => (
-          <button key={item} type="button" onClick={() => updateFilter(item)} role="tab" aria-selected={filter === item} className={`rounded-full px-4 py-2 text-xs font-medium transition ${filter === item ? 'bg-white text-black' : 'bg-white/[.06] text-white/55 hover:bg-white/[.1] hover:text-white'}`}>
-            {item}
-          </button>
-        ))}
-      </div>
+        <div className="mt-4 flex overflow-x-auto border-b border-white/[.07]" role="tablist" aria-label="Explore sections">
+          {TABS.map((item) => (
+            <button
+              key={item}
+              type="button"
+              role="tab"
+              aria-selected={tab === item}
+              onClick={() => updateTab(item)}
+              className={`relative shrink-0 px-4 py-3 text-sm font-semibold transition ${tab === item ? 'text-white' : 'text-white/40 hover:text-white/70'}`}
+            >
+              {item}
+              {tab === item && <span className="absolute inset-x-4 bottom-0 h-1 rounded-full bg-white" />}
+            </button>
+          ))}
+        </div>
 
-      {filter === 'People' ? (
-        accountsLoading ? (
-          <div className="mt-4">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <div key={index} className="flex items-center gap-3 py-2.5">
-                <Skeleton className="h-14 w-14 shrink-0 rounded-full" />
-                <div className="min-w-0 flex-1 space-y-1.5"><Skeleton className="h-3.5 w-28 rounded" /><Skeleton className="h-3 w-20 rounded" /></div>
-              </div>
-            ))}
-          </div>
-        ) : accounts.length ? (
-          <div className="mt-2">
-            {!query.trim() && <p className="px-1 pb-1 pt-3 text-xs font-semibold text-white/45">Suggested for you</p>}
-            {accounts.map((account) => (
-              <div key={account.email} className="flex items-center gap-3 py-2.5">
-                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-white/[.07]">
-                  <img src={account.avatarUrl || '/logo.png'} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+        {tab === 'People' ? (
+          <section className="mt-2">
+            {accountsLoading ? (
+              Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="flex items-center gap-3 border-b border-white/[.06] py-4">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <div className="flex-1 space-y-2"><Skeleton className="h-3.5 w-32 rounded" /><Skeleton className="h-3 w-24 rounded" /></div>
+                  <Skeleton className="h-8 w-20 rounded-full" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-white">{account.name}</p>
-                  <p className="truncate text-xs text-white/40">{[account.title, account.chapter].filter(Boolean).join(' · ') || 'Suggested for you'}</p>
+              ))
+            ) : people.length ? (
+              people.map((person, index) => (
+                <div key={person.email || person.name || index} className="flex items-center gap-3 border-b border-white/[.06] py-4">
+                  <Avatar src={person.avatarUrl} name={person.name} size="h-12 w-12" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-white">{person.name}</p>
+                    <p className="truncate text-xs text-white/35">{person.title || 'Emet community member'}</p>
+                  </div>
+                  {person.email && (
+                    <button type="button" onClick={() => follow(person)} disabled={followBusy === person.email} className={`rounded-full px-4 py-1.5 text-xs font-bold transition disabled:opacity-50 ${person.following ? 'border border-white/15 text-white/70 hover:bg-white/[.06]' : 'bg-white text-black hover:bg-white/90'}`}>
+                      {person.following ? 'Following' : 'Follow'}
+                    </button>
+                  )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => follow(account)}
-                  disabled={followBusy === account.email}
-                  className={`shrink-0 rounded-lg px-4 py-1.5 text-sm font-semibold transition disabled:opacity-50 ${account.following ? 'border border-white/15 text-white/70 hover:bg-white/[.06]' : 'bg-[#EC2FA8] text-white hover:bg-[#F04FB8]'}`}
-                >
-                  {account.following ? 'Following' : 'Follow'}
-                </button>
-              </div>
-            ))}
-          </div>
+              ))
+            ) : (
+              <Empty title="No people found" text="Try searching for a name." icon={FiUsers} />
+            )}
+          </section>
         ) : (
-          <div className="mt-12 rounded-2xl border border-white/10 bg-white/[.035] px-6 py-12 text-center">
-            <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-white/[.06] text-white/55"><FiSearch /></div>
-            <h2 className="mt-4 text-sm font-semibold text-white">No one found</h2>
-            <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-white/45">Try a different name or chapter.</p>
-          </div>
-        )
-      ) : loading ? (
-        <div className="mt-5 grid grid-cols-3 gap-1 sm:gap-2">
-          {Array.from({ length: 12 }).map((_, index) => <Skeleton key={index} className="aspect-square rounded-lg" />)}
-        </div>
-      ) : results.length ? (
-        <div className="mt-5 grid grid-cols-3 gap-1 sm:gap-2">
-          {results.map((post) => {
-            const isVideo = Boolean(post.videoId || post.type === 'reel' || String(post.mediaType).startsWith('video'));
-            const href = `/feed?${post.type === 'reel' ? 'tab=Reels&' : ''}notificationId=${encodeURIComponent(post.id)}`;
-            return (
-              <Link key={post.id} to={href} className="group relative aspect-square overflow-hidden rounded-lg border border-white/[.06] bg-white/[.035]">
-                {post.mediaUrl ? (
-                  <img src={post.mediaUrl} alt={post.title || 'Community post'} loading="lazy" className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" />
-                ) : isVideo && post.videoId ? (
-                  <div className="grid h-full w-full place-items-center bg-black"><div className="grid h-12 w-12 place-items-center rounded-full bg-white text-black shadow-xl">▶</div></div>
-                ) : (
-                  <div className="flex h-full w-full flex-col justify-end bg-gradient-to-br from-[#251b38] via-[#161426] to-[#0d0c18] p-3"><span className="line-clamp-4 text-xs font-medium leading-relaxed text-white/85 sm:text-sm">{post.title || post.body || 'Community update'}</span></div>
-                )}
-                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/70 to-transparent px-2 pb-1.5 pt-5">
-                  <span className="max-w-[70%] truncate text-[10px] text-white/85">{post.author || 'BLW Kenya Zone'}</span>
-                  {tileLabel(post) && <span className="text-[10px] text-white/65">{tileLabel(post)}</span>}
+          <div className="mt-2">
+            {loading ? (
+              Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="border-b border-white/[.06] py-5">
+                  <div className="flex gap-3"><Skeleton className="h-10 w-10 rounded-full" /><div className="flex-1 space-y-2"><Skeleton className="h-3 w-40 rounded" /><Skeleton className="h-3 w-24 rounded" /></div></div>
+                  <Skeleton className="mt-4 h-16 w-full rounded-xl" />
                 </div>
-              </Link>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="mt-12 rounded-2xl border border-white/10 bg-white/[.035] px-6 py-12 text-center">
-          <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-white/[.06] text-white/55"><FiSearch /></div>
-          <h2 className="mt-4 text-sm font-semibold text-white">Nothing found</h2>
-          <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-white/45">Try a different name, topic, or search term.</p>
-        </div>
-      )}
+              ))
+            ) : results.length ? (
+              results.slice(0, 30).map((post) => (
+                <Link key={post.id} to={`/feed?notificationId=${encodeURIComponent(post.id)}`} className="block border-b border-white/[.06] py-4 transition hover:bg-white/[.025]">
+                  <div className="flex gap-3">
+                    <Avatar src={post.avatarUrl} name={post.author} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-x-1.5 text-sm">
+                        <span className="font-bold text-white">{post.author || 'Emet member'}</span>
+                        {post.isOfficial && <span className="grid h-4 w-4 place-items-center rounded-full bg-white text-[9px] font-black text-black">✓</span>}
+                        <span className="text-white/35">· {timeLabel(post.time)}</span>
+                      </div>
+                      {post.title && <h2 className="mt-1 text-[15px] font-bold leading-snug text-white">{post.title}</h2>}
+                      {post.body && <p className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed text-white/75">{post.body}</p>}
+                      {post.mediaUrl && <div className="mt-3 overflow-hidden rounded-2xl border border-white/[.08]"><img src={post.mediaUrl} alt="" loading="lazy" className="max-h-80 w-full object-cover" /></div>}
+                      <div className="mt-3 flex items-center gap-5 text-xs text-white/35">
+                        <span>{post.commentCount || 0} replies</span>
+                        <span>{post.likeCount || 0} likes</span>
+                        {post.mediaUrl && <span className="inline-flex items-center gap-1"><FiImage /> Media</span>}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <Empty title={normalizedQuery ? 'No results' : 'Nothing to explore yet'} text={normalizedQuery ? 'Try another search term.' : 'Conversations from the community will appear here.'} icon={FiSearch} />
+            )}
+          </div>
+        )}
+
+        {tab !== 'People' && !query.trim() && (
+          <section className="mt-8">
+            <div className="mb-3 flex items-center gap-2 text-sm font-bold text-white"><FiHash /> Trending on Emet</div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {trends.map((trend) => (
+                <button key={trend.name} type="button" onClick={() => updateQuery(trend.name)} className="rounded-2xl border border-white/[.07] bg-white/[.025] px-4 py-3 text-left transition hover:bg-white/[.05]">
+                  <p className="text-[11px] text-white/35">Trending topic</p>
+                  <p className="mt-1 text-sm font-bold text-white">{trend.name}</p>
+                  <p className="mt-1 text-[11px] text-white/35">{trend.count ? `${trend.count} posts` : 'Explore the conversation'}</p>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
     </main>
+  );
+}
+
+function Empty({ title, text, icon: Icon }) {
+  return (
+    <div className="py-20 text-center">
+      <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-white/[.06] text-white/45"><Icon /></div>
+      <h2 className="mt-4 text-base font-bold text-white">{title}</h2>
+      <p className="mx-auto mt-1 max-w-sm text-sm text-white/40">{text}</p>
+    </div>
   );
 }
