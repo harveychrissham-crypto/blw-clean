@@ -319,3 +319,20 @@ async function setUpPushNotificationsInternal() {
     console.warn('[native] push setup failed:', error?.message || error);
   }
 }
+
+
+export async function setAppIconPalette(palette) {
+  const allowed = ['black', 'blue', 'snow', 'slate'];
+  const next = allowed.includes(palette) ? palette : 'black';
+  try { localStorage.setItem('emet_icon_palette', next); } catch {}
+  if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return { applied:false, palette:next };
+  try {
+    const { registerPlugin } = await import('@capacitor/core');
+    const AppIcon = registerPlugin('AppIcon');
+    await AppIcon.setPalette({ palette: next });
+    return { applied:true, palette:next };
+  } catch (error) {
+    console.warn('[native] app icon palette change failed:', error?.message || error);
+    return { applied:false, palette:next, error };
+  }
+}
