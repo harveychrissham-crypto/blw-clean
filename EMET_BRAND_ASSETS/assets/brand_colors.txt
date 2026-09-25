@@ -1,0 +1,5 @@
+EMET brand colors
+#0B0F14 Jet Black (Primary)
+#3B82F6 Emet Blue (Accent)
+#F8FAFC Snow (Background)
+#6B7280 Slate (Text)
