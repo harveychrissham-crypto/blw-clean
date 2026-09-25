@@ -96,6 +96,7 @@ export default function Explore() {
         .some((value) => String(value).toLowerCase().includes(normalizedQuery));
       if (!matchesQuery) return false;
       if (tab === 'Media') return isMedia;
+      if (tab === 'Posts') return !isMedia;
       return true;
     });
   }, [posts, normalizedQuery, tab]);
@@ -111,7 +112,7 @@ export default function Explore() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
       .map(([name, count]) => ({ name, count }));
-    const fallback = ['#Faith', '#Jesus', '#Prayer', '#Testimony', '#Emet'];
+    const fallback = ['#Community', '#Conversation', '#Creativity', '#Ideas', '#Emet'];
     return [...derived, ...fallback.filter((tag) => !derived.some((item) => item.name === tag.toLowerCase())).map((name) => ({ name, count: 0 }))].slice(0, 5);
   }, [posts]);
 
@@ -178,7 +179,7 @@ export default function Explore() {
                 <div key={person.email || person.name || index} className="flex items-center gap-3 border-b border-white/[.06] py-4">
                   <Avatar src={person.avatarUrl} name={person.name} size="h-12 w-12" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-white">{person.name}</p>
+                    <Link to={person.email ? `/u/${encodeURIComponent(person.email)}` : '/explore'} className="block truncate text-sm font-bold text-white hover:underline">{person.name}</Link>
                     <p className="truncate text-xs text-white/35">{person.title || 'Emet community member'}</p>
                   </div>
                   {person.email && (
