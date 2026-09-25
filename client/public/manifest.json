@@ -7,7 +7,7 @@
   "theme_color": "#0B0B0D",
   "icons": [
     {
-      "src": "/emet-mark.svg",
+      "src": "/emet-approved-mark.svg",
       "sizes": "any",
       "type": "image/svg+xml"
     }
