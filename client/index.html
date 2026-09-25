@@ -22,13 +22,29 @@
         background-size: 100% 100%;
         transition: opacity 0.2s ease;
       }
-      #boot-splash img { position: relative; filter: drop-shadow(0 12px 30px rgba(0,0,0,.35)); }
+      #boot-splash .splash-mark { position: relative; filter: drop-shadow(0 12px 30px rgba(0,0,0,.35)); }
+      #boot-splash .splash-dot { transform-box: fill-box; transform-origin: center; animation: splash-dot-loading 1.2s ease-in-out infinite; }
+      #boot-splash .splash-dot:nth-of-type(2) { animation-delay: .16s; }
+      #boot-splash .splash-dot:nth-of-type(3) { animation-delay: .32s; }
+      @keyframes splash-dot-loading {
+        0%, 60%, 100% { opacity: .35; transform: scale(.78); }
+        30% { opacity: 1; transform: scale(1.18); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #boot-splash .splash-dot { animation: none; opacity: 1; transform: none; }
+      }
       #boot-splash.boot-splash-hidden { opacity: 0; pointer-events: none; }
     </style>
   </head>
   <body>
     <div id="boot-splash" aria-hidden="true">
-      <img src="/emet-approved-mark-white.svg" alt="" width="56" height="56" />
+      <svg class="splash-mark" width="56" height="56" viewBox="0 0 128 128" aria-label="Emet loading" role="img">
+        <path fill="#fff" d="M22 18h65c16.57 0 30 13.43 30 30v25c0 16.57-13.43 30-30 30H53l-25 17 5-19C18 96.7 12 86.9 12 75V48c0-16.57 13.43-30 30-30Z"/>
+        <path fill="#0B0F14" d="M87 35c-2.8-7.7-10.1-13-19-13H49c-17.1 0-31 13.9-31 31s13.9 31 31 31h24c8.9 0 16.2-5.3 19-13H52c-10 0-18-8.1-18-18s8.1-18 18-18h35Z"/>
+        <circle class="splash-dot" cx="51" cy="53" r="4.7" fill="#fff"/>
+        <circle class="splash-dot" cx="65" cy="53" r="4.7" fill="#fff"/>
+        <circle class="splash-dot" cx="79" cy="53" r="4.7" fill="#fff"/>
+      </svg>
       <span style="font:800 14px/1 Inter,Montserrat,system-ui,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.72);margin-left:.22em;">Emet</span>
     </div>
     <div id="root"></div>
