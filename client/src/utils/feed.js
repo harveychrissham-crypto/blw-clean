@@ -438,7 +438,7 @@ export async function searchAccounts(query = '') {
   return Array.isArray(result?.users) ? result.users : [];
 }
 
-export async function toggleFollow(email) {
+export async function fetchUserProfile(email) {\n  const target = String(email || '').trim();\n  if (!target) throw new Error('Member not found.');\n  const response = await apiFetch(`/api/feed/users/${encodeURIComponent(target)}`);\n  const result = await response.json().catch(() => ({}));\n  if (!response.ok) throw new Error(result?.error || 'Unable to load this profile.');\n  return result?.user || null;\n}\n\nexport async function toggleFollow(email) {
   const target = String(email || '').trim();
   if (!target) throw new Error('Member not found.');
   const response = await apiFetch(`/api/feed/users/${encodeURIComponent(target)}/follow`, { method: 'POST' });
