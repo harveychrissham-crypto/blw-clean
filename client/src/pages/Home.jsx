@@ -154,7 +154,7 @@ function RightRail({ posts }) {
               </div>
             );
           })}
-        </section>
+        </section>}
         <p className="px-2 text-[11px] leading-5 text-white/25">Emet is a Christian social network for conversation, community, faith and genuine connection.</p>
       </div>
     </aside>
