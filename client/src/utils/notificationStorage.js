@@ -41,8 +41,8 @@ export const addNotification = ({ id, title, body, data } = {}) => {
     return existing.find((notification) => notification.id === id);
   }
 
-  const cleanTitle = typeof title === 'string' && title.trim() ? title.trim() : 'BLW Kenya Zone';
-  const cleanBody = typeof body === 'string' && body.trim() ? body.trim() : 'You have a new ministry update.';
+  const cleanTitle = typeof title === 'string' && title.trim() ? title.trim() : 'Emet';
+  const cleanBody = typeof body === 'string' && body.trim() ? body.trim() : 'You have a new notification.';
   const entry = {
     id: id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     title: cleanTitle,
