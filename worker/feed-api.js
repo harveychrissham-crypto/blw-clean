@@ -153,7 +153,7 @@ export async function handleFeed(request, env, url) {
         return json({ ok:true },200,headers);
       } finally { await client.end().catch(()=>{}); }
     }
-    const singleMatch = url.pathname.match(/^\\/api\\/feed\\/posts\\/([^/]+)$/);
+    const singleMatch = url.pathname.match(/^\/api\/feed\/posts\/([^/]+)$/);
     if (singleMatch && request.method === 'GET') {
       const feedId = parseFeedId(singleMatch[1]);
       if (!feedId.id) return json({ error:'Invalid post.' },400,headers);
