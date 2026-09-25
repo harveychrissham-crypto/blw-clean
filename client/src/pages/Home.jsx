@@ -89,7 +89,7 @@ function Compose({ user }) {
         <Avatar src={user?.avatarUrl || user?.avatar_url} name={name} />
         <div className="min-w-0 flex-1">
           <Link to={user ? '/create' : '/auth'} className="block min-h-14 rounded-2xl border border-transparent bg-white/[.035] px-4 py-4 text-[15px] text-white/35 transition hover:border-white/10 hover:bg-white/[.05]">
-            {user ? 'What’s happening in your faith community?' : 'Sign in to share with Emet'}
+            {user ? 'What’s happening in your community?' : 'Sign in to share with Emet'}
           </Link>
           <div className="mt-3 flex items-center justify-between">
             <div className="flex items-center gap-1 text-white/45">
@@ -155,7 +155,7 @@ function RightRail({ posts }) {
             );
           })}
         </section>}
-        <p className="px-2 text-[11px] leading-5 text-white/25">Emet is a Christian social network for conversation, community, faith and genuine connection.</p>
+        <p className="px-2 text-[11px] leading-5 text-white/25">Emet is a social network for conversation, community and genuine connection.</p>
       </div>
     </aside>
   );
