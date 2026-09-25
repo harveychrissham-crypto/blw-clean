@@ -29,41 +29,58 @@ const GlobalNetworkAnimation = () => (
     <div className="emet-network-glow" />
     <svg className="emet-network-svg" viewBox="0 0 700 560" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <radialGradient id="emet-globe-fill" cx="50%" cy="42%" r="70%">
-          <stop offset="0%" stopColor="#183c91" stopOpacity=".58" />
-          <stop offset="62%" stopColor="#0c1d4c" stopOpacity=".38" />
-          <stop offset="100%" stopColor="#050b1d" stopOpacity=".08" />
+        <radialGradient id="emet-world-ocean" cx="50%" cy="45%" r="70%">
+          <stop offset="0%" stopColor="#173b8a" stopOpacity=".58" />
+          <stop offset="58%" stopColor="#0b255c" stopOpacity=".42" />
+          <stop offset="100%" stopColor="#020617" stopOpacity=".1" />
         </radialGradient>
-        <linearGradient id="emet-line" x1="80" y1="80" x2="620" y2="480">
-          <stop stopColor="#60A5FA" stopOpacity=".1" />
-          <stop offset=".5" stopColor="#3B82F6" stopOpacity=".9" />
-          <stop offset="1" stopColor="#93C5FD" stopOpacity=".08" />
+        <linearGradient id="emet-continent" x1="180" y1="120" x2="520" y2="430">
+          <stop stopColor="#2563EB" stopOpacity=".32" />
+          <stop offset=".55" stopColor="#3B82F6" stopOpacity=".2" />
+          <stop offset="1" stopColor="#60A5FA" stopOpacity=".1" />
+        </linearGradient>
+        <linearGradient id="emet-route" x1="100" y1="100" x2="600" y2="430">
+          <stop stopColor="#93C5FD" stopOpacity=".12" />
+          <stop offset=".5" stopColor="#60A5FA" stopOpacity=".9" />
+          <stop offset="1" stopColor="#93C5FD" stopOpacity=".12" />
         </linearGradient>
       </defs>
 
-      <ellipse cx="350" cy="315" rx="285" ry="170" fill="url(#emet-globe-fill)" stroke="#3B82F6" strokeOpacity=".22" />
-      <ellipse cx="350" cy="315" rx="285" ry="170" stroke="#60A5FA" strokeOpacity=".16" />
-      <ellipse cx="350" cy="315" rx="205" ry="170" stroke="#60A5FA" strokeOpacity=".16" />
-      <ellipse cx="350" cy="315" rx="112" ry="170" stroke="#60A5FA" strokeOpacity=".13" />
-      <path d="M82 315H618M112 252C235 296 465 296 588 252M112 378C235 334 465 334 588 378" stroke="#60A5FA" strokeOpacity=".13" />
+      <ellipse cx="350" cy="278" rx="305" ry="190" fill="url(#emet-world-ocean)" stroke="#3B82F6" strokeOpacity=".28" />
+      <ellipse cx="350" cy="278" rx="305" ry="190" stroke="#60A5FA" strokeOpacity=".1" />
+      <ellipse cx="350" cy="278" rx="215" ry="190" stroke="#60A5FA" strokeOpacity=".12" />
+      <ellipse cx="350" cy="278" rx="105" ry="190" stroke="#60A5FA" strokeOpacity=".1" />
+      <path d="M55 278H645M78 208C210 250 490 250 622 208M78 348C210 306 490 306 622 348" stroke="#60A5FA" strokeOpacity=".1" />
 
-      <path className="emet-orbit emet-orbit-one" d="M108 230C190 64 485 70 592 250C642 334 542 474 354 486C176 497 55 386 108 230Z" stroke="url(#emet-line)" strokeWidth="1.5" strokeDasharray="8 14" />
-      <path className="emet-orbit emet-orbit-two" d="M82 340C180 176 475 105 610 270C666 339 521 430 338 438C181 445 74 409 82 340Z" stroke="#60A5FA" strokeOpacity=".42" strokeWidth="1.2" strokeDasharray="5 16" />
-
-      <g className="emet-network-lines" stroke="#60A5FA" strokeOpacity=".38" strokeWidth="1">
-        <path d="M154 244L258 178L351 228L452 144L556 218" />
-        <path d="M154 244L218 350L330 305L446 372L556 218" />
-        <path d="M218 350L300 410L446 372" />
-        <path d="M258 178L330 305L452 144" />
-        <path d="M351 228L446 372L556 218" />
+      <g className="emet-continents" fill="url(#emet-continent)" stroke="#60A5FA" strokeOpacity=".58" strokeWidth="1.1">
+        <path d="M106 177L127 145L160 133L183 105L218 113L239 139L263 150L271 178L252 195L236 215L211 214L196 232L170 225L155 207L126 211L111 196Z" />
+        <path d="M222 239L246 247L261 267L258 291L243 306L235 331L220 354L211 382L196 403L181 389L184 362L174 339L183 313L178 286L190 263L205 251Z" />
+        <path d="M276 143L299 120L335 115L365 128L394 120L430 128L459 116L501 128L535 151L572 160L600 184L589 203L553 204L527 216L497 211L475 225L445 218L425 202L398 208L377 193L350 195L327 180L303 181L286 166Z" />
+        <path d="M332 210L355 203L374 218L383 241L372 259L376 279L363 298L347 289L338 270L325 257L327 236L315 223Z" />
+        <path d="M489 250L511 245L530 254L539 270L527 283L510 284L498 273L486 263Z" />
+        <path d="M520 332L542 324L566 330L585 344L576 360L554 366L537 355L518 349Z" />
+        <path d="M577 397L594 391L613 399L622 414L613 429L594 431L581 419Z" />
       </g>
 
-      <g className="emet-network-points" fill="#93C5FD">
-        <circle cx="154" cy="244" r="4" /><circle cx="258" cy="178" r="4" />
-        <circle cx="351" cy="228" r="5" /><circle cx="452" cy="144" r="4" />
-        <circle cx="556" cy="218" r="4" /><circle cx="218" cy="350" r="4" />
-        <circle cx="330" cy="305" r="5" /><circle cx="446" cy="372" r="4" />
-        <circle cx="300" cy="410" r="3.5" />
+      <g className="emet-network-routes" fill="none" stroke="url(#emet-route)" strokeWidth="1.35">
+        <path d="M160 170C245 110 390 110 505 184" />
+        <path d="M205 199C285 174 365 180 438 218" />
+        <path d="M246 270C305 218 385 208 520 267" />
+        <path d="M222 335C310 295 412 296 555 344" />
+        <path d="M360 150C345 215 365 280 520 335" />
+      </g>
+
+      <g className="emet-network-points" fill="#BFDBFE">
+        <circle cx="160" cy="170" r="4" /><circle cx="205" cy="199" r="3.5" />
+        <circle cx="246" cy="270" r="4.5" /><circle cx="360" cy="150" r="4" />
+        <circle cx="438" cy="218" r="4" /><circle cx="520" cy="267" r="4.5" />
+        <circle cx="222" cy="335" r="3.5" /><circle cx="555" cy="344" r="4" />
+        <circle cx="594" cy="411" r="3.5" />
+      </g>
+
+      <g className="emet-orbits" fill="none" stroke="#60A5FA" strokeOpacity=".28" strokeDasharray="5 13">
+        <ellipse className="emet-orbit emet-orbit-one" cx="350" cy="278" rx="315" ry="205" />
+        <ellipse className="emet-orbit emet-orbit-two" cx="350" cy="278" rx="240" ry="205" />
       </g>
     </svg>
     <div className="emet-network-label"><span className="emet-network-pulse" />Connecting people everywhere</div>
@@ -170,20 +187,24 @@ export default function Auth() {
         </Card>
       </div>
       <style>{`
-        .emet-network{position:relative;display:grid;height:100%;min-height:360px;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 48%,rgba(37,99,235,.24),transparent 42%),linear-gradient(145deg,#071126,#020617 72%);isolation:isolate}
-        .emet-network-glow{position:absolute;width:55%;aspect-ratio:1;border-radius:999px;background:#2563eb;filter:blur(90px);opacity:.2;animation:emet-glow 5s ease-in-out infinite}
-        .emet-network-svg{position:relative;width:112%;max-width:720px;height:auto;filter:drop-shadow(0 0 16px rgba(59,130,246,.2))}
-        .emet-network-lines path{animation:emet-lines 3.8s ease-in-out infinite}
-        .emet-network-points circle{filter:drop-shadow(0 0 7px rgba(147,197,253,.9));animation:emet-point 2.6s ease-in-out infinite}
-        .emet-network-points circle:nth-child(2n){animation-delay:.45s}
+        .emet-network{position:relative;display:grid;height:100%;min-height:360px;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 44%,rgba(37,99,235,.2),transparent 44%),linear-gradient(145deg,#071126,#020617 76%);isolation:isolate}
+        .emet-network-glow{position:absolute;width:62%;aspect-ratio:1;border-radius:999px;background:#2563eb;filter:blur(95px);opacity:.16;animation:emet-glow 6s ease-in-out infinite}
+        .emet-network-svg{position:relative;width:112%;max-width:720px;height:auto;filter:drop-shadow(0 0 22px rgba(59,130,246,.18))}
+        .emet-continents path{animation:emet-land 5s ease-in-out infinite}
+        .emet-continents path:nth-child(2n){animation-delay:.7s}
+        .emet-network-routes path{stroke-dasharray:7 13;animation:emet-route 5s linear infinite}
+        .emet-network-routes path:nth-child(2n){animation-delay:1.1s}
+        .emet-network-points circle{filter:drop-shadow(0 0 8px rgba(147,197,253,.95));animation:emet-point 2.8s ease-in-out infinite}
+        .emet-network-points circle:nth-child(2n){animation-delay:.5s}
         .emet-network-points circle:nth-child(3n){animation-delay:1s}
-        .emet-orbit-one{transform-origin:350px 315px;animation:emet-orbit 16s linear infinite}
-        .emet-orbit-two{transform-origin:350px 315px;animation:emet-orbit-reverse 12s linear infinite}
-        .emet-network-label{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:9px;white-space:nowrap;border:1px solid rgba(96,165,250,.18);border-radius:999px;background:rgba(2,6,23,.58);padding:9px 14px;color:rgba(191,219,254,.78);font-size:11px;font-weight:600;letter-spacing:.03em;backdrop-filter:blur(12px)}
+        .emet-orbit-one{transform-origin:350px 278px;animation:emet-orbit 18s linear infinite}
+        .emet-orbit-two{transform-origin:350px 278px;animation:emet-orbit-reverse 14s linear infinite}
+        .emet-network-label{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:9px;white-space:nowrap;border:1px solid rgba(96,165,250,.2);border-radius:999px;background:rgba(2,6,23,.68);padding:9px 14px;color:rgba(191,219,254,.82);font-size:11px;font-weight:600;letter-spacing:.03em;backdrop-filter:blur(12px)}
         .emet-network-pulse{width:7px;height:7px;border-radius:50%;background:#60a5fa;box-shadow:0 0 12px #60a5fa;animation:emet-pulse 1.7s ease-in-out infinite}
-        @keyframes emet-glow{0%,100%{transform:scale(.92);opacity:.15}50%{transform:scale(1.08);opacity:.28}}
-        @keyframes emet-point{0%,100%{opacity:.5;transform:scale(.8)}50%{opacity:1;transform:scale(1.35)}}
-        @keyframes emet-lines{0%,100%{stroke-opacity:.22}50%{stroke-opacity:.72}}
+        @keyframes emet-glow{0%,100%{transform:scale(.94);opacity:.12}50%{transform:scale(1.08);opacity:.23}}
+        @keyframes emet-land{0%,100%{fill-opacity:.2}50%{fill-opacity:.34}}
+        @keyframes emet-route{to{stroke-dashoffset:-40}}
+        @keyframes emet-point{0%,100%{opacity:.48;transform:scale(.82)}50%{opacity:1;transform:scale(1.3)}}
         @keyframes emet-orbit{to{transform:rotate(360deg)}}
         @keyframes emet-orbit-reverse{to{transform:rotate(-360deg)}}
         @keyframes emet-pulse{0%,100%{transform:scale(.8);opacity:.5}50%{transform:scale(1.25);opacity:1}}
