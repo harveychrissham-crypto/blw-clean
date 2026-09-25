@@ -24,7 +24,7 @@ import {
   FiLoader,
 } from 'react-icons/fi';
 import { Card, Eyebrow, StatGroup, ActionBanner, InfoTile } from '../components/ui/Card';
-import { getAppVersion } from '../native';
+import { getAppVersion, setAppIconPalette } from '../native';
 import EmptyState from '../components/ui/EmptyState';
 import { Toast } from '../components/ui/Toast';
 import { Skeleton } from '../components/ui/Skeleton';
@@ -61,10 +61,37 @@ export default function Dashboard() {
     setShowPhotoSheet(true);
   };
   const [appVersion, setAppVersion] = useState(null);
+  const [iconPalette, setIconPalette] = useState(() => {
+    try { return localStorage.getItem('emet_icon_palette') || 'black'; } catch { return 'black'; }
+  });
+  const [iconPaletteBusy, setIconPaletteBusy] = useState(false);
+  const [iconPaletteMessage, setIconPaletteMessage] = useState('');
 
   useEffect(() => {
     getAppVersion().then(setAppVersion);
   }, []);
+
+  const handleIconPaletteChange = async (palette) => {
+    if (palette === iconPalette || iconPaletteBusy) return;
+    setIconPaletteBusy(true);
+    setIconPaletteMessage('');
+    try {
+      const result = await setAppIconPalette(palette);
+      setIconPalette(palette);
+      setIconPaletteMessage(result.applied
+        ? 'App icon updated. Your launcher may take a few seconds to refresh.'
+        : 'Palette saved. Install the Android app to apply it to the launcher.');
+    } finally {
+      setIconPaletteBusy(false);
+    }
+  };
+
+  const iconPalettes = [
+    { id: 'black', name: 'Jet Black', bg: '#0B0F14', fg: '#FFFFFF' },
+    { id: 'blue', name: 'Emet Blue', bg: '#3B82F6', fg: '#FFFFFF' },
+    { id: 'snow', name: 'Snow', bg: '#F8FAFC', fg: '#0B0F14' },
+    { id: 'slate', name: 'Slate', bg: '#6B7280', fg: '#FFFFFF' },
+  ];
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
@@ -399,6 +426,34 @@ export default function Dashboard() {
               <div className="h-full w-[60%] rounded-full bg-gradient-to-r from-[#C93690] to-[#4D1B82] shadow-[0_0_20px_rgba(163,77,255,0.45)]" />
             </div>
           </div>
+        </Card>
+
+        <Card variant="raised" className="p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <Eyebrow>App appearance</Eyebrow>
+              <h2 className="mt-1 text-lg font-semibold text-white">App icon</h2>
+              <p className="mt-1 max-w-xl text-xs leading-relaxed text-slate-400">Choose the color palette for your Emet launcher icon. Your choice is saved to this device.</p>
+            </div>
+            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-[16px] shadow-lg" style={{background:iconPalettes.find((p)=>p.id===iconPalette)?.bg||'#0B0F14'}}>
+              <span className="text-2xl font-black" style={{color:iconPalettes.find((p)=>p.id===iconPalette)?.fg||'#fff'}}>E</span>
+            </span>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {iconPalettes.map((palette)=>{ const active=palette.id===iconPalette; return (
+              <button key={palette.id} type="button" disabled={iconPaletteBusy} onClick={()=>handleIconPaletteChange(palette.id)}
+                className="rounded-2xl border p-2.5 text-left transition disabled:opacity-60"
+                style={{borderColor:active?'rgba(255,255,255,.55)':'rgba(255,255,255,.08)',background:active?'rgba(255,255,255,.07)':'rgba(255,255,255,.025)'}}>
+                <span className="flex items-center gap-2.5">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl shadow-md" style={{background:palette.bg}}>
+                    <span className="text-base font-black" style={{color:palette.fg}}>E</span>
+                  </span>
+                  <span className="min-w-0"><span className="block truncate text-xs font-semibold text-white">{palette.name}</span><span className="block text-[10px] text-white/40">{active?'Selected':'Use icon'}</span></span>
+                </span>
+              </button>
+            );})}
+          </div>
+          {iconPaletteMessage&&<p className="mt-3 text-[11px] text-emerald-300">{iconPaletteMessage}</p>}
         </Card>
 
         {/* ONE primary call-to-action for this screen — everything else is quieter */}
