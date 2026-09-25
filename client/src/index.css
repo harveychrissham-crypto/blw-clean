@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Sora:wght@600;700;800&display=swap');
 @import './meetings.css';
 
 @tailwind base;
@@ -6,9 +6,9 @@
 @tailwind utilities;
 
 :root {
-  --bg-page: #0d0c18;
-  --bg-navbar: rgba(13,12,24,0.92);
-  --text-gold: #F2A31C;
+  --bg-page: #0B0F14;
+  --bg-navbar: rgba(11,15,20,0.94);
+  --text-gold: #3B82F6;
   --feed-liked-color: #EC2FA8;
   color-scheme: dark;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
@@ -18,14 +18,14 @@
   color: #fff;
 }
 html { scroll-behavior: smooth; overscroll-behavior-y: contain; }
-body { margin: 0; min-height: 100vh; padding: 0; overscroll-behavior-y: contain; background: radial-gradient(ellipse at top left, rgba(120,20,60,0.45) 0%, transparent 45%), radial-gradient(ellipse at bottom right, rgba(60,20,100,0.35) 0%, transparent 45%), #0d0c18; }
+body { margin: 0; min-height: 100vh; padding: 0; overscroll-behavior-y: contain; background: #0B0F14; }
 * { box-sizing: border-box; }
 a, button, [role="button"], input, textarea, select { -webkit-tap-highlight-color: transparent; }
 @media (hover: none) { a:active, button:not(:disabled):active, [role="button"]:active { transform: scale(0.96); transition: transform 0.1s ease; } a, button, [role="button"], img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; } input, select, textarea { font-size: 16px !important; } }
-::selection { background: rgba(236,47,168,0.3); color: white; }
+::selection { background: rgba(59,130,246,0.3); color: white; }
 nav::-webkit-scrollbar { display: none; }
 input, select, textarea { background: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 0.75rem !important; color: #fff !important; transition: border-color 0.15s; }
-input:focus, select:focus, textarea:focus { outline: none !important; border-color: #EC2FA8 !important; }
+input:focus, select:focus, textarea:focus { outline: none !important; border-color: #3B82F6 !important; }
 input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3) !important; }
 select option { color: #0d0c18 !important; background: #ffffff !important; }
 
