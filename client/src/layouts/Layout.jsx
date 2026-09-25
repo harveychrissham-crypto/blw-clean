@@ -21,27 +21,34 @@ export default function Layout({ children }) {
   useEffect(()=>{const refresh=()=>setUnreadCount(getUnreadCount());refresh();return onNotificationsUpdated(refresh);},[]);
   const desktopLink=(path,Icon,label,end=false)=><NavLink to={path} end={end} className={({isActive})=>`flex items-center gap-4 rounded-2xl px-4 py-3.5 text-[0.95rem] font-semibold transition ${isActive?'bg-white/[.09] text-white':'text-white/55 hover:bg-white/[.05] hover:text-white'}`}><Icon className="h-[21px] w-[21px] shrink-0"/>{label}</NavLink>;
   return <div className="min-h-screen text-white" style={{background:'#0B0F14'}}>
-    <aside className="fixed inset-y-0 left-0 z-50 hidden w-[250px] border-r border-white/[0.07] bg-[#0B0F14] px-4 py-6 lg:block">
-      <div className="flex h-full flex-col">
-        <Link to="/" className="mb-8 flex items-center px-3"><img src="/emet-wordmark-white.svg" alt="Emet" className="h-10 w-auto max-w-[170px]"/></Link>
-        <nav className="flex flex-col gap-1">
-          {navItems.map(item=>desktopLink(item.path,item.icon,item.name,item.path==='/'))}
-          {desktopLink('/explore',FiSearch,'Explore')}
-          {user&&desktopLink('/notifications',FiBell,'Notifications')}
-          {user&&desktopLink('/messages',FiMessageCircle,'Messages')}
-          {desktopLink(user?'/profile':'/auth',FiUser,user?'Profile':'Sign In')}
-        </nav>
-        <Link to={user?'/create':'/auth'} className="mt-6 block rounded-full bg-[#3B82F6] px-5 py-3.5 text-center text-sm font-bold text-white hover:bg-blue-500">{user?'Post':'Sign In'}</Link>
-        <div className="mt-auto border-t border-white/[.07] pt-5">{user?<Link to="/profile" className="flex items-center gap-3 rounded-2xl px-3 py-3 hover:bg-white/[.05]"><span className="grid h-9 w-9 place-items-center rounded-full bg-white/[.08] text-xs font-bold">{(user.name||user.email||'E').slice(0,1).toUpperCase()}</span><span className="min-w-0"><span className="block truncate text-sm font-semibold">{user.name||'Emet member'}</span><span className="block truncate text-xs text-white/35">{user.email}</span></span></Link>:<span className="px-3 text-xs text-white/30">Join the Emet community</span>}</div>
+    <header className="sticky top-0 z-40 border-b border-white/[0.07]" style={{background:'rgba(11,15,20,0.94)',backdropFilter:'blur(20px)'}}>
+      <div className="flex items-center justify-between px-4 py-2.5 sm:px-5">
+        <Link to="/" className="flex items-center lg:hidden"><img src="/emet-mark-white.svg" alt="Emet" className="h-8 w-8"/></Link>
+        <div className="ml-auto flex items-center gap-1"><Button variant="custom" size="none" onClick={()=>setSearchOpen(true)} className="rounded-lg p-2 text-white/50 hover:text-white hover:bg-white/5" aria-label="Search"><FiSearch className="h-4 w-4"/></Button>{user&&<Link to="/notifications" className="rounded-lg p-2 text-white/50 hover:text-white lg:hidden"><FiBell className="h-4 w-4"/></Link>}{user?<Link to="/profile" className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden">Profile</Link>:<Link to="/auth" className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden">Sign In</Link>}</div>
       </div>
-    </aside>
-    <header className="sticky top-0 z-40 border-b border-white/[0.07] lg:ml-[250px]" style={{background:'rgba(11,15,20,0.94)',backdropFilter:'blur(20px)'}}>
-      <div className="flex items-center justify-between px-4 py-2.5 sm:px-5"><Link to="/" className="flex lg:hidden"><img src="/emet-mark-white.svg" alt="Emet" className="h-8 w-8"/></Link><div className="ml-auto flex items-center gap-1"><Button variant="custom" size="none" onClick={()=>setSearchOpen(true)} className="rounded-lg p-2 text-white/50 hover:text-white hover:bg-white/5" aria-label="Search"><FiSearch className="h-4 w-4"/></Button>{user&&<Link to="/notifications" className="rounded-lg p-2 text-white/50 hover:text-white lg:hidden"><FiBell className="h-4 w-4"/></Link>}{user?<Link to="/profile" className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden">Profile</Link>:<Link to="/auth" className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden">Sign In</Link>}</div></div>
     </header>
-    {isFeed&&<FeedSocialChrome user={user}/>} {isFeed&&<FeedTabStyle/>}
-    <div className="lg:ml-[250px]"><main className={isFeed?'feed-page':undefined}>{children}</main></div>
+    <div className="lg:flex lg:items-start">
+      <aside className="hidden lg:block lg:w-[250px] lg:shrink-0 border-r border-white/[0.07] bg-[#0B0F14] px-4 py-6">
+        <div className="flex flex-col">
+          <Link to="/" className="mb-8 flex items-center px-3"><img src="/emet-wordmark-white.svg" alt="Emet" className="h-10 w-auto max-w-[170px]"/></Link>
+          <nav className="flex flex-col gap-1">
+            {navItems.map(item=>desktopLink(item.path,item.icon,item.name,item.path==='/'))}
+            {desktopLink('/explore',FiSearch,'Explore')}
+            {user&&desktopLink('/notifications',FiBell,'Notifications')}
+            {user&&desktopLink('/messages',FiMessageCircle,'Messages')}
+            {desktopLink(user?'/profile':'/auth',FiUser,user?'Profile':'Sign In')}
+          </nav>
+          <Link to={user?'/create':'/auth'} className="mt-6 block rounded-full bg-[#3B82F6] px-5 py-3.5 text-center text-sm font-bold text-white hover:bg-blue-500">{user?'Post':'Sign In'}</Link>
+          <div className="mt-8 border-t border-white/[.07] pt-5">{user?<Link to="/profile" className="flex items-center gap-3 rounded-2xl px-3 py-3 hover:bg-white/[.05]"><span className="grid h-9 w-9 place-items-center rounded-full bg-white/[.08] text-xs font-bold">{(user.name||user.email||'E').slice(0,1).toUpperCase()}</span><span className="min-w-0"><span className="block truncate text-sm font-semibold">{user.name||'Emet member'}</span><span className="block truncate text-xs text-white/35">{user.email}</span></span></Link>:<span className="px-3 text-xs text-white/30">Join the Emet community</span>}</div>
+        </div>
+      </aside>
+      <div className="min-w-0 flex-1">
+        {isFeed&&<FeedSocialChrome user={user}/>} {isFeed&&<FeedTabStyle/>}
+        <main className={isFeed?'feed-page':undefined}>{children}</main>
+        <footer className="hidden border-t border-white/[0.07] mt-8 sm:block" style={{background:'rgba(10,9,20,0.8)'}}><div className="mx-auto max-w-6xl px-5 py-10"><div><h4 className="mb-3 text-xs font-semibold uppercase tracking-widest text-white/40">Quick Links</h4><div className="flex flex-col gap-2 text-sm text-white/50"><Link to="/feed">Feed</Link><Link to="/messages">Messages</Link><Link to="/communities">Communities</Link></div></div></div><div className="border-t border-white/[0.05] py-4 text-center text-xs text-white/25">© {new Date().getFullYear()} Emet</div></footer>
+      </div>
+    </div>
     <SearchPanel open={searchOpen} onClose={()=>setSearchOpen(false)}/><AIChatWidget/>
-    <footer className="hidden border-t border-white/[0.07] mt-8 lg:ml-[250px] sm:block" style={{background:'rgba(10,9,20,0.8)'}}><div className="mx-auto max-w-6xl px-5 py-10"><div className="flex gap-8"><div><h4 className="mb-3 text-xs font-semibold uppercase tracking-widest text-white/40">Quick Links</h4><div className="flex flex-col gap-2 text-sm text-white/50"><Link to="/feed">Feed</Link><Link to="/messages">Messages</Link><Link to="/communities">Communities</Link></div></div></div></div><div className="border-t border-white/[0.05] py-4 text-center text-xs text-white/25">© {new Date().getFullYear()} Emet</div></footer>
     <div className="pb-24 pt-2 text-center text-[10px] text-white/20 lg:hidden">© {new Date().getFullYear()} Emet · Faith · Community · Conversation</div><BottomNav/>
   </div>;
 }
