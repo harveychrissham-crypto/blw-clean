@@ -79,7 +79,19 @@ export async function handleFeed(request, env, url) {
         return json({ post:{...post,id:`p:${post.id}`,source_type:'user',is_user_post:true,is_owner:true,youtube_id:youtubeId(post.youtube_url),like_count:0,save_count:0,comment_count:0,view_count:0,liked:false,saved:false} },201,headers);
       } finally { await client.end().catch(()=>{}); }
     }
-    const profileMatch = url.pathname.match(/^\/api\/feed\/users\/([^/]+)$/);\n    if (profileMatch && request.method === 'GET') {\n      const profileEmail = decodeURIComponent(profileMatch[1] || '').trim().toLowerCase();\n      if (!profileEmail || !profileEmail.includes('@')) return json({ error:'Invalid member.' },400,headers);\n      const client = await getDb(env);\n      try {\n        const result = await client.query(`SELECT u.full_name,u.email,u.avatar_url,u.chapter,u.title, (SELECT COUNT(*)::int FROM public.feed_posts p WHERE LOWER(p.user_email)=LOWER(u.email)) AS post_count, (SELECT COUNT(*)::int FROM public.feed_user_follows f WHERE LOWER(f.followed_email)=LOWER(u.email)) AS follower_count, (SELECT COUNT(*)::int FROM public.feed_user_follows f WHERE LOWER(f.follower_email)=LOWER(u.email)) AS following_count, CASE WHEN $2 <> '' AND EXISTS(SELECT 1 FROM public.feed_user_follows f WHERE LOWER(f.follower_email)=LOWER($2) AND LOWER(f.followed_email)=LOWER(u.email)) THEN true ELSE false END AS following FROM public.users u WHERE LOWER(u.email)=LOWER($1) LIMIT 1`,[profileEmail,email || '']);\n        if (!result.rows.length) return json({ error:'Member not found.' },404,headers);\n        const row=result.rows[0];\n        return json({ user:{ name:row.full_name || row.email.split('@')[0], email:row.email, avatarUrl:row.avatar_url || '', chapter:row.chapter || '', title:row.title || '', postCount:Number(row.post_count || 0), followerCount:Number(row.follower_count || 0), followingCount:Number(row.following_count || 0), following:Boolean(row.following) } },200,headers);\n      } finally { await client.end().catch(()=>{}); }\n    }\n    const followMatch = url.pathname.match(/^\/api\/feed\/users\/([^/]+)\/follow$/);
+    const profileMatch = url.pathname.match(/^\/api\/feed\/users\/([^/]+)$/);
+    if (profileMatch && request.method === 'GET') {
+      const profileEmail = decodeURIComponent(profileMatch[1] || '').trim().toLowerCase();
+      if (!profileEmail || !profileEmail.includes('@')) return json({ error:'Invalid member.' },400,headers);
+      const client = await getDb(env);
+      try {
+        const result = await client.query(`SELECT u.full_name,u.email,u.avatar_url,u.chapter,u.title, (SELECT COUNT(*)::int FROM public.feed_posts p WHERE LOWER(p.user_email)=LOWER(u.email)) AS post_count, (SELECT COUNT(*)::int FROM public.feed_user_follows f WHERE LOWER(f.followed_email)=LOWER(u.email)) AS follower_count, (SELECT COUNT(*)::int FROM public.feed_user_follows f WHERE LOWER(f.follower_email)=LOWER(u.email)) AS following_count, CASE WHEN $2 <> '' AND EXISTS(SELECT 1 FROM public.feed_user_follows f WHERE LOWER(f.follower_email)=LOWER($2) AND LOWER(f.followed_email)=LOWER(u.email)) THEN true ELSE false END AS following FROM public.users u WHERE LOWER(u.email)=LOWER($1) LIMIT 1`,[profileEmail,email || '']);
+        if (!result.rows.length) return json({ error:'Member not found.' },404,headers);
+        const row=result.rows[0];
+        return json({ user:{ name:row.full_name || row.email.split('@')[0], email:row.email, avatarUrl:row.avatar_url || '', chapter:row.chapter || '', title:row.title || '', postCount:Number(row.post_count || 0), followerCount:Number(row.follower_count || 0), followingCount:Number(row.following_count || 0), following:Boolean(row.following) } },200,headers);
+      } finally { await client.end().catch(()=>{}); }
+    }
+    const followMatch = url.pathname.match(/^\/api\/feed\/users\/([^/]+)\/follow$/);
     if (followMatch && request.method === 'POST') {
       if (!email) return json({ error:'Sign in required to follow members.' },401,headers);
       const followedEmail = decodeURIComponent(followMatch[1] || '').trim().toLowerCase();
