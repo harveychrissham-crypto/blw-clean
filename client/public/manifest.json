@@ -1,10 +1,11 @@
 {
-  "name": "EMET",
-  "short_name": "EMET",
+  "name": "Emet",
+  "short_name": "Emet",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0B0B0D",
-  "theme_color": "#0B0B0D",
+  "background_color": "#0B0F14",
+  "theme_color": "#0B0F14",
+  "description": "Faith • Community • Conversation",
   "icons": [
     {
       "src": "/emet-approved-mark.svg",
