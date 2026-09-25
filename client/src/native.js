@@ -73,6 +73,9 @@ function markQrCameraSessions() {
 async function setUpStatusBar() {
   try {
     const { StatusBar, Style } = await import('@capacitor/status-bar');
+    // Draw the web UI from the very top of the window so the native
+    // status-bar area does not create a visible blank strip above Emet.
+    await StatusBar.setOverlaysWebView({ overlay: true });
     await StatusBar.setStyle({ style: Style.Dark });
     await StatusBar.setBackgroundColor({ color: '#0d0c18' });
   } catch (error) {
