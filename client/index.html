@@ -28,17 +28,14 @@
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
       }
-      #boot-splash svg { position: relative; animation: boot-splash-spin 1s linear infinite; }
-      @keyframes boot-splash-spin { to { transform: rotate(360deg); } }
+      #boot-splash img { position: relative; filter: drop-shadow(0 12px 30px rgba(0,0,0,.35)); }
       #boot-splash.boot-splash-hidden { opacity: 0; pointer-events: none; }
     </style>
   </head>
   <body>
     <div id="boot-splash" aria-hidden="true">
-      <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-        <circle cx="20" cy="20" r="17" stroke="#ffffff" stroke-opacity="0.15" stroke-width="4" />
-        <path d="M37 20a17 17 0 0 0-17-17" stroke="#F2A31C" stroke-width="4" stroke-linecap="round" />
-      </svg>
+      <img src="/emet-mark-white.svg" alt="" width="56" height="56" />
+      <span style="font:800 14px/1 Inter,Montserrat,system-ui,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.72);margin-left:.22em;">Emet</span>
     </div>
     <div id="root"></div>
     <script>
