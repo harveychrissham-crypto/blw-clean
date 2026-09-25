@@ -12,7 +12,13 @@
         android:pathData="M86,31c-3.1,-8.4 -11.1,-14 -20.3,-14H49c-18.2,0 -33,14.8 -33,33s14.8,33 33,33h16.7c9.2,0 17.2,-5.6 20.3,-14H50c-10.5,0 -19,-8.5 -19,-19s8.5,-19 19,-19h36Z"/>
     <path android:fillColor="#FFFFFFFF" android:pathData="M45,50h42c3.314,0 6,2.686 6,6s-2.686,6 -6,6H45z"/>
     <path android:fillColor="#FF0B0F14" android:pathData="M82,35h18v12H82zM82,47h18v12H82zM82,59h18v12H82z"/>
-    <circle android:fillColor="#FFFFFFFF" android:cx="91" android:cy="41" android:r="3.8"/>
-    <circle android:fillColor="#FFFFFFFF" android:cx="91" android:cy="53" android:r="3.8"/>
-    <circle android:fillColor="#FFFFFFFF" android:cx="91" android:cy="65" android:r="3.8"/>
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M91,37.2 c2.098,0 3.8,1.702 3.8,3.8 s-1.702,3.8 -3.8,3.8 -3.8,-1.702 -3.8,-3.8 1.702,-3.8 3.8,-3.8Z"/>
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M91,49.2 c2.098,0 3.8,1.702 3.8,3.8 s-1.702,3.8 -3.8,3.8 -3.8,-1.702 -3.8,-3.8 1.702,-3.8 3.8,-3.8Z"/>
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M91,61.2 c2.098,0 3.8,1.702 3.8,3.8 s-1.702,3.8 -3.8,3.8 -3.8,-1.702 -3.8,-3.8 1.702,-3.8 3.8,-3.8Z"/>
 </vector>
