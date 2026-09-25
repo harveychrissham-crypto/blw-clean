@@ -138,7 +138,22 @@ function RightRail({ posts }) {
         </section>
         {people.length > 0 && <section className="overflow-hidden rounded-2xl border border-white/[.07] bg-white/[.025]">
           <h2 className="px-4 pt-4 text-xl font-extrabold text-white">Who to follow</h2>
-          {people.map((person) => <div key={person.author} className="flex items-center gap-3 px-4 py-3"><Avatar src={person.avatarUrl} name={person.author} size="h-9 w-9" /><div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-white">{person.author}</p><p className="truncate text-xs text-white/35">@{String(person.author).toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 18) || 'emet'}</p></div><Link to="/connect" className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-black">Follow</Link></div>)}
+          {people.map((person) => {
+            const handle = String(person.author || 'emet')
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '')
+              .slice(0, 18) || 'emet';
+            return (
+              <div key={person.author} className="flex items-center gap-3 px-4 py-3">
+                <Avatar src={person.avatarUrl} name={person.author} size="h-9 w-9" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold text-white">{person.author}</p>
+                  <p className="truncate text-xs text-white/35">@{handle}</p>
+                </div>
+                <Link to="/connect" className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-black">Follow</Link>
+              </div>
+            );
+          })}
         </section>
         <p className="px-2 text-[11px] leading-5 text-white/25">Emet is a Christian social network for conversation, community, faith and genuine connection.</p>
       </div>
