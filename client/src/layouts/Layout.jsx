@@ -1,6 +1,6 @@
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { FiX, FiHome, FiMic, FiHeart, FiPhone, FiSearch, FiUser, FiLogIn, FiBell, FiVideo, FiMessageCircle, FiCamera, FiUsers } from 'react-icons/fi';
+import { FiMenu, FiX, FiHome, FiMic, FiHeart, FiPhone, FiSearch, FiUser, FiLogIn, FiBell, FiVideo, FiMessageCircle, FiCamera, FiUsers } from 'react-icons/fi';
 import AIChatWidget from '../components/AIChatWidget';
 import SearchPanel from '../components/SearchPanel';
 import BottomNav from '../components/BottomNav';
@@ -13,7 +13,7 @@ const navItems = [
 function FeedSocialChrome({ user }) { const name=user?.name||'Emet Community'; const firstName=name.split(' ')[0]||'Member'; const initial=firstName.charAt(0).toUpperCase(); return <div className="border-b border-white/[0.07] bg-ink-950/95 px-4 py-3 backdrop-blur-xl sm:hidden"><div className="mx-auto flex max-w-3xl items-center justify-between"><Link to={user?'/dashboard':'/auth'} className="flex min-w-0 items-center gap-3" aria-label={user?'Open your profile':'Sign in'}><span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#c93690] to-[#4d1b82] text-xs font-black text-white ring-1 ring-white/15">{user?.avatarUrl?<img src={user.avatarUrl} alt="" className="h-full w-full object-cover"/>:initial}</span><span className="min-w-0"><span className="block truncate text-sm font-bold text-white">{user?firstName:'Emet Community'}</span><span className="block text-[10px] text-white/40">{user?'Your profile':'Community Feed'}</span></span></Link><div className="flex items-center gap-1">{user&&<Link to="/create" aria-label="Create post or Reel" title="Create post or Reel" className="rounded-full p-2.5 text-white/80 hover:bg-white/5 hover:text-white"><FiCamera className="h-[20px] w-[20px]"/></Link>}{user&&<Link to="/notifications" aria-label="Notifications" className="rounded-full p-2.5 text-white/70 hover:bg-white/5 hover:text-white"><FiBell className="h-[19px] w-[19px]"/></Link>}{user&&<Link to="/messages" aria-label="Messages" title="Messages" className="rounded-full p-2.5 text-white/80 hover:bg-white/5 hover:text-white"><FiMessageCircle className="h-[20px] w-[20px]"/></Link>}</div></div></div>; }
 function FeedTabStyle() { return <style>{`main.feed-page .sticky.top-0 > div{gap:1.25rem!important}main.feed-page .sticky.top-0 button{position:relative;border-radius:0!important;padding:.7rem .15rem!important;background:transparent!important;color:rgba(255,255,255,.45)!important;font-size:.72rem!important}main.feed-page .sticky.top-0 button:hover{background:transparent!important;color:rgba(255,255,255,.85)!important}main.feed-page .sticky.top-0 button::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:999px;background:transparent}main.feed-page .sticky.top-0 button:hover::after{background:rgba(255,255,255,.18)}`}</style>; }
 export default function Layout({ children }) {
-  const [searchOpen,setSearchOpen]=useState(false);
+  const [searchOpen,setSearchOpen]=useState(false); const [sidebarOpen,setSidebarOpen]=useState(false);
   const [unreadCount,setUnreadCount]=useState(0);
   const {user}=useAuth();
   const location=useLocation();
@@ -22,26 +22,13 @@ export default function Layout({ children }) {
   const desktopLink=(path,Icon,label,end=false)=><NavLink to={path} end={end} className={({isActive})=>`flex items-center gap-4 rounded-2xl px-4 py-3.5 text-[0.95rem] font-semibold transition ${isActive?'bg-white/[.09] text-white':'text-white/55 hover:bg-white/[.05] hover:text-white'}`}><Icon className="h-[21px] w-[21px] shrink-0"/>{label}</NavLink>;
   return <div className="min-h-screen text-white" style={{background:'#0B0F14'}}>
     <header className="sticky top-0 z-40 border-b border-white/[0.07]" style={{background:'rgba(11,15,20,0.94)',backdropFilter:'blur(20px)'}}>
-      <div className="flex items-center justify-between px-4 py-2.5 sm:px-5">
+      <div className="flex items-center justify-between px-4 py-2.5 sm:px-5"><Button variant="custom" size="none" onClick={()=>setSidebarOpen(true)} className="hidden rounded-lg p-2 text-white/60 hover:bg-white/5 hover:text-white lg:inline-flex" aria-label="Open navigation"><FiMenu className="h-5 w-5"/></Button>
         <Link to="/" className="flex items-center lg:hidden"><img src="/emet-mark-white.svg" alt="Emet" className="h-8 w-8"/></Link>
         <div className="ml-auto flex items-center gap-1"><Button variant="custom" size="none" onClick={()=>setSearchOpen(true)} className="rounded-lg p-2 text-white/50 hover:text-white hover:bg-white/5" aria-label="Search"><FiSearch className="h-4 w-4"/></Button>{user&&<Link to="/notifications" className="rounded-lg p-2 text-white/50 hover:text-white lg:hidden"><FiBell className="h-4 w-4"/></Link>}{user?<Link to="/profile" className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden">Profile</Link>:<Link to="/auth" className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden">Sign In</Link>}</div>
       </div>
     </header>
+    {sidebarOpen&&<div className="fixed inset-0 z-[70] hidden lg:block"><div className="absolute inset-0 bg-black/60" onClick={()=>setSidebarOpen(false)}/><aside className="absolute inset-y-0 left-0 w-[280px] border-r border-white/[0.07] bg-[#0B0F14] px-4 py-6 shadow-2xl"><div className="flex items-center justify-between px-3 mb-8"><Link to="/" onClick={()=>setSidebarOpen(false)}><img src="/emet-wordmark-white.svg" alt="Emet" className="h-10 w-auto"/></Link><Button variant="custom" size="none" onClick={()=>setSidebarOpen(false)} className="p-2 text-white/60" aria-label="Close navigation"><FiX className="h-5 w-5"/></Button></div><nav className="flex flex-col gap-1">{navItems.map(item=>{const Icon=item.icon;return <NavLink key={item.path} to={item.path} end={item.path==='/'} onClick={()=>setSidebarOpen(false)} className={({isActive})=>`flex items-center gap-4 rounded-2xl px-4 py-3.5 text-[0.95rem] font-semibold ${isActive?'bg-white/[.09] text-white':'text-white/55 hover:bg-white/[.05] hover:text-white'}`}><Icon className="h-[21px] w-[21px]"/>{item.name}</NavLink>;})}{desktopLink('/explore',FiSearch,'Explore')}{user&&desktopLink('/notifications',FiBell,'Notifications')}{user&&desktopLink('/messages',FiMessageCircle,'Messages')}{desktopLink(user?'/profile':'/auth',FiUser,user?'Profile':'Sign In')}</nav><Link to={user?'/create':'/auth'} onClick={()=>setSidebarOpen(false)} className="mt-6 block rounded-full bg-[#3B82F6] px-5 py-3.5 text-center text-sm font-bold">{user?'Post':'Sign In'}</Link></aside></div>}
     <div className="lg:flex lg:items-start">
-      <aside className="hidden lg:block lg:w-[250px] lg:shrink-0 border-r border-white/[0.07] bg-[#0B0F14] px-4 py-6">
-        <div className="flex flex-col">
-          <Link to="/" className="mb-8 flex items-center px-3"><img src="/emet-wordmark-white.svg" alt="Emet" className="h-10 w-auto max-w-[170px]"/></Link>
-          <nav className="flex flex-col gap-1">
-            {navItems.map(item=>desktopLink(item.path,item.icon,item.name,item.path==='/'))}
-            {desktopLink('/explore',FiSearch,'Explore')}
-            {user&&desktopLink('/notifications',FiBell,'Notifications')}
-            {user&&desktopLink('/messages',FiMessageCircle,'Messages')}
-            {desktopLink(user?'/profile':'/auth',FiUser,user?'Profile':'Sign In')}
-          </nav>
-          <Link to={user?'/create':'/auth'} className="mt-6 block rounded-full bg-[#3B82F6] px-5 py-3.5 text-center text-sm font-bold text-white hover:bg-blue-500">{user?'Post':'Sign In'}</Link>
-          <div className="mt-8 border-t border-white/[.07] pt-5">{user?<Link to="/profile" className="flex items-center gap-3 rounded-2xl px-3 py-3 hover:bg-white/[.05]"><span className="grid h-9 w-9 place-items-center rounded-full bg-white/[.08] text-xs font-bold">{(user.name||user.email||'E').slice(0,1).toUpperCase()}</span><span className="min-w-0"><span className="block truncate text-sm font-semibold">{user.name||'Emet member'}</span><span className="block truncate text-xs text-white/35">{user.email}</span></span></Link>:<span className="px-3 text-xs text-white/30">Join the Emet community</span>}</div>
-        </div>
-      </aside>
       <div className="min-w-0 flex-1">
         {isFeed&&<FeedSocialChrome user={user}/>} {isFeed&&<FeedTabStyle/>}
         <main className={isFeed?'feed-page':undefined}>{children}</main>
