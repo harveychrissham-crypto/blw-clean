@@ -153,6 +153,31 @@ export async function handleFeed(request, env, url) {
         return json({ ok:true },200,headers);
       } finally { await client.end().catch(()=>{}); }
     }
+    if (url.pathname === '/api/feed/saved' && request.method === 'GET') {
+      if (!email) return json({ error: 'Sign in required to view your bookmarks.' }, 401, headers);
+      const rawLimit = Number.parseInt(url.searchParams.get('limit') || '30', 10);
+      const rawOffset = Number.parseInt(url.searchParams.get('offset') || '0', 10);
+      const limit = Math.min(Math.max(Number.isFinite(rawLimit) ? rawLimit : 30, 1), 50);
+      const offset = Math.max(Number.isFinite(rawOffset) ? rawOffset : 0, 0);
+      const client = await getDb(env);
+      try {
+        const result = await client.query(`SELECT * FROM (
+          SELECT CONCAT('s:',s.id) AS id,s.title,s.speaker AS author,s.description AS body,s.youtube_url,NULL::text AS media_url,NULL::text AS media_type,s.created_at,s.is_featured,'sermon' AS type,'sermon' AS source_type,false AS is_user_post,false AS is_owner,false AS following,NULL::text AS author_email,0::int AS view_count,
+            (SELECT COUNT(*)::int FROM public.feed_likes x WHERE x.sermon_id=s.id) AS like_count,(SELECT COUNT(*)::int FROM public.feed_comments x WHERE x.sermon_id=s.id) AS comment_count,(SELECT COUNT(*)::int FROM public.feed_saves x WHERE x.sermon_id=s.id) AS save_count,true AS saved,
+            CASE WHEN EXISTS(SELECT 1 FROM public.feed_likes x WHERE x.sermon_id=s.id AND LOWER(x.user_email)=LOWER($1)) THEN true ELSE false END AS liked
+          FROM public.sermons s JOIN public.feed_saves fs ON fs.sermon_id=s.id AND LOWER(fs.user_email)=LOWER($1)
+          UNION ALL
+          SELECT CONCAT('p:',p.id) AS id,p.title,p.author_name AS author,p.body,p.youtube_url,p.media_url,p.media_type,p.created_at,false AS is_featured,p.type,'user' AS source_type,true AS is_user_post,
+            CASE WHEN LOWER(p.user_email)=LOWER($1) THEN true ELSE false END AS is_owner,false AS following,p.user_email AS author_email,0::int AS view_count,
+            (SELECT COUNT(*)::int FROM public.feed_post_likes x WHERE x.post_id=p.id) AS like_count,(SELECT COUNT(*)::int FROM public.feed_post_comments x WHERE x.post_id=p.id) AS comment_count,(SELECT COUNT(*)::int FROM public.feed_post_saves x WHERE x.post_id=p.id) AS save_count,true AS saved,
+            CASE WHEN EXISTS(SELECT 1 FROM public.feed_post_likes x WHERE x.post_id=p.id AND LOWER(x.user_email)=LOWER($1)) THEN true ELSE false END AS liked
+          FROM public.feed_posts p JOIN public.feed_post_saves fps ON fps.post_id=p.id AND LOWER(fps.user_email)=LOWER($1)
+        ) saved_items ORDER BY created_at DESC,id DESC LIMIT $2 OFFSET $3`, [email, limit + 1, offset]);
+        const hasMore = result.rows.length > limit;
+        const posts = result.rows.slice(0, limit).map(row => ({ ...row, youtube_id: youtubeId(row.youtube_url) }));
+        return json({ posts, hasMore, limit, offset }, 200, headers);
+      } finally { await client.end().catch(() => {}); }
+    }
     const match = url.pathname.match(/^\/api\/feed\/posts\/([^/]+)(?:\/(like|save|comments|report))?$/);
     if (!match) return json({error:'Not found.'},404,headers);
     const feedId = parseFeedId(match[1]); if (!feedId.id) return json({error:'Invalid post.'},400,headers); const action=match[2]||''; const client=await getDb(env); const canonicalId=`${feedId.kind==='post'?'p':'s'}:${feedId.id}`;

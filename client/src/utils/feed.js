@@ -159,6 +159,14 @@ if (typeof window !== 'undefined') {
   if (navigator.onLine) flushWhenAvailable();
 }
 
+export async function fetchSavedFeed({ limit = 30, offset = 0 } = {}) {
+  const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+  const response = await apiFetch(`/api/feed/saved?${params.toString()}`, { method: 'GET' });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body?.error || 'Unable to load your bookmarks.');
+  return { posts: Array.isArray(body?.posts) ? body.posts.map(normalizePost) : [], hasMore: Boolean(body?.hasMore) };
+}
+
 export async function fetchFeed({ limit = 20, offset = 0, followingOnly = false, feedType = '' } = {}) {
   const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
   if (followingOnly) params.set('following', '1');
