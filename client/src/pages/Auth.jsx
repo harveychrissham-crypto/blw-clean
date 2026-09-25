@@ -92,10 +92,10 @@ export default function Auth() {
     <section className="min-h-screen w-full bg-slate-950">
       <div className="mx-auto flex min-h-screen w-full max-w-6xl items-center px-4 py-20 sm:px-6 lg:px-8">
         <Card variant="raised" className="flex w-full flex-col shadow-soft lg:flex-row">
-          <div className="h-72 overflow-hidden bg-slate-950/40 lg:h-auto lg:w-1/2"><img src="/illustration.png" alt="BLW registration illustration" className="h-full w-full object-cover" /></div>
+          <div className="h-72 overflow-hidden bg-slate-950/40 lg:h-auto lg:w-1/2"><img src="/illustration.png" alt="Emet community" className="h-full w-full object-cover" /></div>
           <div className="flex w-full flex-col justify-center bg-slate-950/90 p-8 sm:p-10 lg:w-1/2">
             <div className="max-w-md">
-              {mode === 'login' ? <><p className="text-sm font-semibold uppercase tracking-[0.2em] text-purple-300">Welcome back</p><h2 className="mt-3 text-3xl font-semibold text-white">Sign In</h2><p className="mt-3 text-sm text-slate-400">Continue your journey with BLW.</p></> : <><p className="text-sm font-semibold uppercase tracking-[0.2em] text-purple-300">New here?</p><h2 className="mt-3 text-3xl font-semibold text-white">Create account</h2><p className="mt-3 text-sm text-slate-400">Register and join the family — it's free.</p></>}
+              {mode === 'login' ? <><p className="text-sm font-semibold uppercase tracking-[0.2em] text-purple-300">Welcome back</p><h2 className="mt-3 text-3xl font-semibold text-white">Sign In</h2><p className="mt-3 text-sm text-slate-400">Continue your journey with Emet.</p></> : <><p className="text-sm font-semibold uppercase tracking-[0.2em] text-purple-300">New here?</p><h2 className="mt-3 text-3xl font-semibold text-white">Create account</h2><p className="mt-3 text-sm text-slate-400">Create your Emet account — it's free.</p></>}
 
               <form onSubmit={handleSubmit} className="mt-8 space-y-4">
                 {mode === 'login' && <><input className={inputClass} type="email" placeholder="EMAIL ADDRESS" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required /><input className={inputClass} type="password" placeholder="Password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required /></>}
