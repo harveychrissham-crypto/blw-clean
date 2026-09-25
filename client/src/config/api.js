@@ -76,7 +76,7 @@ export async function apiFetch(path, options = {}) {
       throw timeoutError;
     }
     const offlineError = new Error(
-      'Unable to reach the BLW video service. Check your connection or try again.'
+      'Unable to reach the Emet service. Check your connection or try again.'
     );
     offlineError.isOffline = true;
     offlineError.cause = err;
