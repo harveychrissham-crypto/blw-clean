@@ -14,6 +14,8 @@ let checkInFlight = null;
 let appStateListener = null;
 let pendingUpdate = null;
 let visibilityListenerBound = false;
+let updateCheckTimer = null;
+let networkListenerBound = false;
 
 function compareVersions(a, b) {
   const partsA = String(a).split('.').map((value) => Number.parseInt(value, 10) || 0);
@@ -113,8 +115,8 @@ export async function checkForAppUpdate({ force = false } = {}) {
 export async function initAppUpdateChecker() {
   if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'android') return;
 
-  await checkForAppUpdate({ force: true });
-
+  // Register lifecycle triggers before the first request so a quick startup
+  // check cannot leave the checker without foreground/resume listeners.
   if (!appStateListener) {
     try {
       const { App } = await import('@capacitor/app');
@@ -133,6 +135,25 @@ export async function initAppUpdateChecker() {
       if (document.visibilityState === 'visible') void checkForAppUpdate();
     });
   }
+
+  if (!networkListenerBound) {
+    networkListenerBound = true;
+    window.addEventListener('online', () => {
+      void checkForAppUpdate({ force: true });
+    });
+  }
+
+  // A foreground session can outlast a release. Recheck periodically so a
+  // published version is announced without requiring the member to restart.
+  if (!updateCheckTimer) {
+    updateCheckTimer = window.setInterval(() => {
+      if (document.visibilityState === 'visible' && navigator.onLine !== false) {
+        void checkForAppUpdate();
+      }
+    }, CHECK_INTERVAL_MS);
+  }
+
+  await checkForAppUpdate({ force: true });
 }
 
 export async function installApk(url) {
