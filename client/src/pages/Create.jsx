@@ -163,7 +163,7 @@ export default function Create() {
     if (confirmLeave()) navigate(-1);
   };
 
-  if (!user) return <div className="min-h-[70vh] grid place-items-center px-6 text-center"><div><p className="text-lg font-bold text-white">Sign in to create</p><p className="mt-2 text-sm text-white/50">Create posts and Reels for the community.</p><Link to="/auth" className="mt-5 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-bold text-ink-950">Sign in</Link></div></div>;
+  if (!user) return <div className="min-h-[70vh] grid place-items-center px-6 text-center"><div><p className="text-lg font-bold text-white">Sign in to create</p><p className="mt-2 text-sm text-white/50">Create posts and Reels for the community.</p><Link to="/auth" className="mt-5 inline-flex rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-[#0B0F14] hover:bg-white/90">Sign in</Link></div></div>;
 
   const isVideo = Boolean(file?.type?.startsWith('video/'));
 
@@ -171,9 +171,9 @@ export default function Create() {
     <div className="min-h-screen bg-[#0B0F14] text-white sm:py-8">
       <div className="mx-auto min-h-screen max-w-2xl overflow-hidden border-x border-white/[0.07] bg-[#0B0F14] sm:min-h-0 sm:rounded-[28px] sm:border sm:shadow-2xl">
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-white/[0.07] bg-[#0B0F14]/90 px-3 backdrop-blur-2xl">
-          <button type="button" onClick={back} className="grid h-10 w-10 place-items-center rounded-full text-white/75 transition hover:bg-white/[0.07]" aria-label="Back"><FiArrowLeft className="h-5 w-5" /></button>
+          <button type="button" onClick={back} className="grid h-10 w-10 place-items-center rounded-xl text-white/75 transition hover:bg-white/[0.07]" aria-label="Back"><FiArrowLeft className="h-5 w-5" /></button>
           <div className="text-center"><h1 className="text-[15px] font-bold tracking-tight">Create</h1><p className="text-[9px] uppercase tracking-[0.18em] text-white/30">Share with the community</p></div>
-          {uploading ? <button type="button" onClick={cancelUpload} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-full border border-red-400/20 bg-red-400/10 px-3.5 py-2 text-xs font-bold text-red-200 transition hover:bg-red-400/20"><FiX /> Cancel</button> : <button type="button" onClick={publish} disabled={(type !== 'text' && !file) || (!file && !caption.trim()) || published} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-ink-950 transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35"><FiCheck /> Share</button>}
+          {uploading ? <button type="button" onClick={cancelUpload} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-xl border border-red-400/20 bg-red-400/10 px-3.5 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-400/20"><FiX /> Cancel</button> : <button type="button" onClick={publish} disabled={(type !== 'text' && !file) || (!file && !caption.trim()) || published} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-semibold text-[#0B0F14] transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35"><FiCheck /> Share</button>}
         </header>
 
         <div className="grid grid-cols-3 border-b border-white/[0.07] bg-white/[0.015] p-1.5">
@@ -189,8 +189,8 @@ export default function Create() {
               <div className={`group relative overflow-hidden rounded-[26px] bg-black ring-1 ring-white/10 ${type === 'reel' ? 'aspect-[9/15] max-h-[68vh]' : 'aspect-square'}`}>
                 {isVideo ? <video src={preview} className="h-full w-full object-cover" controls playsInline /> : <img src={preview} alt="Preview" className="h-full w-full object-cover" />}
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/45 to-transparent" />
-                <button type="button" onClick={() => setFile(null)} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-black/60 text-white backdrop-blur-xl transition hover:bg-black/80" aria-label="Remove media"><FiX /></button>
-                <button type="button" onClick={() => choose(type)} className="absolute bottom-3 left-3 rounded-full bg-black/65 px-3.5 py-2 text-xs font-semibold backdrop-blur-xl transition hover:bg-black/80">Change media</button>
+                <button type="button" onClick={() => setFile(null)} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-xl bg-black/60 text-white backdrop-blur-xl transition hover:bg-black/80" aria-label="Remove media"><FiX /></button>
+                <button type="button" onClick={() => choose(type)} className="absolute bottom-3 left-3 rounded-xl bg-black/65 px-3.5 py-2 text-xs font-semibold backdrop-blur-xl transition hover:bg-black/80">Change media</button>
               </div>
             ) : (
               <button type="button" onClick={() => choose(type)} className={`group grid w-full place-items-center rounded-[26px] border border-dashed border-white/15 bg-gradient-to-br from-white/[0.045] to-white/[0.015] text-center transition hover:border-white/25 hover:bg-white/[0.06] ${type === 'reel' ? 'aspect-[9/13]' : 'aspect-square'}`}>
@@ -207,13 +207,13 @@ export default function Create() {
 
           <section className={`border-t border-white/[0.07] p-4 sm:p-6 md:border-t-0 ${type === 'text' ? 'md:col-span-2' : ''}`}>
             <div className="mb-4 flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-full border border-white/10 bg-white/[0.07] text-xs font-bold">{user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" /> : (user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()}</div>
+              <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-xl border border-white/10 bg-white/[0.07] text-xs font-semibold">{user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" /> : (user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()}</div>
               <div className="min-w-0"><p className="truncate text-sm font-bold">{user?.name || 'Your profile'}</p><p className="text-[11px] text-white/35">Public community post</p></div>
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3.5 focus-within:border-white/20">
               <textarea value={caption} onChange={(event) => setCaption(event.target.value)} maxLength={5000} rows={7} placeholder={type === 'reel' ? 'Add a caption to your Reel...' : 'Share something with the community...'} className="w-full resize-none bg-transparent text-sm leading-6 text-white outline-none placeholder:text-white/25" />
-              <div className="flex items-center justify-between border-t border-white/[0.07] pt-2.5"><span className="text-[10px] text-white/25">Mention someone with @name</span><button type="button" className="grid h-8 w-8 place-items-center rounded-full text-white/35 transition hover:bg-white/[0.06] hover:text-white/70" aria-label="Emoji"><FiSmile /></button><span className="text-[10px] text-white/25">{caption.length}/5000</span></div>
+              <div className="flex items-center justify-between border-t border-white/[0.07] pt-2.5"><span className="text-[10px] text-white/25">Mention someone with @name</span><button type="button" className="grid h-8 w-8 place-items-center rounded-xl text-white/35 transition hover:bg-white/[0.06] hover:text-white/70" aria-label="Emoji"><FiSmile /></button><span className="text-[10px] text-white/25">{caption.length}/5000</span></div>
             </div>
 
             <div className="mt-3 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.025] px-3.5 py-2.5"><FiMapPin className="shrink-0 text-white/35" /><input value={location} onChange={(event) => setLocation(event.target.value)} maxLength={100} placeholder="Add location (optional)" className="min-w-0 flex-1 bg-transparent text-xs text-white outline-none placeholder:text-white/25" /></div>
@@ -229,7 +229,7 @@ export default function Create() {
         {published && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[90] grid place-items-center bg-[#0B0F14]/95 backdrop-blur-sm">
             <motion.div initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 340, damping: 18 }} className="flex flex-col items-center gap-3">
-              <div className="grid h-20 w-20 place-items-center rounded-full bg-gradient-to-br from-[#3B82F6] to-[#3B82F6] shadow-2xl shadow-purple-400/30"><FiCheck className="h-10 w-10 text-white" /></div>
+              <div className="grid h-20 w-20 place-items-center rounded-xl bg-[#3B82F6] shadow-sm hover:bg-[#2563EB]"><FiCheck className="h-10 w-10 text-white" /></div>
               <p className="text-sm font-bold text-white">{type === 'reel' ? 'Reel shared!' : 'Posted!'}</p>
             </motion.div>
           </motion.div>
