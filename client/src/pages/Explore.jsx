@@ -149,7 +149,7 @@ export default function Explore() {
       </header>
 
       <div className="mx-auto max-w-3xl px-4 py-4 sm:px-6">
-        <label className="flex h-12 items-center gap-3 rounded-xl border border-white/[.08] bg-white/[.045] px-4 transition focus-within:border-[#3B82F6]/40 focus-within:bg-white/[.06]">
+        <label className="flex h-12 items-center gap-3 rounded-xl border border-white/[.08] bg-white/[.045] px-4 transition focus-within:border-[#1D9BF0]/40 focus-within:bg-white/[.06]">
           <FiSearch className="shrink-0 text-white/45" />
           <input
             value={query}
@@ -254,7 +254,7 @@ export default function Explore() {
           <section className="mt-8">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-bold text-white"><FiHash /> Trending on Emet</div>
-              <Link to="/topics" className="text-xs font-semibold text-[#3B82F6] hover:text-white">See all</Link>
+              <Link to="/topics" className="text-xs font-semibold text-[#1D9BF0] hover:text-white">See all</Link>
             </div>
             {trendingLoading ? (
               <div className="grid gap-2 sm:grid-cols-2">
