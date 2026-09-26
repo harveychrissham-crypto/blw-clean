@@ -138,7 +138,7 @@ export default function Explore() {
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-6xl pb-28 sm:border-x sm:border-white/[.06]">
-      <header className="sticky top-0 z-20 border-b border-white/[.07] bg-[#0b0b0d]/90 px-4 py-3 backdrop-blur-xl sm:px-6">
+      <header className="sticky top-0 z-20 border-b border-white/[.07] bg-[#0B0F14]/90 px-4 py-3 backdrop-blur-xl sm:px-6">
         <div className="flex items-center gap-3">
           <Link to="/" aria-label="Back to Home" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-white/70 transition hover:bg-white/[.08] hover:text-white"><FiArrowLeft /></Link>
           <div>
@@ -254,7 +254,7 @@ export default function Explore() {
           <section className="mt-8">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-bold text-white"><FiHash /> Trending on Emet</div>
-              <Link to="/topics" className="text-xs font-semibold text-[#60A5FA] hover:text-white">See all</Link>
+              <Link to="/topics" className="text-xs font-semibold text-[#3B82F6] hover:text-white">See all</Link>
             </div>
             {trendingLoading ? (
               <div className="grid gap-2 sm:grid-cols-2">
