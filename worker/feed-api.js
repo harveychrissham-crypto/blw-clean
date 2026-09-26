@@ -72,6 +72,20 @@ export async function handleFeed(request, env, url) {
         return json({ posts, hasMore, limit, offset },200,headers);
       } finally { await client.end().catch(()=>{}); }
     }
+    if (url.pathname === '/api/topics/trending' && request.method === 'GET') {
+      const client = await getDb(env);
+      try {
+        const result = await client.query(`SELECT t.slug,t.name,COUNT(pt.post_id)::int AS post_count
+          FROM public.feed_topics t
+          JOIN public.feed_post_topics pt ON pt.topic_id=t.id
+          JOIN public.feed_posts p ON p.id=pt.post_id
+          WHERE p.created_at >= now() - interval '7 days'
+          GROUP BY t.id
+          ORDER BY COUNT(pt.post_id) DESC, MAX(p.created_at) DESC
+          LIMIT 20`);
+        return json({ topics: result.rows }, 200, headers);
+      } finally { await client.end().catch(()=>{}); }
+    }
     if (url.pathname === '/api/topics' && request.method === 'GET') { const client = await getDb(env); try { const result = await client.query('SELECT t.slug,t.name,COUNT(pt.post_id)::int AS post_count FROM public.feed_topics t LEFT JOIN public.feed_post_topics pt ON pt.topic_id=t.id GROUP BY t.id ORDER BY COUNT(pt.post_id) DESC,t.created_at DESC LIMIT 30'); return json({topics:result.rows},200,headers); } finally { await client.end().catch(()=>{}); } }
     if (url.pathname === '/api/feed/posts' && request.method === 'POST') {
       if (!email) return json({ error:'Sign in required to publish to the Feed.' },401,headers);
