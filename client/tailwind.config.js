@@ -8,11 +8,11 @@ export default {
         brand: {
           50: '#F8FAFC',
           100: '#EFF6FF',
-          500: '#3B82F6',
-          600: '#2563EB',
-          700: '#1D4ED8'
+          500: '#1D9BF0',
+          600: '#1A8CD8',
+          700: '#1A8CD8'
         },
-        accent: '#3B82F6',
+        accent: '#1D9BF0',
         ink: {
           900: '#0B0F14',
           950: '#0B0F14'
