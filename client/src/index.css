@@ -72,14 +72,14 @@ button.bg-\[\#E7E9EA\]:hover, a.bg-\[\#E7E9EA\]:hover, [role="button"].bg-\[\#E7
 }
 
 .emet-wordmark-sidebar {
-  width: 140px;
+  width: 130px;
   height: 30px;
 }
 
 @media (min-width: 1280px) {
   .emet-wordmark-sidebar {
-    width: 184px;
-    height: 40px;
+    width: 170px;
+    height: 36px;
   }
 }
 
