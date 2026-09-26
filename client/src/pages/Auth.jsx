@@ -150,9 +150,10 @@ export default function Auth() {
             <img src="/emet-logo.png" alt="" className="h-12 w-12" />
             <span role="img" aria-label="Emet" className="emet-wordmark" />
           </Link>
-          <h1 className="max-w-[600px] text-[52px] font-extrabold leading-[.98] tracking-[-.045em] sm:text-[68px] lg:mt-2 lg:text-[clamp(64px,6.1vw,112px)]">
-            {mode === 'login' ? <>Happening<br />now.</> : mode === 'details' ? <>Join<br />Emet.</> : <>Welcome<br />to Emet.</>}
+          <h1 className="max-w-[600px] text-[46px] font-extrabold leading-[1.02] tracking-[-.045em] sm:text-[56px] lg:mt-2 lg:text-[clamp(56px,5vw,84px)]">
+            {mode === 'login' ? <><span className="block">Real People.</span><span className="block">Meaningful</span><span className="block bg-gradient-to-r from-cyan-400 via-blue-500 to-fuchsia-500 bg-clip-text text-transparent">Connections.</span></> : mode === 'details' ? <>Join<br />Emet.</> : <>Welcome<br />to Emet.</>}
           </h1>
+          {mode === 'login' && <p className="mt-5 text-[17px] text-[#c7d7f4] sm:text-[19px]">Share. Discuss. Build. Together.</p>}
           <div className="mt-9 w-full max-w-[580px] sm:mt-12">
             {mode !== 'details' ? (
               <>
