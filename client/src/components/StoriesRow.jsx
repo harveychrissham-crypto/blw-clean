@@ -165,7 +165,7 @@ export default function StoriesRow() {
           <div className="relative h-12 w-12 shrink-0 sm:h-14 sm:w-14">
             <button type="button" onClick={() => (myGroup ? openGroup(myGroup, 0, 0) : fileInputRef.current?.click())} className="h-full w-full rounded-full transition hover:opacity-80 active:scale-95" aria-label={myGroup ? 'View your story' : 'Add a story'}>
               {myGroup ? (
-                <div className={`h-full w-full rounded-full p-[2px] ${uploading ? 'story-upload-ring' : myGroup.some((story) => !story.viewed) ? 'story-ring-spin' : ''}`} style={!uploading ? { background: myGroup.some((story) => !story.viewed) ? 'linear-gradient(135deg,#EC2FA8,#8A2BE2,#F2A31C)' : 'rgba(255,255,255,0.15)' } : undefined}>
+                <div className={`h-full w-full rounded-full p-[2px] ${uploading ? 'story-upload-ring' : myGroup.some((story) => !story.viewed) ? 'story-ring-spin' : ''}`} style={!uploading ? { background: myGroup.some((story) => !story.viewed) ? 'linear-gradient(135deg,#04caff,#254dff,#bb37ff)' : 'rgba(255,255,255,0.15)' } : undefined}>
                   <div className="story-upload-ring-inner h-full w-full overflow-hidden rounded-full bg-white/5">
                     {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async"/> : <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">{(user.name || '?').charAt(0).toUpperCase()}</div>}
                   </div>
@@ -182,9 +182,9 @@ export default function StoriesRow() {
                 </div>
               )}
             </button>
-            <button type="button" onClick={() => fileInputRef.current?.click()} aria-label="Add a story" className="absolute -bottom-0.5 -right-0.5 grid h-5 w-5 place-items-center rounded-full border-2 border-[#0d0c18] bg-[#EC2FA8] text-white transition hover:bg-[#F04FB8] active:scale-90">{uploading ? <span className="h-2 w-2 animate-pulse rounded-full bg-white" /> : <FiPlus className="h-3 w-3" />}</button>
+            <button type="button" onClick={() => fileInputRef.current?.click()} aria-label="Add a story" className="absolute -bottom-0.5 -right-0.5 grid h-5 w-5 place-items-center rounded-full border-2 border-[#07132d] bg-[#283fd7] text-white transition hover:bg-[#3552f0] active:scale-90">{uploading ? <span className="h-2 w-2 animate-pulse rounded-full bg-white" /> : <FiPlus className="h-3 w-3" />}</button>
           </div>
-          <span className="max-w-[4.5rem] truncate text-[11px] text-white/50">Your Story</span>
+          <span className="max-w-[4.5rem] truncate text-[11px] text-white/50">{myGroup ? "Your Story" : "Add story"}</span>
         </div>
 
         {otherGroups.map((group) => {
@@ -195,13 +195,13 @@ export default function StoriesRow() {
           return (
             <div key={first.authorEmail} className="flex shrink-0 flex-col items-center gap-1.5">
               <button type="button" onClick={() => openGroup(group, firstUnseenIndex === -1 ? 0 : firstUnseenIndex, groupIndex)} className="h-12 w-12 shrink-0 rounded-full transition hover:opacity-80 active:scale-95 sm:h-14 sm:w-14" aria-label={`View ${first.authorName}'s story`}>
-                <div className={`h-full w-full rounded-full p-[2px] ${unseen ? 'story-ring-spin-reverse' : ''}`} style={{ background: unseen ? 'linear-gradient(135deg,#EC2FA8,#8A2BE2,#F2A31C)' : 'rgba(255,255,255,0.15)' }}>
-                  <div className="h-full w-full overflow-hidden rounded-full border-2 border-[#0d0c18] bg-white/5">
+                <div className={`h-full w-full rounded-full p-[2px] ${unseen ? 'story-ring-spin-reverse' : ''}`} style={{ background: unseen ? 'linear-gradient(135deg,#04caff,#254dff,#bb37ff)' : 'rgba(255,255,255,0.15)' }}>
+                  <div className="h-full w-full overflow-hidden rounded-full border-2 border-[#07132d] bg-white/5">
                     {first.authorAvatarUrl ? <img src={first.authorAvatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async"/> : <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">{(first.authorName || '?').charAt(0).toUpperCase()}</div>}
                   </div>
                 </div>
               </button>
-              <span className="max-w-[4.5rem] truncate text-[11px] text-white/50">{first.authorName}</span>
+              <span className="max-w-[4.5rem] truncate text-[11px] text-white/65">{first.authorName.split(" ")[0]}</span>
             </div>
           );
         })}

@@ -84,7 +84,7 @@ function PostCard({ post, user, onUpdate }) {
   });
 
   return (
-    <article className="border-b border-white/[.07] px-4 py-4 transition hover:bg-white/[.018] sm:px-5">
+    <article className="mx-2 my-2 overflow-hidden rounded-xl border border-[#17366f]/60 bg-[#04132b]/70 px-4 py-4 transition hover:border-[#2852a0]/70 hover:bg-[#061a39] sm:px-5">
       <div className="flex gap-3.5">
         <Avatar src={post.avatarUrl} name={author} size="h-11 w-11" />
         <div className="min-w-0 flex-1">
@@ -93,9 +93,8 @@ function PostCard({ post, user, onUpdate }) {
               <div className="flex flex-wrap items-center gap-1.5 text-sm">
                 <span className="truncate font-bold text-white">{author}</span>
                 {post.isOfficial && <span className="grid h-4 w-4 place-items-center rounded-full bg-[#20B7FF] text-[9px] font-black text-white">✓</span>}
-                <span className="truncate text-white/35">@{String(author).toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 18) || 'emet'}</span>
                 <span className="text-white/25">·</span>
-                <span className="text-white/35">{post.time || 'now'}</span>
+                <span className="text-white/45">{post.time || 'now'}</span>
               </div>
               {post.communityName && <p className="mt-0.5 text-[11px] text-white/35">in {post.communityName}</p>}
             </div>
@@ -119,9 +118,9 @@ function PostCard({ post, user, onUpdate }) {
           )}
 
           <div className="mt-2 flex max-w-xl items-center justify-between text-white/40">
+            <button type="button" onClick={() => action('like')} disabled={busy === 'like'} className={`group flex items-center gap-2 rounded-full px-2 py-2 text-xs hover:text-white ${post.liked ? 'text-pink-400' : ''}`}><FiHeart className="h-[18px] w-[18px] group-hover:text-pink-400" fill={post.liked ? 'currentColor' : 'none'} />{post.likeCount || 0}</button>
             <Link to={`/post/${post.id}`} className="group flex items-center gap-2 rounded-full px-2 py-2 text-xs hover:text-white"><FiMessageCircle className="h-[18px] w-[18px] group-hover:text-[#20B7FF]" />{post.commentCount || 0}</Link>
             <button type="button" className="group flex items-center gap-2 rounded-full px-2 py-2 text-xs hover:text-white"><FiRepeat className="h-[18px] w-[18px] group-hover:text-[#20B7FF]" />{post.repostCount || 0}</button>
-            <button type="button" onClick={() => action('like')} disabled={busy === 'like'} className={`group flex items-center gap-2 rounded-full px-2 py-2 text-xs hover:text-white ${post.liked ? 'text-pink-400' : ''}`}><FiHeart className="h-[18px] w-[18px] group-hover:text-pink-400" fill={post.liked ? 'currentColor' : 'none'} />{post.likeCount || 0}</button>
             <button type="button" onClick={() => action('save')} disabled={busy === 'save'} className={`grid h-8 w-8 place-items-center rounded-full hover:bg-white/[.06] hover:text-white ${post.saved ? 'text-white' : ''}`} aria-label="Bookmark"><FiBookmark className="h-[17px] w-[17px]" fill={post.saved ? 'currentColor' : 'none'} /></button>
             <button type="button" onClick={share} className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/[.06] hover:text-white" aria-label="Share"><FiSend className="h-[17px] w-[17px]" /></button>
           </div>
