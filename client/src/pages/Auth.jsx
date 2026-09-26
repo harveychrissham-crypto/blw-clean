@@ -147,7 +147,7 @@ export default function Auth() {
       <div className="relative z-10 mx-auto grid min-h-screen max-w-[1800px] grid-cols-1 lg:grid-cols-[minmax(440px,38%)_1fr]">
         <section className="relative flex min-h-screen flex-col px-6 pb-10 pt-5 sm:px-10 lg:px-11 lg:pt-2">
           <Link to="/" aria-label="Emet home" className="mb-4 flex items-center gap-2 lg:hidden">
-            <img src="/emet-logo.png" alt="" className="h-12 w-12" />
+            <img src="/emet-mark.svg" alt="" className="h-12 w-12" />
             <span role="img" aria-label="Emet" className="emet-wordmark" />
           </Link>
           <h1 className="max-w-[600px] text-[46px] font-extrabold leading-[1.02] tracking-[-.045em] sm:text-[56px] lg:mt-2 lg:text-[clamp(56px,5vw,84px)]">
@@ -222,7 +222,7 @@ export default function Auth() {
           <div className="absolute bottom-7 right-7 w-[190px] rounded-2xl border border-white/15 bg-[#09132a]/90 p-4 text-center shadow-[0_18px_60px_rgba(0,0,0,.32)] backdrop-blur-xl">
             <p className="mb-3 text-sm text-white/65">Scan to get the app</p>
             {appQr && <img src={appQr} alt="QR code to download the Emet app" className="mx-auto h-[150px] w-[150px] rounded-lg" />}
-            <img src="/emet-logo.png" alt="Emet app icon" className="mx-auto mt-3 h-8 w-8 rounded-md" />
+            <img src="/emet-mark.svg" alt="Emet app icon" className="mx-auto mt-3 h-8 w-8" />
           </div>
         </aside>
       </div>
