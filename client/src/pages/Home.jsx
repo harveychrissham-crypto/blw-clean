@@ -31,7 +31,7 @@ const PAGE_SIZE = 20;
 function Avatar({ src, size = 'h-10 w-10' }) {
   return (
     <div className={`shrink-0 overflow-hidden ${src ? 'rounded-full bg-white/[.08]' : ''} ${size}`}>
-      {src ? <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" /> : <img src="/emet-logo.png" alt="" className="h-full w-full object-cover" />}
+      {src ? <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" /> : <img src="/emet-mark.svg" alt="" className="h-full w-full object-cover" />}
     </div>
   );
 }
@@ -211,7 +211,7 @@ function PromoCard() {
     <Link to="/communities" className="relative block min-h-[150px] overflow-hidden rounded-2xl border border-[#2557D9]/50 bg-gradient-to-br from-[#071D47] via-[#152F83] to-[#4D0C8A] p-5">
       <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-fuchsia-500/20 blur-3xl" />
       <div className="relative">
-        <img src="/emet-logo.png" alt="" className="h-11 w-11" />
+        <img src="/emet-mark.svg" alt="" className="h-11 w-11" />
         <p className="mt-4 max-w-[190px] text-lg font-extrabold leading-tight">More than a platform.<br /><span className="text-[#A989FF]">A movement.</span></p>
         <span className="absolute bottom-0 right-0 grid h-9 w-9 place-items-center rounded-full bg-white/15 text-white"><FiArrowRight /></span>
       </div>
@@ -329,7 +329,7 @@ export default function Home() {
           <section className="min-w-0 space-y-2.5">
             <div className="flex items-center justify-between gap-3 px-1 pb-1 sm:px-2 lg:hidden">
               <Link to="/" aria-label="Emet home" className="flex items-center gap-2.5">
-                <img src="/emet-logo.png" alt="" className="h-8 w-8" />
+                <img src="/emet-mark.svg" alt="" className="h-8 w-8" />
               </Link>
               <div className="flex items-center gap-1">
                 <Link to="/explore" aria-label="Search Emet" className="grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiSearch className="h-[19px] w-[19px]" /></Link>
