@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FiArrowRight, FiPhone, FiX } from 'react-icons/fi';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FiArrowRight, FiEye, FiEyeOff, FiLock, FiMail, FiX } from 'react-icons/fi';
 import { FaApple, FaGoogle } from 'react-icons/fa';
-import QRCode from 'qrcode';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
 import { Toast } from '../components/ui/Toast';
@@ -25,17 +24,10 @@ const isValidBirthday = (value) => {
 
 function AuthBackdrop() {
   return (
-    <div className="absolute inset-0 overflow-hidden bg-[#020508]" aria-hidden="true">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_64%_48%,rgba(29,155,240,.09),transparent_34%),radial-gradient(circle_at_85%_15%,rgba(29,155,240,.06),transparent_28%)]" />
-      <div className="absolute -right-[12%] top-[8%] h-[65vw] w-[65vw] rounded-full border border-[#1D9BF0]/10 [transform:rotate(-22deg)]" />
-      <div className="absolute -right-[4%] top-[18%] h-[46vw] w-[72vw] rounded-[50%] border border-[#60A5FA]/20 [transform:rotate(-23deg)] shadow-[0_0_35px_rgba(29,155,240,.08)]" />
-      <div className="absolute -right-[10%] bottom-[8%] h-[32vw] w-[78vw] rounded-[50%] border border-[#60A5FA]/25 [transform:rotate(24deg)] shadow-[0_0_45px_rgba(29,155,240,.12)]" />
-      <div className="absolute left-[48%] top-[22%] h-2 w-2 rounded-full bg-white shadow-[0_0_18px_5px_rgba(147,197,253,.8)]" />
-      <div className="absolute right-[17%] top-[29%] h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_15px_4px_rgba(147,197,253,.7)]" />
-      <div className="absolute right-[24%] bottom-[31%] h-2 w-2 rounded-full bg-[#60A5FA] shadow-[0_0_18px_5px_rgba(96,165,250,.8)]" />
-      <div className="absolute left-[43%] bottom-[37%] h-1.5 w-1.5 rounded-full bg-[#60A5FA] shadow-[0_0_14px_4px_rgba(96,165,250,.75)]" />
-      <div className="absolute right-[5%] top-[8%] h-px w-[35%] rotate-[-28deg] bg-gradient-to-r from-transparent via-[#60A5FA]/50 to-transparent" />
-      <div className="absolute right-[10%] bottom-[16%] h-px w-[46%] rotate-[17deg] bg-gradient-to-r from-transparent via-[#60A5FA]/60 to-transparent" />
+    <div className="absolute inset-0 overflow-hidden bg-[#02091d]" aria-hidden="true">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_16%_4%,rgba(0,59,214,.34),transparent_42%),radial-gradient(ellipse_at_93%_3%,rgba(88,29,218,.32),transparent_38%)]" />
+      <img src="/auth-scenic-background.webp" alt="" className="absolute bottom-0 left-0 hidden h-[31vh] w-[54%] object-cover object-center opacity-90 lg:block" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,9,29,.05)_0%,rgba(2,9,29,.08)_42%,#02091d_100%)] lg:bg-[linear-gradient(90deg,transparent_0%,rgba(2,9,29,.06)_47%,#02091d_58%,#02091d_100%)]" />
     </div>
   );
 }
@@ -45,33 +37,11 @@ function ProviderButton({ icon, children, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex h-[58px] w-full items-center justify-center gap-4 rounded-full bg-[#f4f6f8] px-5 text-[16px] font-semibold text-[#0a0d11] shadow-[0_8px_30px_rgba(0,0,0,.14)] transition hover:bg-white hover:shadow-[0_10px_35px_rgba(255,255,255,.1)] active:scale-[.99]"
+      className="flex h-[58px] w-full items-center justify-center gap-4 rounded-full border border-[#2854a0] bg-[#020b20]/55 px-5 text-[16px] font-semibold text-white shadow-[0_8px_30px_rgba(0,0,0,.14)] transition hover:border-[#3984ed] hover:bg-[#071733] active:scale-[.99]"
     >
       <span className="grid w-6 place-items-center text-[21px]">{icon}</span>
       <span>{children}</span>
     </button>
-  );
-}
-
-function QRCard() {
-  const canvasRef = useRef(null);
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    QRCode.toCanvas(canvasRef.current, window.location.origin, {
-      width: 132,
-      margin: 1,
-      color: { dark: '#ffffff', light: '#00000000' },
-      errorCorrectionLevel: 'M',
-    }).catch(() => {});
-  }, []);
-  return (
-    <div className="absolute bottom-8 right-8 z-20 hidden w-[208px] rounded-2xl border border-white/20 bg-[#080c12]/80 p-4 shadow-2xl backdrop-blur-xl lg:block">
-      <p className="mb-3 text-center text-[15px] font-medium text-white/55">Scan to get the app</p>
-      <div className="mx-auto grid w-[140px] place-items-center rounded-lg bg-black p-1">
-        <canvas ref={canvasRef} className="h-[132px] w-[132px]" aria-label="Emet app QR code" />
-      </div>
-      <div className="pointer-events-none absolute left-1/2 top-[74%] grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-md bg-black text-[15px] font-black text-white">=</div>
-    </div>
   );
 }
 
@@ -83,6 +53,8 @@ export default function Auth() {
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
   const [toast, setToast] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const setModeAndReset = (next) => {
     setMode(next);
@@ -159,86 +131,93 @@ export default function Auth() {
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#020508] text-white">
+    <main className="relative min-h-screen overflow-x-hidden bg-[#02091d] text-white">
       <AuthBackdrop />
 
-      <div className="relative z-10 min-h-screen lg:grid lg:grid-cols-[34%_66%]">
-        <section className="flex min-h-screen flex-col px-7 py-8 sm:px-12 lg:min-h-screen lg:max-w-[610px] lg:px-[54px] lg:py-10">
-          <img src="/emet-wordmark-geometric-white.svg" alt="EMET" className="h-auto w-[138px] opacity-95" />
+      <div className="relative z-10 mx-auto min-h-screen max-w-[1500px] lg:grid lg:grid-cols-[1.05fr_.95fr]">
+        <section className="relative hidden min-h-screen flex-col px-12 pb-12 pt-14 lg:flex xl:px-[7vw]">
+          <div className="flex items-center gap-3">
+            <img src="/emet-logo.png" alt="" className="h-[88px] w-[88px]" />
+            <img src="/emet-wordmark-geometric-white.svg" alt="EMET" className="h-auto w-[190px] opacity-95" />
+          </div>
+          <div className="relative z-10 mt-10 max-w-[540px]">
+            <h1 className="text-[48px] font-extrabold leading-[1.02] tracking-[-.04em] xl:text-[58px]">Real People.<br />Meaningful<br /><span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-fuchsia-500 bg-clip-text text-transparent">Connections.</span></h1>
+            <p className="mt-5 text-[18px] text-[#d5e4ff]">Share. Discuss. Build. Together.</p>
+          </div>
+          <div className="flex-1" />
+        </section>
 
-          <div className="flex flex-1 flex-col justify-center pb-8 pt-16 lg:pb-14 lg:pt-20">
+        <section className="flex min-h-screen flex-col items-center justify-center px-4 py-6 sm:px-8 lg:px-8 lg:py-10">
+          <div className="mb-5 flex items-center gap-2 lg:hidden">
+            <img src="/emet-logo.png" alt="" className="h-[58px] w-[58px]" />
+            <img src="/emet-wordmark-geometric-white.svg" alt="EMET" className="h-auto w-[132px]" />
+          </div>
+          <div className="my-auto max-h-[calc(100vh-2rem)] w-full max-w-[524px] overflow-y-auto rounded-2xl border border-[#2456a8]/80 bg-[#020b20]/80 px-6 py-7 shadow-[0_20px_90px_rgba(0,0,0,.42)] backdrop-blur-xl sm:px-10 sm:py-9 lg:px-12 lg:py-10">
+            <div className="text-center">
+              <img src="/emet-logo.png" alt="" className="mx-auto h-[112px] w-[112px]" />
+              <h2 className="mt-2 text-[30px] font-bold tracking-tight sm:text-[34px]">{mode === 'login' ? 'Welcome back' : mode === 'details' ? 'Create your account' : 'Join Emet'}</h2>
+              <p className="mt-2 text-[15px] text-[#adc8f3]">{mode === 'login' ? 'Sign in to continue to Emet' : mode === 'details' ? 'Add a few details to finish signing up' : 'Create an account to continue to Emet'}</p>
+            </div>
+
             {mode !== 'details' ? (
               <>
-                <h1 className="max-w-[420px] text-[56px] font-bold leading-[.98] tracking-[-.045em] sm:text-[64px] lg:text-[70px]">Happening<br />now.</h1>
-
                 <div className="mt-8 space-y-3">
-                  <ProviderButton icon={<FiPhone className="h-5 w-5" />} onClick={() => providerUnavailable('Phone')}>Continue with phone</ProviderButton>
-                  <ProviderButton icon={<FaGoogle className="text-[#4285F4]" />} onClick={() => providerUnavailable('Google')}>Continue with Google</ProviderButton>
-                  <ProviderButton icon={<FaApple className="text-black" />} onClick={() => providerUnavailable('Apple')}>Continue with Apple</ProviderButton>
+                  <ProviderButton icon={<FaGoogle className="text-[22px] text-[#4285F4]" />} onClick={() => providerUnavailable('Google')}>Continue with Google</ProviderButton>
+                  <ProviderButton icon={<FaApple className="text-[23px] text-white" />} onClick={() => providerUnavailable('Apple')}>Continue with Apple</ProviderButton>
                 </div>
 
-                <div className="my-7 flex items-center gap-3 text-[16px] text-white/75">
-                  <span className="h-px flex-1 bg-white/70" /><span>or</span><span className="h-px flex-1 bg-white/70" />
+                <div className="my-6 flex items-center gap-3 text-sm text-[#adc8f3]">
+                  <span className="h-px flex-1 bg-[#28518c]/70" /><span>Or continue with</span><span className="h-px flex-1 bg-[#28518c]/70" />
                 </div>
 
                 <form onSubmit={handleSubmit}>
-                  <input
-                    autoFocus
-                    type={mode === 'login' ? 'email' : 'text'}
-                    value={form.email}
-                    onChange={(event) => update('email', event.target.value)}
-                    placeholder="Email or username"
-                    className="h-[70px] w-full rounded-xl border border-[#00C7FF] bg-black/35 px-4 text-[16px] text-white outline-none shadow-[0_0_0_1px_rgba(0,199,255,.1),0_0_30px_rgba(0,199,255,.04)] placeholder:text-[#20b8ed]"
-                  />
-                  {mode === 'login' && (
-                    <input type="password" value={form.password} onChange={(event) => update('password', event.target.value)} placeholder="Password" className="mt-3 h-[58px] w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-[#00C7FF]" />
-                  )}
+                  <label className="flex h-[60px] items-center gap-3 rounded-xl border border-[#2456a8] bg-[#06152d]/65 px-4 focus-within:border-[#27baff]">
+                    <FiMail className="h-5 w-5 shrink-0 text-[#a9c7f5]" />
+                    <input autoFocus type={mode === 'login' ? 'text' : 'email'} value={form.email} onChange={(event) => update('email', event.target.value)} placeholder={mode === 'login' ? 'Email or username' : 'Email address'} className="h-full min-w-0 flex-1 bg-transparent text-[15px] text-white outline-none placeholder:text-[#a9c7f5]/70" />
+                  </label>
+                  {mode === 'login' && <>
+                    <label className="mt-3 flex h-[60px] items-center gap-3 rounded-xl border border-[#2456a8] bg-[#06152d]/65 px-4 focus-within:border-[#27baff]">
+                      <FiLock className="h-5 w-5 shrink-0 text-[#a9c7f5]" />
+                      <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={(event) => update('password', event.target.value)} placeholder="Password" className="h-full min-w-0 flex-1 bg-transparent text-[15px] text-white outline-none placeholder:text-[#a9c7f5]/70" />
+                      <button type="button" onClick={() => setShowPassword((current) => !current)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="text-[#a9c7f5]">{showPassword ? <FiEyeOff /> : <FiEye />}</button>
+                    </label>
+                    <div className="mt-4 flex items-center justify-between gap-3 text-sm">
+                      <label className="flex cursor-pointer items-center gap-2 text-[#c3d5f2]"><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} className="h-4 w-4 accent-[#148dfb]" />Remember me</label>
+                      <Link to="/forgot-password" className="font-semibold text-[#159eff] hover:text-cyan-300">Forgot password?</Link>
+                    </div>
+                  </>}
                   {error && <p className="mt-3 text-sm text-red-300">{error}</p>}
-                  <button type="submit" disabled={status === 'submitting'} className="mt-7 flex h-[64px] w-full items-center justify-center gap-2 rounded-full bg-[#1c232e] text-[16px] font-semibold text-white/55 transition hover:bg-[#242d39] disabled:opacity-50">
-                    {status === 'submitting' ? 'Please wait…' : mode === 'login' ? 'Continue' : 'Create account'}
+                  <button type="submit" disabled={status === 'submitting'} className="mt-7 flex h-[60px] w-full items-center justify-center gap-3 rounded-full bg-gradient-to-r from-cyan-500 via-blue-600 to-fuchsia-500 text-[16px] font-bold text-white shadow-[0_8px_28px_rgba(38,93,239,.18)] transition hover:brightness-110 disabled:opacity-50">
+                    {status === 'submitting' ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Continue'} <FiArrowRight className="h-5 w-5" />
                   </button>
                 </form>
-
-                <p className="mt-5 text-center text-sm text-white/40 lg:hidden">
-                  {mode === 'login' ? 'New to Emet? ' : 'Already on Emet? '}
-                  <button type="button" className="font-semibold text-white" onClick={() => setModeAndReset(mode === 'login' ? 'register' : 'login')}>{mode === 'login' ? 'Create an account' : 'Sign in'}</button>
-                </p>
               </>
             ) : (
               <>
-                <button type="button" onClick={() => setModeAndReset('register')} className="mb-7 inline-flex w-fit items-center gap-2 text-sm text-white/55 hover:text-white"><FiX /> Back</button>
-                <h1 className="text-4xl font-bold tracking-tight">Create your Emet account.</h1>
-                <p className="mt-3 text-sm leading-6 text-white/45">A few details and you're in.</p>
-                <form onSubmit={handleSubmit} className="mt-7 space-y-3">
-                  <input required value={form.fullName} onChange={(e) => update('fullName', e.target.value)} placeholder="Full name" className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]" />
-                  <input required type="email" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="Email address" className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]" />
-                  <input required type="password" value={form.password} onChange={(e) => update('password', e.target.value)} placeholder="Password" className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]" />
-                  <input required type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="Phone number" className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]" />
-                  <input required type="date" min={earliestBirthday} max={today} value={form.birthday} onChange={(e) => update('birthday', e.target.value)} className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]" />
-                  <select required value={form.gender} onChange={(e) => update('gender', e.target.value)} className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]"><option value="">Gender</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select>
-                  <select required value={form.country} onChange={(e) => update('country', e.target.value)} className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]"><option value="">Country</option><option value="KENYA">Kenya</option><option value="UGANDA">Uganda</option><option value="TANZANIA">Tanzania</option><option value="RWANDA">Rwanda</option><option value="BURUNDI">Burundi</option><option value="SOMALIA">Somalia</option></select>
-                  <input required value={form.residence} onChange={(e) => update('residence', e.target.value)} placeholder="Residence" className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]" />
-                  <input required value={form.campusZone} onChange={(e) => update('campusZone', e.target.value)} placeholder="Campus zone" className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]" />
-                  <input required value={form.chapter} onChange={(e) => update('chapter', e.target.value)} placeholder="Chapter" className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]" />
-                  <input required value={form.invitedBy} onChange={(e) => update('invitedBy', e.target.value)} placeholder="Invited by" className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]" />
-                  {error && <p className="text-sm text-red-300">{error}</p>}
-                  <button disabled={status === 'submitting'} className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white text-sm font-bold text-black disabled:opacity-50">{status === 'submitting' ? 'Creating…' : 'Create account'} <FiArrowRight /></button>
+                <button type="button" onClick={() => setModeAndReset('register')} className="mt-5 inline-flex items-center gap-2 text-sm text-white/65 hover:text-white"><FiX /> Back</button>
+                <form onSubmit={handleSubmit} className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <input required value={form.fullName} onChange={(e) => update('fullName', e.target.value)} placeholder="Full name" className="h-12 w-full rounded-xl border border-[#2456a8] bg-[#06152d]/65 px-4 text-sm outline-none focus:border-[#27baff]" />
+                  <input required type="email" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="Email address" className="h-12 w-full rounded-xl border border-[#2456a8] bg-[#06152d]/65 px-4 text-sm outline-none focus:border-[#27baff]" />
+                  <input required type="password" value={form.password} onChange={(e) => update('password', e.target.value)} placeholder="Password" className="h-12 w-full rounded-xl border border-[#2456a8] bg-[#06152d]/65 px-4 text-sm outline-none focus:border-[#27baff]" />
+                  <input required type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="Phone number" className="h-12 w-full rounded-xl border border-[#2456a8] bg-[#06152d]/65 px-4 text-sm outline-none focus:border-[#27baff]" />
+                  <input required type="date" min={earliestBirthday} max={today} value={form.birthday} onChange={(e) => update('birthday', e.target.value)} className="h-12 w-full rounded-xl border border-[#2456a8] bg-[#06152d]/65 px-4 text-sm outline-none focus:border-[#27baff]" />
+                  <select required value={form.gender} onChange={(e) => update('gender', e.target.value)} className="h-12 w-full rounded-xl border border-[#2456a8] bg-[#06152d] px-4 text-sm outline-none focus:border-[#27baff]"><option value="">Gender</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select>
+                  <select required value={form.country} onChange={(e) => update('country', e.target.value)} className="h-12 w-full rounded-xl border border-[#2456a8] bg-[#06152d] px-4 text-sm outline-none focus:border-[#27baff]"><option value="">Country</option><option value="KENYA">Kenya</option><option value="UGANDA">Uganda</option><option value="TANZANIA">Tanzania</option><option value="RWANDA">Rwanda</option><option value="BURUNDI">Burundi</option><option value="SOMALIA">Somalia</option></select>
+                  <input required value={form.residence} onChange={(e) => update('residence', e.target.value)} placeholder="Residence" className="h-12 w-full rounded-xl border border-[#2456a8] bg-[#06152d]/65 px-4 text-sm outline-none focus:border-[#27baff]" />
+                  <input required value={form.campusZone} onChange={(e) => update('campusZone', e.target.value)} placeholder="Campus zone" className="h-12 w-full rounded-xl border border-[#2456a8] bg-[#06152d]/65 px-4 text-sm outline-none focus:border-[#27baff]" />
+                  <input required value={form.chapter} onChange={(e) => update('chapter', e.target.value)} placeholder="Chapter" className="h-12 w-full rounded-xl border border-[#2456a8] bg-[#06152d]/65 px-4 text-sm outline-none focus:border-[#27baff]" />
+                  <input required value={form.invitedBy} onChange={(e) => update('invitedBy', e.target.value)} placeholder="Invited by" className="h-12 w-full rounded-xl border border-[#2456a8] bg-[#06152d]/65 px-4 text-sm outline-none focus:border-[#27baff] sm:col-span-2" />
+                  {error && <p className="text-sm text-red-300 sm:col-span-2">{error}</p>}
+                  <button disabled={status === 'submitting'} className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 via-blue-600 to-fuchsia-500 text-sm font-bold text-white disabled:opacity-50 sm:col-span-2">{status === 'submitting' ? 'Creating…' : 'Create account'} <FiArrowRight /></button>
                 </form>
               </>
             )}
-          </div>
 
-          {mode !== 'details' && (
-            <p className="max-w-[500px] text-[13px] leading-6 text-white/50">
-              By continuing, you agree to our <a href="#terms" className="font-bold text-white/90 hover:underline">Terms of Service</a>, <a href="#privacy" className="font-bold text-white/90 hover:underline">Privacy Policy</a> and <a href="#guidelines" className="font-bold text-white/90 hover:underline">Community Guidelines</a>.
+            <p className="mt-6 text-center text-sm text-[#adc8f3]">
+              {mode === 'login' ? "Don’t have an account? " : 'Already have an account? '}
+              <button type="button" className="font-semibold text-[#159eff] hover:text-cyan-300" onClick={() => setModeAndReset(mode === 'login' ? 'register' : 'login')}>{mode === 'login' ? 'Create one' : 'Sign in'}</button>
             </p>
-          )}
-        </section>
-
-        <section className="relative hidden min-h-screen lg:block">
-          <img src="/emet-wordmark-geometric-hero.svg" alt="" className="absolute left-[44%] top-[35%] z-10 w-[62%] max-w-[760px] -translate-x-1/2 -translate-y-1/2 opacity-90" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_48%_50%,rgba(29,155,240,.08),transparent_35%)]" />
-          <QRCard />
+          </div>
         </section>
       </div>
 
