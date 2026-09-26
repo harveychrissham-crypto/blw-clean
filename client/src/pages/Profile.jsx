@@ -51,7 +51,7 @@ export default function Profile() {
   useEffect(() => { let alive = true; load().catch(() => {}); return () => { alive = false; }; }, [targetEmail]);
 
   if (!user && !isPublic) {
-    return <main className="grid min-h-[70vh] place-items-center bg-[#0B0F14] px-6 text-center text-white"><div><h1 className="text-xl font-bold">Sign in to view your profile</h1><p className="mt-2 text-sm text-white/45">Your profile, posts and connections live here.</p><button onClick={() => navigate('/auth')} className="mt-5 rounded-full bg-[#3B82F6] px-5 py-2.5 text-sm font-bold text-white">Sign in</button></div></main>;
+    return <main className="grid min-h-[70vh] place-items-center bg-[#0B0F14] px-6 text-center text-white"><div><h1 className="text-xl font-bold">Sign in to view your profile</h1><p className="mt-2 text-sm text-white/45">Your profile, posts and connections live here.</p><button onClick={() => navigate('/auth')} className="mt-5 rounded-xl bg-[#3B82F6] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#2563EB]">Sign in</button></div></main>;
   }
 
   const name = profile?.name || user?.name || targetEmail.split('@')[0] || 'Emet member';
@@ -85,15 +85,15 @@ export default function Profile() {
   return <main className="min-h-screen bg-[#0B0F14] pb-28 text-white">
     <div className="mx-auto max-w-4xl">
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/10 bg-[#0B0F14]/90 px-4 py-3 backdrop-blur-xl">
-        <button onClick={() => navigate(-1)} className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/[.06]" aria-label="Back"><FiArrowLeft /></button>
+        <button onClick={() => navigate(-1)} className="grid h-9 w-9 place-items-center rounded-xl hover:bg-white/[.06]" aria-label="Back"><FiArrowLeft /></button>
         <div className="text-center"><p className="text-sm font-bold">{name}</p><p className="text-[10px] text-white/40">{posts.length} posts</p></div>
-        <button className="grid h-9 w-9 place-items-center rounded-full text-white/60 hover:bg-white/[.06]" aria-label="More"><FiMoreHorizontal /></button>
+        <button className="grid h-9 w-9 place-items-center rounded-xl text-white/60 hover:bg-white/[.06]" aria-label="More"><FiMoreHorizontal /></button>
       </header>
 
       <section className="border-b border-white/10">
         <div className="relative h-36 bg-[#11161D] sm:h-48">
           {profile?.coverUrl ? <img src={profile.coverUrl} alt="" className="h-full w-full object-cover" /> : <div className="h-full w-full bg-gradient-to-r from-[#0B0F14] via-[#17243A] to-[#0B0F14]" />}
-          {!isPublic && <button onClick={() => setEditing(true)} className="absolute right-4 top-4 rounded-full bg-black/50 p-2.5 backdrop-blur" aria-label="Edit cover"><FiCamera /></button>}
+          {!isPublic && <button onClick={() => setEditing(true)} className="absolute right-4 top-4 rounded-xl bg-black/50 p-2.5 backdrop-blur" aria-label="Edit cover"><FiCamera /></button>}
           <div className="absolute -bottom-12 left-5 h-24 w-24 overflow-hidden rounded-full border-4 border-[#0B0F14] bg-[#11161D] sm:left-8 sm:h-28 sm:w-28">
             {profile?.avatarUrl ? <img src={profile.avatarUrl} alt="" className="h-full w-full object-cover" /> : <div className="grid h-full w-full place-items-center text-3xl font-black text-white/70">{initials}</div>}
           </div>
@@ -112,7 +112,7 @@ export default function Profile() {
               </div>
             </div>
             <div className="shrink-0">
-              {isPublic ? <button onClick={doFollow} disabled={followBusy} className={following ? 'rounded-full border border-white/15 bg-white/[.05] px-5 py-2.5 text-sm font-bold' : 'rounded-full bg-[#3B82F6] px-5 py-2.5 text-sm font-bold text-white'}>{followBusy ? '…' : following ? 'Following' : 'Follow'}</button> : <button onClick={() => setEditing(true)} className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-bold hover:bg-white/[.05]"><FiEdit3 className="mr-2 inline" />Edit profile</button>}
+              {isPublic ? <button onClick={doFollow} disabled={followBusy} className={following ? 'rounded-xl border border-white/15 bg-white/[.05] px-5 py-2.5 text-sm font-semibold hover:border-[#3B82F6]/40 hover:bg-white/[.08]' : 'rounded-xl bg-[#3B82F6] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#2563EB]'}>{followBusy ? '…' : following ? 'Following' : 'Follow'}</button> : <button onClick={() => setEditing(true)} className="rounded-xl border border-white/15 px-5 py-2.5 text-sm font-semibold hover:border-[#3B82F6]/40 hover:bg-white/[.05]"><FiEdit3 className="mr-2 inline" />Edit profile</button>}
             </div>
           </div>
           <div className="mt-5 flex flex-wrap gap-5 text-sm"><span><b>{profile?.followingCount || 0}</b> <span className="text-white/45">Following</span></span><span><b>{profile?.followerCount || 0}</b> <span className="text-white/45">Followers</span></span><span><b>{profile?.postCount || posts.length}</b> <span className="text-white/45">Posts</span></span></div>
@@ -128,7 +128,7 @@ export default function Profile() {
         {tab === 'Replies' ? <div className="rounded-2xl border border-white/10 bg-white/[.02] p-8 text-center text-sm text-white/45"><FiMessageCircle className="mx-auto mb-3 h-7 w-7" />Replies are coming from your conversations.</div> : visiblePosts.length ? <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{visiblePosts.map(post => <button key={post.id} onClick={() => navigate('/post/' + encodeURIComponent(post.id))} className="group relative aspect-square overflow-hidden rounded-xl border border-white/10 bg-white/[.03] text-left">{post.mediaUrl ? <img src={post.mediaUrl} alt="" className="h-full w-full object-cover transition group-hover:scale-105" /> : <div className="flex h-full flex-col justify-end p-4"><p className="line-clamp-6 text-sm font-semibold text-white/80">{post.body || post.title || 'Post'}</p></div>}{post.videoId && <span className="absolute right-2 top-2 rounded-full bg-black/60 p-2"><FiVideo /></span>}</button>)}</div> : <div className="py-20 text-center text-sm text-white/40"><FiGrid className="mx-auto mb-3 h-8 w-8" />Nothing here yet.</div>}
       </section>
 
-      {!isPublic && <button onClick={async () => { await logout(); navigate('/'); }} className="mx-5 mb-8 rounded-full border border-white/10 px-5 py-2.5 text-sm font-bold text-white/60 hover:bg-white/[.05]">Sign out</button>}
+      {!isPublic && <button onClick={async () => { await logout(); navigate('/'); }} className="mx-5 mb-8 rounded-xl border border-white/10 px-5 py-2.5 text-sm font-semibold text-white/60 hover:bg-white/[.05]">Sign out</button>}
       <EditProfileModal open={editing} draft={draft} setDraft={setDraft} saving={saving} onClose={() => setEditing(false)} onSave={saveProfile} />
     </div>
   </main>;
@@ -139,9 +139,9 @@ function EditProfileModal({ open, draft, setDraft, saving, onClose, onSave }) {
   const field = (key, label, placeholder) => <label className="block"><span className="mb-1.5 block text-xs font-bold text-white/60">{label}</span><input value={draft[key] || ''} onChange={e => setDraft(v => ({ ...v, [key]: e.target.value }))} placeholder={placeholder} className="w-full rounded-xl border border-white/10 bg-[#11161D] px-3 py-3 text-sm outline-none focus:border-[#3B82F6]" /></label>;
   return <div className="fixed inset-0 z-[100] grid place-items-center bg-black/70 p-4" onClick={onClose}>
     <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/10 bg-[#0B0F14] p-5 shadow-2xl" onClick={e => e.stopPropagation()}>
-      <div className="flex items-center justify-between"><h2 className="text-lg font-black">Edit profile</h2><button onClick={onClose} className="rounded-full px-3 py-1 text-white/50">✕</button></div>
+      <div className="flex items-center justify-between"><h2 className="text-lg font-black">Edit profile</h2><button onClick={onClose} className="rounded-xl px-3 py-1 text-white/50 hover:bg-white/[.06]">✕</button></div>
       <div className="mt-5 space-y-4">{field('name','Name','Your name')}{field('username','Username','your_username')}{field('bio','Bio','Tell people about yourself')}{field('location','Location','City or region')}{field('website','Website','https://example.com')}{field('pronouns','Pronouns','Optional')}{field('avatarUrl','Profile photo URL','https://…')}{field('coverUrl','Cover photo URL','https://…')}</div>
-      <div className="mt-6 flex justify-end gap-2"><button onClick={onClose} disabled={saving} className="rounded-full px-4 py-2.5 text-sm font-bold text-white/60">Cancel</button><button onClick={onSave} disabled={saving} className="rounded-full bg-[#3B82F6] px-5 py-2.5 text-sm font-bold">{saving ? 'Saving…' : 'Save'}</button></div>
+      <div className="mt-6 flex justify-end gap-2"><button onClick={onClose} disabled={saving} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white/60 hover:bg-white/[.05]">Cancel</button><button onClick={onSave} disabled={saving} className="rounded-xl bg-[#3B82F6] px-5 py-2.5 text-sm font-semibold shadow-sm hover:bg-[#2563EB]">{saving ? 'Saving…' : 'Save'}</button></div>
     </div>
   </div>;
 }
