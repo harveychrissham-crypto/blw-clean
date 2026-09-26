@@ -62,26 +62,41 @@ button.bg-\[\#E7E9EA\]:hover, a.bg-\[\#E7E9EA\]:hover, [role="button"].bg-\[\#E7
   background-color: #D9DCDF !important;
 }
 
-/* Emet wordmark fills from left to right, then keeps a quiet breathing glow. */
+/* The outlined wordmark shell remains visible while a gradient fills it left to right. */
 .emet-wordmark {
+  position: relative;
   display: inline-block;
   width: 140px;
   height: 30px;
   flex: 0 0 auto;
+}
+
+.emet-wordmark-sidebar {
+  width: 184px;
+  height: 40px;
+}
+
+.emet-wordmark::before,
+.emet-wordmark::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+}
+
+.emet-wordmark::before {
+  background: linear-gradient(105deg, rgba(34,211,229,.66), rgba(116,92,223,.68), rgba(211,76,222,.66));
+  -webkit-mask: url('/emet-wordmark-outline.svg') center / 100% 100% no-repeat;
+  mask: url('/emet-wordmark-outline.svg') center / 100% 100% no-repeat;
+}
+
+.emet-wordmark::after {
   background: linear-gradient(105deg, #28c7d8 0%, #4b8fe9 36%, #7769e8 68%, #b354d5 100%);
-  background-size: 100% 100%;
-  background-position: 0 50%;
   -webkit-mask: url('/emet-wordmark-geometric-white.svg') center / 100% 100% no-repeat;
   mask: url('/emet-wordmark-geometric-white.svg') center / 100% 100% no-repeat;
   clip-path: inset(0 100% 0 0);
   animation:
     emet-wordmark-fill 5.5s cubic-bezier(.22,.68,.26,1) forwards,
     emet-wordmark-glow 7s ease-in-out 5.5s infinite;
-}
-
-.emet-wordmark-sidebar {
-  width: 184px;
-  height: 40px;
 }
 
 @keyframes emet-wordmark-fill {
@@ -99,13 +114,10 @@ button.bg-\[\#E7E9EA\]:hover, a.bg-\[\#E7E9EA\]:hover, [role="button"].bg-\[\#E7
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .emet-wordmark {
-    animation: none;
+  .emet-wordmark::after {
     clip-path: none;
-    background-position: 50% 50%;
+    animation: none;
     filter: drop-shadow(0 0 5px rgba(98,105,244,.12));
   }
-  .emet-hero-wordmark animateTransform { display: none; }
-}
   .emet-hero-wordmark animateTransform { display: none; }
 }
