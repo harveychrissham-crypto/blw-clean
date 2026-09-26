@@ -64,11 +64,11 @@ export default function PostDetail() {
   };
 
   if(loading) return <main className="mx-auto min-h-[70vh] max-w-2xl px-4 py-8 text-white"><div className="animate-pulse space-y-4"><div className="h-6 w-28 rounded bg-white/10"/><div className="h-56 rounded-2xl bg-white/5"/><div className="h-20 rounded-2xl bg-white/5"/></div></main>;
-  if(error && !post) return <main className="mx-auto grid min-h-[70vh] max-w-2xl place-items-center px-6 text-center text-white"><div><p className="text-sm font-semibold">{error}</p><button onClick={()=>navigate(-1)} className="mt-4 rounded-full bg-white px-4 py-2 text-xs font-bold text-[#0B0F14]">Go back</button></div></main>;
+  if(error && !post) return <main className="mx-auto grid min-h-[70vh] max-w-2xl place-items-center px-6 text-center text-white"><div><p className="text-sm font-semibold">{error}</p><button onClick={()=>navigate(-1)} className="mt-4 rounded-xl bg-white px-4 py-2 text-xs font-semibold text-[#0B0F14] hover:bg-white/90">Go back</button></div></main>;
 
   return <main className="mx-auto min-h-screen max-w-2xl pb-28 text-white">
     <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-white/[.07] bg-[#0B0F14]/90 px-4 py-3 backdrop-blur-xl">
-      <button onClick={()=>navigate(-1)} className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/[.06]" aria-label="Back"><FiArrowLeft/></button>
+      <button onClick={()=>navigate(-1)} className="grid h-9 w-9 place-items-center rounded-xl hover:bg-white/[.06]" aria-label="Back"><FiArrowLeft/></button>
       <div><h1 className="text-sm font-bold">Post</h1><p className="text-[11px] text-white/35">{post?.commentCount||0} {Number(post?.commentCount||0)===1?'reply':'replies'}</p></div>
     </header>
     <article className="border-b border-white/[.07] px-4 py-5 sm:px-6">
@@ -81,10 +81,10 @@ export default function PostDetail() {
       {post.mediaUrl&&<img src={post.mediaUrl} alt="" className="mt-5 max-h-[70vh] w-full rounded-2xl object-contain bg-black"/>}
       {post.videoId&&<div className="mt-5 aspect-video overflow-hidden rounded-2xl bg-black"><iframe className="h-full w-full" src={'https://www.youtube-nocookie.com/embed/'+post.videoId+'?rel=0&modestbranding=1'} title={post.title||'Video'} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen/></div>}
       <div className="mt-4 flex items-center gap-1 border-t border-white/[.06] pt-3">
-        <button onClick={()=>updateAction('like')} className={`flex items-center gap-2 rounded-full px-3 py-2 text-xs ${post.liked?'text-pink-400':'text-white/55 hover:bg-white/[.05]'}`}><FiHeart fill={post.liked?'currentColor':'none'}/>{post.likeCount||0}</button>
-        <button onClick={()=>document.getElementById('reply-box')?.focus()} className="flex items-center gap-2 rounded-full px-3 py-2 text-xs text-white/55 hover:bg-white/[.05]"><FiMessageCircle/>{post.commentCount||0}</button>
-        <button onClick={()=>updateAction('save')} className={`ml-auto grid h-9 w-9 place-items-center rounded-full ${post.saved?'text-white':'text-white/55 hover:bg-white/[.05]'}`} aria-label={post.saved?'Remove bookmark':'Bookmark'}><FiBookmark fill={post.saved?'currentColor':'none'}/></button>
-        <button onClick={()=>shareContent({title:post.title||'Post on Emet',text:post.body||post.title,url:window.location.href})} className="grid h-9 w-9 place-items-center rounded-full text-white/55 hover:bg-white/[.05]" aria-label="Share"><FiSend/></button>
+        <button onClick={()=>updateAction('like')} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs ${post.liked?'text-pink-400':'text-white/55 hover:bg-white/[.05]'}`}><FiHeart fill={post.liked?'currentColor':'none'}/>{post.likeCount||0}</button>
+        <button onClick={()=>document.getElementById('reply-box')?.focus()} className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-white/55 hover:bg-white/[.05]"><FiMessageCircle/>{post.commentCount||0}</button>
+        <button onClick={()=>updateAction('save')} className={`ml-auto grid h-9 w-9 place-items-center rounded-xl ${post.saved?'text-white':'text-white/55 hover:bg-white/[.05]'}`} aria-label={post.saved?'Remove bookmark':'Bookmark'}><FiBookmark fill={post.saved?'currentColor':'none'}/></button>
+        <button onClick={()=>shareContent({title:post.title||'Post on Emet',text:post.body||post.title,url:window.location.href})} className="grid h-9 w-9 place-items-center rounded-xl text-white/55 hover:bg-white/[.05]" aria-label="Share"><FiSend/></button>
       </div>
     </article>
     <section className="px-4 py-5 sm:px-6">
