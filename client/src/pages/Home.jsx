@@ -133,7 +133,7 @@ function PostCard({ post, user, onUpdate }) {
 function Compose({ user }) {
   const name = user?.name || 'Member';
   return (
-    <div className="rounded-xl border border-[#1b376a]/70 bg-[#06152c] p-3">
+    <div className="rounded-xl border border-[#1b376a]/65 bg-[#06152c] p-3">
       <div className="flex items-center gap-3">
         <Avatar src={user?.avatarUrl || user?.avatar_url} name={name} size="h-10 w-10" />
         <Link to={user ? '/create' : '/auth'} className="min-w-0 flex-1 rounded-xl px-1 py-2 text-[14px] text-white/45 hover:text-white/70">
@@ -376,3 +376,4 @@ export default function Home() {
     </main>
   );
 }
+

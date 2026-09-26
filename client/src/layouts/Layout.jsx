@@ -58,8 +58,8 @@ export default function Layout({ children }) {
         <main className={isFeed?'feed-page':undefined}>{children}</main>
         {!isHome&&<footer className="hidden border-t border-white/[0.07] mt-8 sm:block" style={{background:'rgba(10,9,20,0.8)'}}><div className="mx-auto max-w-6xl px-5 py-10"><div><h4 className="mb-3 text-xs font-semibold uppercase tracking-widest text-white/40">Quick Links</h4><div className="flex flex-col gap-2 text-sm text-white/50"><Link to="/feed">Feed</Link><Link to="/messages">Messages</Link></div></div></div><div className="border-t border-white/[0.05] py-4 text-center text-xs text-white/25">© {new Date().getFullYear()} Emet</div></footer>}
       </div>
-    </div></div>
-    <SearchPanel open={searchOpen} onClose={()=>setSearchOpen(false)}/>
+    </div></div>    <SearchPanel open={searchOpen} onClose={()=>setSearchOpen(false)}/>
     <div className="pb-24 pt-2 text-center text-[10px] text-white/20 lg:hidden">© {new Date().getFullYear()} Emet · Faith · Community · Conversation</div><BottomNav/>
   </div>;
 }
+
