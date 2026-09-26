@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+<title>Emet app icon</title><desc>Official Emet app icon: a rounded square with a luminous blue-violet gradient and a speech-bubble E mark.</desc>
+<defs>
+  <linearGradient id="bg" x1="8%" y1="8%" x2="92%" y2="92%">
+    <stop offset="0" stop-color="#050A31"/><stop offset=".48" stop-color="#071B8A"/><stop offset=".78" stop-color="#1828E8"/><stop offset="1" stop-color="#D51CFF"/>
+  </linearGradient>
+  <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#21E7FF"/><stop offset=".45" stop-color="#2367FF"/><stop offset="1" stop-color="#E51CFF"/>
+  </linearGradient>
+  <linearGradient id="emark" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#7AF7FF"/><stop offset=".42" stop-color="#2E8CFF"/><stop offset=".72" stop-color="#8D35FF"/><stop offset="1" stop-color="#F14BFF"/>
+  </linearGradient>
+  <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="12" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="28"/></filter>
+</defs>
+<rect width="512" height="512" rx="116" fill="#02052B"/>
+<rect x="36" y="36" width="440" height="440" rx="92" fill="url(#bg)"/>
+<rect x="39" y="39" width="434" height="434" rx="89" fill="none" stroke="url(#edge)" stroke-width="8" opacity=".95" filter="url(#glow)"/>
+<ellipse cx="118" cy="108" rx="150" ry="120" fill="#22DFFF" opacity=".14" filter="url(#soft)"/>
+<ellipse cx="414" cy="414" rx="150" ry="130" fill="#D51CFF" opacity=".18" filter="url(#soft)"/>
+<path d="M186 126h128c31 0 56 25 56 56s-25 56-56 56h-89c-22 0-40 18-40 40s18 40 40 40h101c31 0 56 25 56 56s-25 56-56 56H205c-64 0-116-52-116-116v-62c0-70 43-126 97-126Zm-1 0c-48 0-86 42-86 94v91c0 24 9 46 24 63l-10 48 55-38c6 1 12 2 18 2h102c22 0 40-18 40-40s-18-40-40-40h-94c-45 0-81-36-81-81s36-81 81-81h87c22 0 40-18 40-40s-18-40-40-40h-96Z" fill="url(#emark)" filter="url(#glow)"/>
+<path d="M205 126h109c31 0 56 25 56 56s-25 56-56 56h-89c-22 0-40 18-40 40s18 40 40 40h101c31 0 56 25 56 56s-25 56-56 56H205c-64 0-116-52-116-116v-62c0-70 43-126 97-126h19Z" fill="url(#emark)"/>
+</svg>
