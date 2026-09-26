@@ -70,11 +70,11 @@ export default function UpdateAvailablePrompt() {
           <FiX className="h-4 w-4" />
         </IconButton>
 
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#3B82F6]/15 text-[#3B82F6]">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1D9BF0]/15 text-[#1D9BF0]">
           <FiDownload className="h-7 w-7" />
         </div>
 
-        <p className="mt-6 text-xs font-bold uppercase tracking-[0.25em] text-[#3B82F6]">New app version</p>
+        <p className="mt-6 text-xs font-bold uppercase tracking-[0.25em] text-[#1D9BF0]">New app version</p>
         <h2 id="update-available-title" className="mt-2 text-2xl font-extrabold text-white">
           An update is available
         </h2>
