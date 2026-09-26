@@ -334,9 +334,9 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-transparent pb-24 text-white">
       <div className="mx-auto max-w-[1320px] px-3 py-3 sm:px-5 sm:py-5">
-        <div className="mb-3 hidden items-center gap-3 rounded-xl border border-[#27468a]/50 bg-[#06132b]/95 px-4 py-2.5 shadow-[0_0_24px_rgba(41,93,230,.12)] lg:flex">
-          <div className="flex w-[54%] max-w-[440px] min-w-0 shrink-0 items-center gap-3">
-            <FiSearch className="shrink-0 text-white/45" />
+        <div className="mb-2 hidden h-[60px] items-center gap-3 border-b border-[#17305e]/50 px-4 lg:flex">
+          <div className="flex h-[34px] w-[54%] max-w-[440px] min-w-0 shrink-0 items-center gap-3 rounded-lg bg-[#0a1c3b] px-3">
+            <FiSearch className="h-4 w-4 shrink-0 text-white/55" />
             <Link to="/explore" className="min-w-0 flex-1 truncate text-xs text-white/35">Search Emet...</Link>
           </div>
           <div className="ml-auto hidden items-center gap-2 sm:flex">
