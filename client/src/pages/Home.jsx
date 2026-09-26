@@ -194,7 +194,7 @@ export default function Home() {
       <div className="mx-auto flex max-w-6xl items-start justify-center gap-6">
         <section className="w-full max-w-2xl border-x border-white/[.06]">
           <div className="sticky top-0 z-30 border-b border-white/[.07] bg-[#0B0F14]/90 backdrop-blur-xl">
-            <div className="flex items-center justify-between px-4 py-3 sm:hidden"><span className="text-lg font-extrabold">Home</span><Link to="/create" className="grid h-9 w-9 place-items-center rounded-full bg-white text-black"><FiEdit3 /></Link></div>
+            <div className="flex items-center justify-between px-4 py-3 sm:hidden"><span className="text-lg font-extrabold">Home</span><Link to="/create" className="grid h-9 w-9 place-items-center rounded-full bg-[#0B0F14] text-white border border-white/10"><FiEdit3 /></Link></div>
             <div className="hidden px-4 pt-4 sm:block"><h1 className="text-xl font-extrabold">Home</h1></div>
             <div className="grid grid-cols-2">
               {['For you', 'Following'].map((item) => <button key={item} type="button" onClick={() => setTab(item)} className={`relative py-4 text-sm font-bold ${tab === item ? 'text-white' : 'text-white/35 hover:text-white/65'}`}>{item}{tab === item && <span className="absolute inset-x-1/3 bottom-0 h-1 rounded-full bg-white" />}</button>)}
