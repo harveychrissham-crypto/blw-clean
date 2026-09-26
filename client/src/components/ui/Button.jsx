@@ -1,7 +1,7 @@
 import { forwardRef } from 'react';
 
-// Shared Emet button styles: white, Emet blue, and black only. Two radius tokens only: pill (rounded-full)
-// for compact/icon actions, rounded-[10px] for everything else — replacing the
+// Shared Emet button styles: neutral white, black, and subtle borders. Buttons use
+// compact 10px corners for a modern professional interface — replacing the
 // mix of 2xl/3xl used ad hoc across the app.
 //
 // NOTE: Tailwind's JIT compiler scans source files as literal text for
@@ -11,7 +11,7 @@ import { forwardRef } from 'react';
 // constant, or the utility silently never gets generated.
 
 const VARIANTS = {
-  primary: 'bg-white text-[#0B0F14] text-white shadow-sm hover:bg-white/90 active:bg-[#1A8CD8] active:shadow-none disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30 disabled:shadow-none',
+  primary: 'bg-white text-[#0B0F14] shadow-sm hover:bg-white/90 active:bg-white/80 active:shadow-none disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30 disabled:shadow-none',
   secondary: 'border border-white/15 bg-white/[.05] text-white hover:bg-white/[.09] hover:border-white/30 active:bg-white/[.12] disabled:cursor-not-allowed disabled:opacity-40 disabled:border-white/10',
   ghost: 'border border-white/15 text-white/80 hover:bg-white/10 hover:text-white active:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40',
   danger: 'border border-red-400/30 bg-red-500/10 text-red-200 hover:bg-red-500/20 active:bg-red-500/25 disabled:cursor-not-allowed disabled:opacity-40',
@@ -21,8 +21,8 @@ const VARIANTS = {
 };
 
 const SIZES = {
-  md: 'rounded-xl px-5 py-2.5 text-sm font-semibold min-h-11',
-  sm: 'rounded-xl px-4 py-2.5 text-xs font-semibold min-h-10',
+  md: 'rounded-[10px] px-5 py-2.5 text-sm font-semibold min-h-11',
+  sm: 'rounded-[10px] px-4 py-2.5 text-xs font-semibold min-h-10',
   none: '',
 };
 
@@ -33,7 +33,7 @@ const Button = forwardRef(function Button({ variant = 'primary', size = 'md', cl
     ? { backgroundColor: 'transparent', border: 0, padding: 0, margin: 0, boxShadow: 'none', color: 'transparent', ...style }
     : style;
   const pressClass = invisible ? '' : 'active:scale-[0.97]';
-  return <button ref={ref} type={type} className={`${sizeClass} ${variantClass} ${pressClass} transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9BF0]/60 ${className}`.trim()} style={buttonStyle} {...props} />;
+  return <button ref={ref} type={type} className={`${sizeClass} ${variantClass} ${pressClass} transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${className}`.trim()} style={buttonStyle} {...props} />;
 });
 
 export default Button;
@@ -45,7 +45,7 @@ const ICON_SIZES = {
   lg: 'h-11 w-11',
 };
 
-// Circular icon-only button — the other recurring shape across the app
+// Compact icon-only button — the other recurring shape across the app
 // (close buttons, back arrows, compact controls). Always needs an
 // aria-label since there's no visible text. Carries a hairline border by
 // default so it reads as a deliberate control against the busy background
