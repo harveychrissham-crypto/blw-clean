@@ -72,8 +72,15 @@ button.bg-\[\#E7E9EA\]:hover, a.bg-\[\#E7E9EA\]:hover, [role="button"].bg-\[\#E7
 }
 
 .emet-wordmark-sidebar {
+  display: none;
   width: 184px;
   height: 40px;
+}
+
+@media (min-width: 1280px) {
+  .emet-wordmark-sidebar {
+    display: inline-block;
+  }
 }
 
 .emet-wordmark::before,
