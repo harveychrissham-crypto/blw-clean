@@ -50,3 +50,14 @@ article[id^="feed-"] .aspect-video > div.h-full > img { object-fit: contain; }
 [role="dialog"][aria-modal="true"] video, [role="dialog"][aria-modal="true"] img { max-height: 100%; }
 
 @media (max-width: 639px) { article[id^="feed-"] { border-color: rgba(255,255,255,0.09) !important; } article[id^="feed-"] > div:first-child { padding-top: 12px; padding-bottom: 12px; } }
+
+/* Emet button surface: soft white, never harsh pure white. */
+button.bg-white, a.bg-white, [role="button"].bg-white,
+button.bg-\[\#E7E9EA\], a.bg-\[\#E7E9EA\], [role="button"].bg-\[\#E7E9EA\] {
+  background-color: #D2D5D8 !important;
+  color: #0B0F14 !important;
+}
+button.bg-white:hover, a.bg-white:hover, [role="button"].bg-white:hover,
+button.bg-\[\#E7E9EA\]:hover, a.bg-\[\#E7E9EA\]:hover, [role="button"].bg-\[\#E7E9EA\]:hover {
+  background-color: #D9DCDF !important;
+}
