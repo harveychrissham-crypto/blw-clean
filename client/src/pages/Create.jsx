@@ -14,7 +14,7 @@ export default function Create() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const inputRef = useRef(null);
-  const [type, setType] = useState('post');
+  const [type, setType] = useState('text');
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState('');
   const [caption, setCaption] = useState('');
@@ -126,7 +126,7 @@ export default function Create() {
   const publish = async () => {
     if (!user) return;
     if (type === 'reel' && !file) return setError('Choose a video for your Reel.');
-    if (type === 'post' && !file && !caption.trim()) return setError('Write something or choose media before posting.');
+    if (type !== 'reel' && !file && !caption.trim()) return setError('Write something or choose media before posting.');
     if (type === 'reel' && !file.type.startsWith('video/')) return setError('A Reel must be a video.');
     if (uploading || published) return;
     if (!window.confirm(`Ready to share this ${type === 'reel' ? 'Reel' : 'post'}?`)) return;
@@ -143,7 +143,7 @@ export default function Create() {
       const cleanLocation = location.trim();
       const title = cleanCaption.slice(0, 160) || (type === 'reel' ? 'New Reel' : 'New post');
       const body = cleanLocation ? `${cleanCaption}${cleanCaption ? '\n\n' : ''}📍 ${cleanLocation}` : cleanCaption;
-      const created = await createFeedPost({ type, title, body, mediaUrl: uploaded?.url || '', mediaType: uploaded?.mediaType || '', thumbnailUrl: uploaded?.thumbnailUrl || '' });
+      const created = await createFeedPost({ type: type === 'reel' ? 'reel' : 'post', title, body, mediaUrl: uploaded?.url || '', mediaType: uploaded?.mediaType || '', thumbnailUrl: uploaded?.thumbnailUrl || '' });
       hapticSuccess();
       setPublished(true);
       setTimeout(() => {
@@ -178,12 +178,12 @@ export default function Create() {
 
         <div className="grid grid-cols-2 border-b border-white/[0.07] bg-white/[0.015] p-1.5">
           <button type="button" onClick={() => selectType('post')} className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition ${type === 'post' ? 'bg-white text-ink-950 shadow-lg' : 'text-white/40 hover:bg-white/[0.05] hover:text-white/70'}`}><FiImage /> Post</button>
-          <button type="button" onClick={() => selectType('post')} className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition ${type === 'post' && !file ? 'bg-white text-ink-950 shadow-lg' : 'text-white/40 hover:bg-white/[0.05] hover:text-white/70'}`}><FiSend /> Text</button>
+          <button type="button" onClick={() => selectType('post')} className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition ${type === 'text' ? 'bg-white text-ink-950 shadow-lg' : 'text-white/40 hover:bg-white/[0.05] hover:text-white/70'}`}><FiSend /> Text</button>
           <button type="button" onClick={() => selectType('reel')} className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition ${type === 'reel' ? 'bg-white text-ink-950 shadow-lg' : 'text-white/40 hover:bg-white/[0.05] hover:text-white/70'}`}><FiFilm /> Reel</button>
         </div>
 
         <div className="grid gap-0 md:grid-cols-[1.08fr_.92fr]">
-          <section className={`p-4 sm:p-6 md:border-r ${type === 'post' && !file && !caption ? 'md:hidden' : ''}` md:border-white/[0.07]">
+          <section className={`p-4 sm:p-6 md:border-r ${type === 'text' ? 'md:hidden' : ''}` md:border-white/[0.07]">
             <input ref={inputRef} type="file" className="hidden" onChange={onFile} />
             {preview ? (
               <div className={`group relative overflow-hidden rounded-[26px] bg-black ring-1 ring-white/10 ${type === 'reel' ? 'aspect-[9/15] max-h-[68vh]' : 'aspect-square'}`}>
@@ -205,7 +205,7 @@ export default function Create() {
             {uploading && isVideo && <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.035] p-3.5 text-xs"><div className="flex items-center gap-3"><FiLoader className="h-4 w-4 shrink-0 animate-spin text-white/50" /><span className="text-white/60">{uploadStage || 'Uploading video…'}</span></div><button type="button" onClick={cancelUpload} className="mt-3 w-full rounded-xl border border-red-400/20 bg-red-400/10 py-2 text-xs font-bold text-red-200 transition hover:bg-red-400/20">Cancel upload</button></div>}
           </section>
 
-          <section className={`border-t border-white/[0.07] p-4 sm:p-6 md:border-t-0 ${type === 'post' && !file ? 'md:col-span-2' : ''}`}
+          <section className={`border-t border-white/[0.07] p-4 sm:p-6 md:border-t-0 ${type === 'text' ? 'md:col-span-2' : ''}`}
             <div className="mb-4 flex items-center gap-3">
               <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-full border border-white/10 bg-white/[0.07] text-xs font-bold">{user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" /> : (user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()}</div>
               <div className="min-w-0"><p className="truncate text-sm font-bold">{user?.name || 'Your profile'}</p><p className="text-[11px] text-white/35">Public community post</p></div>
