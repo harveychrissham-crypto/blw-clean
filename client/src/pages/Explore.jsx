@@ -179,6 +179,12 @@ export default function Explore() {
 
         {tab === 'People' ? (
           <section className="mt-2">
+            {!query.trim() && !accountsLoading && accounts.length > 0 && (
+              <div className="border-b border-white/[.06] px-0 py-4">
+                <h2 className="text-base font-bold text-white">Suggested for you</h2>
+                <p className="mt-1 text-xs text-white/35">People you may know based on your connections and interests.</p>
+              </div>
+            )}
             {accountsLoading ? (
               Array.from({ length: 6 }).map((_, index) => (
                 <div key={index} className="flex items-center gap-3 border-b border-white/[.06] py-4">
