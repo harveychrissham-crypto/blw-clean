@@ -325,7 +325,7 @@ export default function Home() {
             <Link to="/profile" className={user?.avatarUrl ? 'rounded-full' : ''}><Avatar src={user?.avatarUrl} name={user?.name} size="h-8 w-8" /></Link>
           </div>
         </div>
-        <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_200px] xl:grid-cols-[minmax(0,1fr)_240px]">
+        <div className="grid min-w-0 justify-center gap-3 lg:grid-cols-[minmax(0,420px)_200px] xl:grid-cols-[minmax(0,520px)_240px]">
           <section className="min-w-0 space-y-2.5">
             <div className="flex items-center justify-between gap-3 px-1 pb-1 sm:px-2 lg:hidden">
               <Link to="/" aria-label="Emet home" className="flex items-center gap-2.5">
