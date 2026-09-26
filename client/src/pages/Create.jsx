@@ -229,7 +229,7 @@ export default function Create() {
         {published && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[90] grid place-items-center bg-[#0B0F14]/95 backdrop-blur-sm">
             <motion.div initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 340, damping: 18 }} className="flex flex-col items-center gap-3">
-              <div className="grid h-20 w-20 place-items-center rounded-xl bg-[#3B82F6] shadow-sm hover:bg-[#2563EB]"><FiCheck className="h-10 w-10 text-white" /></div>
+              <div className="grid h-20 w-20 place-items-center rounded-xl bg-[#1D9BF0] shadow-sm hover:bg-[#1A8CD8]"><FiCheck className="h-10 w-10 text-white" /></div>
               <p className="text-sm font-bold text-white">{type === 'reel' ? 'Reel shared!' : 'Posted!'}</p>
             </motion.div>
           </motion.div>
