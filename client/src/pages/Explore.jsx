@@ -34,7 +34,7 @@ export default function Explore() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    fetchFeed({ limit: 60, offset: 0 })
+    fetchFeed({ limit: 60, offset: 0, q: query.trim() })
       .then(({ posts: next }) => { if (active) setPosts(next); })
       .catch(() => { if (active) setPosts([]); })
       .finally(() => { if (active) setLoading(false); });

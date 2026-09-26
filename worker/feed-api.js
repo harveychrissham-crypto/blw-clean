@@ -27,6 +27,7 @@ export async function handleFeed(request, env, url) {
       const followingOnly = url.searchParams.get('following') === '1' && Boolean(email);
       const rawFeedType = url.searchParams.get('type') || '';
       const feedType = rawFeedType === 'reel' || rawFeedType === 'ministry' ? rawFeedType : '';
+      const search = String(url.searchParams.get('q') || '').trim().slice(0, 120);
       const client = await getDb(env);
       try {
         const canSeeViews = await canViewOwnPostInsights(client,email);
@@ -52,7 +53,7 @@ export async function handleFeed(request, env, url) {
           CASE WHEN $1 <> '' AND EXISTS(SELECT 1 FROM public.feed_post_saves x WHERE x.post_id=p.id AND LOWER(x.user_email)=$1) THEN true ELSE false END AS saved,
           (SELECT COALESCE(jsonb_agg(jsonb_build_object('name',name,'avatarUrl',avatar_url)),'[]'::jsonb) FROM (SELECT u.full_name AS name, u.avatar_url AS avatar_url FROM public.feed_post_likes x JOIN public.users u ON LOWER(u.email)=LOWER(x.user_email) WHERE x.post_id=p.id ORDER BY x.created_at DESC LIMIT 2) t) AS recent_likers
           FROM public.feed_posts p
-        ) feed_items WHERE ($5 = false OR following = true) AND ($6 = '' OR ($6 = 'reel' AND type = 'reel') OR ($6 = 'ministry' AND (source_type = 'sermon' OR is_featured = true))) ORDER BY created_at DESC,id DESC LIMIT $2 OFFSET $3`,[email,limit+1,offset,canSeeViews,followingOnly,feedType]);
+        ) feed_items WHERE ($5 = false OR following = true) AND ($6 = '' OR ($6 = 'reel' AND type = 'reel') OR ($6 = 'ministry' AND (source_type = 'sermon' OR is_featured = true))) AND ($7 = '' OR lower(coalesce(title,'') || ' ' || coalesce(body,'') || ' ' || coalesce(author,'')) LIKE '%' || lower($7) || '%') ORDER BY created_at DESC,id DESC LIMIT $2 OFFSET $3`,[email,limit+1,offset,canSeeViews,followingOnly,feedType,search]);
         const hasMore = result.rows.length > limit;
         const posts = result.rows.slice(0,limit).map(row => ({ ...row, youtube_id: youtubeId(row.youtube_url) }));
         return json({ posts, hasMore, limit, offset },200,headers);
