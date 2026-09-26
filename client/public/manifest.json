@@ -8,10 +8,16 @@
   "description": "EMET — social connection, community, and conversation.",
   "icons": [
     {
-      "src": "/emet-logo.png",
-      "sizes": "128x128",
-      "type": "image/png"
+      "src": "/emet-logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/emet-logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
-

@@ -184,7 +184,7 @@ export default function StoriesRow() {
             </button>
             <button type="button" onClick={() => fileInputRef.current?.click()} aria-label="Add a story" className="absolute -bottom-0.5 -right-0.5 grid h-5 w-5 place-items-center rounded-full border-2 border-[#07132d] bg-[#283fd7] text-white transition hover:bg-[#3552f0] active:scale-90">{uploading ? <span className="h-2 w-2 animate-pulse rounded-full bg-white" /> : <FiPlus className="h-3 w-3" />}</button>
           </div>
-          <span className="max-w-[4.5rem] truncate text-[11px] text-white/50">{myGroup ? "Your Story" : "Add story"}</span>
+          <span className="max-w-[4.5rem] truncate text-[11px] text-white/50">{myGroup ? 'Your Story' : 'Add story'}</span>
         </div>
 
         {otherGroups.map((group) => {
@@ -201,7 +201,7 @@ export default function StoriesRow() {
                   </div>
                 </div>
               </button>
-              <span className="max-w-[4.5rem] truncate text-[11px] text-white/65">{first.authorName.split(" ")[0]}</span>
+              <span className="max-w-[4.5rem] truncate text-[11px] text-white/65">{first.authorName.split(' ')[0]}</span>
             </div>
           );
         })}
