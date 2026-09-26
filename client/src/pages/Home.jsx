@@ -319,7 +319,7 @@ export default function Home() {
             <div className="flex items-center justify-between gap-3 px-1 pb-1 sm:px-2 lg:hidden">
               <Link to="/" aria-label="Emet home" className="flex items-center gap-2.5">
                 <img src="/emet-logo.png" alt="" className="h-8 w-8 rounded-lg" />
-                <img src="/emet-wordmark-geometric-white.svg" alt="Emet" className="h-6 w-auto" />
+                
               </Link>
               <div className="flex items-center gap-1">
                 <Link to="/explore" aria-label="Search Emet" className="grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiSearch className="h-[19px] w-[19px]" /></Link>
