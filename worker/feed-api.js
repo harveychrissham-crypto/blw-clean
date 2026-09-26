@@ -156,8 +156,29 @@ export async function handleFeed(request, env, url) {
         if (raw) {
           params.push(`%${raw.toLowerCase()}%`);
           sql += ` AND (LOWER(u.full_name) LIKE $2 OR LOWER(u.chapter) LIKE $2) ORDER BY u.full_name ASC LIMIT 20`;
+        } else if (viewerEmail) {
+          sql += ` ORDER BY
+            (SELECT COUNT(*) FROM public.feed_user_follows mutual
+             WHERE LOWER(mutual.followed_email)=LOWER(u.email)
+               AND EXISTS (
+                 SELECT 1 FROM public.feed_user_follows viewer_follow
+                 WHERE LOWER(viewer_follow.follower_email)=LOWER($1)
+                   AND LOWER(viewer_follow.followed_email)=LOWER(mutual.follower_email)
+               )) DESC,
+            (SELECT COUNT(DISTINCT candidate_topics.topic_id)
+             FROM public.feed_posts candidate_posts
+             JOIN public.feed_post_topics candidate_topics ON candidate_topics.post_id=candidate_posts.id
+             WHERE LOWER(candidate_posts.user_email)=LOWER(u.email)
+               AND candidate_topics.topic_id IN (
+                 SELECT own_topics.topic_id
+                 FROM public.feed_posts own_posts
+                 JOIN public.feed_post_topics own_topics ON own_topics.post_id=own_posts.id
+                 WHERE LOWER(own_posts.user_email)=LOWER($1)
+               )) DESC,
+            u.full_name ASC
+            LIMIT 12`;
         } else {
-          sql += ` ORDER BY random() LIMIT 12`;
+          sql += ` ORDER BY u.full_name ASC LIMIT 12`;
         }
         const result = await client.query(sql, params);
         return json({ users: result.rows.map((row) => ({ name: row.full_name, email: row.email, avatarUrl: row.avatar_url || '', chapter: row.chapter || '', title: row.title || '', following: Boolean(row.following) })) }, 200, headers);
