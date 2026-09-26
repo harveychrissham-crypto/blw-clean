@@ -149,26 +149,6 @@ function Compose({ user }) {
   );
 }
 
-function HeroCard({ posts }) {
-  const image = posts.find((post) => post.mediaUrl)?.mediaUrl;
-  return (
-    <section
-      className="relative overflow-hidden rounded-2xl border border-[#2557D9]/60 bg-gradient-to-br from-[#081B42] via-[#11265B] to-[#27105A]"
-      style={image ? { backgroundImage: `linear-gradient(90deg, rgba(3,13,34,.95) 0%, rgba(8,22,57,.78) 46%, rgba(6,13,28,.12) 100%), url("${image}")` } : undefined}
-    >
-      <div className="relative min-h-[168px] p-5 sm:p-6">
-        <div className="max-w-[62%] sm:max-w-[58%]">
-          <p className="text-[22px] font-extrabold leading-[1.05] tracking-tight sm:text-[25px]">Real People.<br />Meaningful<br />Connections.</p>
-          <p className="mt-2 text-xs text-white/70 sm:text-sm">Share. Discuss. Build. Together.</p>
-          <Link to="/create" className="mt-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-fuchsia-500 px-5 py-2.5 text-xs font-extrabold text-white shadow-lg shadow-blue-950/30">
-            Create Post <FiArrowRight />
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function CommunityRail({ communities, onJoin, busyId }) {
   const list = communities.slice(0, 5);
   return (
@@ -362,8 +342,6 @@ export default function Home() {
             <div className="lg:hidden"><StoriesRow /></div>
             <Compose user={user} />
             <div className="hidden lg:block"><StoriesRow /></div>
-            <div className="hidden lg:block"><HeroCard posts={posts} /></div>
-
             <div className="hidden overflow-hidden rounded-xl border border-[#17305e]/55 bg-[#041126] lg:block">
               <div className="grid grid-cols-3">
                 {tabs.map((item) => (
