@@ -62,7 +62,7 @@ button.bg-\[\#E7E9EA\]:hover, a.bg-\[\#E7E9EA\]:hover, [role="button"].bg-\[\#E7
   background-color: #D9DCDF !important;
 }
 
-/* Emet wordmark shimmer: a slow, low-contrast cyan-to-violet drift. */
+/* Emet wordmark shimmer: slow gradient drift and a restrained glow. */
 .emet-wordmark {
   display: inline-block;
   width: 140px;
@@ -73,15 +73,32 @@ button.bg-\[\#E7E9EA\]:hover, a.bg-\[\#E7E9EA\]:hover, [role="button"].bg-\[\#E7
   background-position: 15% 50%;
   -webkit-mask: url('/emet-wordmark-geometric-white.svg') center / 100% 100% no-repeat;
   mask: url('/emet-wordmark-geometric-white.svg') center / 100% 100% no-repeat;
-  animation: emet-wordmark-shimmer 8s ease-in-out infinite;
+  animation: emet-wordmark-shimmer 12s ease-in-out infinite;
+}
+
+.emet-wordmark-sidebar {
+  width: 184px;
+  height: 40px;
 }
 
 @keyframes emet-wordmark-shimmer {
-  0%, 100% { background-position: 15% 50%; opacity: .9; }
-  50% { background-position: 85% 50%; opacity: 1; }
+  0%, 100% {
+    background-position: 15% 50%;
+    opacity: .93;
+    filter: drop-shadow(0 0 4px rgba(34,211,229,.14)) drop-shadow(0 0 7px rgba(168,85,247,.10));
+  }
+  50% {
+    background-position: 85% 50%;
+    opacity: 1;
+    filter: drop-shadow(0 0 7px rgba(34,211,229,.23)) drop-shadow(0 0 11px rgba(168,85,247,.17));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .emet-wordmark { animation: none; background-position: 50% 50%; }
+  .emet-wordmark {
+    animation: none;
+    background-position: 50% 50%;
+    filter: drop-shadow(0 0 5px rgba(98,105,244,.12));
+  }
   .emet-hero-wordmark animateTransform { display: none; }
 }
