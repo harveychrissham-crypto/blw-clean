@@ -331,6 +331,7 @@ export default function Home() {
               <div className="flex items-center gap-1">
                 <Link to="/explore" aria-label="Search Emet" className="grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiSearch className="h-[19px] w-[19px]" /></Link>
                 <Link to="/notifications" aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"} className="relative grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiBell className="h-[19px] w-[19px]" />{unreadCount > 0 && <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full border border-[#07132d] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadCount > 9 ? "9+" : unreadCount}</span>}</Link>
+                <Link to="/messages" aria-label="Messages" className="grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiMessageCircle className="h-[19px] w-[19px]" /></Link>
                 <Link to={user ? '/profile' : '/auth'} aria-label={user ? 'Profile' : 'Sign in'} className="rounded-full ring-1 ring-white/15"><Avatar src={user?.avatarUrl} name={user?.name} size="h-8 w-8" /></Link>
               </div>
             </div>
