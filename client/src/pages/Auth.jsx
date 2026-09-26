@@ -35,24 +35,24 @@ const GlobalNetworkAnimation = () => (
           <stop offset="100%" stopColor="#020617" stopOpacity=".1" />
         </radialGradient>
         <linearGradient id="emet-continent" x1="180" y1="120" x2="520" y2="430">
-          <stop stopColor="#2563EB" stopOpacity=".32" />
-          <stop offset=".55" stopColor="#3B82F6" stopOpacity=".2" />
-          <stop offset="1" stopColor="#60A5FA" stopOpacity=".1" />
+          <stop stopColor="#1A8CD8" stopOpacity=".32" />
+          <stop offset=".55" stopColor="#1D9BF0" stopOpacity=".2" />
+          <stop offset="1" stopColor="#42A5F5" stopOpacity=".1" />
         </linearGradient>
         <linearGradient id="emet-route" x1="100" y1="100" x2="600" y2="430">
           <stop stopColor="#93C5FD" stopOpacity=".12" />
-          <stop offset=".5" stopColor="#60A5FA" stopOpacity=".9" />
+          <stop offset=".5" stopColor="#42A5F5" stopOpacity=".9" />
           <stop offset="1" stopColor="#93C5FD" stopOpacity=".12" />
         </linearGradient>
       </defs>
 
-      <ellipse cx="350" cy="278" rx="305" ry="190" fill="url(#emet-world-ocean)" stroke="#3B82F6" strokeOpacity=".28" />
-      <ellipse cx="350" cy="278" rx="305" ry="190" stroke="#60A5FA" strokeOpacity=".1" />
-      <ellipse cx="350" cy="278" rx="215" ry="190" stroke="#60A5FA" strokeOpacity=".12" />
-      <ellipse cx="350" cy="278" rx="105" ry="190" stroke="#60A5FA" strokeOpacity=".1" />
-      <path d="M55 278H645M78 208C210 250 490 250 622 208M78 348C210 306 490 306 622 348" stroke="#60A5FA" strokeOpacity=".1" />
+      <ellipse cx="350" cy="278" rx="305" ry="190" fill="url(#emet-world-ocean)" stroke="#1D9BF0" strokeOpacity=".28" />
+      <ellipse cx="350" cy="278" rx="305" ry="190" stroke="#42A5F5" strokeOpacity=".1" />
+      <ellipse cx="350" cy="278" rx="215" ry="190" stroke="#42A5F5" strokeOpacity=".12" />
+      <ellipse cx="350" cy="278" rx="105" ry="190" stroke="#42A5F5" strokeOpacity=".1" />
+      <path d="M55 278H645M78 208C210 250 490 250 622 208M78 348C210 306 490 306 622 348" stroke="#42A5F5" strokeOpacity=".1" />
 
-      <g className="emet-continents" fill="url(#emet-continent)" stroke="#60A5FA" strokeOpacity=".58" strokeWidth="1.1">
+      <g className="emet-continents" fill="url(#emet-continent)" stroke="#42A5F5" strokeOpacity=".58" strokeWidth="1.1">
         <path d="M106 177L127 145L160 133L183 105L218 113L239 139L263 150L271 178L252 195L236 215L211 214L196 232L170 225L155 207L126 211L111 196Z" />
         <path d="M222 239L246 247L261 267L258 291L243 306L235 331L220 354L211 382L196 403L181 389L184 362L174 339L183 313L178 286L190 263L205 251Z" />
         <path d="M276 143L299 120L335 115L365 128L394 120L430 128L459 116L501 128L535 151L572 160L600 184L589 203L553 204L527 216L497 211L475 225L445 218L425 202L398 208L377 193L350 195L327 180L303 181L286 166Z" />
@@ -78,7 +78,7 @@ const GlobalNetworkAnimation = () => (
         <circle cx="594" cy="411" r="3.5" />
       </g>
 
-      <g className="emet-orbits" fill="none" stroke="#60A5FA" strokeOpacity=".28" strokeDasharray="5 13">
+      <g className="emet-orbits" fill="none" stroke="#42A5F5" strokeOpacity=".28" strokeDasharray="5 13">
         <ellipse className="emet-orbit emet-orbit-one" cx="350" cy="278" rx="315" ry="205" />
         <ellipse className="emet-orbit emet-orbit-two" cx="350" cy="278" rx="240" ry="205" />
       </g>
@@ -189,7 +189,7 @@ export default function Auth() {
       <style>{`
         .emet-network{position:relative;display:grid;height:100%;min-height:360px;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 44%,rgba(37,99,235,.2),transparent 44%),linear-gradient(145deg,#071126,#020617 76%);isolation:isolate}
         .emet-network-glow{position:absolute;width:62%;aspect-ratio:1;border-radius:999px;background:#2563eb;filter:blur(95px);opacity:.16;animation:emet-glow 6s ease-in-out infinite}
-        .emet-network-svg{position:relative;width:112%;max-width:720px;height:auto;filter:drop-shadow(0 0 22px rgba(59,130,246,.18))}
+        .emet-network-svg{position:relative;width:112%;max-width:720px;height:auto;filter:drop-shadow(0 0 22px rgba(29,155,240,.18))}
         .emet-continents path{animation:emet-land 5s ease-in-out infinite}
         .emet-continents path:nth-child(2n){animation-delay:.7s}
         .emet-network-routes path{stroke-dasharray:7 13;animation:emet-route 5s linear infinite}
