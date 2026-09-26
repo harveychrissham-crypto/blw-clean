@@ -304,60 +304,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#020914] pb-24 text-white">
       <div className="mx-auto max-w-[1480px] px-3 py-3 sm:px-5 sm:py-5">
-        <div className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)_280px] xl:grid-cols-[220px_minmax(0,1fr)_300px]">
-          <aside className="hidden lg:block">
-            <div className="sticky top-5 space-y-3">
-              <div className="rounded-2xl border border-white/[.07] bg-[#06152C] p-4">
-                <div className="flex items-center gap-2 px-1 pb-3">
-                  <img src="/emet-mark-white.svg" alt="Emet" className="h-9 w-9" />
-                  <img src="/emet-wordmark-white.svg" alt="Emet" className="h-6 w-auto" />
-                </div>
-                <nav className="space-y-1">
-                  {[
-                    ['Home', '/', 'home'],
-                    ['Explore', '/explore', 'explore'],
-                    ['Communities', '/communities', 'communities'],
-                    ['Messages', '/messages', 'messages'],
-                    ['Notifications', '/notifications', 'notifications'],
-                    ['Bookmarks', '/bookmarks', 'bookmarks'],
-                    ['Profile', '/profile', 'profile'],
-                  ].map(([label, path]) => (
-                    <Link key={path} to={path} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold ${path === '/' ? 'bg-gradient-to-r from-indigo-700/80 to-violet-700/60 text-white' : 'text-white/65 hover:bg-white/[.05] hover:text-white'}`}>
-                      <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
-                      {label}
-                      {label === 'Notifications' && <span className="ml-auto rounded-full bg-fuchsia-500 px-1.5 py-0.5 text-[9px]">3</span>}
-                    </Link>
-                  ))}
-                </nav>
-              </div>
-
-              <div className="rounded-2xl border border-white/[.07] bg-[#06152C] p-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-extrabold">Your Communities</h3>
-                  <Link to="/communities" className="text-[10px] text-[#4E91FF]">See all</Link>
-                </div>
-                <div className="mt-3 space-y-2.5">
-                  {(communities.filter((c) => c.joined).slice(0, 5).length ? communities.filter((c) => c.joined).slice(0, 5) : communities.slice(0, 5)).map((community, index) => (
-                    <Link key={community.id} to={`/communities/${community.id}`} className="flex items-center gap-2.5">
-                      <CommunityIcon index={index} />
-                      <div className="min-w-0">
-                        <p className="truncate text-[11px] font-semibold">{community.name}</p>
-                        <p className="text-[9px] text-white/35">{Number(community.member_count || 0).toLocaleString()} members</p>
-                      </div>
-                    </Link>
-                  ))}
-                  {communityLoading && <div className="space-y-2"><Skeleton className="h-9 w-full" /><Skeleton className="h-9 w-full" /></div>}
-                </div>
-              </div>
-
-              <Link to="/communities" className="block overflow-hidden rounded-2xl border border-[#3B40FF]/50 bg-gradient-to-br from-[#101DA1] to-[#4E0AB1] p-4">
-                <p className="text-sm font-extrabold leading-tight">Build your<br />community</p>
-                <p className="mt-2 text-[10px] leading-4 text-white/65">Create or join communities that matter to you.</p>
-                <span className="mt-3 ml-auto grid h-8 w-8 place-items-center rounded-full bg-white/15"><FiArrowRight /></span>
-              </Link>
-            </div>
-          </aside>
-
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_300px]">
           <section className="min-w-0 space-y-3">
             <div className="flex items-center gap-3 rounded-2xl border border-white/[.07] bg-[#06152C] px-4 py-2.5">
               <FiSearch className="text-white/45" />
