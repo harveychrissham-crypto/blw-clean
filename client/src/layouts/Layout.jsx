@@ -29,7 +29,7 @@ export default function Layout({ children }) {
     </header>
     <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-[280px] flex-col border-r border-white/[0.07] bg-[#0B0F14] px-0 py-6">
       <div className="flex shrink-0 items-center px-6 mb-8">
-        <Link to="/" aria-label="Emet home"><img src="/emet-wordmark-white.svg" alt="Emet" className="h-10 w-auto"/></Link>
+        <Link to="/" aria-label="Emet home"><img src="/emet-wordmark-geometric-white.svg" alt="Emet" className="h-10 w-auto"/></Link>
       </div>
       <nav className="min-h-0 flex-1 overflow-y-auto flex flex-col gap-1 px-3 pb-4">
         {navItems.map(item=>{const Icon=item.icon;return <NavLink key={item.path} to={item.path} end={item.path==='/'}
