@@ -4,8 +4,8 @@
 // at this layer -- see client/src/offlineSync.js and offlineStorage.js for
 // how the app itself caches API data.
 
-const CACHE_NAME = 'blw-shell-v1';
-const APP_SHELL = ['/', '/index.html', '/manifest.json', '/emet-official-icon.svg'];
+const CACHE_NAME = 'blw-shell-v2';
+const APP_SHELL = ['/', '/index.html', '/manifest.json', '/emet-mark.svg', '/emet-official-icon.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
