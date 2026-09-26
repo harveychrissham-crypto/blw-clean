@@ -303,10 +303,22 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#020914] pb-24 text-white">
-      <div className="mx-auto max-w-[1480px] px-3 py-3 sm:px-5 sm:py-5">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="mx-auto max-w-[1320px] px-3 py-3 sm:px-5 sm:py-5">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
           <section className="min-w-0 space-y-3">
-            <div className="flex items-center gap-3 rounded-2xl border border-white/[.07] bg-[#06152C] px-4 py-2.5">
+            <div className="flex items-center justify-between gap-3 px-1 pb-1 sm:px-2 lg:hidden">
+              <Link to="/" aria-label="Emet home" className="flex items-center gap-2.5">
+                <img src="/emet-official-icon.svg" alt="" className="h-8 w-8" />
+                <img src="/emet-wordmark-geometric-white.svg" alt="Emet" className="h-6 w-auto" />
+              </Link>
+              <div className="flex items-center gap-1">
+                <Link to="/explore" aria-label="Search Emet" className="grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiSearch className="h-[19px] w-[19px]" /></Link>
+                <Link to="/notifications" aria-label="Notifications" className="relative grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiBell className="h-[19px] w-[19px]" /></Link>
+                <Link to={user ? '/profile' : '/auth'} aria-label={user ? 'Profile' : 'Sign in'} className="rounded-full ring-1 ring-white/15"><Avatar src={user?.avatarUrl} name={user?.name} size="h-8 w-8" /></Link>
+              </div>
+            </div>
+
+            <div className="hidden items-center gap-3 rounded-2xl border border-[#243D77]/60 bg-[#06152C]/90 px-4 py-2.5 shadow-[0_0_28px_rgba(41,70,177,.08)] lg:flex">
               <FiSearch className="text-white/45" />
               <Link to="/explore" className="flex-1 text-xs text-white/35">Search Emet...</Link>
               <div className="hidden items-center gap-2 sm:flex">
@@ -319,9 +331,9 @@ export default function Home() {
             <div className="lg:hidden"><StoriesRow /></div>
             <Compose user={user} />
             <div className="hidden lg:block"><StoriesRow /></div>
-            <HeroCard posts={posts} />
+            <div className="hidden lg:block"><HeroCard posts={posts} /></div>
 
-            <div className="overflow-hidden rounded-2xl border border-white/[.07] bg-[#06152C]">
+            <div className="hidden overflow-hidden rounded-2xl border border-white/[.07] bg-[#06152C] lg:block">
               <div className="grid grid-cols-3">
                 {tabs.map((item) => (
                   <button key={item} type="button" onClick={() => setTab(item)} className={`relative py-3.5 text-xs font-bold ${tab === item ? 'text-white' : 'text-white/35 hover:text-white/70'}`}>
@@ -350,7 +362,7 @@ export default function Home() {
             </div>
           </section>
 
-          <aside className="hidden lg:block">
+          <aside className="hidden xl:block">
             <div className="sticky top-5 space-y-3">
               <CommunityRail communities={communities} onJoin={joinCommunity} busyId={busyCommunity} />
               <SuggestedPeople posts={posts} />

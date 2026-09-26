@@ -1,11 +1,12 @@
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { FiMoreHorizontal, FiX, FiHome, FiMic, FiHeart, FiPhone, FiSearch, FiUser, FiLogIn, FiBell, FiVideo, FiMessageCircle, FiCamera, FiUsers, FiBookmark, FiHash } from 'react-icons/fi';
+import { FiMoreHorizontal, FiX, FiHome, FiMic, FiHeart, FiPhone, FiSearch, FiUser, FiLogIn, FiBell, FiVideo, FiMessageCircle, FiCamera, FiUsers, FiBookmark, FiHash, FiArrowRight } from 'react-icons/fi';
 import AIChatWidget from '../components/AIChatWidget';
 import SearchPanel from '../components/SearchPanel';
 import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
 import { getUnreadCount, onNotificationsUpdated } from '../utils/notificationStorage';
+import { fetchCommunities } from '../utils/communities';
 import Button from '../components/ui/Button';
 const navItems = [
   { name: 'Home', path: '/', icon: FiHome }, { name: 'Explore', path: '/explore', icon: FiSearch }, { name: 'Communities', path: '/communities', icon: FiUsers }, { name: 'Messages', path: '/messages', icon: FiMessageCircle }, { name: 'Notifications', path: '/notifications', icon: FiBell }, { name: 'Bookmarks', path: '/bookmarks', icon: FiBookmark }, { name: 'Profile', path: '/profile', icon: FiUser },
@@ -15,32 +16,42 @@ function FeedTabStyle() { return <style>{`main.feed-page .sticky.top-0 > div{gap
 export default function Layout({ children }) {
   const [searchOpen,setSearchOpen]=useState(false);
   const [unreadCount,setUnreadCount]=useState(0);
+  const [communities,setCommunities]=useState([]);
   const {user}=useAuth();
   const location=useLocation();
   const isFeed=location.pathname==='/feed'; const isHome=location.pathname==='/';
   useEffect(()=>{const refresh=()=>setUnreadCount(getUnreadCount());refresh();return onNotificationsUpdated(refresh);},[]);
-    return <div className="min-h-screen text-white" style={{background:'#0B0F14'}}>
+  useEffect(()=>{if(!isHome)return undefined;let active=true;fetchCommunities().then(items=>{if(active)setCommunities(items);}).catch(()=>{});return()=>{active=false;};},[isHome]);
+    return <div className="min-h-screen text-white" style={{background:'radial-gradient(ellipse at 82% 0%, rgba(30,54,151,.18), transparent 36%), radial-gradient(ellipse at 46% 0%, rgba(79,27,150,.12), transparent 33%), #030A18'}}>
     {!isHome&&<header className="sticky top-0 z-40 border-b border-white/[0.07]" style={{background:'rgba(11,15,20,0.94)',backdropFilter:'blur(20px)'}}>
       <div className="flex items-center justify-between px-4 py-2.5 sm:px-5">
         <Link to="/" className="flex items-center lg:hidden"><img src="/emet-official-icon.svg" alt="Emet" className="h-8 w-8"/></Link>
         <div className="ml-auto flex items-center gap-1"><Button variant="custom" size="none" onClick={()=>setSearchOpen(true)} className="rounded-lg p-2 text-white/50 hover:text-white hover:bg-white/5" aria-label="Search"><FiSearch className="h-4 w-4"/></Button>{user&&<Link to="/notifications" className="rounded-lg p-2 text-white/50 hover:text-white lg:hidden"><FiBell className="h-4 w-4"/></Link>}{user?<Link to="/profile" className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden">Profile</Link>:<Link to="/auth" className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden">Sign In</Link>}</div>
       </div>
     </header>}
-    <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-[280px] flex-col border-r border-white/[0.07] bg-[#0B0F14] px-0 py-6">
-      <div className="flex shrink-0 items-center px-6 mb-8">
-        <Link to="/" aria-label="Emet home"><img src="/emet-wordmark-geometric-white.svg" alt="Emet" className="h-10 w-auto"/></Link>
+    <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-[260px] flex-col border-r border-[#253A72]/45 bg-[#030A18]/95 px-0 py-6 backdrop-blur-xl">
+      <div className="mb-8 flex shrink-0 flex-col px-6">
+        <Link to="/" aria-label="Emet home" className="flex items-center gap-2.5"><img src="/emet-official-icon.svg" alt="" className="h-10 w-10"/><img src="/emet-wordmark-geometric-white.svg" alt="Emet" className="h-8 w-auto"/></Link>
+        <p className="mt-3 pl-0.5 text-[9px] font-semibold uppercase tracking-[.28em] text-[#9FB6E8]/80">Real people. Meaningful connections.</p>
       </div>
       <nav className="min-h-0 flex-1 overflow-y-auto flex flex-col gap-1 px-3 pb-4">
         {navItems.map(item=>{const Icon=item.icon;return <NavLink key={item.path} to={item.path} end={item.path==='/'}
-          className={({isActive})=>`flex items-center gap-4 rounded-xl px-4 py-3 text-[0.95rem] font-semibold transition ${isActive?'bg-white/[.09] text-white':'text-white/55 hover:bg-white/[.05] hover:text-white'}`}>
+          className={({isActive})=>`flex items-center gap-4 rounded-xl px-4 py-3 text-[0.95rem] font-semibold transition ${isActive?'bg-gradient-to-r from-[#182F91] to-[#281370] text-white shadow-[0_0_22px_rgba(73,59,228,.2)]':'text-white/60 hover:bg-white/[.05] hover:text-white'}`}>
           <Icon className="h-5 w-5 shrink-0"/>{item.name}
         </NavLink>;})}
       </nav>
-      <Link to={user?'/create':'/auth'} className="mx-4 mt-auto shrink-0 rounded-xl bg-[#11161D] border border-white/10 px-5 py-3 text-center text-sm font-semibold text-white shadow-sm hover:bg-[#171D25]">
-        {user?'Post':'Sign In'}
+      {isHome&&<section className="mx-4 mb-4 hidden shrink-0 xl:block">
+        <div className="mb-2 flex items-center justify-between px-1"><h2 className="text-xs font-bold text-white/85">Your Communities</h2><Link to="/communities" className="text-[10px] font-semibold text-[#91AFFF] hover:text-white">See all</Link></div>
+        <div className="space-y-1">
+          {communities.filter(item=>item.joined).slice(0,5).map((item,index)=><Link key={item.id} to={`/communities/${item.id}`} className="flex items-center gap-2.5 rounded-xl px-2 py-2 hover:bg-white/[.05]"><span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br ${['from-fuchsia-500 to-indigo-600','from-cyan-400 to-blue-600','from-violet-500 to-purple-700','from-sky-400 to-indigo-600','from-blue-500 to-violet-600'][index]} text-white`}><FiUsers className="h-4 w-4"/></span><span className="min-w-0"><span className="block truncate text-[11px] font-semibold text-white/90">{item.name}</span><span className="block text-[9px] text-white/40">{Number(item.member_count||0).toLocaleString()} members</span></span></Link>)}
+          {!communities.some(item=>item.joined)&&<p className="px-1 py-2 text-[10px] leading-4 text-white/40">Join a community to see it here.</p>}
+        </div>
+      </section>}
+      <Link to="/communities" className="mx-4 mt-auto flex shrink-0 items-center justify-between rounded-2xl border border-[#445FDB]/45 bg-gradient-to-br from-[#102989] via-[#221884] to-[#49118E] px-4 py-4 text-sm font-bold text-white shadow-[0_12px_35px_rgba(31,35,145,.22)] transition hover:brightness-110">
+        <span><span className="block">Build your community</span><span className="mt-1 block text-[11px] font-normal text-white/65">Find people who matter to you</span></span><FiArrowRight className="h-4 w-4 shrink-0" />
       </Link>
     </aside>
-    <div className="lg:pl-[280px]">
+    <div className="lg:pl-[260px]">
       <div className="min-w-0">
         {isFeed&&<FeedSocialChrome user={user}/>} {isFeed&&<FeedTabStyle/>}
         <main className={isFeed?'feed-page':undefined}>{children}</main>
