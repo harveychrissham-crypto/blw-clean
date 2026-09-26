@@ -172,12 +172,12 @@ export default function Auth() {
                 <form onSubmit={handleSubmit}>
                   <label className="flex h-[60px] items-center gap-3 rounded-xl border border-[#2456a8] bg-[#06152d]/65 px-4 focus-within:border-[#27baff]">
                     <FiMail className="h-5 w-5 shrink-0 text-[#a9c7f5]" />
-                    <input autoFocus type={mode === 'login' ? 'text' : 'email'} value={form.email} onChange={(event) => update('email', event.target.value)} placeholder={mode === 'login' ? 'Email or username' : 'Email address'} className="h-full min-w-0 flex-1 bg-transparent text-[15px] text-white outline-none placeholder:text-[#a9c7f5]/70" />
+                    <input autoFocus type={mode === 'login' ? 'text' : 'email'} value={form.email} onChange={(event) => update('email', event.target.value)} placeholder={mode === 'login' ? 'Email or username' : 'Email address'} className="auth-card-input h-full min-w-0 flex-1 !border-0 !bg-transparent !rounded-none !shadow-none px-0 text-[15px] text-white outline-none placeholder:text-[#a9c7f5]/70" />
                   </label>
                   {mode === 'login' && <>
                     <label className="mt-3 flex h-[60px] items-center gap-3 rounded-xl border border-[#2456a8] bg-[#06152d]/65 px-4 focus-within:border-[#27baff]">
                       <FiLock className="h-5 w-5 shrink-0 text-[#a9c7f5]" />
-                      <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={(event) => update('password', event.target.value)} placeholder="Password" className="h-full min-w-0 flex-1 bg-transparent text-[15px] text-white outline-none placeholder:text-[#a9c7f5]/70" />
+                      <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={(event) => update('password', event.target.value)} placeholder="Password" className="auth-card-input h-full min-w-0 flex-1 !border-0 !bg-transparent !rounded-none !shadow-none px-0 text-[15px] text-white outline-none placeholder:text-[#a9c7f5]/70" />
                       <button type="button" onClick={() => setShowPassword((current) => !current)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="text-[#a9c7f5]">{showPassword ? <FiEyeOff /> : <FiEye />}</button>
                     </label>
                     <div className="mt-4 flex items-center justify-between gap-3 text-sm">
