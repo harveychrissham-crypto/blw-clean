@@ -51,7 +51,7 @@ export default function Profile() {
   useEffect(() => { let alive = true; load().catch(() => {}); return () => { alive = false; }; }, [targetEmail]);
 
   if (!user && !isPublic) {
-    return <main className="grid min-h-[70vh] place-items-center bg-[#0B0F14] px-6 text-center text-white"><div><h1 className="text-xl font-bold">Sign in to view your profile</h1><p className="mt-2 text-sm text-white/45">Your profile, posts and connections live here.</p><button onClick={() => navigate('/auth')} className="mt-5 rounded-xl bg-[#1D9BF0] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#1A8CD8]">Sign in</button></div></main>;
+    return <main className="grid min-h-[70vh] place-items-center bg-[#0B0F14] px-6 text-center text-white"><div><h1 className="text-xl font-bold">Sign in to view your profile</h1><p className="mt-2 text-sm text-white/45">Your profile, posts and connections live here.</p><button onClick={() => navigate('/auth')} className="mt-5 rounded-xl bg-white text-[#0B0F14] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-white/90">Sign in</button></div></main>;
   }
 
   const name = profile?.name || user?.name || targetEmail.split('@')[0] || 'Emet member';
@@ -112,7 +112,7 @@ export default function Profile() {
               </div>
             </div>
             <div className="shrink-0">
-              {isPublic ? <button onClick={doFollow} disabled={followBusy} className={following ? 'rounded-xl border border-white/15 bg-white/[.05] px-5 py-2.5 text-sm font-semibold hover:border-[#1D9BF0]/40 hover:bg-white/[.08]' : 'rounded-xl bg-[#1D9BF0] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#1A8CD8]'}>{followBusy ? '…' : following ? 'Following' : 'Follow'}</button> : <button onClick={() => setEditing(true)} className="rounded-xl border border-white/15 px-5 py-2.5 text-sm font-semibold hover:border-[#1D9BF0]/40 hover:bg-white/[.05]"><FiEdit3 className="mr-2 inline" />Edit profile</button>}
+              {isPublic ? <button onClick={doFollow} disabled={followBusy} className={following ? 'rounded-xl border border-white/15 bg-white/[.05] px-5 py-2.5 text-sm font-semibold hover:border-[#1D9BF0]/40 hover:bg-white/[.08]' : 'rounded-xl bg-white text-[#0B0F14] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-white/90'}>{followBusy ? '…' : following ? 'Following' : 'Follow'}</button> : <button onClick={() => setEditing(true)} className="rounded-xl border border-white/15 px-5 py-2.5 text-sm font-semibold hover:border-[#1D9BF0]/40 hover:bg-white/[.05]"><FiEdit3 className="mr-2 inline" />Edit profile</button>}
             </div>
           </div>
           <div className="mt-5 flex flex-wrap gap-5 text-sm"><span><b>{profile?.followingCount || 0}</b> <span className="text-white/45">Following</span></span><span><b>{profile?.followerCount || 0}</b> <span className="text-white/45">Followers</span></span><span><b>{profile?.postCount || posts.length}</b> <span className="text-white/45">Posts</span></span></div>
@@ -120,10 +120,10 @@ export default function Profile() {
       </section>
 
       <nav className="sticky top-[57px] z-20 border-b border-white/10 bg-[#0B0F14]/95">
-        <div className="grid grid-cols-4">{TABS.map(t => <button key={t} onClick={() => setTab(t)} className="relative py-4 text-sm font-bold text-white/45 hover:text-white">{t}{tab === t && <span className="absolute inset-x-1/3 bottom-0 h-1 rounded-full bg-[#1D9BF0]" />}</button>)}</div>
+        <div className="grid grid-cols-4">{TABS.map(t => <button key={t} onClick={() => setTab(t)} className="relative py-4 text-sm font-bold text-white/45 hover:text-white">{t}{tab === t && <span className="absolute inset-x-1/3 bottom-0 h-1 rounded-full bg-white text-[#0B0F14]" />}</button>)}</div>
       </nav>
 
-      {error && <div className="mx-5 mt-4 rounded-xl border border-[#1D9BF0]/30 bg-[#1D9BF0]/10 p-3 text-sm text-white">{error}</div>}
+      {error && <div className="mx-5 mt-4 rounded-xl border border-[#1D9BF0]/30 bg-white text-[#0B0F14]/10 p-3 text-sm text-white">{error}</div>}
       <section className="p-4 sm:p-6">
         {tab === 'Replies' ? <div className="rounded-2xl border border-white/10 bg-white/[.02] p-8 text-center text-sm text-white/45"><FiMessageCircle className="mx-auto mb-3 h-7 w-7" />Replies are coming from your conversations.</div> : visiblePosts.length ? <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{visiblePosts.map(post => <button key={post.id} onClick={() => navigate('/post/' + encodeURIComponent(post.id))} className="group relative aspect-square overflow-hidden rounded-xl border border-white/10 bg-white/[.03] text-left">{post.mediaUrl ? <img src={post.mediaUrl} alt="" className="h-full w-full object-cover transition group-hover:scale-105" /> : <div className="flex h-full flex-col justify-end p-4"><p className="line-clamp-6 text-sm font-semibold text-white/80">{post.body || post.title || 'Post'}</p></div>}{post.videoId && <span className="absolute right-2 top-2 rounded-full bg-black/60 p-2"><FiVideo /></span>}</button>)}</div> : <div className="py-20 text-center text-sm text-white/40"><FiGrid className="mx-auto mb-3 h-8 w-8" />Nothing here yet.</div>}
       </section>
@@ -141,7 +141,7 @@ function EditProfileModal({ open, draft, setDraft, saving, onClose, onSave }) {
     <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/10 bg-[#0B0F14] p-5 shadow-2xl" onClick={e => e.stopPropagation()}>
       <div className="flex items-center justify-between"><h2 className="text-lg font-black">Edit profile</h2><button onClick={onClose} className="rounded-xl px-3 py-1 text-white/50 hover:bg-white/[.06]">✕</button></div>
       <div className="mt-5 space-y-4">{field('name','Name','Your name')}{field('username','Username','your_username')}{field('bio','Bio','Tell people about yourself')}{field('location','Location','City or region')}{field('website','Website','https://example.com')}{field('pronouns','Pronouns','Optional')}{field('avatarUrl','Profile photo URL','https://…')}{field('coverUrl','Cover photo URL','https://…')}</div>
-      <div className="mt-6 flex justify-end gap-2"><button onClick={onClose} disabled={saving} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white/60 hover:bg-white/[.05]">Cancel</button><button onClick={onSave} disabled={saving} className="rounded-xl bg-[#1D9BF0] px-5 py-2.5 text-sm font-semibold shadow-sm hover:bg-[#1A8CD8]">{saving ? 'Saving…' : 'Save'}</button></div>
+      <div className="mt-6 flex justify-end gap-2"><button onClick={onClose} disabled={saving} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white/60 hover:bg-white/[.05]">Cancel</button><button onClick={onSave} disabled={saving} className="rounded-xl bg-white text-[#0B0F14] px-5 py-2.5 text-sm font-semibold shadow-sm hover:bg-white/90">{saving ? 'Saving…' : 'Save'}</button></div>
     </div>
   </div>;
 }
