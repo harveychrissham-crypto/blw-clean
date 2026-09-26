@@ -147,8 +147,8 @@ export default function Auth() {
       <div className="relative z-10 mx-auto grid min-h-screen max-w-[1800px] grid-cols-1 lg:grid-cols-[minmax(440px,38%)_1fr]">
         <section className="relative flex min-h-screen flex-col px-6 pb-10 pt-5 sm:px-10 lg:px-11 lg:pt-2">
           <Link to="/" aria-label="Emet home" className="mb-4 flex items-center gap-2 lg:hidden">
-            <img src="/emet-logo.png" alt="" className="h-10 w-10" />
-            <img src="/emet-wordmark-geometric-white.svg" alt="Emet" className="h-auto w-[112px]" />
+            <img src="/emet-logo.png" alt="" className="h-12 w-12" />
+            <span role="img" aria-label="Emet" className="emet-wordmark" />
           </Link>
           <h1 className="max-w-[600px] text-[52px] font-extrabold leading-[.98] tracking-[-.045em] sm:text-[68px] lg:mt-2 lg:text-[clamp(64px,6.1vw,112px)]">
             {mode === 'login' ? <>Happening<br />now.</> : mode === 'details' ? <>Join<br />Emet.</> : <>Welcome<br />to Emet.</>}
@@ -212,7 +212,7 @@ export default function Auth() {
         </section>
 
         <aside className="relative hidden min-h-screen overflow-hidden lg:block" aria-label="Emet app information">
-          <svg className="absolute left-1/2 top-[43%] w-[86%] max-w-[1100px] -translate-x-1/2 -translate-y-1/2" viewBox="0 0 112 24" aria-hidden="true" fill="none" stroke="rgba(212,224,255,.24)" strokeWidth=".42">
+          <svg className="emet-hero-wordmark absolute left-1/2 top-[43%] w-[86%] max-w-[1100px] -translate-x-1/2 -translate-y-1/2" viewBox="0 0 112 24" aria-hidden="true" fill="none" stroke="url(#emetHeroWordmarkGradient)" strokeOpa<defs><linearGradient id="emetHeroWordmarkGradient" x1="0" y1="0" x2="112" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#28c7d8"/><stop offset=".52" stop-color="#5782f5"/><stop offset="1" stop-color="#a557dd"/><animateTransform attributeName="gradientTransform" type="translate" values="-112 0;112 0;-112 0" dur="14s" repeatCount="indefinite"/></linearGradient></defs>city=".72" strokeWidth=".42">
             <rect x="6" y="3" width="18" height="3.5" rx=".8"/><rect x="6" y="9.25" width="18" height="3.5" rx=".8"/><rect x="6" y="15.5" width="18" height="3.5" rx=".8"/>
             <path d="M31 19V3h4.5L43 10.5 50.5 3H55v16h-4V9.5L43 18l-8-8.5V19z"/>
             <rect x="61" y="3" width="18" height="3.5" rx=".8"/><rect x="61" y="9.25" width="18" height="3.5" rx=".8"/><rect x="61" y="15.5" width="18" height="3.5" rx=".8"/>
