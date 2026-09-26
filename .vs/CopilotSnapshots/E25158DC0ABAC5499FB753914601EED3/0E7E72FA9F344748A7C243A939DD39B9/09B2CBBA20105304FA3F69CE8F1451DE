@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiAlertCircle, FiBookmark, FiHeart, FiLoader, FiMessageCircle, FiMoreHorizontal, FiSend, FiShare2, FiRepeat, FiMessageSquare, FiVolume2, FiVolumeX, FiWifiOff, FiX, FiFlag, FiLink2, FiTrash2 } from 'react-icons/fi';
@@ -288,7 +288,7 @@ export default function Feed(){
        <div className="absolute inset-0 z-50 pointer-events-none">
          <div className="pointer-events-auto absolute left-4 top-4 flex items-center gap-3">
            <Link to="/dashboard" className="h-10 w-10 overflow-hidden rounded-full border border-white/20 bg-black/40 backdrop-blur-xl" aria-label="Profile">
-            <img src={user?.avatar_url || user?.avatarUrl || '/emet-official-icon.svg'} alt="" className="h-full w-full object-cover" />
+             <img src={user?.avatar_url || user?.avatarUrl || '/logo.png'} alt="" className="h-full w-full object-cover" />
            </Link>
            <span className="hidden text-sm font-bold sm:block">Feed</span>
          </div>
