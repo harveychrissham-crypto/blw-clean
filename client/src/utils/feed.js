@@ -50,6 +50,7 @@ function normalizePost(row = {}) {
     saveCount: Number(row.save_count ?? row.saveCount ?? 0),
     repostCount: Number(row.repost_count ?? row.repostCount ?? 0),
     reposted: Boolean(row.reposted),
+    quotedPost: row.quoted_post_id ? { id: `p:${row.quoted_post_id}`, title: row.quoted_title || '', author: row.quoted_author || '', body: row.quoted_body || '', mediaUrl: row.quoted_media_url || '', mediaType: row.quoted_media_type || '', youtubeUrl: row.quoted_youtube_url || '' } : null,
     liked: Boolean(row.liked),
     saved: Boolean(row.saved),
     time: row.time || formatFeedTime(row.created_at),
@@ -432,6 +433,13 @@ async function postAction(id, action) {
 export const toggleLike = (id) => postAction(id, 'like');
 export const toggleSave = (id) => postAction(id, 'save');
 export const toggleRepost = (id) => postAction(id, 'repost');
+export async function createQuote(id, body) {
+  const key = String(id ?? '').trim();
+  const response = await apiFetch(`/api/feed/posts/${encodeURIComponent(key)}/quote`, { method: 'POST', body: JSON.stringify({ body }) });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result?.error || 'Unable to publish your quote.');
+  return normalizePost(result?.post || {});
+}
 
 export async function searchAccounts(query = '') {
   const params = query.trim() ? `?q=${encodeURIComponent(query.trim())}` : '';
