@@ -173,12 +173,12 @@ export default function Create() {
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-white/[0.07] bg-[#0d0c18]/90 px-3 backdrop-blur-2xl">
           <button type="button" onClick={back} className="grid h-10 w-10 place-items-center rounded-full text-white/75 transition hover:bg-white/[0.07]" aria-label="Back"><FiArrowLeft className="h-5 w-5" /></button>
           <div className="text-center"><h1 className="text-[15px] font-bold tracking-tight">Create</h1><p className="text-[9px] uppercase tracking-[0.18em] text-white/30">Share with the community</p></div>
-          {uploading ? <button type="button" onClick={cancelUpload} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-full border border-red-400/20 bg-red-400/10 px-3.5 py-2 text-xs font-bold text-red-200 transition hover:bg-red-400/20"><FiX /> Cancel</button> : <button type="button" onClick={publish} disabled={!file || published} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-ink-950 transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35"><FiCheck /> Share</button>}
+          {uploading ? <button type="button" onClick={cancelUpload} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-full border border-red-400/20 bg-red-400/10 px-3.5 py-2 text-xs font-bold text-red-200 transition hover:bg-red-400/20"><FiX /> Cancel</button> : <button type="button" onClick={publish} disabled={(type !== 'text' && !file) || (!file && !caption.trim()) || published} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-ink-950 transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35"><FiCheck /> Share</button>}
         </header>
 
-        <div className="grid grid-cols-2 border-b border-white/[0.07] bg-white/[0.015] p-1.5">
+        <div className="grid grid-cols-3 border-b border-white/[0.07] bg-white/[0.015] p-1.5">
           <button type="button" onClick={() => selectType('post')} className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition ${type === 'post' ? 'bg-white text-ink-950 shadow-lg' : 'text-white/40 hover:bg-white/[0.05] hover:text-white/70'}`}><FiImage /> Post</button>
-          <button type="button" onClick={() => selectType('post')} className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition ${type === 'text' ? 'bg-white text-ink-950 shadow-lg' : 'text-white/40 hover:bg-white/[0.05] hover:text-white/70'}`}><FiSend /> Text</button>
+          <button type="button" onClick={() => selectType('text')} className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition ${type === 'text' ? 'bg-white text-ink-950 shadow-lg' : 'text-white/40 hover:bg-white/[0.05] hover:text-white/70'}`}><FiSend /> Text</button>
           <button type="button" onClick={() => selectType('reel')} className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition ${type === 'reel' ? 'bg-white text-ink-950 shadow-lg' : 'text-white/40 hover:bg-white/[0.05] hover:text-white/70'}`}><FiFilm /> Reel</button>
         </div>
 
@@ -205,7 +205,7 @@ export default function Create() {
             {uploading && isVideo && <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.035] p-3.5 text-xs"><div className="flex items-center gap-3"><FiLoader className="h-4 w-4 shrink-0 animate-spin text-white/50" /><span className="text-white/60">{uploadStage || 'Uploading video…'}</span></div><button type="button" onClick={cancelUpload} className="mt-3 w-full rounded-xl border border-red-400/20 bg-red-400/10 py-2 text-xs font-bold text-red-200 transition hover:bg-red-400/20">Cancel upload</button></div>}
           </section>
 
-          <section className={`border-t border-white/[0.07] p-4 sm:p-6 md:border-t-0 ${type === 'text' ? 'md:col-span-2' : ''}`}
+          <section className={`border-t border-white/[0.07] p-4 sm:p-6 md:border-t-0 ${type === 'text' ? 'md:col-span-2' : ''}`}>
             <div className="mb-4 flex items-center gap-3">
               <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-full border border-white/10 bg-white/[0.07] text-xs font-bold">{user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" /> : (user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()}</div>
               <div className="min-w-0"><p className="truncate text-sm font-bold">{user?.name || 'Your profile'}</p><p className="text-[11px] text-white/35">Public community post</p></div>
