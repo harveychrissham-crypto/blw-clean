@@ -128,16 +128,42 @@ export async function handleFeed(request, env, url) {
         return json({ post:{...post,id:`p:${post.id}`,source_type:'user',is_user_post:true,is_owner:true,youtube_id:youtubeId(post.youtube_url),like_count:0,save_count:0,comment_count:0,view_count:0,liked:false,saved:false} },201,headers);
       } finally { await client.end().catch(()=>{}); }
     }
+    if (url.pathname === '/api/feed/profile' && request.method === 'PATCH') {
+      if (!email) return json({ error:'Sign in required to update your profile.' },401,headers);
+      const body = await request.json().catch(() => ({}));
+      const clean = (value,max) => typeof value === 'string' ? value.trim().slice(0,max) : '';
+      const name = clean(body.name,80);
+      const username = clean(body.username,30).replace(/^@/,'');
+      const bio = clean(body.bio,500);
+      const location = clean(body.location,100);
+      const website = clean(body.website,300);
+      const pronouns = clean(body.pronouns,50);
+      const avatarUrl = clean(body.avatarUrl,1000);
+      const coverUrl = clean(body.coverUrl,1000);
+      if (!name) return json({ error:'Name is required.' },400,headers);
+      if (username && !/^[A-Za-z0-9_]{2,30}$/.test(username)) return json({ error:'Username must be 2–30 letters, numbers or underscores.' },400,headers);
+      const client = await getDb(env);
+      try {
+        if (username) {
+          const taken = await client.query('SELECT 1 FROM public.users WHERE LOWER(username)=LOWER($1) AND LOWER(email)<>LOWER($2) LIMIT 1',[username,email]);
+          if (taken.rows.length) return json({ error:'That username is already taken.' },409,headers);
+        }
+        const result = await client.query(`UPDATE public.users SET full_name=$1,username=$2,bio=$3,location=$4,website=$5,pronouns=$6,avatar_url=$7,cover_url=$8 WHERE LOWER(email)=LOWER($9) RETURNING full_name,email,username,bio,location,website,pronouns,avatar_url,cover_url,chapter,title`,[name,username||null,bio||null,location||null,website||null,pronouns||null,avatarUrl||null,coverUrl||null,email]);
+        if (!result.rows.length) return json({ error:'Profile not found.' },404,headers);
+        const row=result.rows[0];
+        return json({ user:{ name:row.full_name||row.email.split('@')[0],email:row.email,username:row.username||'',bio:row.bio||'',location:row.location||'',website:row.website||'',pronouns:row.pronouns||'',avatarUrl:row.avatar_url||'',coverUrl:row.cover_url||'',chapter:row.chapter||'',title:row.title||'' } },200,headers);
+      } finally { await client.end().catch(()=>{}); }
+    }
     const profileMatch = url.pathname.match(/^\/api\/feed\/users\/([^/]+)$/);
     if (profileMatch && request.method === 'GET') {
       const profileEmail = decodeURIComponent(profileMatch[1] || '').trim().toLowerCase();
       if (!profileEmail || !profileEmail.includes('@')) return json({ error:'Invalid member.' },400,headers);
       const client = await getDb(env);
       try {
-        const result = await client.query(`SELECT u.full_name,u.email,u.avatar_url,u.chapter,u.title, (SELECT COUNT(*)::int FROM public.feed_posts p WHERE LOWER(p.user_email)=LOWER(u.email)) AS post_count, (SELECT COUNT(*)::int FROM public.feed_user_follows f WHERE LOWER(f.followed_email)=LOWER(u.email)) AS follower_count, (SELECT COUNT(*)::int FROM public.feed_user_follows f WHERE LOWER(f.follower_email)=LOWER(u.email)) AS following_count, CASE WHEN $2 <> '' AND EXISTS(SELECT 1 FROM public.feed_user_follows f WHERE LOWER(f.follower_email)=LOWER($2) AND LOWER(f.followed_email)=LOWER(u.email)) THEN true ELSE false END AS following FROM public.users u WHERE LOWER(u.email)=LOWER($1) LIMIT 1`,[profileEmail,email || '']);
+        const result = await client.query(`SELECT u.full_name,u.email,u.avatar_url,u.cover_url,u.username,u.bio,u.location,u.website,u.pronouns,u.chapter,u.title, (SELECT COUNT(*)::int FROM public.feed_posts p WHERE LOWER(p.user_email)=LOWER(u.email)) AS post_count, (SELECT COUNT(*)::int FROM public.feed_user_follows f WHERE LOWER(f.followed_email)=LOWER(u.email)) AS follower_count, (SELECT COUNT(*)::int FROM public.feed_user_follows f WHERE LOWER(f.follower_email)=LOWER(u.email)) AS following_count, CASE WHEN $2 <> '' AND EXISTS(SELECT 1 FROM public.feed_user_follows f WHERE LOWER(f.follower_email)=LOWER($2) AND LOWER(f.followed_email)=LOWER(u.email)) THEN true ELSE false END AS following FROM public.users u WHERE LOWER(u.email)=LOWER($1) LIMIT 1`,[profileEmail,email || '']);
         if (!result.rows.length) return json({ error:'Member not found.' },404,headers);
         const row=result.rows[0];
-        return json({ user:{ name:row.full_name || row.email.split('@')[0], email:row.email, avatarUrl:row.avatar_url || '', chapter:row.chapter || '', title:row.title || '', postCount:Number(row.post_count || 0), followerCount:Number(row.follower_count || 0), followingCount:Number(row.following_count || 0), following:Boolean(row.following) } },200,headers);
+        return json({ user:{ name:row.full_name || row.email.split('@')[0], email:row.email, username:row.username || '', bio:row.bio || '', location:row.location || '', website:row.website || '', pronouns:row.pronouns || '', avatarUrl:row.avatar_url || '', coverUrl:row.cover_url || '', chapter:row.chapter || '', title:row.title || '', postCount:Number(row.post_count || 0), followerCount:Number(row.follower_count || 0), followingCount:Number(row.following_count || 0), following:Boolean(row.following) } },200,headers);
       } finally { await client.end().catch(()=>{}); }
     }
     const followMatch = url.pathname.match(/^\/api\/feed\/users\/([^/]+)\/follow$/);

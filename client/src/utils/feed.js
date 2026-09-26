@@ -468,6 +468,13 @@ export async function fetchUserProfile(email) {
   return result?.user || null;
 }
 
+export async function updateUserProfile(profile = {}) {
+  const response = await apiFetch('/api/feed/profile', { method: 'PATCH', body: JSON.stringify(profile) });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result?.error || 'Unable to update your profile.');
+  return result?.user || null;
+}
+
 export async function toggleFollow(email) {
   const target = String(email || '').trim();
   if (!target) throw new Error('Member not found.');
