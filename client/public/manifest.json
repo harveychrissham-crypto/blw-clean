@@ -5,10 +5,10 @@
   "display": "standalone",
   "background_color": "#0B0F14",
   "theme_color": "#0B0F14",
-  "description": "Faith • Community • Conversation",
+  "description": "EMET — social connection, community, and conversation.",
   "icons": [
     {
-      "src": "/emet-approved-mark.svg",
+      "src": "/emet-app-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml"
     }
