@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { FiArrowLeft, FiHash, FiImage, FiSearch, FiUsers, FiX } from 'react-icons/fi';
-import { fetchFeed, searchAccounts, toggleFollow } from '../utils/feed';
+import { fetchFeed, fetchTrendingTopics, searchAccounts, toggleFollow } from '../utils/feed';
 import { Skeleton } from '../components/ui/Skeleton';
 
 const TABS = ['For you', 'Posts', 'People', 'Media'];
@@ -30,6 +30,8 @@ export default function Explore() {
   const [loading, setLoading] = useState(true);
   const [accountsLoading, setAccountsLoading] = useState(false);
   const [followBusy, setFollowBusy] = useState('');
+  const [trending, setTrending] = useState([]);
+  const [trendingLoading, setTrendingLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
@@ -87,6 +89,15 @@ export default function Explore() {
       setFollowBusy('');
     }
   };
+
+  useEffect(() => {
+    let active = true;
+    fetchTrendingTopics()
+      .then((items) => { if (active) setTrending(items); })
+      .catch(() => { if (active) setTrending([]); })
+      .finally(() => { if (active) setTrendingLoading(false); });
+    return () => { active = false; };
+  }, []);
 
   const normalizedQuery = query.trim().toLowerCase();
 
@@ -235,19 +246,29 @@ export default function Explore() {
 
         {tab !== 'People' && !query.trim() && (
           <section className="mt-8">
-            <div className="mb-3 flex items-center gap-2 text-sm font-bold text-white"><FiHash /> Trending on Emet</div>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {trends.map((trend) => (
-                <button key={trend.name} type="button" onClick={() => updateQuery(trend.name)} className="rounded-2xl border border-white/[.07] bg-white/[.025] px-4 py-3 text-left transition hover:bg-white/[.05]">
-                  <p className="text-[11px] text-white/35">Trending topic</p>
-                  <p className="mt-1 text-sm font-bold text-white">{trend.name}</p>
-                  <p className="mt-1 text-[11px] text-white/35">{trend.count ? `${trend.count} posts` : 'Explore the conversation'}</p>
-                </button>
-              ))}
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-bold text-white"><FiHash /> Trending on Emet</div>
+              <Link to="/topics" className="text-xs font-semibold text-[#60A5FA] hover:text-white">See all</Link>
             </div>
+            {trendingLoading ? (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {Array.from({ length: 5 }).map((_, index) => <div key={index} className="h-20 animate-pulse rounded-2xl border border-white/[.07] bg-white/[.025]" />)}
+              </div>
+            ) : trending.length ? (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {trending.slice(0, 10).map((trend, index) => (
+                  <Link key={trend.slug} to={`/topics/${encodeURIComponent(trend.slug)}`} className="rounded-2xl border border-white/[.07] bg-white/[.025] px-4 py-3 text-left transition hover:bg-white/[.05]">
+                    <p className="text-[11px] text-white/35">#{index + 1} · Trending topic</p>
+                    <p className="mt-1 text-sm font-bold text-white">{trend.name || `#${trend.slug}`}</p>
+                    <p className="mt-1 text-[11px] text-white/35">{Number(trend.post_count || 0)} {Number(trend.post_count || 0) === 1 ? 'post' : 'posts'} · Last 7 days</p>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-white/[.07] bg-white/[.025] px-4 py-5 text-sm text-white/40">Trending topics will appear as people add hashtags to conversations.</div>
+            )}
           </section>
-        )}
-      </div>
+        )}      </div>
     </main>
   );
 }
