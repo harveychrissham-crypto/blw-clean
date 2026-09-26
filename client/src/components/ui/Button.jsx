@@ -15,7 +15,7 @@ const VARIANTS = {
   secondary: 'border border-white/12 bg-[#11161D] text-white hover:bg-[#171D25] hover:border-white/20 active:bg-[#0D1218] disabled:cursor-not-allowed disabled:opacity-40 disabled:border-white/10',
   ghost: 'border border-transparent text-white/75 hover:bg-white/[.06] hover:text-white active:bg-white/[.10] disabled:cursor-not-allowed disabled:opacity-40',
   danger: 'border border-red-400/30 bg-red-500/10 text-red-200 hover:bg-red-500/20 active:bg-red-500/25 disabled:cursor-not-allowed disabled:opacity-40',
-  gradient: 'bg-white text-[#0B0F14] text-white shadow-sm hover:bg-white/90 active:bg-[#1A8CD8] active:shadow-none disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none',
+  gradient: 'bg-[#E7E9EA] text-[#0B0F14] text-white shadow-sm hover:bg-[#D9DDE1] active:bg-[#1A8CD8] active:shadow-none disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none',
   link: 'text-white/80 hover:text-white font-medium',
   custom: '',
 };
