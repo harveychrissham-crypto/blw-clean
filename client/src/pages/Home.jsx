@@ -325,7 +325,7 @@ export default function Home() {
             <Link to="/profile" className={user?.avatarUrl ? 'rounded-full' : ''}><Avatar src={user?.avatarUrl} name={user?.name} size="h-8 w-8" /></Link>
           </div>
         </div>
-        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_276px]">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px] xl:grid-cols-[minmax(0,1fr)_276px]">
           <section className="min-w-0 space-y-2.5">
             <div className="flex items-center justify-between gap-3 px-1 pb-1 sm:px-2 lg:hidden">
               <Link to="/" aria-label="Emet home" className="flex items-center gap-2.5">
@@ -371,7 +371,7 @@ export default function Home() {
             </div>
           </section>
 
-          <aside className="hidden xl:block">
+          <aside className="hidden lg:block">
             <div className="sticky top-5 space-y-3">
               <CommunityRail communities={communities} onJoin={joinCommunity} busyId={busyCommunity} />
               <SuggestedPeople posts={posts} />
