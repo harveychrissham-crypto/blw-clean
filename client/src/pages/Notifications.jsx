@@ -11,24 +11,6 @@ import {
 } from 'react-icons/fi';
 import { apiFetch } from '../config/api';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  FiAtSign,
-  FiBell,
-  FiCheck,
-  FiHeart,
-  FiMessageCircle,
-  FiRepeat,
-  FiUserPlus,
-} from 'react-icons/fi';
-import {
-  loadNotifications,
-  markAllAsRead,
-  markAsRead,
-  onNotificationsUpdated,
-} from '../utils/notificationStorage';
-
 const formatTimestamp = (iso) => {
   try {
     const date = new Date(iso);
