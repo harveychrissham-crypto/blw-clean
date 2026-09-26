@@ -164,6 +164,13 @@ if (typeof window !== 'undefined') {
 
 export async function fetchTopics() { const response = await apiFetch('/api/topics'); const result = await response.json().catch(() => ({})); if (!response.ok) throw new Error(result?.error || 'Unable to load topics.'); return Array.isArray(result?.topics) ? result.topics : []; }
 
+export async function fetchTrendingTopics() {
+  const response = await apiFetch('/api/topics/trending');
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result?.error || 'Unable to load trending topics.');
+  return Array.isArray(result?.topics) ? result.topics : [];
+}
+
 export async function fetchSavedFeed({ limit = 30, offset = 0 } = {}) {
   const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
   const response = await apiFetch(`/api/feed/saved?${params.toString()}`, { method: 'GET' });
