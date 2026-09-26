@@ -23,6 +23,7 @@ import { fetchCommunities, toggleCommunityMembership } from '../utils/communitie
 import { shareContent } from '../utils/share';
 import StoriesRow from '../components/StoriesRow';
 import { Skeleton } from '../components/ui/Skeleton';
+import { apiFetch } from '../config/api';
 import { getUnreadCount, onNotificationsUpdated } from '../utils/notificationStorage';
 
 const PAGE_SIZE = 20;
@@ -239,6 +240,7 @@ function PromoCard() {
 export default function Home() {
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [tab, setTab] = useState('For You');
   const [posts, setPosts] = useState([]);
   const [communities, setCommunities] = useState([]);
@@ -254,6 +256,23 @@ export default function Home() {
     refresh();
     return onNotificationsUpdated(refresh);
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setUnreadMessages(0);
+      return undefined;
+    }
+    let active = true;
+    apiFetch('/api/messages/conversations')
+      .then((response) => response.json().then((body) => ({ response, body })))
+      .then(({ response, body }) => {
+        if (active && response.ok) {
+          setUnreadMessages((body.conversations || []).reduce((total, conversation) => total + Number(conversation.unreadCount || 0), 0));
+        }
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [user]);
 
   const load = useCallback(async (reset = true) => {
     setLoading(true);
@@ -318,7 +337,7 @@ export default function Home() {
           <Link to="/explore" className="flex-1 text-xs text-white/35">Search Emet...</Link>
           <div className="hidden items-center gap-2 sm:flex">
             <Link to="/notifications" aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"} className="relative rounded-lg p-2 text-white/65 hover:bg-white/[.05]"><FiBell />{unreadCount > 0 && <span className="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full border border-[#07132d] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadCount > 9 ? "9+" : unreadCount}</span>}</Link>
-            <Link to="/messages" className="rounded-lg p-2 text-white/65 hover:bg-white/[.05]"><FiMessageCircle /></Link>
+            <Link to="/messages" aria-label={unreadMessages ? `Messages, ${unreadMessages} unread` : "Messages"} className="relative rounded-lg p-2 text-white/65 hover:bg-white/[.05]"><FiMessageCircle />{unreadMessages > 0 && <span className="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full border border-[#07132d] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadMessages > 9 ? "9+" : unreadMessages}</span>}</Link>
             <Link to="/profile" className="rounded-full"><Avatar src={user?.avatarUrl} name={user?.name} size="h-8 w-8" /></Link>
           </div>
         </div>
@@ -331,7 +350,7 @@ export default function Home() {
               <div className="flex items-center gap-1">
                 <Link to="/explore" aria-label="Search Emet" className="grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiSearch className="h-[19px] w-[19px]" /></Link>
                 <Link to="/notifications" aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"} className="relative grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiBell className="h-[19px] w-[19px]" />{unreadCount > 0 && <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full border border-[#07132d] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadCount > 9 ? "9+" : unreadCount}</span>}</Link>
-                <Link to="/messages" aria-label="Messages" className="grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiMessageCircle className="h-[19px] w-[19px]" /></Link>
+                <Link to="/messages" aria-label={unreadMessages ? `Messages, ${unreadMessages} unread` : "Messages"} className="relative grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiMessageCircle className="h-[19px] w-[19px]" />{unreadMessages > 0 && <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full border border-[#07132d] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadMessages > 9 ? "9+" : unreadMessages}</span>}</Link>
                 <Link to={user ? '/profile' : '/auth'} aria-label={user ? 'Profile' : 'Sign in'} className="rounded-full ring-1 ring-white/15"><Avatar src={user?.avatarUrl} name={user?.name} size="h-8 w-8" /></Link>
               </div>
             </div>
