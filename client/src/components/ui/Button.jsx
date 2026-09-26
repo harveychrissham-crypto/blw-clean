@@ -11,12 +11,12 @@ import { forwardRef } from 'react';
 // constant, or the utility silently never gets generated.
 
 const VARIANTS = {
-  primary: 'bg-[#3B82F6] text-white shadow-sm hover:bg-[#2563EB] active:bg-[#1D4ED8] active:shadow-none disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30 disabled:shadow-none',
-  secondary: 'border border-white/15 bg-white/[.05] text-white hover:bg-white/[.09] hover:border-[#3B82F6]/40 active:bg-white/[.12] disabled:cursor-not-allowed disabled:opacity-40 disabled:border-white/10',
+  primary: 'bg-[#1D9BF0] text-white shadow-sm hover:bg-[#1A8CD8] active:bg-[#1A8CD8] active:shadow-none disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30 disabled:shadow-none',
+  secondary: 'border border-white/15 bg-white/[.05] text-white hover:bg-white/[.09] hover:border-[#1D9BF0]/40 active:bg-white/[.12] disabled:cursor-not-allowed disabled:opacity-40 disabled:border-white/10',
   ghost: 'border border-white/15 text-white/80 hover:bg-white/10 hover:text-white active:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40',
   danger: 'border border-red-400/30 bg-red-500/10 text-red-200 hover:bg-red-500/20 active:bg-red-500/25 disabled:cursor-not-allowed disabled:opacity-40',
-  gradient: 'bg-[#3B82F6] text-white shadow-sm hover:bg-[#2563EB] active:bg-[#1D4ED8] active:shadow-none disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none',
-  link: 'text-[#3B82F6] hover:text-[#60A5FA] font-medium',
+  gradient: 'bg-[#1D9BF0] text-white shadow-sm hover:bg-[#1A8CD8] active:bg-[#1A8CD8] active:shadow-none disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none',
+  link: 'text-[#1D9BF0] hover:text-[#42A5F5] font-medium',
   custom: '',
 };
 
@@ -33,7 +33,7 @@ const Button = forwardRef(function Button({ variant = 'primary', size = 'md', cl
     ? { backgroundColor: 'transparent', border: 0, padding: 0, margin: 0, boxShadow: 'none', color: 'transparent', ...style }
     : style;
   const pressClass = invisible ? '' : 'active:scale-[0.97]';
-  return <button ref={ref} type={type} className={`${sizeClass} ${variantClass} ${pressClass} transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]/60 ${className}`.trim()} style={buttonStyle} {...props} />;
+  return <button ref={ref} type={type} className={`${sizeClass} ${variantClass} ${pressClass} transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9BF0]/60 ${className}`.trim()} style={buttonStyle} {...props} />;
 });
 
 export default Button;
@@ -56,5 +56,5 @@ export const IconButton = forwardRef(function IconButton({ variant = 'ghost', si
   if (!ariaLabel && import.meta.env.DEV) {
     console.warn('IconButton rendered without an aria-label — icon-only buttons need one for screen readers.');
   }
-  return <button ref={ref} type={type} aria-label={ariaLabel} className={`grid ${sizeClass} shrink-0 place-items-center rounded-xl ${variantClass} active:scale-[0.94] transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]/60 ${className}`.trim()} {...props} />;
+  return <button ref={ref} type={type} aria-label={ariaLabel} className={`grid ${sizeClass} shrink-0 place-items-center rounded-xl ${variantClass} active:scale-[0.94] transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9BF0]/60 ${className}`.trim()} {...props} />;
 });
