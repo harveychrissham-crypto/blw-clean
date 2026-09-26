@@ -23,6 +23,7 @@ import { fetchCommunities, toggleCommunityMembership } from '../utils/communitie
 import { shareContent } from '../utils/share';
 import StoriesRow from '../components/StoriesRow';
 import { Skeleton } from '../components/ui/Skeleton';
+import { getUnreadCount, onNotificationsUpdated } from '../utils/notificationStorage';
 
 const PAGE_SIZE = 20;
 
@@ -238,6 +239,7 @@ function PromoCard() {
 
 export default function Home() {
   const { user } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
   const [tab, setTab] = useState('For You');
   const [posts, setPosts] = useState([]);
   const [communities, setCommunities] = useState([]);
@@ -247,6 +249,12 @@ export default function Home() {
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [busyCommunity, setBusyCommunity] = useState('');
+
+  useEffect(() => {
+    const refresh = () => setUnreadCount(getUnreadCount());
+    refresh();
+    return onNotificationsUpdated(refresh);
+  }, []);
 
   const load = useCallback(async (reset = true) => {
     setLoading(true);
@@ -315,7 +323,7 @@ export default function Home() {
               </Link>
               <div className="flex items-center gap-1">
                 <Link to="/explore" aria-label="Search Emet" className="grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiSearch className="h-[19px] w-[19px]" /></Link>
-                <Link to="/notifications" aria-label="Notifications" className="relative grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiBell className="h-[19px] w-[19px]" /></Link>
+                <Link to="/notifications" aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"} className="relative grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiBell className="h-[19px] w-[19px]" />{unreadCount > 0 && <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full border border-[#07132d] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadCount > 9 ? "9+" : unreadCount}</span>}</Link>
                 <Link to={user ? '/profile' : '/auth'} aria-label={user ? 'Profile' : 'Sign in'} className="rounded-full ring-1 ring-white/15"><Avatar src={user?.avatarUrl} name={user?.name} size="h-8 w-8" /></Link>
               </div>
             </div>
@@ -324,7 +332,7 @@ export default function Home() {
               <FiSearch className="text-white/45" />
               <Link to="/explore" className="flex-1 text-xs text-white/35">Search Emet...</Link>
               <div className="hidden items-center gap-2 sm:flex">
-                <Link to="/notifications" className="relative rounded-lg p-2 text-white/65 hover:bg-white/[.05]"><FiBell /></Link>
+                <Link to="/notifications" aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"} className="relative rounded-lg p-2 text-white/65 hover:bg-white/[.05]"><FiBell />{unreadCount > 0 && <span className="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full border border-[#07132d] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadCount > 9 ? "9+" : unreadCount}</span>}</Link>
                 <Link to="/messages" className="rounded-lg p-2 text-white/65 hover:bg-white/[.05]"><FiMessageCircle /></Link>
                 <Link to="/profile" className="rounded-full"><Avatar src={user?.avatarUrl} name={user?.name} size="h-8 w-8" /></Link>
               </div>

@@ -48,11 +48,11 @@ export default function StoriesRow() {
 
   if (loading) {
     return (
-      <div className="w-full px-5 pt-2" aria-label="Loading stories" aria-busy="true">
-        <div className="flex gap-4 overflow-hidden pb-2">
+      <div className="w-full px-4 pt-2 sm:px-5" aria-label="Loading stories" aria-busy="true">
+        <div className="flex gap-3 overflow-hidden pb-2 sm:gap-4">
           {Array.from({ length: 6 }).map((_, index) => (
             <div key={index} className="flex shrink-0 flex-col items-center gap-1.5">
-              <div className="h-16 w-16 animate-pulse rounded-full border-2 border-white/[.08] bg-white/[.06]" />
+              <div className="h-12 w-12 animate-pulse rounded-full border-2 border-white/[.08] bg-white/[.06] sm:h-14 sm:w-14" />
               <div className="h-2.5 w-12 animate-pulse rounded-full bg-white/[.06]" />
             </div>
           ))}
@@ -158,11 +158,11 @@ export default function StoriesRow() {
   };
 
   return (
-    <div className="w-full px-5 pt-2">
+    <div className="w-full px-4 pt-2 sm:px-5">
       <style>{`@keyframes blwStoryRingSpin{to{transform:rotate(360deg)}}.story-ring-spin{animation:blwStoryRingSpin 4.5s linear infinite;transform-origin:center}.story-ring-spin-reverse{animation:blwStoryRingSpin 7s linear infinite reverse;transform-origin:center}@keyframes blwStoryUploadSpin{to{transform:rotate(360deg)}}.story-upload-ring{background:conic-gradient(from 0deg,#04caff,#254dff,#bb37ff,#04caff);animation:blwStoryUploadSpin 1.6s linear infinite;transform-origin:center}.story-upload-ring-inner{border:2px solid #07132d}@media (prefers-reduced-motion:reduce){.story-ring-spin,.story-ring-spin-reverse,.story-upload-ring{animation:none}}`}</style>
-      <div className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none]">
+      <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] sm:gap-4">
         <div className="flex shrink-0 flex-col items-center gap-1.5">
-          <div className="relative h-16 w-16 shrink-0">
+          <div className="relative h-12 w-12 shrink-0 sm:h-14 sm:w-14">
             <button type="button" onClick={() => (myGroup ? openGroup(myGroup, 0, 0) : fileInputRef.current?.click())} className="h-full w-full rounded-full transition hover:opacity-80 active:scale-95" aria-label={myGroup ? 'View your story' : 'Add a story'}>
               {myGroup ? (
                 <div className={`h-full w-full rounded-full p-[2px] ${uploading ? 'story-upload-ring' : myGroup.some((story) => !story.viewed) ? 'story-ring-spin' : ''}`} style={!uploading ? { background: myGroup.some((story) => !story.viewed) ? 'linear-gradient(135deg,#EC2FA8,#8A2BE2,#F2A31C)' : 'rgba(255,255,255,0.15)' } : undefined}>
@@ -194,7 +194,7 @@ export default function StoriesRow() {
           const groupIndex = orderedGroups.indexOf(group);
           return (
             <div key={first.authorEmail} className="flex shrink-0 flex-col items-center gap-1.5">
-              <button type="button" onClick={() => openGroup(group, firstUnseenIndex === -1 ? 0 : firstUnseenIndex, groupIndex)} className="h-16 w-16 shrink-0 rounded-full transition hover:opacity-80 active:scale-95" aria-label={`View ${first.authorName}'s story`}>
+              <button type="button" onClick={() => openGroup(group, firstUnseenIndex === -1 ? 0 : firstUnseenIndex, groupIndex)} className="h-12 w-12 shrink-0 rounded-full transition hover:opacity-80 active:scale-95 sm:h-14 sm:w-14" aria-label={`View ${first.authorName}'s story`}>
                 <div className={`h-full w-full rounded-full p-[2px] ${unseen ? 'story-ring-spin-reverse' : ''}`} style={{ background: unseen ? 'linear-gradient(135deg,#EC2FA8,#8A2BE2,#F2A31C)' : 'rgba(255,255,255,0.15)' }}>
                   <div className="h-full w-full overflow-hidden rounded-full border-2 border-[#0d0c18] bg-white/5">
                     {first.authorAvatarUrl ? <img src={first.authorAvatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async"/> : <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">{(first.authorName || '?').charAt(0).toUpperCase()}</div>}
