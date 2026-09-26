@@ -4,7 +4,7 @@ import { FiArrowLeft, FiHash, FiImage, FiSearch, FiUsers, FiX } from 'react-icon
 import { fetchFeed, fetchTrendingTopics, searchAccounts, toggleFollow } from '../utils/feed';
 import { Skeleton } from '../components/ui/Skeleton';
 
-const TABS = ['For you', 'Posts', 'People', 'Media'];
+const TABS = ['For you', 'Media'];
 
 function Avatar({ src, name, size = 'h-10 w-10' }) {
   return src ? (
