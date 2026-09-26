@@ -313,27 +313,25 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-transparent pb-24 text-white">
       <div className="mx-auto max-w-[1320px] px-3 py-3 sm:px-5 sm:py-5">
+        <div className="mb-3 hidden items-center gap-3 rounded-xl border border-[#3159B9]/65 bg-[#091B3A]/95 px-4 py-2.5 shadow-[0_0_28px_rgba(41,93,230,.18)] lg:flex">
+          <FiSearch className="text-white/45" />
+          <Link to="/explore" className="flex-1 text-xs text-white/35">Search Emet...</Link>
+          <div className="hidden items-center gap-2 sm:flex">
+            <Link to="/notifications" aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"} className="relative rounded-lg p-2 text-white/65 hover:bg-white/[.05]"><FiBell />{unreadCount > 0 && <span className="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full border border-[#07132d] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadCount > 9 ? "9+" : unreadCount}</span>}</Link>
+            <Link to="/messages" className="rounded-lg p-2 text-white/65 hover:bg-white/[.05]"><FiMessageCircle /></Link>
+            <Link to="/profile" className="rounded-full"><Avatar src={user?.avatarUrl} name={user?.name} size="h-8 w-8" /></Link>
+          </div>
+        </div>
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_276px]">
           <section className="min-w-0 space-y-2.5">
             <div className="flex items-center justify-between gap-3 px-1 pb-1 sm:px-2 lg:hidden">
               <Link to="/" aria-label="Emet home" className="flex items-center gap-2.5">
                 <img src="/emet-logo.png" alt="" className="h-8 w-8 rounded-lg" />
-                
               </Link>
               <div className="flex items-center gap-1">
                 <Link to="/explore" aria-label="Search Emet" className="grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiSearch className="h-[19px] w-[19px]" /></Link>
                 <Link to="/notifications" aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"} className="relative grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiBell className="h-[19px] w-[19px]" />{unreadCount > 0 && <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full border border-[#07132d] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadCount > 9 ? "9+" : unreadCount}</span>}</Link>
                 <Link to={user ? '/profile' : '/auth'} aria-label={user ? 'Profile' : 'Sign in'} className="rounded-full ring-1 ring-white/15"><Avatar src={user?.avatarUrl} name={user?.name} size="h-8 w-8" /></Link>
-              </div>
-            </div>
-
-            <div className="hidden items-center gap-3 rounded-xl border border-[#3159B9]/65 bg-[#091B3A]/95 px-4 py-2.5 shadow-[0_0_28px_rgba(41,93,230,.18)] lg:flex">
-              <FiSearch className="text-white/45" />
-              <Link to="/explore" className="flex-1 text-xs text-white/35">Search Emet...</Link>
-              <div className="hidden items-center gap-2 sm:flex">
-                <Link to="/notifications" aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"} className="relative rounded-lg p-2 text-white/65 hover:bg-white/[.05]"><FiBell />{unreadCount > 0 && <span className="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full border border-[#07132d] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadCount > 9 ? "9+" : unreadCount}</span>}</Link>
-                <Link to="/messages" className="rounded-lg p-2 text-white/65 hover:bg-white/[.05]"><FiMessageCircle /></Link>
-                <Link to="/profile" className="rounded-full"><Avatar src={user?.avatarUrl} name={user?.name} size="h-8 w-8" /></Link>
               </div>
             </div>
 
