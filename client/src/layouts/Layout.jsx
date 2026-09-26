@@ -29,15 +29,15 @@ export default function Layout({ children }) {
       </div>
     </header>}
     <div className={isHome?'mx-auto max-w-[1468px] px-4 pb-10 lg:grid lg:grid-cols-[250px_minmax(0,1fr)] lg:min-h-[calc(100vh-180px)] lg:overflow-hidden lg:rounded-[22px] lg:border lg:border-[#514da5]/60 lg:bg-[#02091a]/95 lg:shadow-[0_0_0_1px_rgba(42,86,190,.14),0_0_28px_rgba(75,55,190,.16)]':'contents'}>
-    <aside className={`${isHome?'relative w-[250px] shrink-0 border-r border-[#28478e]/40 bg-[#020817]/95':'fixed inset-y-0 left-0 z-40 w-[260px] border-r border-[#253A72]/45 bg-[#030A18]/95'} hidden flex-col px-0 py-6 backdrop-blur-xl lg:flex`}>
-      <div className="mb-8 flex shrink-0 flex-col px-6">
-        <Link to="/" aria-label="Emet home" className="flex items-center"><span role="img" aria-label="Emet" className="emet-wordmark emet-wordmark-sidebar"/></Link>
+    <aside className={`${isHome?'relative w-[72px] xl:w-[250px] shrink-0 border-r border-[#28478e]/40 bg-[#020817]/95':'fixed inset-y-0 left-0 z-40 w-[260px] border-r border-[#253A72]/45 bg-[#030A18]/95'} hidden flex-col px-0 py-6 backdrop-blur-xl lg:flex`}>
+      <div className="mb-8 flex shrink-0 flex-col px-0 lg:items-center xl:items-stretch xl:px-6">
+        <Link to="/" aria-label="Emet home" className="flex items-center justify-center xl:justify-start"><img src="/emet-mark.svg" alt="" className="h-8 w-8 xl:hidden" /><span role="img" aria-label="Emet" className="emet-wordmark emet-wordmark-sidebar hidden xl:inline-block"/></Link>
         {!isHome&&<p className="mt-3 pl-0.5 text-[9px] font-semibold uppercase tracking-[.28em] text-[#9FB6E8]/80">Real people. Meaningful connections.</p>}
       </div>
-      <nav className="min-h-0 flex-1 overflow-y-auto flex flex-col gap-1 px-3 pb-4">
+      <nav className="min-h-0 flex-1 overflow-y-auto flex flex-col gap-1 px-1 pb-4 xl:px-3">
         {navItems.map(item=>{const Icon=item.icon;return <NavLink key={item.path} to={item.path} end={item.path==='/'}
-          className={({isActive})=>`flex items-center gap-4 rounded-xl px-4 py-3 text-[0.95rem] font-semibold transition ${isActive?'bg-gradient-to-r from-[#182F91] to-[#281370] text-white shadow-[0_0_22px_rgba(73,59,228,.2)]':'text-white/60 hover:bg-white/[.05] hover:text-white'}`}>
-          <Icon className="h-5 w-5 shrink-0"/>{item.name}
+          className={({isActive})=>[`flex items-center gap-4 rounded-xl px-4 py-3 text-[0.95rem] font-semibold transition`,isHome&&`lg:justify-center lg:gap-0 lg:px-2 xl:justify-start xl:gap-4 xl:px-4`,isActive?`bg-gradient-to-r from-[#182F91] to-[#281370] text-white shadow-[0_0_22px_rgba(73,59,228,.2)]`:`text-white/60 hover:bg-white/[.05] hover:text-white`].filter(Boolean).join(" ")}>
+          <Icon className="h-5 w-5 shrink-0"/><span className={isHome?"lg:hidden xl:inline":""}>{item.name}</span>
         </NavLink>;})}
       </nav>
       {isHome&&<section className="mx-4 mb-4 hidden shrink-0 xl:block">
@@ -47,7 +47,7 @@ export default function Layout({ children }) {
           {!communities.some(item=>item.joined)&&<p className="px-1 py-2 text-[10px] leading-4 text-white/40">Join a community to see it here.</p>}
         </div>
       </section>}
-      <Link to="/communities" className="mx-4 mt-auto flex shrink-0 items-center justify-between rounded-2xl border border-[#445FDB]/45 bg-gradient-to-br from-[#102989] via-[#221884] to-[#49118E] px-4 py-4 text-sm font-bold text-white shadow-[0_12px_35px_rgba(31,35,145,.22)] transition hover:brightness-110">
+      <Link to="/communities" className={(isHome?"hidden xl:flex ":"flex ")+"mx-4 mt-auto shrink-0 items-center justify-between rounded-2xl border border-[#445FDB]/45 bg-gradient-to-br from-[#102989] via-[#221884] to-[#49118E] px-4 py-4 text-sm font-bold text-white shadow-[0_12px_35px_rgba(31,35,145,.22)] transition hover:brightness-110"}>
         <span><span className="block">Build your community</span><span className="mt-1 block text-[11px] font-normal text-white/65">Find people who matter to you</span></span><FiArrowRight className="h-4 w-4 shrink-0" />
       </Link>
     </aside>
