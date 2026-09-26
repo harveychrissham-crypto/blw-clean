@@ -202,7 +202,7 @@ export default function Explore() {
                     <p className="truncate text-xs text-white/35">{person.title || 'Emet community member'}</p>
                   </div>
                   {person.email && (
-                    <button type="button" onClick={() => follow(person)} disabled={followBusy === person.email} className={`rounded-xl px-4 py-2 text-xs font-semibold transition disabled:opacity-50 ${person.following ? 'border border-white/15 text-white/70 hover:bg-white/[.06]' : 'bg-white text-black hover:bg-white/90'}`}>
+                    <button type="button" onClick={() => follow(person)} disabled={followBusy === person.email} className={`rounded-xl px-4 py-2 text-xs font-semibold transition disabled:opacity-50 ${person.following ? 'border border-white/15 text-white/70 hover:bg-white/[.06]' : 'bg-[#E7E9EA] text-[#0B0F14] hover:bg-[#D9DDE1]'}`}>
                       {person.following ? 'Following' : 'Follow'}
                     </button>
                   )}
