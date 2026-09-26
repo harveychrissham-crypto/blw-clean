@@ -34,12 +34,14 @@ export default function Explore() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    fetchFeed({ limit: 60, offset: 0, q: query.trim() })
-      .then(({ posts: next }) => { if (active) setPosts(next); })
-      .catch(() => { if (active) setPosts([]); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, []);
+    const timer = setTimeout(() => {
+      fetchFeed({ limit: 60, offset: 0, q: query.trim() })
+        .then(({ posts: next }) => { if (active) setPosts(next); })
+        .catch(() => { if (active) setPosts([]); })
+        .finally(() => { if (active) setLoading(false); });
+    }, 300);
+    return () => { active = false; clearTimeout(timer); };
+  }, [query]);
 
   useEffect(() => {
     if (tab !== 'People') {
