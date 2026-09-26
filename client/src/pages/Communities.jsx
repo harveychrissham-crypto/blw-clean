@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { fetchCommunities, toggleCommunityMembership, createCommunity } from '../utils/communities';
 import { useAuth } from '../context/AuthContext';
 
-const FALLBACK_CATEGORIES = ['All', 'Creativity', 'Business', 'Education', 'Culture', 'Faith', 'Life', 'Technology', 'Learning'];
+const FALLBACK_CATEGORIES = ['All', 'Creativity', 'Business', 'Education', 'Culture', 'Life', 'Technology', 'Learning'];
 const TONES = [
   'bg-blue-500/10 text-blue-300',
   'bg-emerald-500/10 text-emerald-300',
