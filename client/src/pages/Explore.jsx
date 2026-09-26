@@ -10,7 +10,7 @@ function Avatar({ src, name, size = 'h-10 w-10' }) {
   return src ? (
     <img src={src} alt="" className={`${size} shrink-0 rounded-full object-cover`} />
   ) : (
-    <div className={`${size} shrink-0 grid place-items-center rounded-full bg-white/[.08] text-sm font-bold text-white/70`}>
+    <div className={`${size} shrink-0 grid place-items-center rounded-xl bg-white/[.08] text-sm font-semibold text-white/70`}>
       {String(name || 'E').trim().charAt(0).toUpperCase()}
     </div>
   );
@@ -140,7 +140,7 @@ export default function Explore() {
     <main className="mx-auto min-h-screen w-full max-w-6xl pb-28 sm:border-x sm:border-white/[.06]">
       <header className="sticky top-0 z-20 border-b border-white/[.07] bg-[#0B0F14]/90 px-4 py-3 backdrop-blur-xl sm:px-6">
         <div className="flex items-center gap-3">
-          <Link to="/" aria-label="Back to Home" className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-white/70 transition hover:bg-white/[.08] hover:text-white"><FiArrowLeft /></Link>
+          <Link to="/" aria-label="Back to Home" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white/70 transition hover:bg-white/[.08] hover:text-white"><FiArrowLeft /></Link>
           <div>
             <h1 className="text-lg font-bold text-white">Explore</h1>
             <p className="text-[11px] text-white/35">Find conversations, people and topics</p>
@@ -149,7 +149,7 @@ export default function Explore() {
       </header>
 
       <div className="mx-auto max-w-3xl px-4 py-4 sm:px-6">
-        <label className="flex h-12 items-center gap-3 rounded-full border border-white/[.08] bg-white/[.045] px-4 transition focus-within:border-white/20 focus-within:bg-white/[.06]">
+        <label className="flex h-12 items-center gap-3 rounded-xl border border-white/[.08] bg-white/[.045] px-4 transition focus-within:border-[#3B82F6]/40 focus-within:bg-white/[.06]">
           <FiSearch className="shrink-0 text-white/45" />
           <input
             value={query}
@@ -158,7 +158,7 @@ export default function Explore() {
             aria-label="Search Emet"
             className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/35"
           />
-          {query && <button type="button" onClick={() => updateQuery('')} aria-label="Clear search" className="grid h-7 w-7 place-items-center rounded-full text-white/45 hover:bg-white/[.08]"><FiX /></button>}
+          {query && <button type="button" onClick={() => updateQuery('')} aria-label="Clear search" className="grid h-7 w-7 place-items-center rounded-xl text-white/45 hover:bg-white/[.08]"><FiX /></button>}
         </label>
 
         <div className="mt-4 flex overflow-x-auto border-b border-white/[.07]" role="tablist" aria-label="Explore sections">
@@ -202,7 +202,7 @@ export default function Explore() {
                     <p className="truncate text-xs text-white/35">{person.title || 'Emet community member'}</p>
                   </div>
                   {person.email && (
-                    <button type="button" onClick={() => follow(person)} disabled={followBusy === person.email} className={`rounded-full px-4 py-1.5 text-xs font-bold transition disabled:opacity-50 ${person.following ? 'border border-white/15 text-white/70 hover:bg-white/[.06]' : 'bg-white text-black hover:bg-white/90'}`}>
+                    <button type="button" onClick={() => follow(person)} disabled={followBusy === person.email} className={`rounded-xl px-4 py-2 text-xs font-semibold transition disabled:opacity-50 ${person.following ? 'border border-white/15 text-white/70 hover:bg-white/[.06]' : 'bg-white text-black hover:bg-white/90'}`}>
                       {person.following ? 'Following' : 'Follow'}
                     </button>
                   )}
