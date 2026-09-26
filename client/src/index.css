@@ -133,10 +133,5 @@ button.bg-\[\#E7E9EA\]:hover, a.bg-\[\#E7E9EA\]:hover, [role="button"].bg-\[\#E7
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .emet-wordmark::after {
-    clip-path: none;
-    animation: none;
-    filter: drop-shadow(0 0 5px rgba(98,105,244,.12));
-  }
   .emet-hero-wordmark animateTransform { display: none; }
 }
