@@ -62,18 +62,21 @@ button.bg-\[\#E7E9EA\]:hover, a.bg-\[\#E7E9EA\]:hover, [role="button"].bg-\[\#E7
   background-color: #D9DCDF !important;
 }
 
-/* Emet wordmark shimmer: slow gradient drift and a restrained glow. */
+/* Emet wordmark fills from left to right, then keeps a quiet breathing glow. */
 .emet-wordmark {
   display: inline-block;
   width: 140px;
   height: 30px;
   flex: 0 0 auto;
   background: linear-gradient(105deg, #28c7d8 0%, #4b8fe9 36%, #7769e8 68%, #b354d5 100%);
-  background-size: 220% 100%;
-  background-position: 15% 50%;
+  background-size: 100% 100%;
+  background-position: 0 50%;
   -webkit-mask: url('/emet-wordmark-geometric-white.svg') center / 100% 100% no-repeat;
   mask: url('/emet-wordmark-geometric-white.svg') center / 100% 100% no-repeat;
-  animation: emet-wordmark-shimmer 12s ease-in-out infinite;
+  clip-path: inset(0 100% 0 0);
+  animation:
+    emet-wordmark-fill 5.5s cubic-bezier(.22,.68,.26,1) forwards,
+    emet-wordmark-glow 7s ease-in-out 5.5s infinite;
 }
 
 .emet-wordmark-sidebar {
@@ -81,24 +84,28 @@ button.bg-\[\#E7E9EA\]:hover, a.bg-\[\#E7E9EA\]:hover, [role="button"].bg-\[\#E7
   height: 40px;
 }
 
-@keyframes emet-wordmark-shimmer {
+@keyframes emet-wordmark-fill {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes emet-wordmark-glow {
   0%, 100% {
-    background-position: 15% 50%;
-    opacity: .93;
-    filter: drop-shadow(0 0 4px rgba(34,211,229,.14)) drop-shadow(0 0 7px rgba(168,85,247,.10));
+    filter: drop-shadow(0 0 4px rgba(34,211,229,.12)) drop-shadow(0 0 7px rgba(168,85,247,.08));
   }
   50% {
-    background-position: 85% 50%;
-    opacity: 1;
-    filter: drop-shadow(0 0 7px rgba(34,211,229,.23)) drop-shadow(0 0 11px rgba(168,85,247,.17));
+    filter: drop-shadow(0 0 7px rgba(34,211,229,.20)) drop-shadow(0 0 11px rgba(168,85,247,.14));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .emet-wordmark {
     animation: none;
+    clip-path: none;
     background-position: 50% 50%;
     filter: drop-shadow(0 0 5px rgba(98,105,244,.12));
   }
+  .emet-hero-wordmark animateTransform { display: none; }
+}
   .emet-hero-wordmark animateTransform { display: none; }
 }
