@@ -73,7 +73,7 @@ export default function AIChatWidget() {
           </div>
           <div className="mt-4 space-y-2">
             {suggestions.map((item) => (
-              <Button variant="custom" size="none" key={item.key} onClick={() => setAnswer(answers[item.key])} className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EC2FA8]/60 ${selectedKey === item.key ? 'border-[#EC2FA8]/30 bg-[#EC2FA8]/10 text-[#F04FB8]' : 'border-white/10 bg-white/5 text-slate-300'}`}>
+              <Button variant="custom" size="none" key={item.key} onClick={() => setAnswer(answers[item.key])} className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]/60 ${selectedKey === item.key ? 'border-[#3B82F6]/30 bg-[#3B82F6]/10 text-[#3B82F6]' : 'border-white/10 bg-white/5 text-slate-300'}`}>
                 {item.label}
               </Button>
             ))}
@@ -84,7 +84,7 @@ export default function AIChatWidget() {
           </Card>
           <form onSubmit={submit} className="mt-4 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
             <input value={question} onChange={(event) => setQuestion(event.target.value)} className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none" placeholder="Ask a ministry question" aria-label="Ask a ministry question" />
-            <Button variant="gradient" size="none" type="submit" disabled={!question.trim()} className="rounded-full p-2" aria-label="Send question">
+            <Button variant="primary" size="none" type="submit" disabled={!question.trim()} className="rounded-full p-2" aria-label="Send question">
               <FiSend />
             </Button>
           </form>
