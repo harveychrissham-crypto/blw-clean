@@ -118,7 +118,7 @@ export default function Notifications() {
               <button
                 type="button"
                 onClick={markEverythingRead}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 px-3.5 py-2 text-xs font-semibold text-white/65 transition hover:border-white/20 hover:bg-white/[.05] hover:text-white"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-white/10 px-3.5 py-2.5 text-xs font-semibold hover:border-[#3B82F6]/40 text-white/65 transition hover:border-white/20 hover:bg-white/[.05] hover:text-white"
               >
                 <FiCheck />
                 Mark all read
