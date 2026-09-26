@@ -282,7 +282,7 @@ export default function Explore() {
 function Empty({ title, text, icon: Icon }) {
   return (
     <div className="py-20 text-center">
-      <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-white/[.06] text-white/45"><Icon /></div>
+      <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-white/[.06] text-white/45"><Icon /></div>
       <h2 className="mt-4 text-base font-bold text-white">{title}</h2>
       <p className="mx-auto mt-1 max-w-sm text-sm text-white/40">{text}</p>
     </div>
