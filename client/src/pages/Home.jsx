@@ -1,33 +1,71 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FiBarChart2, FiBookmark, FiEdit3, FiHeart, FiImage, FiMessageCircle, FiMoreHorizontal, FiRepeat, FiSearch, FiSend, FiSmile } from 'react-icons/fi';
+import {
+  FiArrowRight,
+  FiBell,
+  FiBookmark,
+  FiCamera,
+  FiChevronRight,
+  FiHeart,
+  FiImage,
+  FiMessageCircle,
+  FiMoreHorizontal,
+  FiPlus,
+  FiRepeat,
+  FiSearch,
+  FiSend,
+  FiUsers,
+  FiVideo,
+} from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { fetchFeed, toggleFollow, toggleLike, toggleSave } from '../utils/feed';
+import { fetchCommunities, toggleCommunityMembership } from '../utils/communities';
 import { shareContent } from '../utils/share';
+import StoriesRow from '../components/StoriesRow';
 import { Skeleton } from '../components/ui/Skeleton';
 
 const PAGE_SIZE = 20;
 
 function Avatar({ src, name, size = 'h-10 w-10' }) {
   const initial = String(name || 'E').trim().charAt(0).toUpperCase() || 'E';
-  return <div className={`shrink-0 overflow-hidden rounded-full bg-white/[.08] ${size}`}>{src ? <img src={src} alt="" className="h-full w-full object-cover" /> : <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">{initial}</div>}</div>;
+  return (
+    <div className={`shrink-0 overflow-hidden rounded-full bg-white/[.08] ${size}`}>
+      {src ? <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" /> : <div className="grid h-full w-full place-items-center text-sm font-bold text-white/70">{initial}</div>}
+    </div>
+  );
+}
+
+function CommunityIcon({ index = 0 }) {
+  const tones = ['from-fuchsia-500 to-indigo-600', 'from-cyan-400 to-blue-600', 'from-violet-500 to-purple-700', 'from-sky-400 to-indigo-600', 'from-blue-500 to-violet-600'];
+  return <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${tones[index % tones.length]} text-white`}><FiUsers className="h-4 w-4" /></span>;
 }
 
 function PostCard({ post, user, onUpdate }) {
   const [busy, setBusy] = useState('');
   const author = post.author || 'Emet Community';
   const isFollowing = Boolean(post.following);
+
   const update = (patch) => onUpdate(post.id, patch);
 
   const action = async (type) => {
     if (!user) return;
     setBusy(type);
-    const previous = { liked: post.liked, saved: post.saved, following: post.following, likeCount: post.likeCount, saveCount: post.saveCount };
-    if (type === 'like') update({ liked: !post.liked, likeCount: Math.max(0, post.likeCount + (post.liked ? -1 : 1)) });
-    if (type === 'save') update({ saved: !post.saved, saveCount: Math.max(0, post.saveCount + (post.saved ? -1 : 1)) });
+    const previous = {
+      liked: post.liked,
+      saved: post.saved,
+      following: post.following,
+      likeCount: post.likeCount,
+      saveCount: post.saveCount,
+    };
+    if (type === 'like') update({ liked: !post.liked, likeCount: Math.max(0, (post.likeCount || 0) + (post.liked ? -1 : 1)) });
+    if (type === 'save') update({ saved: !post.saved, saveCount: Math.max(0, (post.saveCount || 0) + (post.saved ? -1 : 1)) });
     if (type === 'follow') update({ following: !post.following });
     try {
-      const result = type === 'like' ? await toggleLike(post.id) : type === 'save' ? await toggleSave(post.id) : await toggleFollow(post.id);
+      const result = type === 'like'
+        ? await toggleLike(post.id)
+        : type === 'save'
+          ? await toggleSave(post.id)
+          : await toggleFollow(post.id);
       update(result || {});
     } catch {
       update(previous);
@@ -43,36 +81,45 @@ function PostCard({ post, user, onUpdate }) {
   });
 
   return (
-    <article className="border-b border-white/[.07] px-4 py-4 transition hover:bg-white/[.018]">
-      <div className="flex gap-3">
-        <Avatar src={post.avatarUrl} name={author} />
+    <article className="border-b border-white/[.07] px-4 py-4 transition hover:bg-white/[.018] sm:px-5">
+      <div className="flex gap-3.5">
+        <Avatar src={post.avatarUrl} name={author} size="h-11 w-11" />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-1.5 text-sm">
                 <span className="truncate font-bold text-white">{author}</span>
-                {post.isOfficial && <span className="grid h-4 w-4 place-items-center rounded-full bg-white text-[9px] font-black text-black">✓</span>}
+                {post.isOfficial && <span className="grid h-4 w-4 place-items-center rounded-full bg-[#20B7FF] text-[9px] font-black text-white">✓</span>}
                 <span className="truncate text-white/35">@{String(author).toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 18) || 'emet'}</span>
                 <span className="text-white/25">·</span>
                 <span className="text-white/35">{post.time || 'now'}</span>
               </div>
+              {post.communityName && <p className="mt-0.5 text-[11px] text-white/35">in {post.communityName}</p>}
             </div>
             <div className="flex items-center gap-1">
-              {user && !post.isOwner && <button type="button" onClick={() => action('follow')} disabled={busy === 'follow'} className={`hidden rounded-full border px-3 py-1 text-xs font-bold sm:inline-flex ${isFollowing ? 'border-white/10 text-white/55' : 'border-white/30 text-white hover:bg-white hover:text-black'}`}>{isFollowing ? 'Following' : 'Follow'}</button>}
+              {user && !post.isOwner && (
+                <button type="button" onClick={() => action('follow')} disabled={busy === 'follow'} className={`hidden rounded-full px-3 py-1 text-xs font-bold sm:inline-flex ${isFollowing ? 'border border-white/10 text-white/55' : 'border border-white/20 text-white hover:bg-white hover:text-black'}`}>
+                  {isFollowing ? 'Following' : 'Follow'}
+                </button>
+              )}
               <button type="button" className="grid h-8 w-8 place-items-center rounded-full text-white/35 hover:bg-white/[.06] hover:text-white" aria-label="More options"><FiMoreHorizontal /></button>
             </div>
           </div>
 
-          {post.title && post.title !== post.body && <p className="mt-1 text-sm font-semibold text-white">{post.title}</p>}
+          {post.title && post.title !== post.body && <p className="mt-2 text-sm font-semibold text-white">{post.title}</p>}
           {post.body && <p className="mt-1 whitespace-pre-wrap break-words text-[15px] leading-6 text-white/85">{post.body}</p>}
 
-          {post.mediaUrl && <div className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-black/20"><img src={post.mediaUrl} alt="" className="max-h-[520px] w-full object-cover" loading="lazy" /></div>}
+          {post.mediaUrl && (
+            <div className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-black/20">
+              <img src={post.mediaUrl} alt="" className="max-h-[520px] w-full object-cover" loading="lazy" />
+            </div>
+          )}
 
           <div className="mt-2 flex max-w-xl items-center justify-between text-white/40">
-            <button type="button" onClick={() => {}} className="group flex items-center gap-2 rounded-full px-2 py-2 text-xs hover:text-white"><FiMessageCircle className="h-[18px] w-[18px] group-hover:text-[#1D9BF0]" />{post.commentCount || 0}</button>
-            <button type="button" onClick={() => {}} className="group flex items-center gap-2 rounded-full px-2 py-2 text-xs hover:text-white"><FiRepeat className="h-[18px] w-[18px] group-hover:text-[#1D9BF0]" />{post.repostCount || 0}</button>
-            <button type="button" onClick={() => action('like')} disabled={busy === 'like'} className={`group flex items-center gap-2 rounded-full px-2 py-2 text-xs hover:text-white ${post.liked ? 'text-[#1D9BF0]' : ''}`}><FiHeart className="h-[18px] w-[18px] group-hover:text-[#1D9BF0]" fill={post.liked ? 'currentColor' : 'none'} />{post.likeCount || 0}</button>
-            <button type="button" onClick={() => action('save')} disabled={busy === 'save'} className={`group flex items-center gap-2 rounded-full px-2 py-2 text-xs hover:text-white ${post.saved ? 'text-white' : ''}`}><FiBookmark className="h-[18px] w-[18px]" /></button>
+            <Link to={`/post/${post.id}`} className="group flex items-center gap-2 rounded-full px-2 py-2 text-xs hover:text-white"><FiMessageCircle className="h-[18px] w-[18px] group-hover:text-[#20B7FF]" />{post.commentCount || 0}</Link>
+            <button type="button" className="group flex items-center gap-2 rounded-full px-2 py-2 text-xs hover:text-white"><FiRepeat className="h-[18px] w-[18px] group-hover:text-[#20B7FF]" />{post.repostCount || 0}</button>
+            <button type="button" onClick={() => action('like')} disabled={busy === 'like'} className={`group flex items-center gap-2 rounded-full px-2 py-2 text-xs hover:text-white ${post.liked ? 'text-pink-400' : ''}`}><FiHeart className="h-[18px] w-[18px] group-hover:text-pink-400" fill={post.liked ? 'currentColor' : 'none'} />{post.likeCount || 0}</button>
+            <button type="button" onClick={() => action('save')} disabled={busy === 'save'} className={`grid h-8 w-8 place-items-center rounded-full hover:bg-white/[.06] hover:text-white ${post.saved ? 'text-white' : ''}`} aria-label="Bookmark"><FiBookmark className="h-[17px] w-[17px]" fill={post.saved ? 'currentColor' : 'none'} /></button>
             <button type="button" onClick={share} className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/[.06] hover:text-white" aria-label="Share"><FiSend className="h-[17px] w-[17px]" /></button>
           </div>
         </div>
@@ -84,97 +131,130 @@ function PostCard({ post, user, onUpdate }) {
 function Compose({ user }) {
   const name = user?.name || 'Member';
   return (
-    <div className="border-b border-white/[.07] px-4 py-4">
-      <div className="flex gap-3">
-        <Avatar src={user?.avatarUrl || user?.avatar_url} name={name} />
-        <div className="min-w-0 flex-1">
-          <Link to={user ? '/create' : '/auth'} className="block min-h-14 rounded-2xl border border-transparent bg-white/[.035] px-4 py-4 text-[15px] text-white/35 transition hover:border-white/10 hover:bg-white/[.05]">
-            {user ? 'What’s happening in your community?' : 'Sign in to share with Emet'}
-          </Link>
-          <div className="mt-3 flex items-center justify-between">
-            <div className="flex items-center gap-1 text-white/45">
-              <Link to="/create" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/[.06] hover:text-white" aria-label="Add image"><FiImage /></Link>
-              <Link to="/create" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/[.06] hover:text-white" aria-label="Add poll"><FiBarChart2 /></Link>
-              <Link to="/create" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/[.06] hover:text-white" aria-label="Add emoji"><FiSmile /></Link>
-            </div>
-            <Link to="/create" className="rounded-full bg-white px-5 py-2 text-xs font-extrabold text-black transition hover:bg-white/90">Post</Link>
-          </div>
+    <div className="rounded-2xl border border-white/[.07] bg-[#06152C] p-3">
+      <div className="flex items-center gap-3">
+        <Avatar src={user?.avatarUrl || user?.avatar_url} name={name} size="h-10 w-10" />
+        <Link to={user ? '/create' : '/auth'} className="min-w-0 flex-1 rounded-xl px-1 py-2 text-[14px] text-white/45 hover:text-white/70">
+          {user ? "What's on your mind?" : 'Sign in to share with Emet'}
+        </Link>
+        <div className="hidden items-center gap-1 sm:flex">
+          <Link to="/create" aria-label="Add image" className="grid h-9 w-9 place-items-center rounded-lg text-white/60 hover:bg-white/[.06] hover:text-white"><FiImage /></Link>
+          <Link to="/create" aria-label="Add video" className="grid h-9 w-9 place-items-center rounded-lg text-white/60 hover:bg-white/[.06] hover:text-white"><FiVideo /></Link>
+          <Link to="/create" aria-label="Create post" className="grid h-9 w-9 place-items-center rounded-full border border-white/20 text-white hover:border-white/40"><FiPlus /></Link>
         </div>
       </div>
     </div>
   );
 }
 
-function RightRail({ posts }) {
-  const trends = useMemo(() => {
-    const counts = new Map();
-    posts.forEach((post) => {
-      const text = `${post.body || ''} ${post.title || ''}`;
-      for (const tag of text.match(/#[a-z0-9_]+/gi) || []) counts.set(tag.toLowerCase(), (counts.get(tag.toLowerCase()) || 0) + 1);
-    });
-    const generated = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([tag, count]) => ({ label: tag, count }));
-    return generated.length ? generated : [
-      { label: '#Faith', count: 0 },
-      { label: '#Jesus', count: 0 },
-      { label: '#Prayer', count: 0 },
-      { label: '#Testimony', count: 0 },
-      { label: '#Emet', count: 0 },
-    ];
-  }, [posts]);
+function HeroCard({ posts }) {
+  const image = posts.find((post) => post.mediaUrl)?.mediaUrl;
+  return (
+    <section
+      className="relative overflow-hidden rounded-2xl border border-[#2557D9]/60 bg-gradient-to-br from-[#081B42] via-[#11265B] to-[#27105A]"
+      style={image ? { backgroundImage: `linear-gradient(90deg, rgba(3,13,34,.95) 0%, rgba(8,22,57,.78) 46%, rgba(6,13,28,.12) 100%), url("${image}")` } : undefined}
+    >
+      <div className="relative min-h-[168px] p-5 sm:p-6">
+        <div className="max-w-[62%] sm:max-w-[58%]">
+          <p className="text-[22px] font-extrabold leading-[1.05] tracking-tight sm:text-[25px]">Real People.<br />Meaningful<br />Connections.</p>
+          <p className="mt-2 text-xs text-white/70 sm:text-sm">Share. Discuss. Build. Together.</p>
+          <Link to="/create" className="mt-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-fuchsia-500 px-5 py-2.5 text-xs font-extrabold text-white shadow-lg shadow-blue-950/30">
+            Create Post <FiArrowRight />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
 
+function CommunityRail({ communities, onJoin, busyId }) {
+  const list = communities.slice(0, 5);
+  return (
+    <section className="overflow-hidden rounded-2xl border border-white/[.07] bg-[#06152C]">
+      <div className="flex items-center justify-between px-4 py-4">
+        <h2 className="text-sm font-extrabold">Trending Communities</h2>
+        <Link to="/communities" className="text-xs font-semibold text-[#4E91FF]">See all</Link>
+      </div>
+      <div>
+        {list.map((community, index) => (
+          <div key={community.id} className="flex items-center gap-3 px-4 py-3 hover:bg-white/[.025]">
+            <span className="w-3 text-center text-xs font-bold text-white/80">{index + 1}</span>
+            <CommunityIcon index={index} />
+            <Link to={`/communities/${community.id}`} className="min-w-0 flex-1">
+              <p className="truncate text-xs font-bold text-white">{community.name}</p>
+              <p className="mt-0.5 text-[10px] text-white/35">{Number(community.member_count || 0).toLocaleString()} members</p>
+            </Link>
+            <button type="button" onClick={() => onJoin(community)} disabled={busyId === String(community.id)} className={`rounded-full px-3 py-1.5 text-[10px] font-bold ${community.joined ? 'border border-white/10 text-white/55' : 'bg-[#0B2D75] text-white hover:bg-[#12419D]'}`}>
+              {busyId === String(community.id) ? '…' : community.joined ? 'Joined' : 'Join'}
+            </button>
+          </div>
+        ))}
+        {!list.length && <div className="px-4 pb-4 text-xs text-white/35">Communities will appear here as they grow.</div>}
+      </div>
+    </section>
+  );
+}
+
+function SuggestedPeople({ posts }) {
   const people = useMemo(() => {
     const seen = new Set();
-    return posts.filter((p) => p.author && !seen.has(p.author) && seen.add(p.author)).slice(0, 3);
+    return posts.filter((post) => post.author && !seen.has(post.author) && seen.add(post.author)).slice(0, 4);
   }, [posts]);
 
   return (
-    <aside className="hidden w-[310px] shrink-0 lg:block">
-      <div className="sticky top-20 space-y-4">
-        <div className="flex items-center gap-3 rounded-full border border-white/[.08] bg-white/[.035] px-4 py-2.5 text-sm text-white/40"><FiSearch /> Search Emet</div>
-        <section className="overflow-hidden rounded-2xl border border-white/[.07] bg-white/[.025]">
-          <h2 className="px-4 pt-4 text-xl font-extrabold text-white">What’s happening</h2>
-          {trends.map((trend) => <div key={trend.label} className="px-4 py-3 transition hover:bg-white/[.04]"><p className="text-[11px] text-white/30">Trending in Emet</p><p className="mt-0.5 font-bold text-white">{trend.label}</p><p className="text-xs text-white/30">{trend.count ? `${trend.count} post${trend.count === 1 ? '' : 's'}` : 'Explore the conversation'}</p></div>)}
-          <Link to="/explore" className="block px-4 py-3 text-sm text-white/55 hover:bg-white/[.04] hover:text-white">Show more</Link>
-        </section>
-        {people.length > 0 && <section className="overflow-hidden rounded-2xl border border-white/[.07] bg-white/[.025]">
-          <h2 className="px-4 pt-4 text-xl font-extrabold text-white">Who to follow</h2>
-          {people.map((person) => {
-            const handle = String(person.author || 'emet')
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, '')
-              .slice(0, 18) || 'emet';
-            return (
-              <div key={person.author} className="flex items-center gap-3 px-4 py-3">
-                <Avatar src={person.avatarUrl} name={person.author} size="h-9 w-9" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-white">{person.author}</p>
-                  <p className="truncate text-xs text-white/35">@{handle}</p>
-                </div>
-                <Link to="/connect" className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-black">Follow</Link>
-              </div>
-            );
-          })}
-        </section>}
-        <p className="px-2 text-[11px] leading-5 text-white/25">Emet is a social network for conversation, community and genuine connection.</p>
+    <section className="overflow-hidden rounded-2xl border border-white/[.07] bg-[#06152C]">
+      <div className="flex items-center justify-between px-4 py-4">
+        <h2 className="text-sm font-extrabold">Suggested People</h2>
+        <Link to="/connect" className="text-xs font-semibold text-[#4E91FF]">See all</Link>
       </div>
-    </aside>
+      {people.map((person, index) => (
+        <div key={person.author} className="flex items-center gap-3 px-4 py-3">
+          <Avatar src={person.avatarUrl} name={person.author} size="h-9 w-9" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-bold text-white">{person.author}</p>
+            <p className="text-[10px] text-white/35">{index + 1} mutual {index === 0 ? 'friend' : 'friends'}</p>
+          </div>
+          <Link to="/connect" className="rounded-full bg-[#0B2D75] px-3 py-1.5 text-[10px] font-bold text-white hover:bg-[#12419D]">Follow</Link>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function PromoCard() {
+  return (
+    <Link to="/communities" className="relative block min-h-[150px] overflow-hidden rounded-2xl border border-[#2557D9]/50 bg-gradient-to-br from-[#071D47] via-[#152F83] to-[#4D0C8A] p-5">
+      <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-fuchsia-500/20 blur-3xl" />
+      <div className="relative">
+        <img src="/emet-mark-white.svg" alt="" className="h-11 w-11" />
+        <p className="mt-4 max-w-[190px] text-lg font-extrabold leading-tight">More than a platform.<br /><span className="text-[#A989FF]">A movement.</span></p>
+        <span className="absolute bottom-0 right-0 grid h-9 w-9 place-items-center rounded-full bg-white/15 text-white"><FiArrowRight /></span>
+      </div>
+    </Link>
   );
 }
 
 export default function Home() {
   const { user } = useAuth();
-  const [tab, setTab] = useState('For you');
+  const [tab, setTab] = useState('For You');
   const [posts, setPosts] = useState([]);
+  const [communities, setCommunities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [communityLoading, setCommunityLoading] = useState(true);
   const [error, setError] = useState('');
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
+  const [busyCommunity, setBusyCommunity] = useState('');
 
   const load = useCallback(async (reset = true) => {
     setLoading(true);
     setError('');
     try {
-      const result = await fetchFeed({ limit: PAGE_SIZE, offset: reset ? 0 : offset, followingOnly: tab === 'Following' });
+      const result = await fetchFeed({
+        limit: PAGE_SIZE,
+        offset: reset ? 0 : offset,
+        followingOnly: tab === 'Following',
+      });
       setPosts((current) => reset ? result.posts : [...current, ...result.posts]);
       setHasMore(result.hasMore);
       setOffset(reset ? result.posts.length : offset + result.posts.length);
@@ -185,28 +265,152 @@ export default function Home() {
     }
   }, [tab, offset]);
 
-  useEffect(() => { setOffset(0); load(true); }, [tab]);
+  useEffect(() => {
+    setOffset(0);
+    load(true);
+  }, [tab]);
+
+  useEffect(() => {
+    let active = true;
+    fetchCommunities()
+      .then((items) => { if (active) setCommunities(items); })
+      .catch(() => {})
+      .finally(() => { if (active) setCommunityLoading(false); });
+    return () => { active = false; };
+  }, []);
 
   const update = (id, patch) => setPosts((current) => current.map((post) => post.id === id ? { ...post, ...patch } : post));
 
+  const joinCommunity = async (community) => {
+    if (!user) return;
+    const id = String(community.id);
+    setBusyCommunity(id);
+    try {
+      const result = await toggleCommunityMembership(id);
+      setCommunities((current) => current.map((item) => String(item.id) === id ? { ...item, joined: Boolean(result.joined), member_count: result.memberCount ?? item.member_count } : item));
+    } catch {
+      // Keep the rail usable if a membership request fails.
+    } finally {
+      setBusyCommunity('');
+    }
+  };
+
+  const visiblePosts = tab === 'Communities'
+    ? posts.filter((post) => post.communityId || post.communityName)
+    : posts;
+
+  const tabs = ['For You', 'Following', 'Communities'];
+
   return (
-    <main className="min-h-screen bg-[#0B0F14] pb-24 text-white">
-      <div className="mx-auto flex max-w-6xl items-start justify-center gap-6">
-        <section className="w-full max-w-2xl border-x border-white/[.06]">
-          <div className="sticky top-0 z-30 border-b border-white/[.07] bg-[#0B0F14]/90 backdrop-blur-xl">
-            <div className="flex items-center justify-between px-4 py-3 sm:hidden"><span className="text-lg font-extrabold">Home</span><Link to="/create" className="grid h-9 w-9 place-items-center rounded-full bg-[#0B0F14] text-white border border-white/10"><FiEdit3 /></Link></div>
-            <div className="hidden px-4 pt-4 sm:block"><h1 className="text-xl font-extrabold">Home</h1></div>
-            <div className="grid grid-cols-2">
-              {['For you', 'Following'].map((item) => <button key={item} type="button" onClick={() => setTab(item)} className={`relative py-4 text-sm font-bold ${tab === item ? 'text-white' : 'text-white/35 hover:text-white/65'}`}>{item}{tab === item && <span className="absolute inset-x-1/3 bottom-0 h-1 rounded-full bg-white" />}</button>)}
+    <main className="min-h-screen bg-[#020914] pb-24 text-white">
+      <div className="mx-auto max-w-[1480px] px-3 py-3 sm:px-5 sm:py-5">
+        <div className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)_280px] xl:grid-cols-[220px_minmax(0,1fr)_300px]">
+          <aside className="hidden lg:block">
+            <div className="sticky top-5 space-y-3">
+              <div className="rounded-2xl border border-white/[.07] bg-[#06152C] p-4">
+                <div className="flex items-center gap-2 px-1 pb-3">
+                  <img src="/emet-mark-white.svg" alt="Emet" className="h-9 w-9" />
+                  <img src="/emet-wordmark-white.svg" alt="Emet" className="h-6 w-auto" />
+                </div>
+                <nav className="space-y-1">
+                  {[
+                    ['Home', '/', 'home'],
+                    ['Explore', '/explore', 'explore'],
+                    ['Communities', '/communities', 'communities'],
+                    ['Messages', '/messages', 'messages'],
+                    ['Notifications', '/notifications', 'notifications'],
+                    ['Bookmarks', '/bookmarks', 'bookmarks'],
+                    ['Profile', '/profile', 'profile'],
+                  ].map(([label, path]) => (
+                    <Link key={path} to={path} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold ${path === '/' ? 'bg-gradient-to-r from-indigo-700/80 to-violet-700/60 text-white' : 'text-white/65 hover:bg-white/[.05] hover:text-white'}`}>
+                      <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
+                      {label}
+                      {label === 'Notifications' && <span className="ml-auto rounded-full bg-fuchsia-500 px-1.5 py-0.5 text-[9px]">3</span>}
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+
+              <div className="rounded-2xl border border-white/[.07] bg-[#06152C] p-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-extrabold">Your Communities</h3>
+                  <Link to="/communities" className="text-[10px] text-[#4E91FF]">See all</Link>
+                </div>
+                <div className="mt-3 space-y-2.5">
+                  {(communities.filter((c) => c.joined).slice(0, 5).length ? communities.filter((c) => c.joined).slice(0, 5) : communities.slice(0, 5)).map((community, index) => (
+                    <Link key={community.id} to={`/communities/${community.id}`} className="flex items-center gap-2.5">
+                      <CommunityIcon index={index} />
+                      <div className="min-w-0">
+                        <p className="truncate text-[11px] font-semibold">{community.name}</p>
+                        <p className="text-[9px] text-white/35">{Number(community.member_count || 0).toLocaleString()} members</p>
+                      </div>
+                    </Link>
+                  ))}
+                  {communityLoading && <div className="space-y-2"><Skeleton className="h-9 w-full" /><Skeleton className="h-9 w-full" /></div>}
+                </div>
+              </div>
+
+              <Link to="/communities" className="block overflow-hidden rounded-2xl border border-[#3B40FF]/50 bg-gradient-to-br from-[#101DA1] to-[#4E0AB1] p-4">
+                <p className="text-sm font-extrabold leading-tight">Build your<br />community</p>
+                <p className="mt-2 text-[10px] leading-4 text-white/65">Create or join communities that matter to you.</p>
+                <span className="mt-3 ml-auto grid h-8 w-8 place-items-center rounded-full bg-white/15"><FiArrowRight /></span>
+              </Link>
             </div>
-          </div>
-          <Compose user={user} />
-          {error && <div className="m-4 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">{error}</div>}
-          {loading && !posts.length ? <div className="space-y-2">{[1,2,3].map((n) => <Skeleton key={n} className="h-36 w-full" />)}</div> : posts.length ? posts.map((post) => <PostCard key={post.id} post={post} user={user} onUpdate={update} />) : <div className="px-6 py-16 text-center"><p className="text-lg font-bold">Your timeline is quiet.</p><p className="mt-2 text-sm text-white/40">{tab === 'Following' ? 'Follow people and communities to build your timeline.' : 'Be the first to start a conversation.'}</p><Link to="/create" className="mt-5 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-bold text-black">Create a post</Link></div>}
-          {hasMore && !loading && <button type="button" onClick={() => load(false)} className="w-full border-t border-white/[.07] py-5 text-sm font-bold text-white/55 hover:bg-white/[.03] hover:text-white">Load more</button>}
-          {loading && posts.length > 0 && <div className="border-t border-white/[.07] py-5 text-center text-xs text-white/30">Loading…</div>}
-        </section>
-        <RightRail posts={posts} />
+          </aside>
+
+          <section className="min-w-0 space-y-3">
+            <div className="flex items-center gap-3 rounded-2xl border border-white/[.07] bg-[#06152C] px-4 py-2.5">
+              <FiSearch className="text-white/45" />
+              <Link to="/explore" className="flex-1 text-xs text-white/35">Search Emet...</Link>
+              <div className="hidden items-center gap-2 sm:flex">
+                <Link to="/notifications" className="relative rounded-lg p-2 text-white/65 hover:bg-white/[.05]"><FiBell /></Link>
+                <Link to="/messages" className="rounded-lg p-2 text-white/65 hover:bg-white/[.05]"><FiMessageCircle /></Link>
+                <Link to="/profile" className="rounded-full"><Avatar src={user?.avatarUrl} name={user?.name} size="h-8 w-8" /></Link>
+              </div>
+            </div>
+
+            <div className="lg:hidden"><StoriesRow /></div>
+            <Compose user={user} />
+            <div className="hidden lg:block"><StoriesRow /></div>
+            <HeroCard posts={posts} />
+
+            <div className="overflow-hidden rounded-2xl border border-white/[.07] bg-[#06152C]">
+              <div className="grid grid-cols-3">
+                {tabs.map((item) => (
+                  <button key={item} type="button" onClick={() => setTab(item)} className={`relative py-3.5 text-xs font-bold ${tab === item ? 'text-white' : 'text-white/35 hover:text-white/70'}`}>
+                    {item}
+                    {tab === item && <span className="absolute inset-x-1/3 bottom-0 h-0.5 rounded-full bg-gradient-to-r from-cyan-400 to-fuchsia-500" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-white/[.07] bg-[#06152C]">
+              {error && <div className="m-4 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">{error}</div>}
+              {loading && !posts.length ? (
+                <div className="space-y-2 p-2">{[1, 2, 3].map((n) => <Skeleton key={n} className="h-40 w-full rounded-2xl" />)}</div>
+              ) : visiblePosts.length ? (
+                visiblePosts.map((post) => <PostCard key={post.id} post={post} user={user} onUpdate={update} />)
+              ) : (
+                <div className="px-6 py-16 text-center">
+                  <p className="text-lg font-bold">Your timeline is quiet.</p>
+                  <p className="mt-2 text-sm text-white/40">{tab === 'Communities' ? 'Join a community and start the conversation.' : tab === 'Following' ? 'Follow people and communities to build your timeline.' : 'Be the first to start a conversation.'}</p>
+                  <Link to={tab === 'Communities' ? '/communities' : '/create'} className="mt-5 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-bold text-black">{tab === 'Communities' ? 'Explore communities' : 'Create a post'}</Link>
+                </div>
+              )}
+              {hasMore && !loading && <button type="button" onClick={() => load(false)} className="w-full border-t border-white/[.07] py-5 text-sm font-bold text-white/55 hover:bg-white/[.03] hover:text-white">Load more</button>}
+              {loading && posts.length > 0 && <div className="border-t border-white/[.07] py-5 text-center text-xs text-white/30">Loading…</div>}
+            </div>
+          </section>
+
+          <aside className="hidden lg:block">
+            <div className="sticky top-5 space-y-3">
+              <CommunityRail communities={communities} onJoin={joinCommunity} busyId={busyCommunity} />
+              <SuggestedPeople posts={posts} />
+              <PromoCard />
+            </div>
+          </aside>
+        </div>
       </div>
     </main>
   );
