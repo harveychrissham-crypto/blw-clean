@@ -183,7 +183,7 @@ export default function Create() {
         </div>
 
         <div className="grid gap-0 md:grid-cols-[1.08fr_.92fr]">
-          <section className={`p-4 sm:p-6 md:border-r ${type === 'text' ? 'md:hidden' : ''}` md:border-white/[0.07]">
+          <section className={`p-4 sm:p-6 md:border-r border-white/[0.07] ${type === 'text' ? 'md:hidden' : ''}`}>
             <input ref={inputRef} type="file" className="hidden" onChange={onFile} />
             {preview ? (
               <div className={`group relative overflow-hidden rounded-[26px] bg-black ring-1 ring-white/10 ${type === 'reel' ? 'aspect-[9/15] max-h-[68vh]' : 'aspect-square'}`}>
