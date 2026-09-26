@@ -1,13 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512" role="img" aria-labelledby="title">
-  <title id="title">Emet</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 1280" role="img" aria-labelledby="title">
+  <title id="title">Emet app icon</title>
   <defs>
-    <linearGradient id="emet-gradient" x1="0" y1="0" x2="480" y2="0" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#22d3e5"/>
-      <stop offset=".38" stop-color="#168cff"/>
-      <stop offset=".68" stop-color="#5b38ff"/>
-      <stop offset="1" stop-color="#d52dff"/>
+    <linearGradient id="emet-gradient" x1="250" y1="600" x2="1000" y2="600" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#29d7e7"/>
+      <stop offset=".28" stop-color="#1496ff"/>
+      <stop offset=".5" stop-color="#1d5aff"/>
+      <stop offset=".76" stop-color="#8228f5"/>
+      <stop offset="1" stop-color="#e42dff"/>
     </linearGradient>
   </defs>
-  <path fill="url(#emet-gradient)" d="M192 8h173c36 0 63 24 63 58s-27 60-63 60H193c-36 0-63 27-63 62v103c0 25 16 48 45 48h199c37 0 63 25 63 58s-26 61-63 61H230l-76 47c-14 9-31 2-31-14l8-33C60 446 8 385 8 291V188C8 89 91 8 192 8Z"/>
-  <path fill="url(#emet-gradient)" d="M130 188c0-17 17-28 36-28h205c34 0 60 23 60 51s-26 52-60 52H164c-17 0-30 14-34 28V188Z"/>
+  <path fill="url(#emet-gradient)" d="M568 253h290c68 0 123 39 123 91s-42 91-94 91H610c-84 0-144 59-144 133v173c0 23 14 45 46 59h400c51 0 88 37 88 87s-38 92-88 92H512l-157 84c-25 14-51-2-44-31l15-119c-47-37-74-100-74-168V552c0-167 136-299 316-299Z"/>
+  <path fill="url(#emet-gradient)" d="M466 568c0-29 28-50 63-50h357c61 0 103 36 103 87s-43 90-103 90H616c-66 0-123 29-150 75V568Z"/>
 </svg>
