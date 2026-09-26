@@ -213,7 +213,7 @@ export default function Create() {
 
             <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-3.5 focus-within:border-white/20">
               <textarea value={caption} onChange={(event) => setCaption(event.target.value)} maxLength={5000} rows={7} placeholder={type === 'reel' ? 'Add a caption to your Reel...' : 'Share something with the community...'} className="w-full resize-none bg-transparent text-sm leading-6 text-white outline-none placeholder:text-white/25" />
-              <div className="flex items-center justify-between border-t border-white/[0.07] pt-2.5"><button type="button" className="grid h-8 w-8 place-items-center rounded-full text-white/35 transition hover:bg-white/[0.06] hover:text-white/70" aria-label="Emoji"><FiSmile /></button><span className="text-[10px] text-white/25">{caption.length}/5000</span></div>
+              <div className="flex items-center justify-between border-t border-white/[0.07] pt-2.5"><span className="text-[10px] text-white/25">Mention someone with @name</span><button type="button" className="grid h-8 w-8 place-items-center rounded-full text-white/35 transition hover:bg-white/[0.06] hover:text-white/70" aria-label="Emoji"><FiSmile /></button><span className="text-[10px] text-white/25">{caption.length}/5000</span></div>
             </div>
 
             <div className="mt-3 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.025] px-3.5 py-2.5"><FiMapPin className="shrink-0 text-white/35" /><input value={location} onChange={(event) => setLocation(event.target.value)} maxLength={100} placeholder="Add location (optional)" className="min-w-0 flex-1 bg-transparent text-xs text-white outline-none placeholder:text-white/25" /></div>
