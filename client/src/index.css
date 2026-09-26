@@ -94,7 +94,7 @@ button.bg-\[\#E7E9EA\]:hover, a.bg-\[\#E7E9EA\]:hover, [role="button"].bg-\[\#E7
   -webkit-mask: url('/emet-wordmark-geometric-white.svg') center / 100% 100% no-repeat;
   mask: url('/emet-wordmark-geometric-white.svg') center / 100% 100% no-repeat;
   clip-path: inset(0 100% 0 0);
-  animation: emet-wordmark-cycle 24s linear infinite;
+  animation: emet-wordmark-cycle 40s linear infinite;
 }
 
 @keyframes emet-wordmark-cycle {
