@@ -154,8 +154,8 @@ function CommunityRail({ communities, onJoin, busyId }) {
   return (
     <section className="overflow-hidden rounded-xl border border-[#17305e]/55 bg-[#041126]">
       <div className="flex items-center justify-between px-4 py-4">
-        <h2 className="text-sm font-extrabold">Trending Communities</h2>
-        <Link to="/communities" className="text-xs font-semibold text-[#4E91FF]">See all</Link>
+        <h2 className="whitespace-nowrap text-sm font-extrabold">Trending Communities</h2>
+        <Link to="/communities" className="shrink-0 whitespace-nowrap text-xs font-semibold text-[#4E91FF]">See all</Link>
       </div>
       <div>
         {list.map((community, index) => (
@@ -189,8 +189,8 @@ function SuggestedPeople({ posts }) {
   return (
     <section className="overflow-hidden rounded-xl border border-[#17305e]/55 bg-[#041126]">
       <div className="flex items-center justify-between px-4 py-4">
-        <h2 className="text-sm font-extrabold">Suggested People</h2>
-        <Link to="/connect" className="text-xs font-semibold text-[#4E91FF]">See all</Link>
+        <h2 className="whitespace-nowrap text-sm font-extrabold">Suggested People</h2>
+        <Link to="/connect" className="shrink-0 whitespace-nowrap text-xs font-semibold text-[#4E91FF]">See all</Link>
       </div>
       {people.map((person, index) => (
         <div key={person.author} className="flex items-center gap-3 px-4 py-3">
@@ -212,7 +212,7 @@ function PromoCard() {
       <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-fuchsia-500/20 blur-3xl" />
       <div className="relative">
         <img src="/emet-mark.svg" alt="" className="h-11 w-11" />
-        <p className="mt-4 max-w-[190px] text-lg font-extrabold leading-tight">More than a platform.<br /><span className="text-[#A989FF]">A movement.</span></p>
+        <p className="mt-4 max-w-none whitespace-nowrap text-sm font-extrabold leading-tight xl:text-base">More than a platform.<br /><span className="text-[#A989FF]">A movement.</span></p>
         <span className="absolute bottom-0 right-0 grid h-9 w-9 place-items-center rounded-full bg-white/15 text-white"><FiArrowRight /></span>
       </div>
     </Link>
@@ -325,7 +325,7 @@ export default function Home() {
             <Link to="/profile" className={user?.avatarUrl ? 'rounded-full' : ''}><Avatar src={user?.avatarUrl} name={user?.name} size="h-8 w-8" /></Link>
           </div>
         </div>
-        <div className="grid min-w-0 justify-center gap-3 lg:grid-cols-[minmax(0,420px)_200px] xl:grid-cols-[minmax(0,520px)_240px]">
+        <div className="grid min-w-0 justify-center gap-3 lg:grid-cols-[minmax(0,420px)_210px] xl:grid-cols-[minmax(0,520px)_260px]">
           <section className="min-w-0 space-y-2.5">
             <div className="flex items-center justify-between gap-3 px-1 pb-1 sm:px-2 lg:hidden">
               <Link to="/" aria-label="Emet home" className="flex items-center gap-2.5">
