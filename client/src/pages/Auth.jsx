@@ -217,7 +217,7 @@ export default function Auth() {
             <rect x="6" y="3" width="18" height="3.5" rx=".8"/><rect x="6" y="9.25" width="18" height="3.5" rx=".8"/><rect x="6" y="15.5" width="18" height="3.5" rx=".8"/>
             <path d="M31 19V3h4.5L43 10.5 50.5 3H55v16h-4V9.5L43 18l-8-8.5V19z"/>
             <rect x="61" y="3" width="18" height="3.5" rx=".8"/><rect x="61" y="9.25" width="18" height="3.5" rx=".8"/><rect x="61" y="15.5" width="18" height="3.5" rx=".8"/>
-            <rect x="86" y="3" width="20" height="3.5" rx=".8"/><rect x="94.25" y="3" width="3.5" height="16" rx=".8"/>
+            <path d="M86 3h20v3.5h-8.25V19h-3.5V6.5H86z" fill="rgba(21,34,54,.28)" strokeLinejoin="round"/>
           </svg>
           <div className="absolute bottom-7 right-7 w-[190px] rounded-2xl border border-white/15 bg-[#09132a]/90 p-4 text-center shadow-[0_18px_60px_rgba(0,0,0,.32)] backdrop-blur-xl">
             <p className="mb-3 text-sm text-white/65">Scan to get the app</p>
