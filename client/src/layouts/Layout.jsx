@@ -21,15 +21,15 @@ export default function Layout({ children }) {
   const isFeed=location.pathname==='/feed'; const isHome=location.pathname==='/';
   useEffect(()=>{const refresh=()=>setUnreadCount(getUnreadCount());refresh();return onNotificationsUpdated(refresh);},[]);
   useEffect(()=>{if(!isHome)return undefined;let active=true;fetchCommunities().then(items=>{if(active)setCommunities(items);}).catch(()=>{});return()=>{active=false;};},[isHome]);
-    return <div className="min-h-screen text-white" style={{background:'radial-gradient(ellipse at 4% 28%, rgba(0,88,220,.14), transparent 34%), radial-gradient(ellipse at 98% 9%, rgba(80,42,215,.17), transparent 35%), radial-gradient(ellipse at 51% 100%, rgba(23,39,154,.14), transparent 42%), #02091d'}}>
+    return <div className="min-h-screen text-white" style={{background:'radial-gradient(ellipse at 4% 28%, rgba(0,88,220,.10), transparent 34%), radial-gradient(ellipse at 98% 9%, rgba(80,42,215,.12), transparent 35%), radial-gradient(ellipse at 51% 100%, rgba(23,39,154,.10), transparent 42%), #010716'}}>
     {!isHome&&<header className="sticky top-0 z-40 border-b border-white/[0.07]" style={{background:'rgba(11,15,20,0.94)',backdropFilter:'blur(20px)'}}>
       <div className="flex items-center justify-between px-4 py-2.5 sm:px-5">
         <Link to="/" className="flex items-center lg:hidden"><img src="/emet-logo.png" alt="Emet" className="h-8 w-8 rounded-lg"/></Link>
         <div className="ml-auto flex items-center gap-1"><Button variant="custom" size="none" onClick={()=>setSearchOpen(true)} className="rounded-lg p-2 text-white/50 hover:text-white hover:bg-white/5" aria-label="Search"><FiSearch className="h-4 w-4"/></Button>{user&&<Link to="/notifications" className="rounded-lg p-2 text-white/50 hover:text-white lg:hidden"><FiBell className="h-4 w-4"/></Link>}{user?<Link to="/profile" className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden">Profile</Link>:<Link to="/auth" className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden">Sign In</Link>}</div>
       </div>
     </header>}
-    <div className={isHome?'mx-auto max-w-[1468px] px-4 pb-10 lg:flex lg:min-h-[calc(100vh-180px)] lg:overflow-hidden lg:rounded-[22px] lg:border lg:border-[#625bc1]/70 lg:bg-[#020b20]/95 lg:shadow-[0_0_0_1px_rgba(42,86,190,.18),0_0_32px_rgba(75,55,190,.24)]':'contents'}>
-    <aside className={`${isHome?'relative w-[250px] shrink-0 border-r border-[#3156AE]/50 bg-[#020a20]/95':'fixed inset-y-0 left-0 z-40 w-[260px] border-r border-[#253A72]/45 bg-[#030A18]/95'} hidden flex-col px-0 py-6 backdrop-blur-xl lg:flex`}>
+    <div className={isHome?'mx-auto max-w-[1468px] px-4 pb-10 lg:flex lg:min-h-[calc(100vh-180px)] lg:overflow-hidden lg:rounded-[22px] lg:border lg:border-[#514da5]/60 lg:bg-[#02091a]/95 lg:shadow-[0_0_0_1px_rgba(42,86,190,.14),0_0_28px_rgba(75,55,190,.16)]':'contents'}>
+    <aside className={`${isHome?'relative w-[250px] shrink-0 border-r border-[#28478e]/40 bg-[#020817]/95':'fixed inset-y-0 left-0 z-40 w-[260px] border-r border-[#253A72]/45 bg-[#030A18]/95'} hidden flex-col px-0 py-6 backdrop-blur-xl lg:flex`}>
       <div className="mb-8 flex shrink-0 flex-col px-6">
         <Link to="/" aria-label="Emet home" className="flex items-center gap-2.5"><img src="/emet-logo.png" alt="" className="h-10 w-10 rounded-xl"/></Link>
         {!isHome&&<p className="mt-3 pl-0.5 text-[9px] font-semibold uppercase tracking-[.28em] text-[#9FB6E8]/80">Real people. Meaningful connections.</p>}
