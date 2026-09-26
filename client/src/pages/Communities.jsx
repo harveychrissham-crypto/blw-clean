@@ -102,12 +102,12 @@ export default function Communities() {
               <h1 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Communities</h1>
             </div>
           </div>
-          <button onClick={() => user ? setShowCreate(true) : navigate('/auth')} className="inline-flex items-center gap-2 rounded-xl bg-white text-[#0B0F14] px-4 py-2.5 text-xs font-semibold text-white hover:bg-white/90"><FiPlus /> Create</button>
+          <button onClick={() => user ? setShowCreate(true) : navigate('/auth')} className="inline-flex items-center gap-2 rounded-xl bg-[#E7E9EA] text-[#0B0F14] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#D9DDE1]"><FiPlus /> Create</button>
         </header>
 
         <section className="mt-7 rounded-[1.75rem] border border-white/[.07] bg-white/[.025] p-5 sm:p-7">
           <div className="flex items-start gap-4">
-            <div className="hidden h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white text-[#0B0F14]/10 text-[#1D9BF0] sm:grid"><FiCompass className="h-6 w-6" /></div>
+            <div className="hidden h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#E7E9EA] text-[#0B0F14]/10 text-[#1D9BF0] sm:grid"><FiCompass className="h-6 w-6" /></div>
             <div>
               <h2 className="text-lg font-bold">Find people who share your interests</h2>
               <p className="mt-1 max-w-2xl text-sm leading-6 text-white/45">Join conversations around the things you care about. Communities on Emet are built around people, interests and conversation.</p>
@@ -118,7 +118,7 @@ export default function Communities() {
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search communities" className="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/25" />
           </label>
           <div className="mt-4 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-            {categories.map((item) => <button key={item} onClick={() => setCategory(item)} className={`shrink-0 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${category === item ? 'bg-white text-[#0B0F14]' : 'border border-white/10 bg-white/[.03] text-white/55 hover:bg-white/[.07] hover:text-white'}`}>{item}</button>)}
+            {categories.map((item) => <button key={item} onClick={() => setCategory(item)} className={`shrink-0 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${category === item ? 'bg-[#E7E9EA] text-[#0B0F14]' : 'border border-white/10 bg-white/[.03] text-white/55 hover:bg-white/[.07] hover:text-white'}`}>{item}</button>)}
           </div>
         </section>
 
@@ -137,7 +137,7 @@ export default function Communities() {
               <article key={community.id} className="rounded-3xl border border-white/[.07] bg-white/[.025] p-5 transition hover:border-white/15 hover:bg-white/[.04]">
                 <div className="flex items-start justify-between gap-4">
                   <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${community.tone}`}><FiUsers className="h-5 w-5" /></div>
-                  <button onClick={() => toggleJoin(community)} disabled={busyId === community.id} className={`rounded-xl px-4 py-2 text-xs font-semibold transition disabled:opacity-50 ${community.joined ? 'border border-white/10 bg-white/[.05] text-white/60' : 'bg-white text-[#0B0F14] text-white hover:bg-white/90'}`}>{busyId === community.id ? 'Updating…' : community.joined ? 'Joined' : 'Join'}</button>
+                  <button onClick={() => toggleJoin(community)} disabled={busyId === community.id} className={`rounded-xl px-4 py-2 text-xs font-semibold transition disabled:opacity-50 ${community.joined ? 'border border-white/10 bg-white/[.05] text-white/60' : 'bg-[#E7E9EA] text-[#0B0F14] text-white hover:bg-[#D9DDE1]'}`}>{busyId === community.id ? 'Updating…' : community.joined ? 'Joined' : 'Join'}</button>
                 </div>
                 <button onClick={() => navigate(`/communities/${community.id}`)} className="mt-5 text-left">
                   <h3 className="text-base font-bold hover:text-[#1D9BF0]">{community.name}</h3>
@@ -161,7 +161,7 @@ export default function Communities() {
             <input maxLength={40} value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} placeholder="Category" className="w-full rounded-2xl border border-white/12 bg-[#11161D] px-4 py-3 text-sm outline-none focus:border-[#1D9BF0]" />
           </div>
           {createError && <p className="mt-3 text-sm text-red-300">{createError}</p>}
-          <button disabled={creating} className="mt-5 w-full rounded-2xl bg-white text-[#0B0F14] px-4 py-3 text-sm font-semibold text-white disabled:opacity-50 hover:bg-white/90">{creating ? 'Creating…' : 'Create community'}</button>
+          <button disabled={creating} className="mt-5 w-full rounded-2xl bg-[#E7E9EA] text-[#0B0F14] px-4 py-3 text-sm font-semibold text-white disabled:opacity-50 hover:bg-[#D9DDE1]">{creating ? 'Creating…' : 'Create community'}</button>
         </form>
       </div>}
     </main>
