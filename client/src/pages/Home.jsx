@@ -37,7 +37,9 @@ function Avatar({ src, name, size = 'h-10 w-10' }) {
 
 function CommunityIcon({ index = 0 }) {
   const tones = ['from-fuchsia-500 to-indigo-600', 'from-cyan-400 to-blue-600', 'from-violet-500 to-purple-700', 'from-sky-400 to-indigo-600', 'from-blue-500 to-violet-600'];
-  return <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${tones[index % tones.length]} text-white`}><FiUsers className="h-4 w-4" /></span>;
+  const icons = [FiHeart, FiUsers, FiImage, FiArrowRight, FiMessageCircle];
+  const Icon = icons[index % icons.length];
+  return <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${tones[index % tones.length]} text-white shadow-[0_0_16px_rgba(62,104,255,.32)]`}><Icon className="h-4 w-4" /></span>;
 }
 
 function PostCard({ post, user, onUpdate }) {
@@ -131,7 +133,7 @@ function PostCard({ post, user, onUpdate }) {
 function Compose({ user }) {
   const name = user?.name || 'Member';
   return (
-    <div className="rounded-2xl border border-white/[.07] bg-[#06152C] p-3">
+    <div className="rounded-xl border border-[#1b376a]/70 bg-[#06152c] p-3">
       <div className="flex items-center gap-3">
         <Avatar src={user?.avatarUrl || user?.avatar_url} name={name} size="h-10 w-10" />
         <Link to={user ? '/create' : '/auth'} className="min-w-0 flex-1 rounded-xl px-1 py-2 text-[14px] text-white/45 hover:text-white/70">
@@ -170,7 +172,7 @@ function HeroCard({ posts }) {
 function CommunityRail({ communities, onJoin, busyId }) {
   const list = communities.slice(0, 5);
   return (
-    <section className="overflow-hidden rounded-2xl border border-white/[.07] bg-[#06152C]">
+    <section className="overflow-hidden rounded-xl border border-[#1b376a]/65 bg-[#06152c]">
       <div className="flex items-center justify-between px-4 py-4">
         <h2 className="text-sm font-extrabold">Trending Communities</h2>
         <Link to="/communities" className="text-xs font-semibold text-[#4E91FF]">See all</Link>
@@ -202,7 +204,7 @@ function SuggestedPeople({ posts }) {
   }, [posts]);
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-white/[.07] bg-[#06152C]">
+    <section className="overflow-hidden rounded-xl border border-[#1b376a]/65 bg-[#06152c]">
       <div className="flex items-center justify-between px-4 py-4">
         <h2 className="text-sm font-extrabold">Suggested People</h2>
         <Link to="/connect" className="text-xs font-semibold text-[#4E91FF]">See all</Link>
@@ -302,10 +304,10 @@ export default function Home() {
   const tabs = ['For You', 'Following', 'Communities'];
 
   return (
-    <main className="min-h-screen bg-[#020914] pb-24 text-white">
+    <main className="min-h-screen bg-transparent pb-24 text-white">
       <div className="mx-auto max-w-[1320px] px-3 py-3 sm:px-5 sm:py-5">
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
-          <section className="min-w-0 space-y-3">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_276px]">
+          <section className="min-w-0 space-y-2.5">
             <div className="flex items-center justify-between gap-3 px-1 pb-1 sm:px-2 lg:hidden">
               <Link to="/" aria-label="Emet home" className="flex items-center gap-2.5">
                 <img src="/emet-logo.png" alt="" className="h-8 w-8 rounded-lg" />
@@ -318,7 +320,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="hidden items-center gap-3 rounded-2xl border border-[#243D77]/60 bg-[#06152C]/90 px-4 py-2.5 shadow-[0_0_28px_rgba(41,70,177,.08)] lg:flex">
+            <div className="hidden items-center gap-3 rounded-xl border border-[#3159B9]/65 bg-[#091B3A]/95 px-4 py-2.5 shadow-[0_0_28px_rgba(41,93,230,.18)] lg:flex">
               <FiSearch className="text-white/45" />
               <Link to="/explore" className="flex-1 text-xs text-white/35">Search Emet...</Link>
               <div className="hidden items-center gap-2 sm:flex">
@@ -333,7 +335,7 @@ export default function Home() {
             <div className="hidden lg:block"><StoriesRow /></div>
             <div className="hidden lg:block"><HeroCard posts={posts} /></div>
 
-            <div className="hidden overflow-hidden rounded-2xl border border-white/[.07] bg-[#06152C] lg:block">
+            <div className="hidden overflow-hidden rounded-xl border border-[#1b376a]/65 bg-[#06152c] lg:block">
               <div className="grid grid-cols-3">
                 {tabs.map((item) => (
                   <button key={item} type="button" onClick={() => setTab(item)} className={`relative py-3.5 text-xs font-bold ${tab === item ? 'text-white' : 'text-white/35 hover:text-white/70'}`}>
@@ -344,7 +346,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-white/[.07] bg-[#06152C]">
+            <div className="overflow-hidden rounded-xl border border-[#1b376a]/65 bg-[#06152c]">
               {error && <div className="m-4 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">{error}</div>}
               {loading && !posts.length ? (
                 <div className="space-y-2 p-2">{[1, 2, 3].map((n) => <Skeleton key={n} className="h-40 w-full rounded-2xl" />)}</div>
@@ -362,7 +364,7 @@ export default function Home() {
             </div>
           </section>
 
-          <aside className="hidden xl:block">
+          <aside className="hidden lg:block">
             <div className="sticky top-5 space-y-3">
               <CommunityRail communities={communities} onJoin={joinCommunity} busyId={busyCommunity} />
               <SuggestedPeople posts={posts} />
@@ -374,4 +376,3 @@ export default function Home() {
     </main>
   );
 }
-

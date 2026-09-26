@@ -159,7 +159,7 @@ export default function StoriesRow() {
 
   return (
     <div className="w-full px-5 pt-2">
-      <style>{`@keyframes blwStoryRingSpin{to{transform:rotate(360deg)}}.story-ring-spin{animation:blwStoryRingSpin 4.5s linear infinite;transform-origin:center}.story-ring-spin-reverse{animation:blwStoryRingSpin 7s linear infinite reverse;transform-origin:center}@keyframes blwStoryUploadSpin{to{transform:rotate(360deg)}}.story-upload-ring{background:conic-gradient(from 0deg,#EC2FA8,#8A2BE2,#F2A31C,#EC2FA8);animation:blwStoryUploadSpin 1.6s linear infinite;transform-origin:center}.story-upload-ring-inner{border:2px solid #0d0c18}@media (prefers-reduced-motion:reduce){.story-ring-spin,.story-ring-spin-reverse,.story-upload-ring{animation:none}}`}</style>
+      <style>{`@keyframes blwStoryRingSpin{to{transform:rotate(360deg)}}.story-ring-spin{animation:blwStoryRingSpin 4.5s linear infinite;transform-origin:center}.story-ring-spin-reverse{animation:blwStoryRingSpin 7s linear infinite reverse;transform-origin:center}@keyframes blwStoryUploadSpin{to{transform:rotate(360deg)}}.story-upload-ring{background:conic-gradient(from 0deg,#04caff,#254dff,#bb37ff,#04caff);animation:blwStoryUploadSpin 1.6s linear infinite;transform-origin:center}.story-upload-ring-inner{border:2px solid #07132d}@media (prefers-reduced-motion:reduce){.story-ring-spin,.story-ring-spin-reverse,.story-upload-ring{animation:none}}`}</style>
       <div className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none]">
         <div className="flex shrink-0 flex-col items-center gap-1.5">
           <div className="relative h-16 w-16 shrink-0">
