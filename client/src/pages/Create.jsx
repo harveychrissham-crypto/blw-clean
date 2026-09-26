@@ -168,9 +168,9 @@ export default function Create() {
   const isVideo = Boolean(file?.type?.startsWith('video/'));
 
   return (
-    <div className="min-h-screen bg-[#090812] text-white sm:py-8">
-      <div className="mx-auto min-h-screen max-w-2xl overflow-hidden border-x border-white/[0.07] bg-[#0d0c18] sm:min-h-0 sm:rounded-[28px] sm:border sm:shadow-2xl">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-white/[0.07] bg-[#0d0c18]/90 px-3 backdrop-blur-2xl">
+    <div className="min-h-screen bg-[#0B0F14] text-white sm:py-8">
+      <div className="mx-auto min-h-screen max-w-2xl overflow-hidden border-x border-white/[0.07] bg-[#0B0F14] sm:min-h-0 sm:rounded-[28px] sm:border sm:shadow-2xl">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-white/[0.07] bg-[#0B0F14]/90 px-3 backdrop-blur-2xl">
           <button type="button" onClick={back} className="grid h-10 w-10 place-items-center rounded-full text-white/75 transition hover:bg-white/[0.07]" aria-label="Back"><FiArrowLeft className="h-5 w-5" /></button>
           <div className="text-center"><h1 className="text-[15px] font-bold tracking-tight">Create</h1><p className="text-[9px] uppercase tracking-[0.18em] text-white/30">Share with the community</p></div>
           {uploading ? <button type="button" onClick={cancelUpload} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-full border border-red-400/20 bg-red-400/10 px-3.5 py-2 text-xs font-bold text-red-200 transition hover:bg-red-400/20"><FiX /> Cancel</button> : <button type="button" onClick={publish} disabled={(type !== 'text' && !file) || (!file && !caption.trim()) || published} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-ink-950 transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35"><FiCheck /> Share</button>}
@@ -227,9 +227,9 @@ export default function Create() {
       </div>
       <AnimatePresence>
         {published && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[90] grid place-items-center bg-[#090812]/95 backdrop-blur-sm">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[90] grid place-items-center bg-[#0B0F14]/95 backdrop-blur-sm">
             <motion.div initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 340, damping: 18 }} className="flex flex-col items-center gap-3">
-              <div className="grid h-20 w-20 place-items-center rounded-full bg-gradient-to-br from-[#A62574] to-[#3C1464] shadow-2xl shadow-purple-400/30"><FiCheck className="h-10 w-10 text-white" /></div>
+              <div className="grid h-20 w-20 place-items-center rounded-full bg-gradient-to-br from-[#3B82F6] to-[#3B82F6] shadow-2xl shadow-purple-400/30"><FiCheck className="h-10 w-10 text-white" /></div>
               <p className="text-sm font-bold text-white">{type === 'reel' ? 'Reel shared!' : 'Posted!'}</p>
             </motion.div>
           </motion.div>
