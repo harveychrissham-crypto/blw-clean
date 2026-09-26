@@ -226,7 +226,7 @@ function PromoCard() {
     <Link to="/communities" className="relative block min-h-[150px] overflow-hidden rounded-2xl border border-[#2557D9]/50 bg-gradient-to-br from-[#071D47] via-[#152F83] to-[#4D0C8A] p-5">
       <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-fuchsia-500/20 blur-3xl" />
       <div className="relative">
-        <img src="/emet-mark-white.svg" alt="" className="h-11 w-11" />
+        <img src="/emet-logo.png" alt="" className="h-11 w-11 rounded-xl" />
         <p className="mt-4 max-w-[190px] text-lg font-extrabold leading-tight">More than a platform.<br /><span className="text-[#A989FF]">A movement.</span></p>
         <span className="absolute bottom-0 right-0 grid h-9 w-9 place-items-center rounded-full bg-white/15 text-white"><FiArrowRight /></span>
       </div>
@@ -308,7 +308,7 @@ export default function Home() {
           <section className="min-w-0 space-y-3">
             <div className="flex items-center justify-between gap-3 px-1 pb-1 sm:px-2 lg:hidden">
               <Link to="/" aria-label="Emet home" className="flex items-center gap-2.5">
-                <img src="/emet-official-icon.svg" alt="" className="h-8 w-8" />
+                <img src="/emet-logo.png" alt="" className="h-8 w-8 rounded-lg" />
                 <img src="/emet-wordmark-geometric-white.svg" alt="Emet" className="h-6 w-auto" />
               </Link>
               <div className="flex items-center gap-1">
@@ -374,3 +374,4 @@ export default function Home() {
     </main>
   );
 }
+

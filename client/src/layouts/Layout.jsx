@@ -1,7 +1,6 @@
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { FiMoreHorizontal, FiX, FiHome, FiMic, FiHeart, FiPhone, FiSearch, FiUser, FiLogIn, FiBell, FiVideo, FiMessageCircle, FiCamera, FiUsers, FiBookmark, FiHash, FiArrowRight } from 'react-icons/fi';
-import AIChatWidget from '../components/AIChatWidget';
 import SearchPanel from '../components/SearchPanel';
 import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
@@ -25,13 +24,13 @@ export default function Layout({ children }) {
     return <div className="min-h-screen text-white" style={{background:'radial-gradient(ellipse at 82% 0%, rgba(30,54,151,.18), transparent 36%), radial-gradient(ellipse at 46% 0%, rgba(79,27,150,.12), transparent 33%), #030A18'}}>
     {!isHome&&<header className="sticky top-0 z-40 border-b border-white/[0.07]" style={{background:'rgba(11,15,20,0.94)',backdropFilter:'blur(20px)'}}>
       <div className="flex items-center justify-between px-4 py-2.5 sm:px-5">
-        <Link to="/" className="flex items-center lg:hidden"><img src="/emet-official-icon.svg" alt="Emet" className="h-8 w-8"/></Link>
+        <Link to="/" className="flex items-center lg:hidden"><img src="/emet-logo.png" alt="Emet" className="h-8 w-8 rounded-lg"/></Link>
         <div className="ml-auto flex items-center gap-1"><Button variant="custom" size="none" onClick={()=>setSearchOpen(true)} className="rounded-lg p-2 text-white/50 hover:text-white hover:bg-white/5" aria-label="Search"><FiSearch className="h-4 w-4"/></Button>{user&&<Link to="/notifications" className="rounded-lg p-2 text-white/50 hover:text-white lg:hidden"><FiBell className="h-4 w-4"/></Link>}{user?<Link to="/profile" className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden">Profile</Link>:<Link to="/auth" className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden">Sign In</Link>}</div>
       </div>
     </header>}
     <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-[260px] flex-col border-r border-[#253A72]/45 bg-[#030A18]/95 px-0 py-6 backdrop-blur-xl">
       <div className="mb-8 flex shrink-0 flex-col px-6">
-        <Link to="/" aria-label="Emet home" className="flex items-center gap-2.5"><img src="/emet-official-icon.svg" alt="" className="h-10 w-10"/><img src="/emet-wordmark-geometric-white.svg" alt="Emet" className="h-8 w-auto"/></Link>
+        <Link to="/" aria-label="Emet home" className="flex items-center gap-2.5"><img src="/emet-logo.png" alt="" className="h-10 w-10 rounded-xl"/><img src="/emet-wordmark-geometric-white.svg" alt="Emet" className="h-8 w-auto"/></Link>
         <p className="mt-3 pl-0.5 text-[9px] font-semibold uppercase tracking-[.28em] text-[#9FB6E8]/80">Real people. Meaningful connections.</p>
       </div>
       <nav className="min-h-0 flex-1 overflow-y-auto flex flex-col gap-1 px-3 pb-4">
@@ -58,7 +57,8 @@ export default function Layout({ children }) {
         <footer className="hidden border-t border-white/[0.07] mt-8 sm:block" style={{background:'rgba(10,9,20,0.8)'}}><div className="mx-auto max-w-6xl px-5 py-10"><div><h4 className="mb-3 text-xs font-semibold uppercase tracking-widest text-white/40">Quick Links</h4><div className="flex flex-col gap-2 text-sm text-white/50"><Link to="/feed">Feed</Link><Link to="/messages">Messages</Link></div></div></div><div className="border-t border-white/[0.05] py-4 text-center text-xs text-white/25">© {new Date().getFullYear()} Emet</div></footer>
       </div>
     </div>
-    <SearchPanel open={searchOpen} onClose={()=>setSearchOpen(false)}/>{!isHome&&<AIChatWidget/>}
+    <SearchPanel open={searchOpen} onClose={()=>setSearchOpen(false)}/>
     <div className="pb-24 pt-2 text-center text-[10px] text-white/20 lg:hidden">© {new Date().getFullYear()} Emet · Faith · Community · Conversation</div><BottomNav/>
   </div>;
 }
+
