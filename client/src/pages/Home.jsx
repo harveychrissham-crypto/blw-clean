@@ -335,9 +335,11 @@ export default function Home() {
     <main className="min-h-screen bg-transparent pb-24 text-white">
       <div className="mx-auto max-w-[1320px] px-3 py-3 sm:px-5 sm:py-5">
         <div className="mb-3 hidden items-center gap-3 rounded-xl border border-[#27468a]/50 bg-[#06132b]/95 px-4 py-2.5 shadow-[0_0_24px_rgba(41,93,230,.12)] lg:flex">
-          <FiSearch className="text-white/45" />
-          <Link to="/explore" className="flex-1 text-xs text-white/35">Search Emet...</Link>
-          <div className="hidden items-center gap-2 sm:flex">
+          <div className="flex w-[54%] max-w-[440px] min-w-0 shrink-0 items-center gap-3">
+            <FiSearch className="shrink-0 text-white/45" />
+            <Link to="/explore" className="min-w-0 flex-1 truncate text-xs text-white/35">Search Emet...</Link>
+          </div>
+          <div className="ml-auto hidden items-center gap-2 sm:flex">
             <Link to="/notifications" aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : 'Notifications'} className="relative rounded-lg p-2 text-white/65 hover:bg-white/[.05]"><FiBell />{unreadCount > 0 && <span className="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full border border-[#07132d] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>}</Link>
             <Link to="/messages" aria-label={unreadMessages ? `Messages, ${unreadMessages} unread` : 'Messages'} className="relative rounded-lg p-2 text-white/65 hover:bg-white/[.05]"><FiMessageCircle />{unreadMessages > 0 && <span className="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full border border-[#07132d] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadMessages > 9 ? '9+' : unreadMessages}</span>}</Link>
             <Link to="/profile" className="rounded-full"><Avatar src={user?.avatarUrl} name={user?.name} size="h-8 w-8" /></Link>
