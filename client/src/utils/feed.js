@@ -48,7 +48,8 @@ function normalizePost(row = {}) {
     likeCount: Number(row.like_count ?? row.likeCount ?? 0),
     commentCount: Number(row.comment_count ?? row.commentCount ?? 0),
     saveCount: Number(row.save_count ?? row.saveCount ?? 0),
-    repostCount: Number(row.repost_count ?? row.repostCount ?? 0),\n    reposted: Boolean(row.reposted),
+    repostCount: Number(row.repost_count ?? row.repostCount ?? 0),
+    reposted: Boolean(row.reposted),
     liked: Boolean(row.liked),
     saved: Boolean(row.saved),
     time: row.time || formatFeedTime(row.created_at),
@@ -429,7 +430,8 @@ async function postAction(id, action) {
   }
 }
 export const toggleLike = (id) => postAction(id, 'like');
-export const toggleSave = (id) => postAction(id, 'save');\nexport const toggleRepost = (id) => postAction(id, 'repost');
+export const toggleSave = (id) => postAction(id, 'save');
+export const toggleRepost = (id) => postAction(id, 'repost');
 
 export async function searchAccounts(query = '') {
   const params = query.trim() ? `?q=${encodeURIComponent(query.trim())}` : '';
