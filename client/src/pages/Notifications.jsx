@@ -118,7 +118,7 @@ export default function Notifications() {
               <button
                 type="button"
                 onClick={markEverythingRead}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-white/10 px-3.5 py-2.5 text-xs font-semibold hover:border-[#3B82F6]/40 text-white/65 transition hover:border-white/20 hover:bg-white/[.05] hover:text-white"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-white/10 px-3.5 py-2.5 text-xs font-semibold hover:border-[#1D9BF0]/40 text-white/65 transition hover:border-white/20 hover:bg-white/[.05] hover:text-white"
               >
                 <FiCheck />
                 Mark all read
@@ -140,7 +140,7 @@ export default function Notifications() {
               >
                 {item}
                 {filter === item && (
-                  <span className="absolute inset-x-4 bottom-0 h-0.5 rounded-full bg-[#3B82F6]" />
+                  <span className="absolute inset-x-4 bottom-0 h-0.5 rounded-full bg-[#1D9BF0]" />
                 )}
               </button>
             ))}
@@ -179,7 +179,7 @@ export default function Notifications() {
                       </div>
                     )}
                     {!notification.read && (
-                      <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[#3B82F6] ring-2 ring-[#0B0F14]" />
+                      <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[#1D9BF0] ring-2 ring-[#0B0F14]" />
                     )}
                   </div>
 
