@@ -26,7 +26,6 @@ function AuthBackdrop() {
   return (
     <div className="absolute inset-0 overflow-hidden bg-[#02091d]" aria-hidden="true">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_16%_4%,rgba(0,59,214,.34),transparent_42%),radial-gradient(ellipse_at_93%_3%,rgba(88,29,218,.32),transparent_38%)]" />
-      <img src="/auth-scenic-background.webp" alt="" className="absolute bottom-0 left-0 hidden h-[31vh] w-[54%] object-cover object-center opacity-90 lg:block" />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,9,29,.05)_0%,rgba(2,9,29,.08)_42%,#02091d_100%)] lg:bg-[linear-gradient(90deg,transparent_0%,rgba(2,9,29,.06)_47%,#02091d_58%,#02091d_100%)]" />
     </div>
   );
