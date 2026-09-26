@@ -31,7 +31,7 @@ export default function Layout({ children }) {
     <div className={isHome?'mx-auto max-w-[1468px] px-4 pb-10 lg:grid lg:grid-cols-[72px_minmax(0,1fr)] xl:grid-cols-[250px_minmax(0,1fr)] lg:min-h-[calc(100vh-180px)] lg:overflow-hidden lg:rounded-[22px] lg:border lg:border-[#514da5]/60 lg:bg-[#02091a]/95 lg:shadow-[0_0_0_1px_rgba(42,86,190,.14),0_0_28px_rgba(75,55,190,.16)]':'contents'}>
     <aside className={`${isHome?'relative w-[72px] xl:w-[250px] shrink-0 border-r border-[#28478e]/40 bg-[#020817]/95':'fixed inset-y-0 left-0 z-40 w-[260px] border-r border-[#253A72]/45 bg-[#030A18]/95'} hidden flex-col px-0 py-6 backdrop-blur-xl lg:flex`}>
       <div className="mb-8 flex shrink-0 flex-col px-0 lg:items-center xl:items-stretch xl:px-6">
-        <Link to="/" aria-label="Emet home" className="flex items-center justify-center xl:justify-start"><img src="/emet-mark.svg" alt="" className="h-8 w-8 xl:hidden" /><span role="img" aria-label="Emet" className="emet-wordmark emet-wordmark-sidebar hidden xl:inline-block"/></Link>
+        <Link to="/" aria-label="Emet home" className="flex items-center justify-center xl:justify-start"><img src="/emet-mark.svg" alt="" className="h-8 w-8 xl:hidden" /><span role="img" aria-label="Emet" className="emet-wordmark emet-wordmark-sidebar"/></Link>
         {!isHome&&<p className="mt-3 pl-0.5 text-[9px] font-semibold uppercase tracking-[.28em] text-[#9FB6E8]/80">Real people. Meaningful connections.</p>}
       </div>
       <nav className="min-h-0 flex-1 overflow-y-auto flex flex-col gap-1 px-1 pb-4 xl:px-3">
