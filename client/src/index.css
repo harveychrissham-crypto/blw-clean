@@ -61,3 +61,27 @@ button.bg-white:hover, a.bg-white:hover, [role="button"].bg-white:hover,
 button.bg-\[\#E7E9EA\]:hover, a.bg-\[\#E7E9EA\]:hover, [role="button"].bg-\[\#E7E9EA\]:hover {
   background-color: #D9DCDF !important;
 }
+
+/* Emet wordmark shimmer: a slow, low-contrast cyan-to-violet drift. */
+.emet-wordmark {
+  display: inline-block;
+  width: 140px;
+  height: 30px;
+  flex: 0 0 auto;
+  background: linear-gradient(105deg, #28c7d8 0%, #4b8fe9 36%, #7769e8 68%, #b354d5 100%);
+  background-size: 220% 100%;
+  background-position: 15% 50%;
+  -webkit-mask: url('/emet-wordmark-geometric-white.svg') center / 100% 100% no-repeat;
+  mask: url('/emet-wordmark-geometric-white.svg') center / 100% 100% no-repeat;
+  animation: emet-wordmark-shimmer 8s ease-in-out infinite;
+}
+
+@keyframes emet-wordmark-shimmer {
+  0%, 100% { background-position: 15% 50%; opacity: .9; }
+  50% { background-position: 85% 50%; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .emet-wordmark { animation: none; background-position: 50% 50%; }
+  .emet-hero-wordmark animateTransform { display: none; }
+}
