@@ -242,9 +242,6 @@ export default function Auth() {
         </section>
       </div>
 
-      <div className="absolute bottom-6 left-1/2 z-20 hidden -translate-x-1/2 text-xs text-white/25 lg:block">
-        Emet · Faith · Community · Conversation
-      </div>
 
       <Toast toast={toast} onClose={() => setToast(null)} />
     </main>
