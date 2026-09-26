@@ -1,13 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FiArrowRight, FiPhone, FiX } from 'react-icons/fi';
+import { FaApple, FaGoogle } from 'react-icons/fa';
+import QRCode from 'qrcode';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
-import { Card } from '../components/ui/Card';
 import { Toast } from '../components/ui/Toast';
-import Button from '../components/ui/Button';
 
-const inputClass = 'w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm outline-none focus:border-purple-400';
-const sectionLabelClass = 'text-xs font-semibold uppercase tracking-[0.3em] text-white/50';
 const AUTH_LOGIN_URL = '/api/auth/login';
 const AUTH_REGISTER_URL = '/api/auth/register';
 const today = new Date().toISOString().slice(0, 10);
@@ -24,80 +23,78 @@ const isValidBirthday = (value) => {
   return !Number.isNaN(date.getTime()) && value >= earliestBirthday && value <= today;
 };
 
-const GlobalNetworkAnimation = () => (
-  <div className="emet-network" aria-hidden="true">
-    <div className="emet-network-glow" />
-    <svg className="emet-network-svg" viewBox="0 0 700 560" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <radialGradient id="emet-world-ocean" cx="50%" cy="45%" r="70%">
-          <stop offset="0%" stopColor="#173b8a" stopOpacity=".58" />
-          <stop offset="58%" stopColor="#0b255c" stopOpacity=".42" />
-          <stop offset="100%" stopColor="#020617" stopOpacity=".1" />
-        </radialGradient>
-        <linearGradient id="emet-continent" x1="180" y1="120" x2="520" y2="430">
-          <stop stopColor="#1A8CD8" stopOpacity=".32" />
-          <stop offset=".55" stopColor="#1D9BF0" stopOpacity=".2" />
-          <stop offset="1" stopColor="#42A5F5" stopOpacity=".1" />
-        </linearGradient>
-        <linearGradient id="emet-route" x1="100" y1="100" x2="600" y2="430">
-          <stop stopColor="#93C5FD" stopOpacity=".12" />
-          <stop offset=".5" stopColor="#42A5F5" stopOpacity=".9" />
-          <stop offset="1" stopColor="#93C5FD" stopOpacity=".12" />
-        </linearGradient>
-      </defs>
+function AuthBackdrop() {
+  return (
+    <div className="absolute inset-0 overflow-hidden bg-[#020508]" aria-hidden="true">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_64%_48%,rgba(29,155,240,.09),transparent_34%),radial-gradient(circle_at_85%_15%,rgba(29,155,240,.06),transparent_28%)]" />
+      <div className="absolute -right-[12%] top-[8%] h-[65vw] w-[65vw] rounded-full border border-[#1D9BF0]/10 [transform:rotate(-22deg)]" />
+      <div className="absolute -right-[4%] top-[18%] h-[46vw] w-[72vw] rounded-[50%] border border-[#60A5FA]/20 [transform:rotate(-23deg)] shadow-[0_0_35px_rgba(29,155,240,.08)]" />
+      <div className="absolute -right-[10%] bottom-[8%] h-[32vw] w-[78vw] rounded-[50%] border border-[#60A5FA]/25 [transform:rotate(24deg)] shadow-[0_0_45px_rgba(29,155,240,.12)]" />
+      <div className="absolute left-[48%] top-[22%] h-2 w-2 rounded-full bg-white shadow-[0_0_18px_5px_rgba(147,197,253,.8)]" />
+      <div className="absolute right-[17%] top-[29%] h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_15px_4px_rgba(147,197,253,.7)]" />
+      <div className="absolute right-[24%] bottom-[31%] h-2 w-2 rounded-full bg-[#60A5FA] shadow-[0_0_18px_5px_rgba(96,165,250,.8)]" />
+      <div className="absolute left-[43%] bottom-[37%] h-1.5 w-1.5 rounded-full bg-[#60A5FA] shadow-[0_0_14px_4px_rgba(96,165,250,.75)]" />
+      <div className="absolute right-[5%] top-[8%] h-px w-[35%] rotate-[-28deg] bg-gradient-to-r from-transparent via-[#60A5FA]/50 to-transparent" />
+      <div className="absolute right-[10%] bottom-[16%] h-px w-[46%] rotate-[17deg] bg-gradient-to-r from-transparent via-[#60A5FA]/60 to-transparent" />
+    </div>
+  );
+}
 
-      <ellipse cx="350" cy="278" rx="305" ry="190" fill="url(#emet-world-ocean)" stroke="#1D9BF0" strokeOpacity=".28" />
-      <ellipse cx="350" cy="278" rx="305" ry="190" stroke="#42A5F5" strokeOpacity=".1" />
-      <ellipse cx="350" cy="278" rx="215" ry="190" stroke="#42A5F5" strokeOpacity=".12" />
-      <ellipse cx="350" cy="278" rx="105" ry="190" stroke="#42A5F5" strokeOpacity=".1" />
-      <path d="M55 278H645M78 208C210 250 490 250 622 208M78 348C210 306 490 306 622 348" stroke="#42A5F5" strokeOpacity=".1" />
+function ProviderButton({ icon, children, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex h-[58px] w-full items-center justify-center gap-4 rounded-full bg-[#f4f6f8] px-5 text-[16px] font-semibold text-[#0a0d11] shadow-[0_8px_30px_rgba(0,0,0,.14)] transition hover:bg-white hover:shadow-[0_10px_35px_rgba(255,255,255,.1)] active:scale-[.99]"
+    >
+      <span className="grid w-6 place-items-center text-[21px]">{icon}</span>
+      <span>{children}</span>
+    </button>
+  );
+}
 
-      <g className="emet-continents" fill="url(#emet-continent)" stroke="#42A5F5" strokeOpacity=".58" strokeWidth="1.1">
-        <path d="M106 177L127 145L160 133L183 105L218 113L239 139L263 150L271 178L252 195L236 215L211 214L196 232L170 225L155 207L126 211L111 196Z" />
-        <path d="M222 239L246 247L261 267L258 291L243 306L235 331L220 354L211 382L196 403L181 389L184 362L174 339L183 313L178 286L190 263L205 251Z" />
-        <path d="M276 143L299 120L335 115L365 128L394 120L430 128L459 116L501 128L535 151L572 160L600 184L589 203L553 204L527 216L497 211L475 225L445 218L425 202L398 208L377 193L350 195L327 180L303 181L286 166Z" />
-        <path d="M332 210L355 203L374 218L383 241L372 259L376 279L363 298L347 289L338 270L325 257L327 236L315 223Z" />
-        <path d="M489 250L511 245L530 254L539 270L527 283L510 284L498 273L486 263Z" />
-        <path d="M520 332L542 324L566 330L585 344L576 360L554 366L537 355L518 349Z" />
-        <path d="M577 397L594 391L613 399L622 414L613 429L594 431L581 419Z" />
-      </g>
-
-      <g className="emet-network-routes" fill="none" stroke="url(#emet-route)" strokeWidth="1.35">
-        <path d="M160 170C245 110 390 110 505 184" />
-        <path d="M205 199C285 174 365 180 438 218" />
-        <path d="M246 270C305 218 385 208 520 267" />
-        <path d="M222 335C310 295 412 296 555 344" />
-        <path d="M360 150C345 215 365 280 520 335" />
-      </g>
-
-      <g className="emet-network-points" fill="#BFDBFE">
-        <circle cx="160" cy="170" r="4" /><circle cx="205" cy="199" r="3.5" />
-        <circle cx="246" cy="270" r="4.5" /><circle cx="360" cy="150" r="4" />
-        <circle cx="438" cy="218" r="4" /><circle cx="520" cy="267" r="4.5" />
-        <circle cx="222" cy="335" r="3.5" /><circle cx="555" cy="344" r="4" />
-        <circle cx="594" cy="411" r="3.5" />
-      </g>
-
-      <g className="emet-orbits" fill="none" stroke="#42A5F5" strokeOpacity=".28" strokeDasharray="5 13">
-        <ellipse className="emet-orbit emet-orbit-one" cx="350" cy="278" rx="315" ry="205" />
-        <ellipse className="emet-orbit emet-orbit-two" cx="350" cy="278" rx="240" ry="205" />
-      </g>
-    </svg>
-    <div className="emet-network-label"><span className="emet-network-pulse" />Connecting people everywhere</div>
-  </div>
-);
+function QRCard() {
+  const canvasRef = useRef(null);
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    QRCode.toCanvas(canvasRef.current, window.location.origin, {
+      width: 132,
+      margin: 1,
+      color: { dark: '#ffffff', light: '#00000000' },
+      errorCorrectionLevel: 'M',
+    }).catch(() => {});
+  }, []);
+  return (
+    <div className="absolute bottom-8 right-8 z-20 hidden w-[208px] rounded-2xl border border-white/20 bg-[#080c12]/80 p-4 shadow-2xl backdrop-blur-xl lg:block">
+      <p className="mb-3 text-center text-[15px] font-medium text-white/55">Scan to get the app</p>
+      <div className="mx-auto grid w-[140px] place-items-center rounded-lg bg-black p-1">
+        <canvas ref={canvasRef} className="h-[132px] w-[132px]" aria-label="Emet app QR code" />
+      </div>
+      <div className="pointer-events-none absolute left-1/2 top-[74%] grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-md bg-black text-[15px] font-black text-white">=</div>
+    </div>
+  );
+}
 
 export default function Auth() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [mode, setMode] = useState('login');
   const [form, setForm] = useState(emptyForm);
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
-  const [lastMode, setLastMode] = useState('login');
   const [toast, setToast] = useState(null);
-  const { login } = useAuth();
 
-  const handleCampusZoneChange = (event) => setForm((prev) => ({ ...prev, campusZone: event.target.value }));
+  const setModeAndReset = (next) => {
+    setMode(next);
+    setStatus('idle');
+    setError('');
+  };
+
+  const providerUnavailable = (provider) => {
+    const message = `${provider} sign-in is not connected yet.`;
+    setError(message);
+    setToast({ type: 'error', message });
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -106,19 +103,22 @@ export default function Auth() {
 
     if (mode === 'login') {
       if (!form.email || !form.password) {
-        const message = 'Email and password are required for sign in.';
-        setError(message); setStatus('error'); setToast({ type: 'error', message }); return;
+        const message = 'Enter your email and password to continue.';
+        setError(message); setStatus('error'); return;
       }
       try {
-        const response = await apiFetch(AUTH_LOGIN_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: form.email, password: form.password }) });
+        const response = await apiFetch(AUTH_LOGIN_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: form.email, password: form.password }),
+        });
         const body = await response.json().catch(() => ({}));
         if (!response.ok) {
           const message = body.error || 'Unable to sign in.';
           setError(message); setStatus('error'); setToast({ type: 'error', message }); return;
         }
         await login(body.user, body.token);
-        setForm({ ...emptyForm, email: form.email });
-        setLastMode('login'); setStatus('submitted'); setToast({ type: 'success', message: 'Signed in successfully.' }); navigate('/dashboard');
+        navigate('/dashboard');
       } catch (err) {
         const message = err.message || 'Unable to sign in.';
         setError(message); setStatus('error'); setToast({ type: 'error', message });
@@ -126,91 +126,127 @@ export default function Auth() {
       return;
     }
 
+    if (mode === 'register') {
+      setMode('details');
+      setStatus('idle');
+      return;
+    }
+
     if (!isValidBirthday(form.birthday)) {
       const message = 'Please select a valid birthday.';
-      setError(message); setStatus('error'); setToast({ type: 'error', message }); return;
+      setError(message); setStatus('error'); return;
     }
 
     try {
       const response = await apiFetch(AUTH_REGISTER_URL, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form }),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const message = body.message || body.error || 'Unable to register.';
+        const message = body.message || body.error || 'Unable to create your account.';
         setError(message); setStatus('error'); setToast({ type: 'error', message }); return;
       }
       await login(body.user, body.token);
-      setForm(emptyForm); setLastMode('register'); setStatus('submitted');
-      setToast({ type: 'success', message: 'Your account has been created and signed in successfully.' });
       navigate('/dashboard');
     } catch (err) {
-      const message = err.message || 'Unable to register.';
+      const message = err.message || 'Unable to create your account.';
       setError(message); setStatus('error'); setToast({ type: 'error', message });
     }
   };
 
+  const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+
   return (
-    <section className="min-h-screen w-full bg-slate-950">
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl items-center px-4 py-20 sm:px-6 lg:px-8">
-        <Card variant="raised" className="flex w-full flex-col shadow-soft lg:flex-row">
-          <div className="h-72 overflow-hidden bg-[#050b1d] lg:h-auto lg:w-1/2"><GlobalNetworkAnimation /></div>
-          <div className="flex w-full flex-col justify-center bg-slate-950/90 p-8 sm:p-10 lg:w-1/2">
-            <div className="max-w-md">
-              {mode === 'login' ? <><p className="text-sm font-semibold uppercase tracking-[0.2em] text-purple-300">Welcome back</p><h2 className="mt-3 text-3xl font-semibold text-white">Sign In</h2><p className="mt-3 text-sm text-slate-400">Continue your journey with Emet.</p></> : <><p className="text-sm font-semibold uppercase tracking-[0.2em] text-purple-300">New here?</p><h2 className="mt-3 text-3xl font-semibold text-white">Create account</h2><p className="mt-3 text-sm text-slate-400">Create your Emet account — it's free.</p></>}
+    <main className="relative min-h-screen overflow-hidden bg-[#020508] text-white">
+      <AuthBackdrop />
 
-              <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-                {mode === 'login' && <><input className={inputClass} type="email" placeholder="EMAIL ADDRESS" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required /><input className={inputClass} type="password" placeholder="Password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required /></>}
+      <div className="relative z-10 min-h-screen lg:grid lg:grid-cols-[34%_66%]">
+        <section className="flex min-h-screen flex-col px-7 py-8 sm:px-12 lg:min-h-screen lg:max-w-[610px] lg:px-[54px] lg:py-10">
+          <img src="/emet-wordmark-geometric-white.svg" alt="EMET" className="h-auto w-[138px] opacity-95" />
 
-                {mode === 'register' && <>
-                  <div className="space-y-3"><p className={sectionLabelClass}>Personal info</p><input className={inputClass} placeholder="FULL NAME" value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} required /><select className={inputClass} value={form.gender} onChange={(event) => setForm({ ...form, gender: event.target.value })} required><option value="">SELECT YOUR GENDER *</option><option value="MALE">MALE</option><option value="FEMALE">FEMALE</option></select>
-                    <label className="block"><span className="sr-only">Birthday</span><input className={inputClass} type="date" min={earliestBirthday} max={today} autoComplete="bday" value={form.birthday} onChange={(event) => setForm({ ...form, birthday: event.target.value })} required aria-label="Birthday" /></label>
-                  </div>
+          <div className="flex flex-1 flex-col justify-center pb-8 pt-16 lg:pb-14 lg:pt-20">
+            {mode !== 'details' ? (
+              <>
+                <h1 className="max-w-[420px] text-[56px] font-bold leading-[.98] tracking-[-.045em] sm:text-[64px] lg:text-[70px]">Happening<br />now.</h1>
 
-                  <div className="space-y-3 border-t border-white/[0.06] pt-4"><p className={sectionLabelClass}>Contact</p><input className={inputClass} type="email" placeholder="EMAIL ADDRESS" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required /><input className={inputClass} type="tel" inputMode="tel" pattern="\d{9,15}" placeholder="PHONE NUMBER *" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} required title="Enter a phone number with only digits." /><input className={inputClass} type="password" placeholder="PASSWORD" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required /></div>
+                <div className="mt-8 space-y-3">
+                  <ProviderButton icon={<FiPhone className="h-5 w-5" />} onClick={() => providerUnavailable('Phone')}>Continue with phone</ProviderButton>
+                  <ProviderButton icon={<FaGoogle className="text-[#4285F4]" />} onClick={() => providerUnavailable('Google')}>Continue with Google</ProviderButton>
+                  <ProviderButton icon={<FaApple className="text-black" />} onClick={() => providerUnavailable('Apple')}>Continue with Apple</ProviderButton>
+                </div>
 
-                  <div className="space-y-3 border-t border-white/[0.06] pt-4"><p className={sectionLabelClass}>Ministry</p><select className={inputClass} value={form.campusZone} onChange={handleCampusZoneChange} required><option value="">CAMPUS ZONE *</option><option value="BLW KENYA ZONE A">BLW KENYA ZONE A</option><option value="BLW KENYA ZONE B">BLW KENYA ZONE B</option></select><select className={inputClass} value={form.chapter} onChange={(event) => setForm({ ...form, chapter: event.target.value })} required><option value="">CHAPTER *</option><option value="UON CHAPTER">UON CHAPTER</option><option value="TUK CHAPTER">TUK CHAPTER</option></select><input className={inputClass} placeholder="INVITED BY *" value={form.invitedBy} onChange={(event) => setForm({ ...form, invitedBy: event.target.value })} required /></div>
+                <div className="my-7 flex items-center gap-3 text-[16px] text-white/75">
+                  <span className="h-px flex-1 bg-white/70" /><span>or</span><span className="h-px flex-1 bg-white/70" />
+                </div>
 
-                  <div className="space-y-3 border-t border-white/[0.06] pt-4"><p className={sectionLabelClass}>Address</p><select className={inputClass} value={form.country} onChange={(event) => setForm({ ...form, country: event.target.value })} required><option value="">COUNTRY *</option><option value="KENYA">KENYA</option><option value="UGANDA">UGANDA</option><option value="TANZANIA">TANZANIA</option><option value="SOMALIA">SOMALIA</option><option value="RWANDA">RWANDA</option><option value="BURUNDI">BURUNDI</option></select><input className={inputClass} placeholder="RESIDENCE *" value={form.residence} onChange={(event) => setForm({ ...form, residence: event.target.value })} required /></div>
-                </>}
+                <form onSubmit={handleSubmit}>
+                  <input
+                    autoFocus
+                    type={mode === 'login' ? 'email' : 'text'}
+                    value={form.email}
+                    onChange={(event) => update('email', event.target.value)}
+                    placeholder="Email or username"
+                    className="h-[70px] w-full rounded-xl border border-[#00C7FF] bg-black/35 px-4 text-[16px] text-white outline-none shadow-[0_0_0_1px_rgba(0,199,255,.1),0_0_30px_rgba(0,199,255,.04)] placeholder:text-[#20b8ed]"
+                  />
+                  {mode === 'login' && (
+                    <input type="password" value={form.password} onChange={(event) => update('password', event.target.value)} placeholder="Password" className="mt-3 h-[58px] w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-[#00C7FF]" />
+                  )}
+                  {error && <p className="mt-3 text-sm text-red-300">{error}</p>}
+                  <button type="submit" disabled={status === 'submitting'} className="mt-7 flex h-[64px] w-full items-center justify-center gap-2 rounded-full bg-[#1c232e] text-[16px] font-semibold text-white/55 transition hover:bg-[#242d39] disabled:opacity-50">
+                    {status === 'submitting' ? 'Please wait…' : mode === 'login' ? 'Continue' : 'Create account'}
+                  </button>
+                </form>
 
-                <Button type="submit" variant="gradient" className="inline-flex w-full justify-center" disabled={status === 'submitting'}>{status === 'submitting' ? 'Submitting…' : mode === 'register' ? 'Create Account' : 'Sign In'}</Button>
-              </form>
-
-              {mode === 'login' && <div className="mt-4 flex items-center justify-between text-sm text-slate-400"><Button variant="link" size="none" className="text-purple-300 hover:text-[#EC9EFF]" onClick={() => navigate('/forgot-password')}>Forgot password?</Button><Button variant="link" size="none" className="text-purple-300 hover:text-[#EC9EFF]" onClick={() => setMode('register')}>Don’t have an account? Register</Button></div>}
-              {mode === 'register' && <div className="mt-4 flex items-center justify-center text-sm text-slate-400"><span>Already have an account?</span><Button variant="link" size="none" className="ml-2 text-purple-300 hover:text-[#EC9EFF]" onClick={() => setMode('login')}>Sign in</Button></div>}
-              {status === 'submitted' && <div className="mt-6 rounded-2xl border border-purple-400/30 bg-purple-400/10 p-4 text-sm text-purple-300">{lastMode === 'login' ? 'Signed in successfully.' : 'Your account has been created and signed in successfully.'}</div>}
-              {status === 'error' && error && <div className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">{error}</div>}
-            </div>
+                <p className="mt-5 text-center text-sm text-white/40 lg:hidden">
+                  {mode === 'login' ? 'New to Emet? ' : 'Already on Emet? '}
+                  <button type="button" className="font-semibold text-white" onClick={() => setModeAndReset(mode === 'login' ? 'register' : 'login')}>{mode === 'login' ? 'Create an account' : 'Sign in'}</button>
+                </p>
+              </>
+            ) : (
+              <>
+                <button type="button" onClick={() => setModeAndReset('register')} className="mb-7 inline-flex w-fit items-center gap-2 text-sm text-white/55 hover:text-white"><FiX /> Back</button>
+                <h1 className="text-4xl font-bold tracking-tight">Create your Emet account.</h1>
+                <p className="mt-3 text-sm leading-6 text-white/45">A few details and you're in.</p>
+                <form onSubmit={handleSubmit} className="mt-7 space-y-3">
+                  <input required value={form.fullName} onChange={(e) => update('fullName', e.target.value)} placeholder="Full name" className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]" />
+                  <input required type="email" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="Email address" className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]" />
+                  <input required type="password" value={form.password} onChange={(e) => update('password', e.target.value)} placeholder="Password" className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]" />
+                  <input required type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="Phone number" className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]" />
+                  <input required type="date" min={earliestBirthday} max={today} value={form.birthday} onChange={(e) => update('birthday', e.target.value)} className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]" />
+                  <select required value={form.gender} onChange={(e) => update('gender', e.target.value)} className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]"><option value="">Gender</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select>
+                  <select required value={form.country} onChange={(e) => update('country', e.target.value)} className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]"><option value="">Country</option><option value="KENYA">Kenya</option><option value="UGANDA">Uganda</option><option value="TANZANIA">Tanzania</option><option value="RWANDA">Rwanda</option><option value="BURUNDI">Burundi</option><option value="SOMALIA">Somalia</option></select>
+                  <input required value={form.residence} onChange={(e) => update('residence', e.target.value)} placeholder="Residence" className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]" />
+                  <input required value={form.campusZone} onChange={(e) => update('campusZone', e.target.value)} placeholder="Campus zone" className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]" />
+                  <input required value={form.chapter} onChange={(e) => update('chapter', e.target.value)} placeholder="Chapter" className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]" />
+                  <input required value={form.invitedBy} onChange={(e) => update('invitedBy', e.target.value)} placeholder="Invited by" className="h-12 w-full rounded-xl border border-white/10 bg-black/35 px-4 text-sm outline-none focus:border-[#00C7FF]" />
+                  {error && <p className="text-sm text-red-300">{error}</p>}
+                  <button disabled={status === 'submitting'} className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white text-sm font-bold text-black disabled:opacity-50">{status === 'submitting' ? 'Creating…' : 'Create account'} <FiArrowRight /></button>
+                </form>
+              </>
+            )}
           </div>
-        </Card>
+
+          {mode !== 'details' && (
+            <p className="max-w-[500px] text-[13px] leading-6 text-white/50">
+              By continuing, you agree to our <a href="#terms" className="font-bold text-white/90 hover:underline">Terms of Service</a>, <a href="#privacy" className="font-bold text-white/90 hover:underline">Privacy Policy</a> and <a href="#guidelines" className="font-bold text-white/90 hover:underline">Community Guidelines</a>.
+            </p>
+          )}
+        </section>
+
+        <section className="relative hidden min-h-screen lg:block">
+          <img src="/emet-wordmark-geometric-hero.svg" alt="" className="absolute left-[44%] top-[35%] z-10 w-[62%] max-w-[760px] -translate-x-1/2 -translate-y-1/2 opacity-90" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_48%_50%,rgba(29,155,240,.08),transparent_35%)]" />
+          <QRCard />
+        </section>
       </div>
-      <style>{`
-        .emet-network{position:relative;display:grid;height:100%;min-height:360px;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 44%,rgba(37,99,235,.2),transparent 44%),linear-gradient(145deg,#071126,#020617 76%);isolation:isolate}
-        .emet-network-glow{position:absolute;width:62%;aspect-ratio:1;border-radius:999px;background:#2563eb;filter:blur(95px);opacity:.16;animation:emet-glow 6s ease-in-out infinite}
-        .emet-network-svg{position:relative;width:112%;max-width:720px;height:auto;filter:drop-shadow(0 0 22px rgba(29,155,240,.18))}
-        .emet-continents path{animation:emet-land 5s ease-in-out infinite}
-        .emet-continents path:nth-child(2n){animation-delay:.7s}
-        .emet-network-routes path{stroke-dasharray:7 13;animation:emet-route 5s linear infinite}
-        .emet-network-routes path:nth-child(2n){animation-delay:1.1s}
-        .emet-network-points circle{filter:drop-shadow(0 0 8px rgba(147,197,253,.95));animation:emet-point 2.8s ease-in-out infinite}
-        .emet-network-points circle:nth-child(2n){animation-delay:.5s}
-        .emet-network-points circle:nth-child(3n){animation-delay:1s}
-        .emet-orbit-one{transform-origin:350px 278px;animation:emet-orbit 18s linear infinite}
-        .emet-orbit-two{transform-origin:350px 278px;animation:emet-orbit-reverse 14s linear infinite}
-        .emet-network-label{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:9px;white-space:nowrap;border:1px solid rgba(96,165,250,.2);border-radius:999px;background:rgba(2,6,23,.68);padding:9px 14px;color:rgba(191,219,254,.82);font-size:11px;font-weight:600;letter-spacing:.03em;backdrop-filter:blur(12px)}
-        .emet-network-pulse{width:7px;height:7px;border-radius:50%;background:#60a5fa;box-shadow:0 0 12px #60a5fa;animation:emet-pulse 1.7s ease-in-out infinite}
-        @keyframes emet-glow{0%,100%{transform:scale(.94);opacity:.12}50%{transform:scale(1.08);opacity:.23}}
-        @keyframes emet-land{0%,100%{fill-opacity:.2}50%{fill-opacity:.34}}
-        @keyframes emet-route{to{stroke-dashoffset:-40}}
-        @keyframes emet-point{0%,100%{opacity:.48;transform:scale(.82)}50%{opacity:1;transform:scale(1.3)}}
-        @keyframes emet-orbit{to{transform:rotate(360deg)}}
-        @keyframes emet-orbit-reverse{to{transform:rotate(-360deg)}}
-        @keyframes emet-pulse{0%,100%{transform:scale(.8);opacity:.5}50%{transform:scale(1.25);opacity:1}}
-        @media (prefers-reduced-motion:reduce){.emet-network *{animation:none!important}}
-      `}</style>
+
+      <div className="absolute bottom-6 left-1/2 z-20 hidden -translate-x-1/2 text-xs text-white/25 lg:block">
+        Emet · Faith · Community · Conversation
+      </div>
+
       <Toast toast={toast} onClose={() => setToast(null)} />
-    </section>
+    </main>
   );
 }
