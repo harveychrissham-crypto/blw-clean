@@ -53,12 +53,14 @@ export async function handleFeed(request, env, url) {
       try {
         const canSeeViews = await canViewOwnPostInsights(client,email);
         const result = await client.query(`SELECT * FROM (
-          SELECT CONCAT('s:',s.id) AS id,s.title,s.speaker AS author,s.description AS body,s.youtube_url,NULL::text AS media_url,NULL::text AS media_type,s.created_at,s.is_featured,'sermon' AS type,'sermon' AS source_type,false AS is_user_post,false AS is_owner,false AS following,NULL::text AS author_email,0::int AS view_count,
+          SELECT CONCAT('s:',s.id) AS id,s.title,s.speaker AS author,s.description AS body,s.youtube_url,NULL::text AS media_url,NULL::text AS media_type,s.created_at,s.is_featured,'sermon' AS type,'sermon' AS source_type,false AS is_user_post,false AS is_owner,false AS following,NULL::text AS author_email,NULL::bigint AS quoted_post_id,NULL::text AS quoted_title,NULL::text AS quoted_author,NULL::text AS quoted_body,NULL::text AS quoted_media_url,NULL::text AS quoted_media_type,NULL::text AS quoted_youtube_url,0::int AS view_count,
           (SELECT COUNT(*)::int FROM public.feed_likes x WHERE x.sermon_id=s.id) AS like_count,
           (SELECT COUNT(*)::int FROM public.feed_comments x WHERE x.sermon_id=s.id) AS comment_count,
           (SELECT COUNT(*)::int FROM public.feed_saves x WHERE x.sermon_id=s.id) AS save_count,
+          0::int AS repost_count,
           CASE WHEN $1 <> '' AND EXISTS(SELECT 1 FROM public.feed_likes x WHERE x.sermon_id=s.id AND LOWER(x.user_email)=$1) THEN true ELSE false END AS liked,
           CASE WHEN $1 <> '' AND EXISTS(SELECT 1 FROM public.feed_saves x WHERE x.sermon_id=s.id AND LOWER(x.user_email)=$1) THEN true ELSE false END AS saved,
+          false AS reposted,
           (SELECT COALESCE(jsonb_agg(jsonb_build_object('name',name,'avatarUrl',avatar_url)),'[]'::jsonb) FROM (SELECT u.full_name AS name, u.avatar_url AS avatar_url FROM public.feed_likes x JOIN public.users u ON LOWER(u.email)=LOWER(x.user_email) WHERE x.sermon_id=s.id ORDER BY x.created_at DESC LIMIT 2) t) AS recent_likers
           FROM public.sermons s
           UNION ALL
