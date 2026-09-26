@@ -162,6 +162,8 @@ if (typeof window !== 'undefined') {
   if (navigator.onLine) flushWhenAvailable();
 }
 
+export async function fetchTopics() { const response = await apiFetch('/api/topics'); const result = await response.json().catch(() => ({})); if (!response.ok) throw new Error(result?.error || 'Unable to load topics.'); return Array.isArray(result?.topics) ? result.topics : []; }
+
 export async function fetchSavedFeed({ limit = 30, offset = 0 } = {}) {
   const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
   const response = await apiFetch(`/api/feed/saved?${params.toString()}`, { method: 'GET' });
@@ -170,10 +172,11 @@ export async function fetchSavedFeed({ limit = 30, offset = 0 } = {}) {
   return { posts: Array.isArray(body?.posts) ? body.posts.map(normalizePost) : [], hasMore: Boolean(body?.hasMore) };
 }
 
-export async function fetchFeed({ limit = 20, offset = 0, followingOnly = false, feedType = '' } = {}) {
+export async function fetchFeed({ limit = 20, offset = 0, followingOnly = false, feedType = '', topic = '' } = {}) {
   const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
   if (followingOnly) params.set('following', '1');
   if (feedType === 'reel' || feedType === 'ministry') params.set('type', feedType);
+  if (topic) params.set('topic', topic.replace(/^#/, '').trim().toLowerCase());
   const response = await apiFetch(`/api/feed?${params.toString()}`, { method: 'GET' });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body?.error || 'Unable to load the Feed.');
