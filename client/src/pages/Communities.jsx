@@ -96,18 +96,18 @@ export default function Communities() {
       <div className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 sm:py-8">
         <header className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <button onClick={() => navigate(-1)} className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[.03] text-white/65 hover:border-[#3B82F6]/40 hover:bg-white/[.07] hover:text-white" aria-label="Go back"><FiArrowLeft /></button>
+            <button onClick={() => navigate(-1)} className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/[.03] text-white/65 hover:border-[#1D9BF0]/40 hover:bg-white/[.07] hover:text-white" aria-label="Go back"><FiArrowLeft /></button>
             <div className="min-w-0">
-              <p className="text-[11px] font-bold uppercase tracking-[.2em] text-[#3B82F6]">Discover</p>
+              <p className="text-[11px] font-bold uppercase tracking-[.2em] text-[#1D9BF0]">Discover</p>
               <h1 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Communities</h1>
             </div>
           </div>
-          <button onClick={() => user ? setShowCreate(true) : navigate('/auth')} className="inline-flex items-center gap-2 rounded-xl bg-[#3B82F6] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#2563EB]"><FiPlus /> Create</button>
+          <button onClick={() => user ? setShowCreate(true) : navigate('/auth')} className="inline-flex items-center gap-2 rounded-xl bg-[#1D9BF0] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#1A8CD8]"><FiPlus /> Create</button>
         </header>
 
         <section className="mt-7 rounded-[1.75rem] border border-white/[.07] bg-white/[.025] p-5 sm:p-7">
           <div className="flex items-start gap-4">
-            <div className="hidden h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#3B82F6]/10 text-[#3B82F6] sm:grid"><FiCompass className="h-6 w-6" /></div>
+            <div className="hidden h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#1D9BF0]/10 text-[#1D9BF0] sm:grid"><FiCompass className="h-6 w-6" /></div>
             <div>
               <h2 className="text-lg font-bold">Find people who share your interests</h2>
               <p className="mt-1 max-w-2xl text-sm leading-6 text-white/45">Join conversations around the things you care about. Communities on Emet are built around people, interests and conversation.</p>
@@ -137,10 +137,10 @@ export default function Communities() {
               <article key={community.id} className="rounded-3xl border border-white/[.07] bg-white/[.025] p-5 transition hover:border-white/15 hover:bg-white/[.04]">
                 <div className="flex items-start justify-between gap-4">
                   <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${community.tone}`}><FiUsers className="h-5 w-5" /></div>
-                  <button onClick={() => toggleJoin(community)} disabled={busyId === community.id} className={`rounded-xl px-4 py-2 text-xs font-semibold transition disabled:opacity-50 ${community.joined ? 'border border-white/10 bg-white/[.05] text-white/60' : 'bg-[#3B82F6] text-white hover:bg-[#2563EB]'}`}>{busyId === community.id ? 'Updating…' : community.joined ? 'Joined' : 'Join'}</button>
+                  <button onClick={() => toggleJoin(community)} disabled={busyId === community.id} className={`rounded-xl px-4 py-2 text-xs font-semibold transition disabled:opacity-50 ${community.joined ? 'border border-white/10 bg-white/[.05] text-white/60' : 'bg-[#1D9BF0] text-white hover:bg-[#1A8CD8]'}`}>{busyId === community.id ? 'Updating…' : community.joined ? 'Joined' : 'Join'}</button>
                 </div>
                 <button onClick={() => navigate(`/communities/${community.id}`)} className="mt-5 text-left">
-                  <h3 className="text-base font-bold hover:text-[#3B82F6]">{community.name}</h3>
+                  <h3 className="text-base font-bold hover:text-[#1D9BF0]">{community.name}</h3>
                   <p className="mt-2 min-h-[3rem] text-sm leading-6 text-white/45">{community.description}</p>
                 </button>
                 <div className="mt-5 flex items-center justify-between text-xs text-white/30"><span>{community.members.toLocaleString()} members</span><span>{community.category}</span></div>
@@ -156,12 +156,12 @@ export default function Communities() {
         <form onSubmit={submitCreate} onClick={(event) => event.stopPropagation()} className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#11161D] p-6 shadow-2xl">
           <div className="flex items-center justify-between"><div><h2 className="text-lg font-bold">Create a community</h2><p className="mt-1 text-xs text-white/40">Start a space around an interest, idea or shared goal.</p></div><button type="button" onClick={() => setShowCreate(false)} className="grid h-9 w-9 place-items-center rounded-xl hover:bg-white/[.06]" aria-label="Close"><FiX /></button></div>
           <div className="mt-6 space-y-4">
-            <input required maxLength={80} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Community name" className="w-full rounded-2xl border border-white/10 bg-white/[.04] px-4 py-3 text-sm outline-none focus:border-[#3B82F6]" />
-            <textarea required maxLength={500} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} placeholder="What is this community about?" rows={4} className="w-full resize-none rounded-2xl border border-white/10 bg-white/[.04] px-4 py-3 text-sm outline-none focus:border-[#3B82F6]" />
-            <input maxLength={40} value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} placeholder="Category" className="w-full rounded-2xl border border-white/10 bg-white/[.04] px-4 py-3 text-sm outline-none focus:border-[#3B82F6]" />
+            <input required maxLength={80} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Community name" className="w-full rounded-2xl border border-white/10 bg-white/[.04] px-4 py-3 text-sm outline-none focus:border-[#1D9BF0]" />
+            <textarea required maxLength={500} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} placeholder="What is this community about?" rows={4} className="w-full resize-none rounded-2xl border border-white/10 bg-white/[.04] px-4 py-3 text-sm outline-none focus:border-[#1D9BF0]" />
+            <input maxLength={40} value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} placeholder="Category" className="w-full rounded-2xl border border-white/10 bg-white/[.04] px-4 py-3 text-sm outline-none focus:border-[#1D9BF0]" />
           </div>
           {createError && <p className="mt-3 text-sm text-red-300">{createError}</p>}
-          <button disabled={creating} className="mt-5 w-full rounded-2xl bg-[#3B82F6] px-4 py-3 text-sm font-semibold text-white disabled:opacity-50 hover:bg-[#2563EB]">{creating ? 'Creating…' : 'Create community'}</button>
+          <button disabled={creating} className="mt-5 w-full rounded-2xl bg-[#1D9BF0] px-4 py-3 text-sm font-semibold text-white disabled:opacity-50 hover:bg-[#1A8CD8]">{creating ? 'Creating…' : 'Create community'}</button>
         </form>
       </div>}
     </main>
