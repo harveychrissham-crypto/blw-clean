@@ -312,8 +312,8 @@ export default function Home() {
   const tabs = ['For You', 'Following', 'Communities'];
 
   return (
-    <main className="min-h-screen bg-transparent pb-24 text-white">
-      <div className="mx-auto max-w-[1320px] px-3 py-3 sm:px-5 sm:py-5">
+    <main className="min-h-screen w-full min-w-0 bg-transparent pb-24 text-white">
+      <div className="mx-auto w-full min-w-0 max-w-[1320px] px-3 py-3 sm:px-5 sm:py-5">
         <div className="mb-2 hidden h-[60px] items-center gap-3 border-b border-[#17305e]/50 px-4 lg:flex">
           <div className="flex h-[34px] w-[54%] max-w-[440px] min-w-0 shrink-0 items-center gap-3 rounded-lg bg-[#0a1c3b] px-3">
             <FiSearch className="h-4 w-4 shrink-0 text-white/55" />
@@ -325,7 +325,7 @@ export default function Home() {
             <Link to="/profile" className={user?.avatarUrl ? 'rounded-full' : ''}><Avatar src={user?.avatarUrl} name={user?.name} size="h-8 w-8" /></Link>
           </div>
         </div>
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px] xl:grid-cols-[minmax(0,1fr)_276px]">
+        <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_200px] xl:grid-cols-[minmax(0,1fr)_240px]">
           <section className="min-w-0 space-y-2.5">
             <div className="flex items-center justify-between gap-3 px-1 pb-1 sm:px-2 lg:hidden">
               <Link to="/" aria-label="Emet home" className="flex items-center gap-2.5">
