@@ -73,7 +73,7 @@ export default function AIChatWidget() {
           </div>
           <div className="mt-4 space-y-2">
             {suggestions.map((item) => (
-              <Button variant="custom" size="none" key={item.key} onClick={() => setAnswer(answers[item.key])} className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]/60 ${selectedKey === item.key ? 'border-[#3B82F6]/30 bg-[#3B82F6]/10 text-[#3B82F6]' : 'border-white/10 bg-white/5 text-slate-300'}`}>
+              <Button variant="custom" size="none" key={item.key} onClick={() => setAnswer(answers[item.key])} className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D9BF0]/60 ${selectedKey === item.key ? 'border-[#1D9BF0]/30 bg-[#1D9BF0]/10 text-[#1D9BF0]' : 'border-white/10 bg-white/5 text-slate-300'}`}>
                 {item.label}
               </Button>
             ))}
