@@ -8,6 +8,8 @@ async function getDb(env) { const connectionString = env.HYPERDRIVE?.connectionS
 function parseId(value) { const id = Number.parseInt(String(value), 10); return Number.isSafeInteger(id) && id > 0 ? id : 0; }
 function parseFeedId(value) { const raw = String(value || ''); if (raw.startsWith('p:')) return { kind: 'post', id: parseId(raw.slice(2)) }; if (raw.startsWith('s:')) return { kind: 'sermon', id: parseId(raw.slice(2)) }; return { kind: 'sermon', id: parseId(raw) }; }
 function youtubeId(value) { if (typeof value !== 'string') return ''; const patterns = [/(?:youtube\.com\/watch\?v=)([\w-]{11})/i,/(?:youtu\.be\/)([\w-]{11})/i,/(?:youtube(?:-nocookie)?\.com\/embed\/)([\w-]{11})/i,/(?:youtube\.com\/shorts\/)([\w-]{11})/i,/(?:youtube\.com\/live\/)([\w-]{11})/i]; for (const pattern of patterns) { const match = value.match(pattern); if (match) return match[1]; } return ''; }
+function extractTopics(value) { const text = typeof value === 'string' ? value : ''; const matches = text.match(/#[\p{L}\p{N}_-]{2,50}/gu) || []; return [...new Set(matches.map((item) => item.slice(1).toLowerCase()).filter(Boolean))].slice(0, 8); }
+async function attachTopics(client, postId, text) { for (const slug of extractTopics(text)) { const topic = await client.query('INSERT INTO public.feed_topics(slug,name) VALUES($1,$2) ON CONFLICT(slug) DO UPDATE SET name=EXCLUDED.name RETURNING id',[slug,'#'+slug]); await client.query('INSERT INTO public.feed_post_topics(post_id,topic_id) VALUES($1,$2) ON CONFLICT DO NOTHING',[postId,topic.rows[0].id]); } }
 async function authorName(client, email) { const result = await client.query('SELECT full_name FROM public.users WHERE LOWER(email) = $1 LIMIT 1', [email]); return String(result.rows[0]?.full_name || email).trim().slice(0, 120); }
 async function canViewOwnPostInsights(client, email) { if (!email) return false; const result = await client.query('SELECT is_admin,title FROM public.users WHERE LOWER(email)=LOWER($1) LIMIT 1',[email]); if (!result.rows.length) return false; if (result.rows[0].is_admin) return true; const title = String(result.rows[0].title || '').toLowerCase(); return /leader|secretary|coordinator|pastor|president|director|chair|supervisor|administrator/.test(title); }
 async function postSocialCounts(client, id, email) { const [likes,saves,comments,reposts,liked,saved,reposted,recentLikers] = await Promise.all([client.query('SELECT COUNT(*)::int AS count FROM public.feed_post_likes WHERE post_id = $1',[id]),client.query('SELECT COUNT(*)::int AS count FROM public.feed_post_saves WHERE post_id = $1',[id]),client.query('SELECT COUNT(*)::int AS count FROM public.feed_post_comments WHERE post_id = $1',[id]),client.query('SELECT COUNT(*)::int AS count FROM public.feed_post_reposts WHERE post_id = $1',[id]),client.query('SELECT 1 FROM public.feed_post_likes WHERE post_id = $1 AND LOWER(user_email) = $2 LIMIT 1',[id,email]),client.query('SELECT 1 FROM public.feed_post_saves WHERE post_id = $1 AND LOWER(user_email) = $2 LIMIT 1',[id,email]),client.query('SELECT 1 FROM public.feed_post_reposts WHERE post_id = $1 AND LOWER(user_email) = $2 LIMIT 1',[id,email]),recentLikerNames(client,'feed_post_likes','post_id',id)]); return { likeCount: likes.rows[0].count, saveCount: saves.rows[0].count, commentCount: comments.rows[0].count, repostCount: reposts.rows[0].count, liked: liked.rows.length > 0, saved: saved.rows.length > 0, reposted: reposted.rows.length > 0, recentLikers }; }
@@ -28,6 +30,7 @@ export async function handleFeed(request, env, url) {
       const rawFeedType = url.searchParams.get('type') || '';
       const feedType = rawFeedType === 'reel' || rawFeedType === 'ministry' ? rawFeedType : '';
       const search = String(url.searchParams.get('q') || '').trim().slice(0, 120);
+      const topic = String(url.searchParams.get('topic') || '').trim().toLowerCase().replace(/^#/, '').slice(0, 60);
       const client = await getDb(env);
       try {
         const canSeeViews = await canViewOwnPostInsights(client,email);
@@ -63,12 +66,13 @@ export async function handleFeed(request, env, url) {
           (SELECT COALESCE(jsonb_agg(jsonb_build_object('name',name,'avatarUrl',avatar_url)),'[]'::jsonb) FROM (SELECT u.full_name AS name, u.avatar_url AS avatar_url FROM public.feed_post_likes x JOIN public.users u ON LOWER(u.email)=LOWER(x.user_email) WHERE x.post_id=p.id ORDER BY x.created_at DESC LIMIT 2) t) AS recent_likers
           FROM public.feed_posts p
           LEFT JOIN public.feed_posts qp ON qp.id=p.quoted_post_id
-        ) feed_items WHERE ($5 = false OR following = true) AND ($6 = '' OR ($6 = 'reel' AND type = 'reel') OR ($6 = 'ministry' AND (source_type = 'sermon' OR is_featured = true))) AND ($7 = '' OR lower(coalesce(title,'') || ' ' || coalesce(body,'') || ' ' || coalesce(author,'')) LIKE '%' || lower($7) || '%') ORDER BY created_at DESC,id DESC LIMIT $2 OFFSET $3`,[email,limit+1,offset,canSeeViews,followingOnly,feedType,search]);
+        ) feed_items WHERE ($5 = false OR following = true) AND ($6 = '' OR ($6 = 'reel' AND type = 'reel') OR ($6 = 'ministry' AND (source_type = 'sermon' OR is_featured = true))) AND ($7 = '' OR lower(coalesce(title,'') || ' ' || coalesce(body,'') || ' ' || coalesce(author,'')) LIKE '%' || lower($7) || '%') AND ($8 = '' OR (source_type = 'user' AND EXISTS (SELECT 1 FROM public.feed_post_topics pt JOIN public.feed_topics t ON t.id=pt.topic_id WHERE pt.post_id = regexp_replace(id, '^p:', '')::bigint AND t.slug = $8))) ORDER BY created_at DESC,id DESC LIMIT $2 OFFSET $3`,[email,limit+1,offset,canSeeViews,followingOnly,feedType,search,topic]);
         const hasMore = result.rows.length > limit;
         const posts = result.rows.slice(0,limit).map(row => ({ ...row, youtube_id: youtubeId(row.youtube_url) }));
         return json({ posts, hasMore, limit, offset },200,headers);
       } finally { await client.end().catch(()=>{}); }
     }
+    if (url.pathname === '/api/topics' && request.method === 'GET') { const client = await getDb(env); try { const result = await client.query('SELECT t.slug,t.name,COUNT(pt.post_id)::int AS post_count FROM public.feed_topics t LEFT JOIN public.feed_post_topics pt ON pt.topic_id=t.id GROUP BY t.id ORDER BY COUNT(pt.post_id) DESC,t.created_at DESC LIMIT 30'); return json({topics:result.rows},200,headers); } finally { await client.end().catch(()=>{}); } }
     if (url.pathname === '/api/feed/posts' && request.method === 'POST') {
       if (!email) return json({ error:'Sign in required to publish to the Feed.' },401,headers);
       const body = await request.json().catch(()=>({}));
@@ -87,6 +91,7 @@ export async function handleFeed(request, env, url) {
         const name = await authorName(client,email);
         const inserted = await client.query(`INSERT INTO public.feed_posts (user_email,author_name,type,title,body,image_url,youtube_url,media_url,media_type) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id,user_email,author_name,type,title,body,image_url,youtube_url,media_url,media_type,created_at`,[email,name,type,title,text,imageUrl,youtubeUrl,mediaUrl,mediaType || null]);
         const post = inserted.rows[0];
+        await attachTopics(client, post.id, `${title} ${text}`);
         return json({ post:{...post,id:`p:${post.id}`,source_type:'user',is_user_post:true,is_owner:true,youtube_id:youtubeId(post.youtube_url),like_count:0,save_count:0,comment_count:0,view_count:0,liked:false,saved:false} },201,headers);
       } finally { await client.end().catch(()=>{}); }
     }

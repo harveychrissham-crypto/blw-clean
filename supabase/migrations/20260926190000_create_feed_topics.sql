@@ -1,0 +1,11 @@
+create table if not exists public.feed_topics (id bigserial primary key, slug text not null unique, name text not null, created_at timestamptz not null default now());
+create table if not exists public.feed_post_topics (post_id bigint not null references public.feed_posts(id) on delete cascade, topic_id bigint not null references public.feed_topics(id) on delete cascade, created_at timestamptz not null default now(), primary key (post_id,topic_id));
+create index if not exists idx_feed_topics_created_at on public.feed_topics(created_at desc);
+create index if not exists idx_feed_post_topics_topic_id on public.feed_post_topics(topic_id);
+create index if not exists idx_feed_post_topics_post_id on public.feed_post_topics(post_id);
+alter table public.feed_topics enable row level security;
+alter table public.feed_post_topics enable row level security;
+drop policy if exists feed_topics_read on public.feed_topics; create policy feed_topics_read on public.feed_topics for select using (true);
+drop policy if exists feed_post_topics_read on public.feed_post_topics; create policy feed_post_topics_read on public.feed_post_topics for select using (true);
+drop policy if exists feed_topics_write on public.feed_topics; create policy feed_topics_write on public.feed_topics for all using (true) with check (true);
+drop policy if exists feed_post_topics_write on public.feed_post_topics; create policy feed_post_topics_write on public.feed_post_topics for all using (true) with check (true);
