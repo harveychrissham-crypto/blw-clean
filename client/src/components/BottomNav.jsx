@@ -11,7 +11,7 @@ const tabs = [
 
 export default function BottomNav() {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/[.07] bg-[#0b0b0d]/95 backdrop-blur-2xl sm:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} aria-label="Primary">
+    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/[.07] bg-[#0B0F14]/95 backdrop-blur-2xl sm:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} aria-label="Primary">
       <div className="grid grid-cols-5 px-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
