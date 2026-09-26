@@ -1,13 +1,13 @@
 # EMET Brand Assets
 
-Source: the exact EMET logo/app-icon board supplied in the chat.
+The active application icon is now maintained at:
 
-Includes:
-- `emet_icon_1024.png` — primary launcher icon, transparent outside the rounded square
-- density PNGs for Android
-- transparent white/black logo lockups
-- transparent white icon mark
-- official palette
-- `apply_emet_brand.ps1` — drop into the EMET project root and run from PowerShell to wire the launcher icon and remove the malformed `emet_icon_black.xml` resource.
+- `client/public/emet-app-icon.svg` — official Emet app icon used by the web/PWA experience.
 
-Brand palette: #0B0F14, #3B82F6, #F8FAFC, #6B7280.
+The repository no longer keeps the previous launcher PNG set, legacy mark exports, or the old branding installation script here. Those assets were superseded by the official Emet app icon and current geometric wordmark assets.
+
+Brand palette:
+- #0B0F14
+- #3B82F6
+- #F8FAFC
+- #6B7280
