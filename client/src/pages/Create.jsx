@@ -163,7 +163,7 @@ export default function Create() {
     if (confirmLeave()) navigate(-1);
   };
 
-  if (!user) return <div className="min-h-[70vh] grid place-items-center px-6 text-center"><div><p className="text-lg font-bold text-white">Sign in to create</p><p className="mt-2 text-sm text-white/50">Create posts and Reels for the community.</p><Link to="/auth" className="mt-5 inline-flex rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-[#0B0F14] hover:bg-white/90">Sign in</Link></div></div>;
+  if (!user) return <div className="min-h-[70vh] grid place-items-center px-6 text-center"><div><p className="text-lg font-bold text-white">Sign in to create</p><p className="mt-2 text-sm text-white/50">Create posts and Reels for the community.</p><Link to="/auth" className="mt-5 inline-flex rounded-xl bg-[#E7E9EA] px-5 py-2.5 text-sm font-semibold text-[#0B0F14] hover:bg-[#D9DDE1]">Sign in</Link></div></div>;
 
   const isVideo = Boolean(file?.type?.startsWith('video/'));
 
@@ -173,7 +173,7 @@ export default function Create() {
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-white/[0.07] bg-[#0B0F14]/90 px-3 backdrop-blur-2xl">
           <button type="button" onClick={back} className="grid h-10 w-10 place-items-center rounded-xl text-white/75 transition hover:bg-white/[0.07]" aria-label="Back"><FiArrowLeft className="h-5 w-5" /></button>
           <div className="text-center"><h1 className="text-[15px] font-bold tracking-tight">Create</h1><p className="text-[9px] uppercase tracking-[0.18em] text-white/30">Share with the community</p></div>
-          {uploading ? <button type="button" onClick={cancelUpload} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-xl border border-red-400/20 bg-red-400/10 px-3.5 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-400/20"><FiX /> Cancel</button> : <button type="button" onClick={publish} disabled={(type !== 'text' && !file) || (!file && !caption.trim()) || published} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-semibold text-[#0B0F14] transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-35"><FiCheck /> Share</button>}
+          {uploading ? <button type="button" onClick={cancelUpload} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-xl border border-red-400/20 bg-red-400/10 px-3.5 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-400/20"><FiX /> Cancel</button> : <button type="button" onClick={publish} disabled={(type !== 'text' && !file) || (!file && !caption.trim()) || published} className="flex min-w-[62px] items-center justify-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-semibold text-[#0B0F14] transition hover:bg-[#D9DDE1] disabled:cursor-not-allowed disabled:opacity-35"><FiCheck /> Share</button>}
         </header>
 
         <div className="grid grid-cols-3 border-b border-white/[0.07] bg-white/[0.015] p-1.5">
@@ -221,7 +221,7 @@ export default function Create() {
             <div className="mt-4 rounded-2xl border border-white/[.07] bg-white/[.02] p-3.5"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/30">Sharing to Feed</p><p className="mt-1.5 text-xs leading-5 text-white/45">Your {type === 'reel' ? 'Reel' : 'post'} will appear in the community Feed where people can like, comment and save it.</p></div>
 
             {error && <p className="mt-3 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-xs leading-5 text-red-200">{error}</p>}
-            <button type="button" onClick={uploading ? cancelUpload : publish} disabled={!file || published} className={`mt-4 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold shadow-xl transition disabled:cursor-not-allowed disabled:opacity-35 ${uploading ? 'border border-red-400/20 bg-red-400/10 text-red-200 hover:bg-red-400/20' : 'bg-white text-ink-950 hover:bg-white/90'}`}>{uploading ? <><FiX /> Cancel upload</> : <><FiSend /> {error ? 'Retry share' : `Share ${type === 'reel' ? 'Reel' : 'Post'}`}</>}</button>
+            <button type="button" onClick={uploading ? cancelUpload : publish} disabled={!file || published} className={`mt-4 flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold shadow-xl transition disabled:cursor-not-allowed disabled:opacity-35 ${uploading ? 'border border-red-400/20 bg-red-400/10 text-red-200 hover:bg-red-400/20' : 'bg-white text-ink-950 hover:bg-[#D9DDE1]'}`}>{uploading ? <><FiX /> Cancel upload</> : <><FiSend /> {error ? 'Retry share' : `Share ${type === 'reel' ? 'Reel' : 'Post'}`}</>}</button>
           </section>
         </div>
       </div>
@@ -229,7 +229,7 @@ export default function Create() {
         {published && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[90] grid place-items-center bg-[#0B0F14]/95 backdrop-blur-sm">
             <motion.div initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 340, damping: 18 }} className="flex flex-col items-center gap-3">
-              <div className="grid h-20 w-20 place-items-center rounded-xl bg-white text-[#0B0F14] shadow-sm hover:bg-white/90"><FiCheck className="h-10 w-10 text-white" /></div>
+              <div className="grid h-20 w-20 place-items-center rounded-xl bg-[#E7E9EA] text-[#0B0F14] shadow-sm hover:bg-[#D9DDE1]"><FiCheck className="h-10 w-10 text-white" /></div>
               <p className="text-sm font-bold text-white">{type === 'reel' ? 'Reel shared!' : 'Posted!'}</p>
             </motion.div>
           </motion.div>
