@@ -69,9 +69,9 @@ function PostCard({ post, user, onUpdate }) {
           {post.mediaUrl && <div className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-black/20"><img src={post.mediaUrl} alt="" className="max-h-[520px] w-full object-cover" loading="lazy" /></div>}
 
           <div className="mt-2 flex max-w-xl items-center justify-between text-white/40">
-            <button type="button" onClick={() => {}} className="group flex items-center gap-2 rounded-full px-2 py-2 text-xs hover:text-white"><FiMessageCircle className="h-[18px] w-[18px] group-hover:text-sky-300" />{post.commentCount || 0}</button>
-            <button type="button" onClick={() => {}} className="group flex items-center gap-2 rounded-full px-2 py-2 text-xs hover:text-white"><FiRepeat className="h-[18px] w-[18px] group-hover:text-emerald-300" />{post.repostCount || 0}</button>
-            <button type="button" onClick={() => action('like')} disabled={busy === 'like'} className={`group flex items-center gap-2 rounded-full px-2 py-2 text-xs hover:text-white ${post.liked ? 'text-pink-400' : ''}`}><FiHeart className="h-[18px] w-[18px] group-hover:text-pink-400" fill={post.liked ? 'currentColor' : 'none'} />{post.likeCount || 0}</button>
+            <button type="button" onClick={() => {}} className="group flex items-center gap-2 rounded-full px-2 py-2 text-xs hover:text-white"><FiMessageCircle className="h-[18px] w-[18px] group-hover:text-[#3B82F6]" />{post.commentCount || 0}</button>
+            <button type="button" onClick={() => {}} className="group flex items-center gap-2 rounded-full px-2 py-2 text-xs hover:text-white"><FiRepeat className="h-[18px] w-[18px] group-hover:text-[#3B82F6]" />{post.repostCount || 0}</button>
+            <button type="button" onClick={() => action('like')} disabled={busy === 'like'} className={`group flex items-center gap-2 rounded-full px-2 py-2 text-xs hover:text-white ${post.liked ? 'text-[#3B82F6]' : ''}`}><FiHeart className="h-[18px] w-[18px] group-hover:text-[#3B82F6]" fill={post.liked ? 'currentColor' : 'none'} />{post.likeCount || 0}</button>
             <button type="button" onClick={() => action('save')} disabled={busy === 'save'} className={`group flex items-center gap-2 rounded-full px-2 py-2 text-xs hover:text-white ${post.saved ? 'text-white' : ''}`}><FiBookmark className="h-[18px] w-[18px]" /></button>
             <button type="button" onClick={share} className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/[.06] hover:text-white" aria-label="Share"><FiSend className="h-[17px] w-[17px]" /></button>
           </div>
@@ -190,10 +190,10 @@ export default function Home() {
   const update = (id, patch) => setPosts((current) => current.map((post) => post.id === id ? { ...post, ...patch } : post));
 
   return (
-    <main className="min-h-screen bg-[#090812] pb-24 text-white">
+    <main className="min-h-screen bg-[#0B0F14] pb-24 text-white">
       <div className="mx-auto flex max-w-6xl items-start justify-center gap-6">
         <section className="w-full max-w-2xl border-x border-white/[.06]">
-          <div className="sticky top-0 z-30 border-b border-white/[.07] bg-[#090812]/90 backdrop-blur-xl">
+          <div className="sticky top-0 z-30 border-b border-white/[.07] bg-[#0B0F14]/90 backdrop-blur-xl">
             <div className="flex items-center justify-between px-4 py-3 sm:hidden"><span className="text-lg font-extrabold">Home</span><Link to="/create" className="grid h-9 w-9 place-items-center rounded-full bg-white text-black"><FiEdit3 /></Link></div>
             <div className="hidden px-4 pt-4 sm:block"><h1 className="text-xl font-extrabold">Home</h1></div>
             <div className="grid grid-cols-2">
