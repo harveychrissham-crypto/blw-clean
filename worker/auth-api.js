@@ -240,11 +240,45 @@ export async function handleAuth(request, env, ctx) {
       const identifier = sanitizeString(body.email);
       const password = body.password;
       if (!identifier || !password) return { response: json({ error: 'Email or username and password are required.' }, 400, headers) };
-      await ensureAvatarColumn(client);
-      await ensureProfileColumns(client);
-      const result = await client.query(`SELECT full_name,email,username,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status,password_hash,is_admin,avatar_url,title,marital_status,church,city,about FROM users WHERE LOWER(email)=LOWER($1) OR LOWER(COALESCE(username,''))=LOWER($1) LIMIT 1`, [identifier]);
+      // Login must not run runtime schema migrations. The deployed Supabase
+      // database may restrict ALTER TABLE to its owner; auth only needs the
+      // stable account columns created by the original users-table schema.
+      const accountFields = 'full_name,email,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status,password_hash,is_admin';
+      let result = await client.query(
+        `SELECT ${accountFields} FROM users WHERE LOWER(email)=LOWER($1) LIMIT 1`,
+        [identifier]
+      );
+
+      // Username is optional in older Supabase databases. Keep email login
+      // independent of that migration, while retaining username login when
+      // the column exists.
+      if (!result.rows.length) {
+        try {
+          result = await client.query(
+            `SELECT ${accountFields} FROM users WHERE LOWER(COALESCE(username,''))=LOWER($1) LIMIT 1`,
+            [identifier]
+          );
+        } catch (error) {
+          if (error?.code !== '42703') throw error;
+          result = { rows: [] };
+        }
+      }
+
       if (!result.rows.length) return { response: json({ error: 'Invalid email or password.' }, 401, headers) };
       const row = result.rows[0];
+
+      // Profile-only fields are optional across deployed schemas; avoid making
+      // them a prerequisite for authentication.
+      try {
+        const profile = await client.query(
+          'SELECT username,avatar_url,title,marital_status,church,city,about FROM users WHERE LOWER(email)=LOWER($1) LIMIT 1',
+          [row.email]
+        );
+        Object.assign(row, profile.rows[0] || {});
+      } catch (error) {
+        if (error?.code !== '42703') throw error;
+      }
+
       if (!(await verifyPassword(password, row.password_hash))) return { response: json({ error: 'Invalid email or password.' }, 401, headers) };
       const user = payloadUser(row, !!row.is_admin);
       const token = signUser(user, env);
