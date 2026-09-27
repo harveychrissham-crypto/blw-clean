@@ -24,7 +24,30 @@ function normalizeResponse(request, env, response) {
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 function preflightResponse(request, env) { return new Response(null, { status: 204, headers: corsHeaders(request, env) }); }
-async function applyRateLimit(request, env, bindingName, key, fallbackLimit) { const limiter = env[bindingName]; if (limiter?.limit) { const { success } = await limiter.limit({ key }); return success; } const now = Math.floor(Date.now() / 60000); const ip = request.headers.get('CF-Connecting-IP') || 'unknown'; const fallbackKey = `${bindingName}:${ip}:${now}`; if (!globalThis.__blwRateFallback) globalThis.__blwRateFallback = new Map(); const current = globalThis.__blwRateFallback.get(fallbackKey) || 0; if (current >= fallbackLimit) return false; globalThis.__blwRateFallback.set(fallbackKey, current + 1); return true; }
+async function applyRateLimit(request, env, bindingName, key, fallbackLimit) {
+  const limiter = env[bindingName];
+  if (limiter?.limit) {
+    try {
+      const { success } = await limiter.limit({ key });
+      return success;
+    } catch (error) {
+      // A transient/misconfigured Cloudflare limiter must not crash auth
+      // before handleAuth can return its structured response.
+      console.error('[worker] rate limiter unavailable; using isolate fallback', {
+        binding: bindingName,
+        message: error?.message,
+      });
+    }
+  }
+  const now = Math.floor(Date.now() / 60000);
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const fallbackKey = `${bindingName}:${ip}:${now}`;
+  if (!globalThis.__blwRateFallback) globalThis.__blwRateFallback = new Map();
+  const current = globalThis.__blwRateFallback.get(fallbackKey) || 0;
+  if (current >= fallbackLimit) return false;
+  globalThis.__blwRateFallback.set(fallbackKey, current + 1);
+  return true;
+}
 function rateLimitedResponse(request, env) { return normalizeResponse(request, env, new Response(JSON.stringify({ error: 'Too many requests. Please try again later.' }), { status: 429, headers: { 'content-type': 'application/json; charset=utf-8', 'retry-after': '60' } })); }
 
 export default {
