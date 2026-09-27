@@ -28,15 +28,6 @@ export default function Layout({ children }) {
         <div className="ml-auto flex items-center gap-1"><Button variant="custom" size="none" onClick={()=>setSearchOpen(true)} className="rounded-lg p-2 text-white/50 hover:text-white hover:bg-white/5" aria-label="Search"><FiSearch className="h-4 w-4"/></Button>{user&&<Link to="/notifications" className="rounded-lg p-2 text-white/50 hover:text-white lg:hidden"><FiBell className="h-4 w-4"/></Link>}{user?<Link to="/profile" className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden">Profile</Link>:<Link to="/auth" className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden">Sign In</Link>}</div>
       </div>
     </header>}
-    {isHome && <header className="mx-auto hidden w-full max-w-[1468px] items-center justify-between gap-6 px-8 py-5 sm:px-10 md:flex lg:py-6">
-      <Link to="/" aria-label="Emet home" className="flex shrink-0 items-center gap-3">
-        <img src="/emet-mark.svg" alt="" className="h-14 w-14 sm:h-[68px] sm:w-[68px]" />
-        <span className="emet-wordmark" role="img" aria-label="EMET" style={{ width: 190, height: 40 }} />
-      </Link>
-      <p className="hidden text-right text-[10px] font-semibold uppercase tracking-[.32em] text-[#D7E5FF]/90 md:block lg:text-xs">
-        Real people. Meaningful connections.
-      </p>
-    </header>}
     <div className={isHome?'mx-auto max-w-[1468px] px-4 pb-10 md:grid md:grid-cols-[180px_minmax(0,1fr)] lg:grid-cols-[210px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)] md:min-h-[calc(100vh-160px)] md:rounded-[22px] md:border lg:overflow-hidden lg:border-[#514da5]/60 lg:bg-[#02091a]/95 lg:shadow-[0_0_0_1px_rgba(42,86,190,.14),0_0_28px_rgba(75,55,190,.16)]':'contents'}>
     <aside className={`${isHome
       ? 'relative hidden w-[180px] shrink-0 flex-col border-r border-[#28478e]/40 bg-[#020817]/95 py-6 md:flex lg:w-[210px] xl:w-[240px]'
