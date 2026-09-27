@@ -149,6 +149,31 @@ function Compose({ user }) {
   );
 }
 
+function FeatureBanner() {
+  return (
+    <section
+      className="relative isolate overflow-hidden rounded-2xl border border-[#315dd8]/45 px-5 py-5 sm:px-6 sm:py-6"
+      style={{
+        backgroundImage: "linear-gradient(90deg, rgba(4, 13, 35, .96) 0%, rgba(4, 13, 35, .8) 48%, rgba(4, 13, 35, .25) 100%), url('/auth-scenic-background.webp')",
+        backgroundPosition: 'center',
+        backgroundSize: 'cover',
+      }}
+      aria-labelledby="home-feature-heading"
+    >
+      <div className="max-w-md">
+        <p className="text-[10px] font-bold uppercase tracking-[.22em] text-cyan-200">The Emet community</p>
+        <h2 id="home-feature-heading" className="mt-2 text-2xl font-extrabold leading-tight text-white sm:text-3xl">
+          Real people. Meaningful connections.
+        </h2>
+        <p className="mt-2 text-sm text-white/70">Share, discuss, and build together.</p>
+        <Link to="/create" className="mt-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-fuchsia-500 px-4 py-2.5 text-xs font-extrabold text-white shadow-lg shadow-blue-950/30 transition hover:brightness-110">
+          Create a post <FiArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+    </section>
+  );
+}
+
 function CommunityRail({ communities, onJoin, busyId }) {
   const list = communities.slice(0, 5);
   return (
@@ -342,6 +367,7 @@ export default function Home() {
             <div className="lg:hidden"><StoriesRow /></div>
             <Compose user={user} />
             <div className="hidden lg:block"><StoriesRow /></div>
+            <div className="hidden lg:block"><FeatureBanner /></div>
             <div className="hidden overflow-hidden rounded-xl border border-[#17305e]/55 bg-[#041126] lg:block">
               <div className="grid grid-cols-3">
                 {tabs.map((item) => (
@@ -354,13 +380,19 @@ export default function Home() {
             </div>
 
             <div className="overflow-hidden rounded-xl border border-[#17305e]/55 bg-[#041126]">
-              {error && <div className="m-4 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">{error}</div>}
+              {error && visiblePosts.length > 0 && <div role="status" className="mx-3 mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300/20 bg-amber-300/[.07] px-4 py-3 text-sm text-amber-100/90 sm:mx-4"><span>{error}</span><button type="button" onClick={() => load(true)} className="rounded-full border border-amber-100/20 px-3 py-1.5 text-xs font-bold text-white hover:bg-white/10">Retry</button></div>}
               {loading && !posts.length ? (
                 <div className="space-y-2 p-2">{[1, 2, 3].map((n) => <Skeleton key={n} className="h-40 w-full rounded-2xl" />)}</div>
               ) : visiblePosts.length ? (
                 visiblePosts.map((post) => <PostCard key={post.id} post={post} user={user} onUpdate={update} />)
+              ) : error ? (
+                <div role="alert" className="px-6 py-14 text-center sm:py-16">
+                  <p className="text-lg font-bold">Your feed couldn’t load.</p>
+                  <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-white/55">{error}</p>
+                  <button type="button" onClick={() => load(true)} className="mt-5 inline-flex rounded-full bg-gradient-to-r from-cyan-400 to-fuchsia-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-950/30 transition hover:brightness-110">Try again</button>
+                </div>
               ) : (
-                <div className="px-6 py-16 text-center">
+                <div className="px-6 py-14 text-center sm:py-16">
                   <p className="text-lg font-bold">Your timeline is quiet.</p>
                   <p className="mt-2 text-sm text-white/40">{tab === 'Communities' ? 'Join a community and start the conversation.' : tab === 'Following' ? 'Follow people and communities to build your timeline.' : 'Be the first to start a conversation.'}</p>
                   <Link to={tab === 'Communities' ? '/communities' : '/create'} className="mt-5 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-bold text-black">{tab === 'Communities' ? 'Explore communities' : 'Create a post'}</Link>
