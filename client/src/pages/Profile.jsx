@@ -132,7 +132,7 @@ export default function Profile() {
         </div>
       </section>
 
-      <nav className="sticky top-[52px] z-20 mt-4 overflow-x-auto border-b border-[#17386f]/70 bg-[#020b1d]/95 backdrop-blur-xl">
+      <nav className="sticky top-0 z-20 mt-4 overflow-x-auto border-b border-[#17386f]/70 bg-[#020b1d]/95 backdrop-blur-xl">
         <div className="flex min-w-max items-center gap-1 sm:gap-4">{TABS.map((item) => <button key={item} onClick={() => setTab(item)} className={`relative min-w-[72px] px-3 py-3 text-xs font-semibold transition ${tab === item ? 'text-fuchsia-300' : 'text-white/55 hover:text-white'}`}>{item}{tab === item && <span className="absolute inset-x-2 bottom-0 h-[2px] rounded-full bg-gradient-to-r from-cyan-400 to-fuchsia-500" />}</button>)}</div>
       </nav>
 
