@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiArrowRight, FiCalendar, FiEye, FiEyeOff, FiLock, FiPhone, FiUser, FiUsers } from 'react-icons/fi';
+import { FiArrowLeft, FiArrowRight, FiCalendar, FiEye, FiEyeOff, FiLock, FiPhone, FiUser } from 'react-icons/fi';
 import { FaApple, FaGoogle } from 'react-icons/fa';
 import QRCode from 'qrcode';
 import { useAuth } from '../context/AuthContext';
@@ -246,23 +246,6 @@ export default function Auth() {
                     </div>
                   </section>
 
-                  <section aria-labelledby="signup-community-heading">
-                    <div className="mb-2 flex items-center gap-2">
-                      <FiUsers className="h-[18px] w-[18px] text-[#c7d7f4]" />
-                      <div>
-                        <h2 id="signup-community-heading" className="text-[14px] font-bold leading-tight">Your Community</h2>
-                        <p className="text-[10px] leading-4 text-[#a9c3ec]/75">A few more details to set up your membership.</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <input required type="tel" autoComplete="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="Phone number *" aria-label="Phone number" className="h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-3 text-[11px] placeholder:text-[#9fb5db]/65 focus:!border-cyan-400" />
-                      <select required value={form.country} onChange={(e) => update('country', e.target.value)} aria-label="Country" className="h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-2 text-[11px] focus:!border-cyan-400"><option value="">Country *</option><option value="KENYA">Kenya</option><option value="UGANDA">Uganda</option><option value="TANZANIA">Tanzania</option><option value="RWANDA">Rwanda</option><option value="BURUNDI">Burundi</option><option value="SOMALIA">Somalia</option></select>
-                      <input required value={form.residence} onChange={(e) => update('residence', e.target.value)} placeholder="Residence *" aria-label="Residence" className="h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-3 text-[11px] placeholder:text-[#9fb5db]/65 focus:!border-cyan-400" />
-                      <input required value={form.campusZone} onChange={(e) => update('campusZone', e.target.value)} placeholder="Campus zone *" aria-label="Campus zone" className="h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-3 text-[11px] placeholder:text-[#9fb5db]/65 focus:!border-cyan-400" />
-                      <input required value={form.chapter} onChange={(e) => update('chapter', e.target.value)} placeholder="Chapter *" aria-label="Chapter" className="h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-3 text-[11px] placeholder:text-[#9fb5db]/65 focus:!border-cyan-400" />
-                      <input required value={form.invitedBy} onChange={(e) => update('invitedBy', e.target.value)} placeholder="Invited by *" aria-label="Invited by" className="h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-3 text-[11px] placeholder:text-[#9fb5db]/65 focus:!border-cyan-400" />
-                    </div>
-                  </section>
 
                   {error && <p className="text-xs text-red-300">{error}</p>}
                   <button disabled={status === 'submitting'} className="flex h-[44px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-fuchsia-500 text-[13px] font-bold text-white shadow-[0_8px_28px_rgba(40,190,248,.18)] transition hover:brightness-110 disabled:opacity-50">{status === 'submitting' ? 'Creating…' : 'Create Account'} <FiArrowRight className="h-4 w-4" /></button>
