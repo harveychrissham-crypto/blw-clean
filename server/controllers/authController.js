@@ -26,7 +26,7 @@ const setAuthCookie = (res, token) => {
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
   res.setHeader(
     'Set-Cookie',
-    `blw_auth_token=${encodeURIComponent(token)}; Max-Age=${TOKEN_MAX_AGE}; Path=/; HttpOnly; SameSite=Strict${secure}`
+    [`emet_auth_token=${encodeURIComponent(token)}; Max-Age=${TOKEN_MAX_AGE}; Path=/; HttpOnly; SameSite=Strict${secure}`, ['emet_auth_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict', 'blw_auth_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict']]
   );
 };
 

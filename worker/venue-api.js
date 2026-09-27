@@ -10,8 +10,9 @@ const getToken = (request) => {
   const header = request.headers.get('Authorization') || request.headers.get('authorization') || '';
   if (header.startsWith('Bearer ')) return header.slice(7).trim();
   const cookie = request.headers.get('Cookie') || request.headers.get('cookie') || '';
-  const match = cookie.split(';').map((part) => part.trim()).find((part) => part.startsWith('blw_auth_token='));
-  return match ? decodeURIComponent(match.slice('blw_auth_token='.length)) : '';
+  const cookies = cookie.split(';').map((part) => part.trim());
+  const match = cookies.find((part) => part.startsWith('emet_auth_token=')) || cookies.find((part) => part.startsWith('blw_auth_token='));
+  return match ? decodeURIComponent(match.slice(match.indexOf('=') + 1)) : '';
 };
 
 async function isAdmin(request, env) {

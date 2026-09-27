@@ -9,9 +9,10 @@ const getTokenFromRequest = (req) => {
   if (authHeader && authHeader.startsWith('Bearer ')) return authHeader.split(' ')[1];
   const cookieHeader = req.headers.cookie;
   if (!cookieHeader) return null;
-  const tokenCookie = cookieHeader.split(';').map((cookie) => cookie.trim()).find((cookie) => cookie.startsWith('blw_auth_token='));
+  const cookies = cookieHeader.split(';').map((cookie) => cookie.trim());
+  const tokenCookie = cookies.find((cookie) => cookie.startsWith('emet_auth_token=')) || cookies.find((cookie) => cookie.startsWith('blw_auth_token='));
   if (!tokenCookie) return null;
-  return decodeURIComponent(tokenCookie.split('=')[1] || '');
+  return decodeURIComponent(tokenCookie.slice(tokenCookie.indexOf('=') + 1) || '');
 };
 
 export const authenticateToken = async (req, res, next) => {
@@ -26,7 +27,7 @@ export const authenticateToken = async (req, res, next) => {
     // JWTs remain valid until expiry, so also verify that the account still exists.
     const result = await query('SELECT 1 FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1', [email]);
     if (!result.rows.length) {
-      res.setHeader('Set-Cookie', 'blw_auth_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict');
+      res.setHeader('Set-Cookie', ['emet_auth_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict', 'blw_auth_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict']);
       return res.status(401).json({ error: 'Account no longer exists.' });
     }
 

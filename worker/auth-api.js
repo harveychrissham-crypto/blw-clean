@@ -4,24 +4,29 @@ import { corsHeaders } from './security.js';
 import { sendEmail, welcomeEmail } from './email.js';
 import { uploadImageToStorage } from './upload-api.js';
 
-const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), {
-  status,
-  headers: { 'content-type': 'application/json; charset=utf-8', ...headers },
-});
+const json = (body, status = 200, headers = {}) => {
+  const responseHeaders = new Headers({ 'content-type': 'application/json; charset=utf-8', ...headers });
+  if (Array.isArray(headers['set-cookie'])) {
+    responseHeaders.delete('set-cookie');
+    headers['set-cookie'].forEach((value) => responseHeaders.append('set-cookie', value));
+  }
+  return new Response(JSON.stringify(body), { status, headers: responseHeaders });
+};
 
 const sanitizeString = (value) => {
   if (typeof value !== 'string') return '';
   return value.trim().replace(/<[^>]*>/g, '').replace(/[<>\"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 };
 const sanitizeEmail = (value) => typeof value === 'string' ? value.trim().toLowerCase() : '';
-const cookie = (token) => `blw_auth_token=${encodeURIComponent(token)}; Max-Age=604800; Path=/; HttpOnly; SameSite=Strict; Secure`;
-const clearCookie = 'blw_auth_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict; Secure';
+const cookie = (token) => [`emet_auth_token=${encodeURIComponent(token)}; Max-Age=604800; Path=/; HttpOnly; SameSite=Strict; Secure`, 'blw_auth_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict; Secure'];
+const clearCookie = ['emet_auth_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict; Secure', 'blw_auth_token=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict; Secure'];
 const bearerToken = (request) => {
   const authorization = request.headers.get('Authorization') || request.headers.get('authorization') || '';
   if (authorization.startsWith('Bearer ')) return authorization.slice(7).trim();
   const raw = request.headers.get('Cookie') || request.headers.get('cookie') || '';
-  const match = raw.split(';').map((part) => part.trim()).find((part) => part.startsWith('blw_auth_token='));
-  return match ? decodeURIComponent(match.slice('blw_auth_token='.length)) : '';
+  const cookies = raw.split(';').map((part) => part.trim());
+  const match = cookies.find((part) => part.startsWith('emet_auth_token=')) || cookies.find((part) => part.startsWith('blw_auth_token='));
+  return match ? decodeURIComponent(match.slice(match.indexOf('=') + 1)) : '';
 };
 
 async function db(env, fn) {
