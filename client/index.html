@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="EMET is a Christ-centered social network built around truth, genuine connection, and community." />
-    <meta name="theme-color" content="#0B0F14" />
+    <meta name="theme-color" content="#02092b" />
     <link rel="icon" href="/emet-mark.svg" type="image/svg+xml" />
     <link rel="manifest" href="/manifest.json" />
     <title>EMET</title>
@@ -13,23 +13,78 @@
         position: fixed;
         inset: 0;
         z-index: 9999;
+        overflow: hidden;
+        background:
+          radial-gradient(ellipse at 100% 0%, rgba(69, 35, 255, .72), transparent 40%),
+          radial-gradient(ellipse at 0% 100%, rgba(0, 104, 255, .72), transparent 38%),
+          linear-gradient(145deg, #02092b 0%, #020b35 52%, #09003a 100%);
+        transition: opacity .24s ease;
+        isolation: isolate;
+      }
+      #boot-splash .splash-brand {
+        position: absolute;
+        top: 28.5%;
+        left: 50%;
         display: flex;
+        width: min(82vw, 440px);
+        transform: translateX(-50%);
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        gap: 16px;
-        background: linear-gradient(135deg, #0B0F14, #111820, #0B0F14);
-        background-size: 100% 100%;
-        transition: opacity 0.2s ease;
+        text-align: center;
       }
-      #boot-splash .splash-mark { position: relative; filter: drop-shadow(0 12px 30px rgba(0,0,0,.35)); }
-      #boot-splash .splash-dot { transform-box: fill-box; transform-origin: center; animation: splash-dot-loading 1.05s ease-in-out infinite; }
-      #boot-splash .splash-dot:nth-of-type(2) { animation-delay: .18s; }
-      #boot-splash .splash-dot:nth-of-type(3) { animation-delay: .36s; }
-      @keyframes splash-dot-loading {
-        0%, 65%, 100% { opacity: .28; transform: scale(.82); }
-        32% { opacity: 1; transform: scale(1.12); }
+      #boot-splash .splash-mark {
+        display: block;
+        width: clamp(150px, 25vh, 250px);
+        height: clamp(150px, 25vh, 250px);
+        filter: drop-shadow(0 18px 42px rgba(24, 51, 255, .25));
       }
+      #boot-splash .splash-wordmark {
+        display: block;
+        width: min(78vw, 390px);
+        height: auto;
+        margin-top: 20px;
+      }
+      #boot-splash .splash-tagline {
+        max-width: 430px;
+        margin: 27px 0 0;
+        color: rgba(237, 243, 255, .94);
+        font: 400 clamp(20px, 3.7vw, 36px)/1.35 Inter, system-ui, sans-serif;
+        letter-spacing: .015em;
+      }
+      #boot-splash .splash-wave {
+        position: absolute;
+        z-index: -1;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 31%;
+        min-height: 220px;
+      }
+      #boot-splash .splash-loading {
+        position: absolute;
+        bottom: max(7%, calc(env(safe-area-inset-bottom) + 4%));
+        left: 50%;
+        display: flex;
+        transform: translateX(-50%);
+        flex-direction: column;
+        align-items: center;
+        gap: 22px;
+        color: rgba(225, 234, 255, .82);
+        font: 500 15px/1 Inter, system-ui, sans-serif;
+        letter-spacing: .24em;
+        white-space: nowrap;
+      }
+      #boot-splash .splash-spinner {
+        width: 76px;
+        height: 76px;
+        border: 5px solid rgba(71, 97, 255, .35);
+        border-top-color: #15d9f0;
+        border-right-color: #b22cff;
+        border-radius: 50%;
+        animation: splash-spin 1.05s linear infinite;
+      }
+      @keyframes splash-spin { to { transform: rotate(360deg); } }
       @media (prefers-reduced-motion: reduce) {
         #boot-splash .splash-dot { animation: none; opacity: 1; transform: none; }
       }
@@ -38,8 +93,17 @@
   </head>
   <body>
     <div id="boot-splash" aria-hidden="true">
-      <img class="splash-mark" src="/emet-mark.svg" width="56" height="56" alt="Emet" />
-      <span style="font:800 14px/1 Sora,Inter,Montserrat,system-ui,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.72);margin-left:.22em;">Emet</span>
+      <svg class="splash-wave" viewBox="0 0 1000 360" preserveAspectRatio="none">
+        <defs><linearGradient id="splash-wave-gradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#087dff"/><stop offset=".52" stop-color="#173cff"/><stop offset="1" stop-color="#8500f5"/></linearGradient></defs>
+        <path fill="url(#splash-wave-gradient)" d="M0 18C145 -2 232 52 366 130c158 92 258 153 409 146 89-4 163-44 225-103v187H0Z"/>
+        <path fill="url(#splash-wave-gradient)" opacity=".45" d="M0 133c149-73 251-22 379 65 145 98 278 160 426 122 83-22 145-68 195-126v166H0Z"/>
+      </svg>
+      <div class="splash-brand">
+        <img class="splash-mark" src="/emet-mark.svg" width="250" height="250" alt="" />
+        <img class="splash-wordmark" src="/emet-wordmark-geometric-white.svg" width="390" height="84" alt="EMET" />
+        <p class="splash-tagline">Real People. Meaningful Connections.</p>
+      </div>
+      <div class="splash-loading"><span class="splash-spinner"></span><span>LOADING...</span></div>
     </div>
     <div id="root"></div>
     <script>
