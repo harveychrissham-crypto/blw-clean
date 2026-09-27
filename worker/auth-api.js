@@ -230,7 +230,7 @@ export async function handleAuth(request, env, ctx) {
         const gender = sanitizeString(body.gender);
         if (!username || !email || !password || !birthday || !gender) return { response: json({ error: 'Username, email, password, date of birth, and gender are required.' }, 400, headers) };
         if (!/^[A-Za-z0-9_.]{3,30}$/.test(username)) return { response: json({ error: 'Username must be 3–30 characters and use only letters, numbers, dots, or underscores.' }, 400, headers) };
-        if (!/^([^\\s@]+)@([^\\s@]+)\\.([^\\s@]+)$/.test(email)) return { response: json({ error: 'Invalid email format.' }, 400, headers) };
+        if (!/^([^\s@]+)@([^\s@]+)\.([^\s@]+)$/.test(email)) return { response: json({ error: 'Invalid email format.' }, 400, headers) };
         if (typeof password !== 'string' || password.length < 8) return { response: json({ error: 'Password must be at least 8 characters.' }, 400, headers) };
 
         await ensureOptionalRegistrationFields(client);
@@ -240,7 +240,7 @@ export async function handleAuth(request, env, ctx) {
         const hashedPassword = await hashPassword(password);
         const membershipId = `M-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
         const badge = `BLW-2026-${Math.floor(100 + Math.random() * 900)}`;
-        const inserted = await client.query(`INSERT INTO users (full_name,username,email,password_hash,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status,password_changed_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'Verified',NOW()) RETURNING email,full_name,username,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status`, [username, username, email, hashedPassword, phone, campusZone, chapter, country, residence, birthday || null, invitedBy, gender, membershipId, badge]);
+        const inserted = await client.query(`INSERT INTO users (full_name,username,email,password_hash,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status,password_changed_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'Verified',NOW()) RETURNING email,full_name,username,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status`, [username, username, email, hashedPassword, null, null, null, null, null, birthday || null, null, gender, membershipId, badge]);
         const user = payloadUser(inserted.rows[0], false);
         const token = signUser(user, env);
         if (ctx?.waitUntil) ctx.waitUntil((async () => { try { await sendEmail(env, { to: user.email, ...welcomeEmail(user) }); } catch (error) { console.error('[email] welcome email failed', error); } })());
