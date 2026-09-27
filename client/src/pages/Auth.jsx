@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiArrowRight, FiCalendar, FiEye, FiEyeOff, FiLock, FiPhone, FiUser, FiUsers, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiArrowRight, FiCalendar, FiEye, FiEyeOff, FiLock, FiPhone, FiUser, FiUsers } from 'react-icons/fi';
 import { FaApple, FaGoogle } from 'react-icons/fa';
 import QRCode from 'qrcode';
 import { useAuth } from '../context/AuthContext';
@@ -200,8 +200,6 @@ export default function Auth() {
               </>
             ) : (
               <>
-                <button type="button" onClick={() => setModeAndReset('register')} className="mb-4 inline-flex items-center gap-2 text-sm text-white/65 hover:text-white"><FiX /> Back</button>
-                <button type="button" onClick={() => setModeAndReset('login')} className="mb-3 inline-flex items-center gap-2 text-xs text-white/65 hover:text-white"><FiArrowLeft /> Back to sign in</button>
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <section aria-labelledby="signup-account-heading">
                     <div className="mb-2 flex items-center gap-2">
