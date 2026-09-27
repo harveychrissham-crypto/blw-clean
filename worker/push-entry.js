@@ -25,24 +25,26 @@ function normalizeResponse(request, env, response) {
 }
 function preflightResponse(request, env) { return new Response(null, { status: 204, headers: corsHeaders(request, env) }); }
 async function applyRateLimit(request, env, bindingName, key, fallbackLimit) {
-  const limiter = env[bindingName];
-  if (limiter?.limit) {
-    try {
-      const { success } = await limiter.limit({ key });
-      return success;
-    } catch (error) {
-      // A transient/misconfigured Cloudflare limiter must not crash auth
-      // before handleAuth can return its structured response.
-      console.error('[worker] rate limiter unavailable; using isolate fallback', {
-        binding: bindingName,
-        message: error?.message,
-      });
-    }
-  }
   const now = Math.floor(Date.now() / 60000);
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-  const fallbackKey = `${bindingName}:${ip}:${now}`;
+  const fallbackKey = bindingName + ':' + ip + ':' + now;
   if (!globalThis.__blwRateFallback) globalThis.__blwRateFallback = new Map();
+
+  try {
+    // Binding lookup can fail as well as the limiter call, so keep both inside
+    // the same guard before falling back to the isolate-local counter.
+    const limiter = env[bindingName];
+    if (limiter && typeof limiter.limit === 'function') {
+      const result = await limiter.limit({ key });
+      if (typeof result?.success === 'boolean') return result.success;
+    }
+  } catch (error) {
+    console.error('[worker] rate limiter unavailable; using isolate fallback', {
+      binding: bindingName,
+      message: error?.message,
+    });
+  }
+
   const current = globalThis.__blwRateFallback.get(fallbackKey) || 0;
   if (current >= fallbackLimit) return false;
   globalThis.__blwRateFallback.set(fallbackKey, current + 1);
