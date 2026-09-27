@@ -69,7 +69,30 @@ export default {
     if ((url.pathname === '/api/auth/login' || url.pathname === '/api/auth/register') && request.method === 'POST') { const isRegister = url.pathname.endsWith('/register'); const allowed = await applyRateLimit(request, env, isRegister ? 'AUTH_REGISTER_LIMITER' : 'AUTH_LOGIN_LIMITER', `${isRegister ? 'register' : 'login'}:${request.headers.get('CF-Connecting-IP') || 'unknown'}`, isRegister ? 5 : 10); if (!allowed) return rateLimitedResponse(request, env); }
     if ((url.pathname === '/api/auth/forgot-password' || url.pathname === '/api/auth/reset-password') && request.method === 'POST') { const isReset = url.pathname.endsWith('/reset-password'); const allowed = await applyRateLimit(request, env, 'PASSWORD_RESET_LIMITER', `${isReset ? 'reset' : 'forgot'}:${request.headers.get('CF-Connecting-IP') || 'unknown'}`, isReset ? 8 : 3); if (!allowed) return rateLimitedResponse(request, env); }
     if ((url.pathname === '/api/live/viewers' && (request.method === 'POST' || request.method === 'PATCH'))) { const allowed = await applyRateLimit(request, env, 'LIVE_VIEWER_LIMITER', `viewer:${request.headers.get('CF-Connecting-IP') || 'unknown'}`, 60); if (!allowed) return rateLimitedResponse(request, env); }
-    if (url.pathname.startsWith('/api/auth')) { const response = await handleAuth(request, env, ctx); if (response) return normalizeResponse(request, env, response); const resetResponse = await handlePasswordReset(request, env); if (resetResponse) return normalizeResponse(request, env, resetResponse); }
+    if (url.pathname.startsWith('/api/auth')) {
+      try {
+        const response = await handleAuth(request, env, ctx);
+        if (response) return normalizeResponse(request, env, response);
+        const resetResponse = await handlePasswordReset(request, env);
+        if (resetResponse) return normalizeResponse(request, env, resetResponse);
+      } catch (error) {
+        // Keep unexpected route-level failures readable to native clients.
+        // Never expose database messages, request bodies, or credentials.
+        const requestId = crypto.randomUUID();
+        console.error('[worker] auth route failed', {
+          requestId,
+          message: error?.message,
+          code: error?.code,
+        });
+        return normalizeResponse(request, env, new Response(JSON.stringify({
+          error: 'Sign-in service failed unexpectedly.',
+          reference: requestId,
+        }), {
+          status: 500,
+          headers: { 'content-type': 'application/json; charset=utf-8' },
+        }));
+      }
+    }
     if (url.pathname.startsWith('/api/events')) { const response = await handleEvents(request, env); if (response) return normalizeResponse(request, env, response); }
     if (url.pathname.startsWith('/api/fellowships') || url.pathname === '/api/geocode') { const response = await handleFellowships(request, env, url); if (response) return normalizeResponse(request, env, response); }
     if (url.pathname.startsWith('/api/venues')) { const response = await handleVenues(request, env, url); if (response) return normalizeResponse(request, env, response); }
