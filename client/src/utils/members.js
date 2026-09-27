@@ -2,8 +2,10 @@ import { Preferences } from '@capacitor/preferences';
 import { apiFetch } from '../config/api';
 import { getOfflineCheckinQueue, removeOfflineCheckins, queueOfflineCheckin } from './offlineCheckin';
 
-const MEMBERS_CACHE_KEY = 'blw_leader_members_cache_v1';
-const SELECTED_ATTENDANCE_EVENT_KEY = 'blw_selected_attendance_event_id';
+const MEMBERS_CACHE_KEY = 'emet_leader_members_cache_v1';
+const LEGACY_MEMBERS_CACHE_KEY = 'blw_leader_members_cache_v1';
+const SELECTED_ATTENDANCE_EVENT_KEY = 'emet_selected_attendance_event_id';
+const LEGACY_SELECTED_ATTENDANCE_EVENT_KEY = 'blw_selected_attendance_event_id';
 
 async function handle(res) {
   let body = null;
@@ -22,7 +24,7 @@ async function leaderFetch(path, options = {}) {
 
 const getSelectedAttendanceEventId = () => {
   try {
-    return sessionStorage.getItem(SELECTED_ATTENDANCE_EVENT_KEY) || null;
+    let id=sessionStorage.getItem(SELECTED_ATTENDANCE_EVENT_KEY);if(!id){id=sessionStorage.getItem(LEGACY_SELECTED_ATTENDANCE_EVENT_KEY);if(id){sessionStorage.setItem(SELECTED_ATTENDANCE_EVENT_KEY,id);sessionStorage.removeItem(LEGACY_SELECTED_ATTENDANCE_EVENT_KEY)}}return id||null;
   } catch {
     return null;
   }
@@ -52,8 +54,8 @@ async function saveMembersCache(members, eventId = null) {
 
 async function readMembersCache(eventId = null) {
   try {
-    const { value } = await Preferences.get({ key: `${MEMBERS_CACHE_KEY}_${eventId ?? 'default'}` });
-    return value ? JSON.parse(value) : [];
+    const key=`${MEMBERS_CACHE_KEY}_${eventId??'default'}`;let {value}=await Preferences.get({key});if(!value){const oldKey=`${LEGACY_MEMBERS_CACHE_KEY}_${eventId??'default'}`;const old=await Preferences.get({key:oldKey});value=old.value||null;if(value){await Preferences.set({key,value});await Preferences.remove({key:oldKey})}}
+    return value?JSON.parse(value):[];
   } catch {
     return [];
   }

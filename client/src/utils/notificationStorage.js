@@ -1,6 +1,7 @@
-const STORAGE_KEY = 'blw-notifications';
+const STORAGE_KEY = 'emet-notifications';
+const LEGACY_STORAGE_KEY = 'blw-notifications';
 const MAX_STORED = 100;
-const UPDATED_EVENT = 'blw-notifications-updated';
+const UPDATED_EVENT = 'emet-notifications-updated';
 
 const emitUpdate = () => {
   if (typeof window === 'undefined') return;
@@ -16,8 +17,8 @@ export const onNotificationsUpdated = (callback) => {
 export const loadNotifications = () => {
   if (typeof window === 'undefined') return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
+    let raw=localStorage.getItem(STORAGE_KEY); if(raw===null){raw=localStorage.getItem(LEGACY_STORAGE_KEY);if(raw!==null){localStorage.setItem(STORAGE_KEY,raw);localStorage.removeItem(LEGACY_STORAGE_KEY)}}
+    const parsed=raw?JSON.parse(raw):[];
     return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
     console.warn('Unable to load notifications from localStorage', error);

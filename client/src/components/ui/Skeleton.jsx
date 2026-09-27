@@ -7,11 +7,11 @@ const shimmerBg =
 export function Skeleton({ className = '' }) {
   return (
     <>
-      <style>{`@keyframes blwSkeletonShimmer{0%{background-position:120% 0}100%{background-position:-120% 0}}@media(prefers-reduced-motion:reduce){.blw-skeleton-shimmer{animation:none!important}}`}</style>
+      <style>{`@keyframes emetSkeletonShimmer{0%{background-position:120% 0}100%{background-position:-120% 0}}@media(prefers-reduced-motion:reduce){.emet-skeleton-shimmer{animation:none!important}}`}</style>
       <div
         aria-hidden="true"
-        className={`blw-skeleton-shimmer rounded-xl ${shimmerBg} ${className}`}
-        style={{ animation: 'blwSkeletonShimmer 1.8s ease-in-out infinite' }}
+        className={`emet-skeleton-shimmer rounded-xl ${shimmerBg} ${className}`}
+        style={{ animation: 'emetSkeletonShimmer 1.8s ease-in-out infinite' }}
       />
     </>
   );

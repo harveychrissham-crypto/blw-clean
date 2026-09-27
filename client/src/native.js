@@ -17,8 +17,8 @@ export async function getAppVersion() {
   }
 }
 
-const PUSH_PERMISSION_PROMPT_EVENT = 'blw:push-permission-prompt';
-const PUSH_PERMISSION_DENIED_EVENT = 'blw:push-permission-denied';
+const PUSH_PERMISSION_PROMPT_EVENT = 'emet:push-permission-prompt';
+const PUSH_PERMISSION_DENIED_EVENT = 'emet:push-permission-denied';
 
 /**
  * Native-only setup (status bar and Android back button).
@@ -49,7 +49,7 @@ function markQrCameraSessions() {
     if (!navigator.mediaDevices?.getUserMedia) return;
     const original = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
     navigator.mediaDevices.getUserMedia = async (...args) => {
-      sessionStorage.setItem('blw_qr_scan_active', '1');
+      sessionStorage.setItem('emet_qr_scan_active', '1');
       const [constraints] = args;
       if (constraints && typeof constraints === 'object' && constraints.video) {
         const video = constraints.video === true ? {} : { ...constraints.video };
@@ -139,7 +139,7 @@ async function setUpForegroundNotificationDisplay() {
     if (Capacitor.getPlatform() === 'android') {
       try {
         await LocalNotifications.createChannel({
-          id: 'blw_default',
+          id: 'emet_default',
           name: 'Emet',
           description: 'Emet announcements and community updates',
           importance: 4,
@@ -171,7 +171,7 @@ async function setUpForegroundNotificationDisplay() {
             id: Math.floor(Date.now() % 2147483647),
             title,
             body,
-            channelId: 'blw_default',
+            channelId: 'emet_default',
             schedule: { at: new Date(Date.now() + 100) },
             extra: notification?.data || {},
             smallIcon: 'ic_stat_notify',
@@ -256,7 +256,7 @@ async function setUpPushNotificationsInternal() {
     if (Capacitor.getPlatform() === 'android') {
       try {
         await PushNotifications.createChannel({
-          id: 'blw_default',
+          id: 'emet_default',
           name: 'Emet',
           description: 'Emet announcements and community updates',
           importance: 4,

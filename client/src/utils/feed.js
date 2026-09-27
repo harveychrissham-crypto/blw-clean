@@ -1,9 +1,10 @@
 import { apiFetch } from '../config/api';
 
-const FEED_CACHE_KEY = 'blw_feed_cache_v2';
-const FEED_COMMENTS_CACHE_KEY = 'blw_feed_comments_cache_v1';
-const FEED_ACTION_QUEUE_KEY = 'blw_feed_action_queue_v1';
-const PUBLIC_USER_STORAGE_KEY = 'blw_public_user_v1';
+const FEED_CACHE_KEY = 'emet_feed_cache_v2';
+const FEED_COMMENTS_CACHE_KEY = 'emet_feed_comments_cache_v1';
+const FEED_ACTION_QUEUE_KEY = 'emet_feed_action_queue_v1';
+const PUBLIC_USER_STORAGE_KEY = 'emet_public_user_v1';
+function getMigratedLocalValue(key) { try { let v=localStorage.getItem(key); if(v!==null)return v; const old=key.replace(/^emet_/,'blw_'); v=localStorage.getItem(old); if(v!==null){localStorage.setItem(key,v);localStorage.removeItem(old)} return v } catch {return null} }
 const COMMENTS_CACHE_TTL = 15 * 60 * 1000;
 const COMMENTS_CACHE_MAX_POSTS = 30;
 const COMMENTS_CACHE_MAX_ITEMS = 50;
@@ -59,7 +60,7 @@ function normalizePost(row = {}) {
 
 function readPublicUser() {
   try {
-    const user = JSON.parse(localStorage.getItem(PUBLIC_USER_STORAGE_KEY) || 'null');
+    const user = JSON.parse(getMigratedLocalValue(PUBLIC_USER_STORAGE_KEY) || 'null');
     if (!user || typeof user !== 'object') return { name: 'Member', avatarUrl: '' };
     return {
       name: user.name || 'Member',
@@ -72,7 +73,7 @@ function readPublicUser() {
 
 function readActionQueue() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(FEED_ACTION_QUEUE_KEY) || '[]');
+    const parsed = JSON.parse(getMigratedLocalValue(FEED_ACTION_QUEUE_KEY) || '[]');
     return Array.isArray(parsed) ? parsed : [];
   } catch { return []; }
 }
@@ -261,7 +262,7 @@ export async function recordFeedView(id) {
 
 export function readCachedFeed() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(FEED_CACHE_KEY) || 'null');
+    const parsed = JSON.parse(getMigratedLocalValue(FEED_CACHE_KEY) || 'null');
     return Array.isArray(parsed?.posts) ? parsed.posts.map(normalizePost) : [];
   } catch { return []; }
 }
@@ -295,7 +296,7 @@ function drawToCanvas(bitmap, maxDimension) {
 
 function readCommentsCache() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(FEED_COMMENTS_CACHE_KEY) || 'null');
+    const parsed = JSON.parse(getMigratedLocalValue(FEED_COMMENTS_CACHE_KEY) || 'null');
     return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
   } catch { return {}; }
 }

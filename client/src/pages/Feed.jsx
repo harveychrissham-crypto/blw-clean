@@ -15,9 +15,10 @@ import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import Messages from './Messages';
 const PAGE_SIZE = 20; // placeholder no-op edit to ensure apply_patch formatting
 const tabs = ['All','Following','Reels'];
-const REEL_MUTE_STORAGE_KEY = 'blw_reel_mute_preference_v1';
-const readReelMutePreference = () => { try { const value = localStorage.getItem(REEL_MUTE_STORAGE_KEY); return value === null ? true : value === 'true'; } catch { return true; } };
-const persistReelMutePreference = (muted) => { try { localStorage.setItem(REEL_MUTE_STORAGE_KEY, String(Boolean(muted))); window.dispatchEvent(new CustomEvent('blw-reel-mute-changed', { detail: Boolean(muted) })); } catch {} };
+const REEL_MUTE_STORAGE_KEY = 'emet_reel_mute_preference_v1';
+const LEGACY_REEL_MUTE_STORAGE_KEY = 'blw_reel_mute_preference_v1';
+const readReelMutePreference = () => { try { let value=localStorage.getItem(REEL_MUTE_STORAGE_KEY); if(value===null){value=localStorage.getItem(LEGACY_REEL_MUTE_STORAGE_KEY);if(value!==null){localStorage.setItem(REEL_MUTE_STORAGE_KEY,value);localStorage.removeItem(LEGACY_REEL_MUTE_STORAGE_KEY)}} return value===null?true:value==='true' } catch{return true} };
+const persistReelMutePreference = (muted) => { try { localStorage.setItem(REEL_MUTE_STORAGE_KEY, String(Boolean(muted))); window.dispatchEvent(new CustomEvent('emet-reel-mute-changed', { detail: Boolean(muted) })); } catch {} };
 const canViewPostInsights = (viewer) => Boolean(viewer?.isAdmin || /leader|secretary|coordinator|pastor|president|director|chair|supervisor|administrator/i.test(String(viewer?.title || '')));
 function formatNameList(names) {
   if (names.length <= 1) return names[0] || '';
@@ -72,7 +73,7 @@ function Actions({post,user,onUpdate,onComments,onQuote}) {
 
 function VideoMedia({post,active=false,reel=false,onDoubleTap}) {
   const videoRef=useRef(null); const frameRef=useRef(null); const [muted,setMuted]=useState(readReelMutePreference); const [playing,setPlaying]=useState(active); const [progress,setProgress]=useState(0); const isYoutube=Boolean(post.videoId);
-  useEffect(()=>{const onMuteChanged=e=>setMuted(Boolean(e.detail));const onStorage=e=>{if(e.key===REEL_MUTE_STORAGE_KEY&&e.newValue!=null)setMuted(e.newValue==='true');};window.addEventListener('blw-reel-mute-changed',onMuteChanged);window.addEventListener('storage',onStorage);return()=>{window.removeEventListener('blw-reel-mute-changed',onMuteChanged);window.removeEventListener('storage',onStorage);};},[]);
+  useEffect(()=>{const onMuteChanged=e=>setMuted(Boolean(e.detail));const onStorage=e=>{if(e.key===REEL_MUTE_STORAGE_KEY&&e.newValue!=null)setMuted(e.newValue==='true');};window.addEventListener('emet-reel-mute-changed',onMuteChanged);window.addEventListener('storage',onStorage);return()=>{window.removeEventListener('emet-reel-mute-changed',onMuteChanged);window.removeEventListener('storage',onStorage);};},[]);
   useEffect(()=>{if(!videoRef.current)return;videoRef.current.muted=muted;if(active){videoRef.current.play?.().then(()=>setPlaying(true)).catch(()=>setPlaying(false));}else{videoRef.current.pause?.();setPlaying(false);}},[active,muted]);
   useEffect(()=>{if(!isYoutube)return;const frame=frameRef.current;if(!frame)return;const send=()=>{frame.contentWindow?.postMessage(JSON.stringify({event:'command',func:active?'playVideo':'pauseVideo',args:[]}), '*');frame.contentWindow?.postMessage(JSON.stringify({event:'command',func:muted?'mute':'unMute',args:[]}), '*');};const timers=[0,350,900,1800].map(delay=>setTimeout(send,delay));setPlaying(active);return()=>timers.forEach(clearTimeout);},[active,muted,isYoutube]);
   useEffect(()=>{const v=videoRef.current;if(!v)return;const update=()=>setProgress(v.duration?Math.min(100,(v.currentTime/v.duration)*100):0);const onPlay=()=>setPlaying(true);const onPause=()=>setPlaying(false);v.addEventListener('timeupdate',update);v.addEventListener('play',onPlay);v.addEventListener('pause',onPause);return()=>{v.removeEventListener('timeupdate',update);v.removeEventListener('play',onPlay);v.removeEventListener('pause',onPause);};},[]);

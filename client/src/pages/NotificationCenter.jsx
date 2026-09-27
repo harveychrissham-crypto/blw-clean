@@ -15,7 +15,8 @@ const TARGETS = [
   ['sermon', 'Sermon'],
   ['venue', 'Service venue'],
 ];
-const LOG_KEY = 'blw_notification_delivery_log';
+const LOG_KEY = 'emet_notification_delivery_log';
+const LEGACY_LOG_KEY = 'blw_notification_delivery_log';
 
 const getItemId = (item, type) => type === 'venue' ? String(item?.chapter || '') : String(item?.id || '');
 const getItemTitle = (item, type) => {
@@ -27,7 +28,8 @@ const getItemTitle = (item, type) => {
 
 function readLog() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+    let raw=localStorage.getItem(LOG_KEY); if(raw===null){raw=localStorage.getItem(LEGACY_LOG_KEY);if(raw!==null){localStorage.setItem(LOG_KEY,raw);localStorage.removeItem(LEGACY_LOG_KEY)}}
+    const parsed=JSON.parse(raw||'[]');
     return Array.isArray(parsed) ? parsed.slice(0, 20) : [];
   } catch {
     return [];

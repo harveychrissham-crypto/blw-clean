@@ -4,9 +4,11 @@
 // at this layer -- see client/src/offlineSync.js and offlineStorage.js for
 // how the app itself caches API data.
 
-const CACHE_NAME = 'blw-shell-v2';
+const CACHE_NAME = 'emet-shell-v3';
+const LEGACY_CACHE_NAMES=['blw-shell-v2'];
 const APP_SHELL = ['/', '/index.html', '/manifest.json', '/emet-mark.svg', '/emet-official-icon.svg'];
 
+self.addEventListener('activate',(event)=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>LEGACY_CACHE_NAMES.includes(key)).map(key=>caches.delete(key)))))});
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))

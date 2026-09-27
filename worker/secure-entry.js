@@ -109,7 +109,7 @@ async function sendSelfPushTest(request, env, headers) {
     if (!tokens.length) return json({ status: 'no_token', message: 'No FCM token is registered for this account yet.' }, 404, headers);
     const { projectId } = firebaseConfig(env); const accessToken = await getFirebaseAccessToken(env); let sent = 0; let failed = 0; const failures = [];
     for (const token of tokens) {
-      const response = await fetch(`https://fcm.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/messages:send`, { method: 'POST', headers: { Authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' }, body: JSON.stringify({ message: { token, notification: { title, body: bodyText }, data, android: { priority: 'HIGH', notification: { channel_id: 'blw_default', sound: 'default' } } } }) });
+      const response = await fetch(`https://fcm.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/messages:send`, { method: 'POST', headers: { Authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' }, body: JSON.stringify({ message: { token, notification: { title, body: bodyText }, data, android: { priority: 'HIGH', notification: { channel_id: 'emet_default', sound: 'default' } } } }) });
       const responseBody = await response.json().catch(() => ({})); if (response.ok) sent += 1; else { failed += 1; failures.push({ status: response.status, error: responseBody?.error?.status || responseBody?.error?.message || 'FCM send failed' }); }
     }
     if (sent > 0) return json({ status: 'ok', sent, failed, totalTokens: tokens.length, payload: { title, body: bodyText, data } }, 200, headers);

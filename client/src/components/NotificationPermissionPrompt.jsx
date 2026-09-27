@@ -3,8 +3,8 @@ import { FiBell, FiX } from 'react-icons/fi';
 import { requestPushNotificationPermission, setUpPushNotifications } from '../native';
 import Button from './ui/Button';
 
-const PROMPT_EVENT = 'blw:push-permission-prompt';
-const DENIED_EVENT = 'blw:push-permission-denied';
+const PROMPT_EVENT = 'emet:push-permission-prompt';
+const DENIED_EVENT = 'emet:push-permission-denied';
 
 export default function NotificationPermissionPrompt() {
   const [visible, setVisible] = useState(false);

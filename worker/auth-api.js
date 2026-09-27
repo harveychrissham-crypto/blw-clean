@@ -239,7 +239,7 @@ export async function handleAuth(request, env, ctx) {
         await ensurePasswordChangedColumn(client);
         const hashedPassword = await hashPassword(password);
         const membershipId = `M-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-        const badge = `BLW-2026-${Math.floor(100 + Math.random() * 900)}`;
+        const badge = `EMET-2026-${Math.floor(100 + Math.random() * 900)}`;
         const inserted = await client.query(`INSERT INTO users (full_name,username,email,password_hash,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status,password_changed_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'Verified',NOW()) RETURNING email,full_name,username,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status`, [username, username, email, hashedPassword, null, null, null, null, null, birthday || null, null, gender, membershipId, badge]);
         const user = payloadUser(inserted.rows[0], false);
         const token = signUser(user, env);

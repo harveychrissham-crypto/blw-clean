@@ -1,11 +1,12 @@
 import { Preferences } from '@capacitor/preferences';
 
-const QUEUE_KEY = 'blw_offline_checkins_v1';
+const QUEUE_KEY = 'emet_offline_checkins_v1';
+const LEGACY_QUEUE_KEY = 'blw_offline_checkins_v1';
 
 async function readQueue() {
   try {
-    const { value } = await Preferences.get({ key: QUEUE_KEY });
-    return value ? JSON.parse(value) : [];
+    let {value}=await Preferences.get({key:QUEUE_KEY}); if(!value){const old=await Preferences.get({key:LEGACY_QUEUE_KEY});value=old.value||null;if(value){await Preferences.set({key:QUEUE_KEY,value});await Preferences.remove({key:LEGACY_QUEUE_KEY})}}
+    return value?JSON.parse(value):[];
   } catch {
     return [];
   }

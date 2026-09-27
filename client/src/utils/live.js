@@ -2,7 +2,8 @@ import { apiFetch, apiUrl } from '../config/api';
 // Helpers for talking to /api/live — the single admin-managed live stream
 // setting shown on the public Live page.
 
-const CLIENT_ID_KEY = 'blw_live_client_id';
+const CLIENT_ID_KEY = 'emet_live_client_id';
+const LEGACY_CLIENT_ID_KEY = 'blw_live_client_id';
 
 // A random id generated once per browser and persisted in localStorage, so
 // repeat visits from the same device are recognized as the same viewer
@@ -10,7 +11,7 @@ const CLIENT_ID_KEY = 'blw_live_client_id';
 // enough to dedupe/track a single browser across visits.
 export function getLiveClientId() {
   try {
-    let id = window.localStorage.getItem(CLIENT_ID_KEY);
+    let id=window.localStorage.getItem(CLIENT_ID_KEY);if(!id){id=window.localStorage.getItem(LEGACY_CLIENT_ID_KEY);if(id){window.localStorage.setItem(CLIENT_ID_KEY,id);window.localStorage.removeItem(LEGACY_CLIENT_ID_KEY)}}
     if (!id) {
       id = (crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`);
       window.localStorage.setItem(CLIENT_ID_KEY, id);
