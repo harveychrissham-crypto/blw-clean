@@ -34,6 +34,7 @@ export function corsHeaders(request, env) {
   const headers = {
     'access-control-allow-methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
     'access-control-allow-headers': 'Content-Type, Authorization',
+    'access-control-expose-headers': 'CF-Ray',
   };
   if (origin) {
     headers['access-control-allow-origin'] = origin;
