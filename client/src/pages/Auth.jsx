@@ -95,9 +95,19 @@ export default function Auth() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: form.email, password: form.password }),
         });
-        const body = await response.json().catch(() => ({}));
+        const responseText = await response.text();
+        let body = {};
+        try {
+          body = responseText ? JSON.parse(responseText) : {};
+        } catch {
+          body = {};
+        }
         if (!response.ok) {
-          const message = body.error || 'Unable to sign in.';
+          const message = body.error || body.message || `Emet sign-in returned HTTP ${response.status}.`;
+          setError(message); setStatus('error'); setToast({ type: 'error', message }); return;
+        }
+        if (!body.user || !body.token) {
+          const message = `Emet sign-in returned an incomplete response (HTTP ${response.status}).`;
           setError(message); setStatus('error'); setToast({ type: 'error', message }); return;
         }
         await login(body.user, body.token);
