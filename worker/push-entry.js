@@ -55,6 +55,7 @@ function rateLimitedResponse(request, env) { return normalizeResponse(request, e
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    try {
     if (request.method === 'OPTIONS') return preflightResponse(request, env);
     if (url.pathname === '/api/health' && request.method === 'GET') return normalizeResponse(request, env, new Response(JSON.stringify({ status: 'ok', message: 'BLW Campus Ministry API is running' }), { status: 200, headers: { 'content-type': 'application/json; charset=utf-8' } }));
     if (url.pathname === '/api/app/version' && request.method === 'GET') { const response = await handleAppVersion(request, env, url); if (response) return normalizeResponse(request, env, response); }
@@ -99,6 +100,15 @@ export default {
     if (url.pathname.startsWith('/api/fellowships') || url.pathname === '/api/geocode') { const response = await handleFellowships(request, env, url); if (response) return normalizeResponse(request, env, response); }
     if (url.pathname.startsWith('/api/venues')) { const response = await handleVenues(request, env, url); if (response) return normalizeResponse(request, env, response); }
     return normalizeResponse(request, env, await secureWorker.fetch(request, env, ctx));
+    } catch (error) {
+      if (!url.pathname.startsWith('/api/auth')) throw error;
+      const requestId = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+      console.error('[worker] uncaught auth request failure', { requestId, message: error?.message, code: error?.code });
+      return new Response(JSON.stringify({ error: 'Sign-in service failed unexpectedly.', reference: requestId }), {
+        status: 500,
+        headers: { 'content-type': 'application/json; charset=utf-8', ...corsHeaders(request, env) },
+      });
+    }
   },
   async scheduled(controller, env, ctx) {
     if (controller.cron === '0 5 * * 6') { ctx.waitUntil(sendWeeklyServiceReminders(env)); return; }
