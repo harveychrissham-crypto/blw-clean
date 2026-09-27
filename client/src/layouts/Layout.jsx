@@ -25,7 +25,7 @@ export default function Layout({ children }) {
   const isFeed=location.pathname==='/feed'; const isHome=location.pathname==='/';
   useEffect(()=>{const refresh=()=>setUnreadCount(getUnreadCount());refresh();return onNotificationsUpdated(refresh);},[]);
   useEffect(()=>{if(!isHome)return undefined;let active=true;fetchCommunities().then(items=>{if(active)setCommunities(items);}).catch(()=>{});return()=>{active=false;};},[isHome]);
-    return <div className="min-h-screen text-white" style={{background:'radial-gradient(ellipse at 4% 28%, rgba(0,88,220,.10), transparent 34%), radial-gradient(ellipse at 98% 9%, rgba(80,42,215,.12), transparent 35%), radial-gradient(ellipse at 51% 100%, rgba(23,39,154,.10), transparent 42%), #010716'}}>
+    return <div className="min-h-screen overflow-x-hidden text-white" style={{background:'radial-gradient(ellipse at 4% 28%, rgba(0,88,220,.10), transparent 34%), radial-gradient(ellipse at 98% 9%, rgba(80,42,215,.12), transparent 35%), radial-gradient(ellipse at 51% 100%, rgba(23,39,154,.10), transparent 42%), #010716'}}>
     <div className={isHome?'mx-auto max-w-[1468px] px-4 pb-10 md:grid md:grid-cols-[180px_minmax(0,1fr)] lg:grid-cols-[210px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)] md:min-h-[calc(100vh-160px)] md:rounded-[22px] md:border lg:overflow-hidden lg:border-[#514da5]/60 lg:bg-[#02091a]/95 lg:shadow-[0_0_0_1px_rgba(42,86,190,.14),0_0_28px_rgba(75,55,190,.16)]':'lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:min-h-screen'}>
     <aside className={`${isHome
       ? 'relative hidden w-[180px] shrink-0 flex-col border-r border-[#28478e]/40 bg-[#020817]/95 py-6 md:flex lg:w-[210px] xl:w-[240px]'
