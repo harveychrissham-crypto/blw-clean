@@ -226,17 +226,12 @@ export async function handleAuth(request, env, ctx) {
         const username = sanitizeString(body.username);
         const email = sanitizeEmail(body.email);
         const password = body.password;
-        const phone = sanitizeString(body.phone) || null;
-        const campusZone = sanitizeString(body.campusZone) || null;
-        const chapter = sanitizeString(body.chapter) || null;
-        const country = sanitizeString(body.country) || null;
-        const residence = sanitizeString(body.residence) || null;
         const birthday = sanitizeString(body.birthday);
-        const invitedBy = sanitizeString(body.invitedBy) || null;
         const gender = sanitizeString(body.gender);
-        if (!fullName || !email || !password || !birthday || !gender) return { response: json({ error: 'Full name, email, password, date of birth, and gender are required.' }, 400, headers) };
-        if (!/^([^\s@]+)@([^\s@]+)\.([^\s@]+)$/.test(email)) return { response: json({ error: 'Invalid email format.' }, 400, headers) };
-        if (password.length < 8) return { response: json({ error: 'Password must be at least 8 characters.' }, 400, headers) };
+        if (!username || !email || !password || !birthday || !gender) return { response: json({ error: 'Username, email, password, date of birth, and gender are required.' }, 400, headers) };
+        if (!/^[A-Za-z0-9_.]{3,30}$/.test(username)) return { response: json({ error: 'Username must be 3–30 characters and use only letters, numbers, dots, or underscores.' }, 400, headers) };
+        if (!/^([^\\s@]+)@([^\\s@]+)\\.([^\\s@]+)$/.test(email)) return { response: json({ error: 'Invalid email format.' }, 400, headers) };
+        if (typeof password !== 'string' || password.length < 8) return { response: json({ error: 'Password must be at least 8 characters.' }, 400, headers) };
 
         await ensureOptionalRegistrationFields(client);
         const duplicate = await client.query("SELECT 1 FROM users WHERE LOWER(email)=LOWER($1) OR LOWER(COALESCE(username,''))=LOWER($2) LIMIT 1", [email, username]);
