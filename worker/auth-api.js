@@ -53,6 +53,7 @@ async function ensureAvatarColumn(client) {
 
 async function ensureProfileColumns(client) {
   await client.query(`ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS username TEXT,
     ADD COLUMN IF NOT EXISTS title TEXT,
     ADD COLUMN IF NOT EXISTS marital_status TEXT,
     ADD COLUMN IF NOT EXISTS church TEXT,
@@ -82,6 +83,7 @@ async function authenticatedUser(request, env, client) {
 function payloadUser(row, isAdmin = false) {
   return {
     email: row.email,
+    username: row.username || '',
     name: row.full_name,
     phone: row.phone,
     campusZone: row.campus_zone,
@@ -235,13 +237,12 @@ export async function handleAuth(request, env, ctx) {
         return { response: json({ user, token }, 201, { ...headers, 'set-cookie': cookie(token) }) };
       }
 
-      const email = sanitizeEmail(body.email);
+      const identifier = sanitizeString(body.email);
       const password = body.password;
-      if (!email || !password) return { response: json({ error: 'Email and password are required.' }, 400, headers) };
-      if (!/^([^\s@]+)@([^\s@]+)\.[^\s@]+$/.test(email)) return { response: json({ error: 'Invalid email format.' }, 400, headers) };
+      if (!identifier || !password) return { response: json({ error: 'Email or username and password are required.' }, 400, headers) };
       await ensureAvatarColumn(client);
       await ensureProfileColumns(client);
-      const result = await client.query(`SELECT full_name,email,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status,password_hash,is_admin,avatar_url,title,marital_status,church,city,about FROM users WHERE LOWER(email)=LOWER($1) LIMIT 1`, [email]);
+      const result = await client.query(`SELECT full_name,email,username,phone,campus_zone,chapter,country,residence,birthday,invited_by,gender,membership_id,badge,status,password_hash,is_admin,avatar_url,title,marital_status,church,city,about FROM users WHERE LOWER(email)=LOWER($1) OR LOWER(COALESCE(username,''))=LOWER($1) LIMIT 1`, [identifier]);
       if (!result.rows.length) return { response: json({ error: 'Invalid email or password.' }, 401, headers) };
       const row = result.rows[0];
       if (!(await verifyPassword(password, row.password_hash))) return { response: json({ error: 'Invalid email or password.' }, 401, headers) };
