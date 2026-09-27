@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FiArrowRight, FiBookmark, FiCheck, FiFolder, FiHeart, FiMessageCircle, FiPlus, FiUsers, FiVideo, FiX } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
-import { fetchSavedFeed, toggleSave } from '../utils/feed';
+import { createBookmarkCollection, fetchBookmarkCollections, fetchSavedFeed, setBookmarkCollectionItem, toggleSave } from '../utils/feed';
 import { useAuth } from '../context/AuthContext';
 
 const FILTERS = ['All', 'Posts', 'Articles', 'Videos', 'Communities'];
@@ -27,33 +27,57 @@ export default function Bookmarks() {
   const [filter, setFilter] = useState('All');
   const [activeCollection, setActiveCollection] = useState('');
   const [collectionData, setCollectionData] = useState({ collections: [], memberships: {} });
-  const [loadedStorageKey, setLoadedStorageKey] = useState('');
   const [newCollectionOpen, setNewCollectionOpen] = useState(false);
   const [collectionName, setCollectionName] = useState('');
   const [assigningPost, setAssigningPost] = useState('');
   const storageKey = `emet-bookmark-collections:${String(user?.email || 'guest').toLowerCase()}`;
+  const migrationKey = `emet-bookmark-collections-migrated:${String(user?.email || 'guest').toLowerCase()}`;
 
   const load = async () => {
     setLoading(true); setError('');
-    try { const result = await fetchSavedFeed({ limit: 50 }); setPosts(result.posts || []); }
-    catch (err) { setError(err?.message || 'Unable to load your bookmarks.'); }
+    try {
+      const [result, initialCollections] = await Promise.all([
+        fetchSavedFeed({ limit: 50 }),
+        fetchBookmarkCollections(),
+      ]);
+      setPosts(result.posts || []);
+      let synced = initialCollections;
+      let migrationDone = false;
+      try { migrationDone = localStorage.getItem(migrationKey) === '1'; } catch {}
+      if (!migrationDone) {
+        try {
+          const legacy = JSON.parse(localStorage.getItem(storageKey) || '{}');
+          const oldCollections = Array.isArray(legacy.collections) ? legacy.collections : [];
+          if (oldCollections.length || Object.keys(legacy.memberships || {}).length) {
+            const idMap = new Map();
+            for (const oldCollection of oldCollections) {
+              let match = synced.collections.find((item) => item.name.toLowerCase() === String(oldCollection.name || '').toLowerCase());
+              if (!match && oldCollection.name) {
+                try { match = await createBookmarkCollection(oldCollection.name); } catch {}
+              }
+              if (match) idMap.set(String(oldCollection.id), String(match.id));
+            }
+            const remoteByName = new Map(synced.collections.map((item) => [item.name.toLowerCase(), String(item.id)]));
+            for (const [postId, oldIds] of Object.entries(legacy.memberships || {})) {
+              for (const oldId of Array.isArray(oldIds) ? oldIds : []) {
+                let collectionId = idMap.get(String(oldId));
+                if (!collectionId) {
+                  const oldCollection = oldCollections.find((item) => String(item.id) === String(oldId));
+                  collectionId = oldCollection ? remoteByName.get(String(oldCollection.name).toLowerCase()) : '';
+                }
+                if (collectionId) await setBookmarkCollectionItem(collectionId, postId, true).catch(() => {});
+              }
+            }
+            synced = await fetchBookmarkCollections();
+          }
+          try { localStorage.setItem(migrationKey, '1'); } catch {}
+        } catch {}
+      }
+      setCollectionData(synced);
+    } catch (err) { setError(err?.message || 'Unable to load your bookmarks.'); }
     finally { setLoading(false); }
   };
-  useEffect(() => { if (user) load(); else setLoading(false); }, [user]);
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
-      setCollectionData({
-        collections: Array.isArray(saved.collections) ? saved.collections : [],
-        memberships: saved.memberships && typeof saved.memberships === 'object' ? saved.memberships : {},
-      });
-    } catch { setCollectionData({ collections: [], memberships: {} }); }
-    setLoadedStorageKey(storageKey);
-  }, [storageKey]);
-  useEffect(() => {
-    if (loadedStorageKey !== storageKey) return;
-    try { localStorage.setItem(storageKey, JSON.stringify(collectionData)); } catch {}
-  }, [collectionData, storageKey, loadedStorageKey]);
+  useEffect(() => { if (user) load(); else setLoading(false); }, [user, storageKey]);
 
   const categories = useMemo(() => ({
     All: posts.length,
@@ -76,32 +100,31 @@ export default function Bookmarks() {
   const remove = async (id) => {
     try {
       await toggleSave(id);
+      const memberships = collectionData.memberships[String(id)] || [];
+      await Promise.all(memberships.map((collectionId) => setBookmarkCollectionItem(collectionId, id, false).catch(() => {})));
       setPosts((current) => current.filter((post) => post.id !== id));
-      setCollectionData((current) => {
-        const memberships = { ...current.memberships };
-        delete memberships[String(id)];
-        return { ...current, memberships };
-      });
+      setCollectionData(await fetchBookmarkCollections());
     } catch (err) { setError(err?.message || 'Unable to remove bookmark.'); }
   };
 
-  const createCollection = (event) => {
+  const createCollection = async (event) => {
     event.preventDefault();
     const name = collectionName.trim();
     if (!name) return;
-    const id = `collection-${Date.now()}`;
-    setCollectionData((current) => ({ ...current, collections: [...current.collections, { id, name }] }));
-    setCollectionName('');
-    setNewCollectionOpen(false);
+    try {
+      await createBookmarkCollection(name);
+      setCollectionData(await fetchBookmarkCollections());
+      setCollectionName('');
+      setNewCollectionOpen(false);
+    } catch (err) { setError(err?.message || 'Unable to create your collection.'); }
   };
 
-  const toggleCollection = (postId, collectionId) => {
-    setCollectionData((current) => {
-      const key = String(postId);
-      const ids = current.memberships[key] || [];
-      const nextIds = ids.includes(collectionId) ? ids.filter((id) => id !== collectionId) : [...ids, collectionId];
-      return { ...current, memberships: { ...current.memberships, [key]: nextIds } };
-    });
+  const toggleCollection = async (postId, collectionId) => {
+    const ids = collectionData.memberships[String(postId)] || [];
+    try {
+      await setBookmarkCollectionItem(collectionId, postId, !ids.includes(collectionId));
+      setCollectionData(await fetchBookmarkCollections());
+    } catch (err) { setError(err?.message || 'Unable to update this collection.'); }
   };
 
   const savedCount = (collectionId) => posts.filter((post) => (collectionData.memberships[String(post.id)] || []).includes(collectionId)).length;
