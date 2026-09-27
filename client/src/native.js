@@ -161,7 +161,7 @@ async function setUpForegroundNotificationDisplay() {
         : 'Emet';
       const body = typeof notification?.body === 'string' && notification.body.trim()
         ? notification.body.trim()
-        : 'You have a new ministry update.';
+        : 'You have a new Emet update.';
 
       await savePushToInbox({ ...notification, title, body });
 

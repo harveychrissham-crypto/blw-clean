@@ -95,7 +95,7 @@ async function sendSelfPushTest(request, env, headers) {
   const email = typeof payload?.user?.email === 'string' ? payload.user.email.trim().toLowerCase() : ''; if (!email) return json({ error: 'Invalid authentication token.' }, 401, headers);
   const requestBody = await request.clone().json().catch(() => ({}));
   const title = typeof requestBody?.title === 'string' && requestBody.title.trim() ? requestBody.title.trim().slice(0, 120) : 'Emet';
-  const bodyText = typeof requestBody?.body === 'string' && requestBody.body.trim() ? requestBody.body.trim().slice(0, 500) : 'You have a new ministry update.';
+  const bodyText = typeof requestBody?.body === 'string' && requestBody.body.trim() ? requestBody.body.trim().slice(0, 500) : 'You have a new Emet update.';
   const incomingData = requestBody?.data && typeof requestBody.data === 'object' && !Array.isArray(requestBody.data) ? requestBody.data : {};
   const allowedTypes = new Set(['event', 'sermon', 'outreach', 'venue', 'announcement', 'notification']);
   const type = typeof incomingData.type === 'string' && allowedTypes.has(incomingData.type) ? incomingData.type : 'notification';
