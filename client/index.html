@@ -20,19 +20,35 @@
       }
       #boot-splash::before {
         position: absolute;
-        z-index: -2;
-        inset: -42%;
+        z-index: 0;
+        inset: 0;
         content: "";
+        pointer-events: none;
         background:
-          radial-gradient(ellipse at 82% 8%, rgba(77, 34, 255, .8), transparent 39%),
-          radial-gradient(ellipse at 10% 90%, rgba(0, 103, 255, .82), transparent 38%),
-          radial-gradient(ellipse at 52% 42%, rgba(20, 33, 147, .32), transparent 55%),
+          radial-gradient(ellipse at 82% 8%, rgba(77, 34, 255, .82), transparent 39%),
+          radial-gradient(ellipse at 10% 90%, rgba(0, 103, 255, .84), transparent 38%),
+          radial-gradient(ellipse at 52% 42%, rgba(20, 33, 147, .38), transparent 55%),
           linear-gradient(145deg, #02092b 0%, #020b35 52%, #09003a 100%);
-        background-size: 130% 130%;
-        animation: splash-gradient-drift 7s ease-in-out infinite alternate;
+        background-size: 220% 220%;
+        background-position: 0% 50%;
+        animation: splash-gradient-drift 6s ease-in-out infinite alternate;
+        will-change: background-position, filter;
+      }
+      #boot-splash::after {
+        position: absolute;
+        z-index: 0;
+        inset: -18%;
+        content: "";
+        pointer-events: none;
+        background: radial-gradient(ellipse at 15% 40%, rgba(0, 196, 255, .18), transparent 35%), radial-gradient(ellipse at 88% 58%, rgba(181, 31, 255, .2), transparent 38%);
+        background-size: 180% 180%;
+        animation: splash-orbs 8s ease-in-out infinite alternate;
+        filter: blur(18px);
+        will-change: background-position, transform;
       }
       #boot-splash .splash-brand {
         position: absolute;
+        z-index: 2;
         top: 42%;
         left: 50%;
         display: flex;
@@ -63,7 +79,7 @@
       }
       #boot-splash .splash-wave {
         position: absolute;
-        z-index: -1;
+        z-index: 1;
         right: 0;
         bottom: 0;
         left: 0;
@@ -71,10 +87,12 @@
         height: 19%;
         min-height: 160px;
       }
+      #boot-splash .splash-wave { animation: splash-wave-drift 7s ease-in-out infinite alternate; will-change: transform; }
       #boot-splash .splash-wave path:first-child { opacity: .9; }
       #boot-splash .splash-wave path:last-child { opacity: .38; }
       #boot-splash .splash-loading {
         position: absolute;
+        z-index: 2;
         bottom: max(6%, calc(env(safe-area-inset-bottom) + 3%));
         left: 50%;
         display: flex;
@@ -98,9 +116,17 @@
       }
       @keyframes splash-spin { to { transform: rotate(360deg); } }
       @keyframes splash-gradient-drift {
-        0% { transform: translate3d(-7%, -4%, 0) scale(1.02); filter: hue-rotate(-12deg); }
-        50% { transform: translate3d(3%, 6%, 0) scale(1.09); filter: hue-rotate(12deg); }
-        100% { transform: translate3d(7%, -5%, 0) scale(1.03); filter: hue-rotate(22deg); }
+        0% { background-position: 0% 50%; filter: hue-rotate(-12deg) saturate(1); }
+        50% { background-position: 100% 0%; filter: hue-rotate(14deg) saturate(1.16); }
+        100% { background-position: 0% 100%; filter: hue-rotate(24deg) saturate(1.08); }
+      }
+      @keyframes splash-orbs {
+        0% { background-position: 0% 50%; transform: translate3d(-3%, -1%, 0) scale(1); }
+        100% { background-position: 100% 50%; transform: translate3d(3%, 2%, 0) scale(1.08); }
+      }
+      @keyframes splash-wave-drift {
+        0% { transform: translateX(-1.5%) scaleX(1.02); }
+        100% { transform: translateX(1.5%) scaleX(1.02); }
       }
       @media (max-height: 720px) {
         #boot-splash .splash-brand { top: 40%; }
@@ -112,6 +138,7 @@
       }
       @media (prefers-reduced-motion: reduce) {
         #boot-splash .splash-spinner { animation: none; }
+        #boot-splash .splash-wave { animation: none; }
       }
       #boot-splash.boot-splash-hidden { opacity: 0; pointer-events: none; }
     </style>
