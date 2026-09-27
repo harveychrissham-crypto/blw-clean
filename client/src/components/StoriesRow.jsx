@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { FiPlus } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../config/api';
@@ -44,7 +45,22 @@ export default function StoriesRow() {
     else setLoading(false);
   }, [user]);
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div className="w-full px-4 pt-2 sm:px-5" aria-label="Stories">
+        <div className="flex min-h-[76px] items-center gap-3 rounded-xl border border-[#17305e]/55 bg-[#041126] px-3 py-3 sm:px-4">
+          <Link to="/auth" aria-label="Sign in to add a story" className="grid h-12 w-12 shrink-0 place-items-center rounded-full border-2 border-dashed border-white/20 bg-white/[.04] text-white/70 transition hover:border-cyan-300/70 hover:text-white">
+            <FiPlus className="h-5 w-5" />
+          </Link>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold text-white/85">Stories</p>
+            <p className="mt-0.5 truncate text-[11px] text-white/45">Sign in to see what your community is sharing.</p>
+          </div>
+          <Link to="/auth" className="shrink-0 rounded-full border border-white/15 px-3 py-2 text-[11px] font-bold text-white/80 transition hover:border-cyan-300/50 hover:text-white">Sign in</Link>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
