@@ -14,8 +14,7 @@ const today = new Date().toISOString().slice(0, 10);
 const earliestBirthday = '1900-01-01';
 
 const emptyForm = {
-  fullName: '', email: '', password: '', phone: '', birthday: '', gender: '', chapter: '',
-  campusZone: '', country: '', residence: '', invitedBy: '',
+  username: '', email: '', password: '', birthday: '', gender: '',
 };
 
 const isValidBirthday = (value) => {
