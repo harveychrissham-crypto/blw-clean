@@ -5,6 +5,14 @@ const config: CapacitorConfig = {
   appName: 'EMET',
   webDir: 'dist',
 
+  plugins: {
+    // Use native networking for fetch/XHR inside the bundled Android WebView.
+    // This avoids CORS failures while keeping the standard Fetch Response API.
+    CapacitorHttp: {
+      enabled: true,
+    },
+  },
+
   // No `server.url` here on purpose: the UI ships inside the app bundle so
   // it opens instantly offline. All API calls go through src/config/api.js
   // (apiFetch), which targets the live backend explicitly regardless of
