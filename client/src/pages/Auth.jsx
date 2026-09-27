@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiArrowRight, FiEye, FiEyeOff, FiLock, FiPhone, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiArrowRight, FiCalendar, FiEye, FiEyeOff, FiLock, FiPhone, FiUser, FiUsers, FiX } from 'react-icons/fi';
 import { FaApple, FaGoogle } from 'react-icons/fa';
 import QRCode from 'qrcode';
 import { useAuth } from '../context/AuthContext';
@@ -155,19 +155,20 @@ export default function Auth() {
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#02091d] text-white">
+    <main className={`relative min-h-screen ${mode === 'details' ? 'overflow-y-auto' : 'overflow-hidden'} bg-[#02091d] text-white`}>
       <AuthBackdrop />
-      <div className="relative z-10 mx-auto grid min-h-screen max-w-[1800px] grid-cols-1 lg:grid-cols-[minmax(440px,38%)_1fr]">
-        <section className="relative flex min-h-screen flex-col px-6 pb-10 pt-5 sm:px-10 lg:px-11 lg:pt-2">
-          <Link to="/" aria-label="Emet home" className="mb-4 flex items-center gap-2 lg:hidden">
+      <div className={`relative z-10 mx-auto grid min-h-screen max-w-[1800px] grid-cols-1 ${mode === 'details' ? 'lg:grid-cols-1' : 'lg:grid-cols-[minmax(440px,38%)_1fr]'}`}>
+        <section className={`relative flex min-h-screen flex-col px-6 pb-10 pt-5 sm:px-10 lg:px-11 ${mode === 'details' ? 'mx-auto w-full max-w-[560px] pb-8 pt-7 sm:px-6 lg:px-6' : 'lg:pt-2'}`}>
+          {mode !== 'details' && <Link to="/" aria-label="Emet home" className="mb-4 flex items-center gap-2 lg:hidden">
             <img src="/emet-mark.svg" alt="" className="h-12 w-12" />
             <span role="img" aria-label="Emet" className="emet-wordmark" />
-          </Link>
-          <h1 className="max-w-[600px] text-[46px] font-extrabold leading-[1.02] tracking-[-.045em] sm:text-[56px] lg:mt-2 lg:text-[clamp(56px,5vw,84px)]">
-            {mode === 'login' ? <><span className="block">Real People.</span><span className="block">Meaningful</span><span className="block bg-gradient-to-r from-cyan-400 via-blue-500 to-fuchsia-500 bg-clip-text text-transparent">Connections.</span></> : mode === 'details' ? <>Join<br />Emet.</> : <>Welcome<br />to Emet.</>}
+          </Link>}
+          <h1 className={`max-w-[600px] ${mode === 'details' ? 'text-[27px] font-extrabold leading-tight tracking-[-.02em]' : 'text-[46px] font-extrabold leading-[1.02] tracking-[-.045em] sm:text-[56px] lg:mt-2 lg:text-[clamp(56px,5vw,84px)]'}`}>
+            {mode === 'login' ? <><span className="block">Real People.</span><span className="block">Meaningful</span><span className="block bg-gradient-to-r from-cyan-400 via-blue-500 to-fuchsia-500 bg-clip-text text-transparent">Connections.</span></> : mode === 'details' ? 'Create your Emet account' : <>Welcome<br />to Emet.</>}
           </h1>
+          {mode === 'details' && <p className="mt-1 text-[13px] text-[#a9c3ec]">Just a few details to get you started.</p>}
           {mode === 'login' && <p className="mt-5 text-[17px] text-[#c7d7f4] sm:text-[19px]">Share. Discuss. Build. Together.</p>}
-          <div className="mt-9 w-full max-w-[580px] sm:mt-12">
+          <div className={`w-full ${mode === 'details' ? 'mt-5 max-w-[490px]' : 'mt-9 max-w-[580px] sm:mt-12'}`}>
             {mode !== 'details' ? (
               <>
                 {mode === 'login' && loginStep === 0 && <div className="mb-2 space-y-3">
@@ -200,32 +201,82 @@ export default function Auth() {
             ) : (
               <>
                 <button type="button" onClick={() => setModeAndReset('register')} className="mb-4 inline-flex items-center gap-2 text-sm text-white/65 hover:text-white"><FiX /> Back</button>
-                <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <input required value={form.fullName} onChange={(e) => update('fullName', e.target.value)} placeholder="Full name" className="h-12 w-full rounded-lg border border-[#2456a8] bg-[#06152d]/65 px-4 text-sm outline-none focus:border-[#27baff]" />
-                  <input required type="email" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="Email address" className="h-12 w-full rounded-lg border border-[#2456a8] bg-[#06152d]/65 px-4 text-sm outline-none focus:border-[#27baff]" />
-                  <input required type="password" value={form.password} onChange={(e) => update('password', e.target.value)} placeholder="Password" className="h-12 w-full rounded-lg border border-[#2456a8] bg-[#06152d]/65 px-4 text-sm outline-none focus:border-[#27baff]" />
-                  <input required type="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="Phone number" className="h-12 w-full rounded-lg border border-[#2456a8] bg-[#06152d]/65 px-4 text-sm outline-none focus:border-[#27baff]" />
-                  <input required type="date" min={earliestBirthday} max={today} value={form.birthday} onChange={(e) => update('birthday', e.target.value)} className="h-12 w-full rounded-lg border border-[#2456a8] bg-[#06152d]/65 px-4 text-sm outline-none focus:border-[#27baff]" />
-                  <select required value={form.gender} onChange={(e) => update('gender', e.target.value)} className="h-12 w-full rounded-lg border border-[#2456a8] bg-[#06152d] px-4 text-sm outline-none focus:border-[#27baff]"><option value="">Gender</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select>
-                  <select required value={form.country} onChange={(e) => update('country', e.target.value)} className="h-12 w-full rounded-lg border border-[#2456a8] bg-[#06152d] px-4 text-sm outline-none focus:border-[#27baff]"><option value="">Country</option><option value="KENYA">Kenya</option><option value="UGANDA">Uganda</option><option value="TANZANIA">Tanzania</option><option value="RWANDA">Rwanda</option><option value="BURUNDI">Burundi</option><option value="SOMALIA">Somalia</option></select>
-                  <input required value={form.residence} onChange={(e) => update('residence', e.target.value)} placeholder="Residence" className="h-12 w-full rounded-lg border border-[#2456a8] bg-[#06152d]/65 px-4 text-sm outline-none focus:border-[#27baff]" />
-                  <input required value={form.campusZone} onChange={(e) => update('campusZone', e.target.value)} placeholder="Campus zone" className="h-12 w-full rounded-lg border border-[#2456a8] bg-[#06152d]/65 px-4 text-sm outline-none focus:border-[#27baff]" />
-                  <input required value={form.chapter} onChange={(e) => update('chapter', e.target.value)} placeholder="Chapter" className="h-12 w-full rounded-lg border border-[#2456a8] bg-[#06152d]/65 px-4 text-sm outline-none focus:border-[#27baff]" />
-                  <input required value={form.invitedBy} onChange={(e) => update('invitedBy', e.target.value)} placeholder="Invited by" className="h-12 w-full rounded-lg border border-[#2456a8] bg-[#06152d]/65 px-4 text-sm outline-none focus:border-[#27baff] sm:col-span-2" />
-                  {error && <p className="text-sm text-red-300 sm:col-span-2">{error}</p>}
-                  <button disabled={status === 'submitting'} className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 via-blue-600 to-fuchsia-500 text-sm font-bold text-white disabled:opacity-50 sm:col-span-2">{status === 'submitting' ? 'Creating…' : 'Create account'} <FiArrowRight /></button>
-                </form>
-              </>
-            )}
+                <button type="button" onClick={() => setModeAndReset('login')} className="mb-3 inline-flex items-center gap-2 text-xs text-white/65 hover:text-white"><FiArrowLeft /> Back to sign in</button>
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <section aria-labelledby="signup-account-heading">
+                    <div className="mb-2 flex items-center gap-2">
+                      <FiUser className="h-[18px] w-[18px] text-[#c7d7f4]" />
+                      <div>
+                        <h2 id="signup-account-heading" className="text-[14px] font-bold leading-tight">Account</h2>
+                        <p className="text-[10px] leading-4 text-[#a9c3ec]/75">These details help others find and connect with you on Emet.</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-[11px] font-medium text-[#c7d7f4]">Full name <span className="text-fuchsia-300">*</span>
+                        <input required autoComplete="name" value={form.fullName} onChange={(e) => update('fullName', e.target.value)} placeholder="Enter your full name" className="mt-0.5 h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-3 text-[12px] placeholder:text-[#9fb5db]/65 focus:!border-cyan-400" />
+                      </label>
+                      <label className="block text-[11px] font-medium text-[#c7d7f4]">Email address <span className="text-fuchsia-300">*</span>
+                        <input required type="email" autoComplete="email" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="you@example.com" className="mt-0.5 h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-3 text-[12px] placeholder:text-[#9fb5db]/65 focus:!border-cyan-400" />
+                      </label>
+                      <label className="block text-[11px] font-medium text-[#c7d7f4]">Password <span className="text-fuchsia-300">*</span>
+                        <span className="mt-0.5 flex h-[37px] items-center gap-2 rounded-[10px] border border-[#173a78] bg-[#061735]/75 px-3 focus-within:border-cyan-400">
+                          <FiLock className="h-4 w-4 shrink-0 text-[#a9c3ec]" />
+                          <input required type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={form.password} onChange={(e) => update('password', e.target.value)} placeholder="Create a strong password" className="!m-0 h-full min-w-0 flex-1 !border-0 !bg-transparent !p-0 text-[12px] !shadow-none placeholder:text-[#9fb5db]/65" />
+                          <button type="button" onClick={() => setShowPassword((current) => !current)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="text-[#a9c3ec]">{showPassword ? <FiEyeOff className="h-4 w-4" /> : <FiEye className="h-4 w-4" />}</button>
+                        </span>
+                      </label>
+                    </div>
+                  </section>
 
-            <p className="mt-5 text-center text-sm text-[#adc8f3] sm:text-left">
+                  <section aria-labelledby="signup-about-heading">
+                    <div className="mb-2 flex items-center gap-2">
+                      <FiCalendar className="h-[18px] w-[18px] text-[#c7d7f4]" />
+                      <div>
+                        <h2 id="signup-about-heading" className="text-[14px] font-bold leading-tight">About You</h2>
+                        <p className="text-[10px] leading-4 text-[#a9c3ec]/75">Help us make your experience more personal.</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="block text-[11px] font-medium text-[#c7d7f4]">Date of birth <span className="text-fuchsia-300">*</span>
+                        <input required type="date" min={earliestBirthday} max={today} value={form.birthday} onChange={(e) => update('birthday', e.target.value)} className="mt-0.5 h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-2 text-[11px] focus:!border-cyan-400" />
+                      </label>
+                      <label className="block text-[11px] font-medium text-[#c7d7f4]">Gender <span className="text-fuchsia-300">*</span>
+                        <select required value={form.gender} onChange={(e) => update('gender', e.target.value)} className="mt-0.5 h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-2 text-[11px] focus:!border-cyan-400">
+                          <option value="">Select your gender</option><option value="MALE">Male</option><option value="FEMALE">Female</option>
+                        </select>
+                      </label>
+                    </div>
+                  </section>
+
+                  <section aria-labelledby="signup-community-heading">
+                    <div className="mb-2 flex items-center gap-2">
+                      <FiUsers className="h-[18px] w-[18px] text-[#c7d7f4]" />
+                      <div>
+                        <h2 id="signup-community-heading" className="text-[14px] font-bold leading-tight">Your Community</h2>
+                        <p className="text-[10px] leading-4 text-[#a9c3ec]/75">A few more details to set up your membership.</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input required type="tel" autoComplete="tel" value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="Phone number *" aria-label="Phone number" className="h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-3 text-[11px] placeholder:text-[#9fb5db]/65 focus:!border-cyan-400" />
+                      <select required value={form.country} onChange={(e) => update('country', e.target.value)} aria-label="Country" className="h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-2 text-[11px] focus:!border-cyan-400"><option value="">Country *</option><option value="KENYA">Kenya</option><option value="UGANDA">Uganda</option><option value="TANZANIA">Tanzania</option><option value="RWANDA">Rwanda</option><option value="BURUNDI">Burundi</option><option value="SOMALIA">Somalia</option></select>
+                      <input required value={form.residence} onChange={(e) => update('residence', e.target.value)} placeholder="Residence *" aria-label="Residence" className="h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-3 text-[11px] placeholder:text-[#9fb5db]/65 focus:!border-cyan-400" />
+                      <input required value={form.campusZone} onChange={(e) => update('campusZone', e.target.value)} placeholder="Campus zone *" aria-label="Campus zone" className="h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-3 text-[11px] placeholder:text-[#9fb5db]/65 focus:!border-cyan-400" />
+                      <input required value={form.chapter} onChange={(e) => update('chapter', e.target.value)} placeholder="Chapter *" aria-label="Chapter" className="h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-3 text-[11px] placeholder:text-[#9fb5db]/65 focus:!border-cyan-400" />
+                      <input required value={form.invitedBy} onChange={(e) => update('invitedBy', e.target.value)} placeholder="Invited by *" aria-label="Invited by" className="h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-3 text-[11px] placeholder:text-[#9fb5db]/65 focus:!border-cyan-400" />
+                    </div>
+                  </section>
+
+                  {error && <p className="text-xs text-red-300">{error}</p>}
+                  <button disabled={status === 'submitting'} className="flex h-[44px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-fuchsia-500 text-[13px] font-bold text-white shadow-[0_8px_28px_rgba(40,190,248,.18)] transition hover:brightness-110 disabled:opacity-50">{status === 'submitting' ? 'Creating…' : 'Create Account'} <FiArrowRight className="h-4 w-4" /></button>
+                  <p className="text-center text-[10px] leading-4 text-[#a9c3ec]">By creating an account, you agree to use Emet respectfully.</p>
+                </form>nter text-sm text-[#adc8f3] sm:text-left">
               {mode === 'login' ? "Don’t have an account? " : 'Already have an account? '}
-              <button type="button" className="font-semibold text-[#159eff] hover:text-cyan-300" onClick={() => setModeAndReset(mode === 'login' ? 'register' : 'login')}>{mode === 'login' ? 'Create one' : 'Sign in'}</button>
+              <button type="button" className="font-semibold text-[#159eff] hover:text-cyan-300" onClick={() => setModeAndReset(mode === 'login' ? 'details' : 'login')}>{mode === 'login' ? 'Create one' : 'Sign in'}</button>
             </p>
           </div>
         </section>
 
-        <aside className="relative hidden min-h-screen overflow-hidden lg:block" aria-label="Emet app information">
+        <aside className={`${mode === 'details' ? 'hidden' : 'relative hidden min-h-screen overflow-hidden lg:block'}`} aria-label="Emet app information">
           <svg className="emet-hero-wordmark absolute left-1/2 top-[43%] w-full max-w-[1400px] -translate-x-1/2 -translate-y-1/2" viewBox="0 0 112 24" aria-hidden="true" fill="none" stroke="url(#emetHeroWordmarkGradient)" strokeOpacity=".72" strokeWidth=".42"><defs><linearGradient id="emetHeroWordmarkGradient" x1="0" y1="0" x2="112" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stopColor="#28c7d8"/><stop offset=".52" stopColor="#5782f5"/><stop offset="1" stopColor="#a557dd"/><animateTransform attributeName="gradientTransform" type="translate" values="-112 0;112 0;-112 0" dur="14s" repeatCount="indefinite"/></linearGradient></defs>
             <rect x="6" y="3" width="18" height="3.5" rx=".8"/><rect x="6" y="9.25" width="18" height="3.5" rx=".8"/><rect x="6" y="15.5" width="18" height="3.5" rx=".8"/>
             <path d="M31 19V3h4.5L43 10.5 50.5 3H55v16h-4V9.5L43 18l-8-8.5V19z"/>
