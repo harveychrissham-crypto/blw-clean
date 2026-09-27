@@ -1,13 +1,11 @@
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { FiMoreHorizontal, FiX, FiHome, FiMic, FiHeart, FiPhone, FiSearch, FiCompass, FiUser, FiLogIn, FiBell, FiVideo, FiMessageCircle, FiCamera, FiUsers, FiBookmark, FiHash, FiArrowRight } from 'react-icons/fi';
+import { FiMoreHorizontal, FiX, FiHome, FiMic, FiHeart, FiPhone, FiCompass, FiUser, FiLogIn, FiBell, FiVideo, FiMessageCircle, FiCamera, FiUsers, FiBookmark, FiHash, FiArrowRight } from 'react-icons/fi';
 import { FaHome, FaCompass, FaUsers, FaComments, FaBell, FaBookmark, FaUser } from 'react-icons/fa';
-import SearchPanel from '../components/SearchPanel';
 import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
 import { getUnreadCount, onNotificationsUpdated } from '../utils/notificationStorage';
 import { fetchCommunities } from '../utils/communities';
-import Button from '../components/ui/Button';
 const navItems = [
   { name: 'Home', path: '/', icon: FiHome, activeIcon: FaHome },
   { name: 'Explore', path: '/explore', icon: FiCompass, activeIcon: FaCompass },
@@ -20,7 +18,6 @@ const navItems = [
 function FeedSocialChrome({ user }) { const name=user?.name||'Emet Community'; const firstName=name.split(' ')[0]||'Member'; const initial=firstName.charAt(0).toUpperCase(); return <div className="border-b border-white/[0.07] bg-ink-950/95 px-4 py-3 backdrop-blur-xl sm:hidden"><div className="mx-auto flex max-w-3xl items-center justify-between"><Link to={user?'/dashboard':'/auth'} className="flex min-w-0 items-center gap-3" aria-label={user?'Open your profile':'Sign in'}><span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#11161D] text-white] text-xs font-black text-white ring-1 ring-white/15">{user?.avatarUrl?<img src={user.avatarUrl} alt="" className="h-full w-full object-cover"/>:initial}</span><span className="min-w-0"><span className="block truncate text-sm font-bold text-white">{user?firstName:'Emet Community'}</span><span className="block text-[10px] text-white/40">{user?'Your profile':'Community Feed'}</span></span></Link><div className="flex items-center gap-1">{user&&<Link to="/create" aria-label="Create post or Reel" title="Create post or Reel" className="rounded-full p-2.5 text-white/80 hover:bg-white/5 hover:text-white"><FiCamera className="h-[20px] w-[20px]"/></Link>}{user&&<Link to="/notifications" aria-label="Notifications" className="rounded-full p-2.5 text-white/70 hover:bg-white/5 hover:text-white"><FiBell className="h-[19px] w-[19px]"/></Link>}{user&&<Link to="/messages" aria-label="Messages" title="Messages" className="rounded-full p-2.5 text-white/80 hover:bg-white/5 hover:text-white"><FiMessageCircle className="h-[20px] w-[20px]"/></Link>}</div></div></div>; }
 function FeedTabStyle() { return <style>{`main.feed-page .sticky.top-0 > div{gap:1.25rem!important}main.feed-page .sticky.top-0 button{position:relative;border-radius:0!important;padding:.7rem .15rem!important;background:transparent!important;color:rgba(255,255,255,.45)!important;font-size:.72rem!important}main.feed-page .sticky.top-0 button:hover{background:transparent!important;color:rgba(255,255,255,.85)!important}main.feed-page .sticky.top-0 button::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:999px;background:transparent}main.feed-page .sticky.top-0 button:hover::after{background:rgba(255,255,255,.18)}`}</style>; }
 export default function Layout({ children }) {
-  const [searchOpen,setSearchOpen]=useState(false);
   const [unreadCount,setUnreadCount]=useState(0);
   const [communities,setCommunities]=useState([]);
   const {user}=useAuth();
@@ -29,12 +26,6 @@ export default function Layout({ children }) {
   useEffect(()=>{const refresh=()=>setUnreadCount(getUnreadCount());refresh();return onNotificationsUpdated(refresh);},[]);
   useEffect(()=>{if(!isHome)return undefined;let active=true;fetchCommunities().then(items=>{if(active)setCommunities(items);}).catch(()=>{});return()=>{active=false;};},[isHome]);
     return <div className="min-h-screen text-white" style={{background:'radial-gradient(ellipse at 4% 28%, rgba(0,88,220,.10), transparent 34%), radial-gradient(ellipse at 98% 9%, rgba(80,42,215,.12), transparent 35%), radial-gradient(ellipse at 51% 100%, rgba(23,39,154,.10), transparent 42%), #010716'}}>
-    {!isHome&&<header className="sticky top-0 z-40 border-b border-white/[0.07]" style={{background:'rgba(11,15,20,0.94)',backdropFilter:'blur(20px)'}}>
-      <div className="flex items-center justify-between px-4 py-2.5 sm:px-5">
-        <Link to="/" className="flex items-center lg:hidden"><img src="/emet-mark.svg" alt="Emet" className="h-8 w-8"/></Link>
-        <div className="ml-auto flex items-center gap-1"><Button variant="custom" size="none" onClick={()=>setSearchOpen(true)} className="rounded-lg p-2 text-white/50 hover:text-white hover:bg-white/5" aria-label="Search"><FiSearch className="h-4 w-4"/></Button>{user&&<Link to="/notifications" className="rounded-lg p-2 text-white/50 hover:text-white lg:hidden"><FiBell className="h-4 w-4"/></Link>}{user?<Link to="/profile" className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden">Profile</Link>:<Link to="/auth" className="rounded-full px-3 py-2 text-sm font-semibold lg:hidden">Sign In</Link>}</div>
-      </div>
-    </header>}
     <div className={isHome?'mx-auto max-w-[1468px] px-4 pb-10 md:grid md:grid-cols-[180px_minmax(0,1fr)] lg:grid-cols-[210px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)] md:min-h-[calc(100vh-160px)] md:rounded-[22px] md:border lg:overflow-hidden lg:border-[#514da5]/60 lg:bg-[#02091a]/95 lg:shadow-[0_0_0_1px_rgba(42,86,190,.14),0_0_28px_rgba(75,55,190,.16)]':'lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:min-h-screen'}>
     <aside className={`${isHome
       ? 'relative hidden w-[180px] shrink-0 flex-col border-r border-[#28478e]/40 bg-[#020817]/95 py-6 md:flex lg:w-[210px] xl:w-[240px]'
@@ -67,7 +58,6 @@ export default function Layout({ children }) {
         <main className={isFeed?'feed-page':undefined}>{children}</main>
       </div>
     </div></div>
-    <SearchPanel open={searchOpen} onClose={()=>setSearchOpen(false)}/>
     <BottomNav/>
   </div>;
 }
