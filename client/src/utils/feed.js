@@ -179,6 +179,40 @@ export async function fetchSavedFeed({ limit = 30, offset = 0 } = {}) {
   return { posts: Array.isArray(body?.posts) ? body.posts.map(normalizePost) : [], hasMore: Boolean(body?.hasMore) };
 }
 
+export async function fetchBookmarkCollections() {
+  const response = await apiFetch('/api/feed/collections', { method: 'GET' });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body?.error || 'Unable to load your collections.');
+  return {
+    collections: Array.isArray(body?.collections) ? body.collections : [],
+    memberships: body?.memberships && typeof body.memberships === 'object' ? body.memberships : {},
+  };
+}
+
+export async function createBookmarkCollection(name) {
+  const response = await apiFetch('/api/feed/collections', { method: 'POST', body: JSON.stringify({ name }) });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body?.error || 'Unable to create your collection.');
+  return body.collection;
+}
+
+export async function deleteBookmarkCollection(collectionId) {
+  const response = await apiFetch(`/api/feed/collections/${encodeURIComponent(collectionId)}`, { method: 'DELETE' });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body?.error || 'Unable to delete your collection.');
+  return body;
+}
+
+export async function setBookmarkCollectionItem(collectionId, postId, included) {
+  const response = await apiFetch(`/api/feed/collections/${encodeURIComponent(collectionId)}/items`, {
+    method: included ? 'PUT' : 'DELETE',
+    body: JSON.stringify({ postId: String(postId) }),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body?.error || 'Unable to update the collection.');
+  return body;
+}
+
 export async function fetchFeed({ limit = 20, offset = 0, followingOnly = false, feedType = '', topic = '' } = {}) {
   const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
   if (followingOnly) params.set('following', '1');
