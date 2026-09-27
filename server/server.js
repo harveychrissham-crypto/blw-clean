@@ -43,7 +43,7 @@ export function createApp({ serveStatic = false } = {}) {
   app.use('/api/live', liveRoutes);
   app.use('/api/fellowships', fellowshipRoutes);
   app.use('/api/push', pushRoutes);
-  app.get('/api/health', (_req,res)=>res.json({ status:'ok', message:'BLW Campus Ministry API is running' }));
+  app.get('/api/health', (_req,res)=>res.json({ status:'ok', message:'Emet API is running' }));
   if (serveStatic) {
     const clientDist = path.join(__dirname,'..','client','dist');
     app.use(express.static(clientDist));

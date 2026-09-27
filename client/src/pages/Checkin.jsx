@@ -95,7 +95,7 @@ function MemberQRCode({ member }) {
         try {
           await navigator.share({
             title: `${member.name} QR Badge`,
-            text: `BLW Campus Ministry QR badge for ${member.name}`,
+            text: `Emet QR badge for ${member.name}`,
             files: [file],
           });
           return;
@@ -120,7 +120,7 @@ function MemberQRCode({ member }) {
   return (
     <div className="rounded-3xl border border-white/10 bg-slate-950/90 p-6 shadow-soft">
       <div className="rounded-[2rem] bg-white p-6 shadow-soft">
-        <p className="mb-4 text-center text-xs font-bold uppercase tracking-[0.25em] text-slate-400">BLW Campus Ministry</p>
+        <p className="mb-4 text-center text-xs font-bold uppercase tracking-[0.25em] text-slate-400">Emet</p>
         <div className="mx-auto mb-4 flex items-center justify-center rounded-2xl bg-white p-2" style={{ width: 276, height: 276 }}>
           <canvas ref={canvasRef} className="rounded-xl" />
         </div>

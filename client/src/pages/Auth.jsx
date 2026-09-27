@@ -9,7 +9,7 @@ import { Toast } from '../components/ui/Toast';
 
 const AUTH_LOGIN_URL = '/api/auth/login';
 const AUTH_REGISTER_URL = '/api/auth/register';
-const APP_DOWNLOAD_URL = 'https://github.com/harveychrissham-crypto/blw-clean/releases/download/latest-android/blw-campus-ministry.apk';
+const APP_DOWNLOAD_URL = 'https://github.com/harveychrissham-crypto/blw-clean/releases/download/latest-android/emet.apk';
 const today = new Date().toISOString().slice(0, 10);
 const earliestBirthday = '1900-01-01';
 

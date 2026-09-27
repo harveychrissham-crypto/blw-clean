@@ -140,8 +140,8 @@ async function setUpForegroundNotificationDisplay() {
       try {
         await LocalNotifications.createChannel({
           id: 'blw_default',
-          name: 'BLW Kenya Zone',
-          description: 'BLW Kenya Zone announcements and ministry updates',
+          name: 'Emet',
+          description: 'Emet announcements and community updates',
           importance: 4,
           visibility: 1,
           sound: 'default',
@@ -158,7 +158,7 @@ async function setUpForegroundNotificationDisplay() {
     await PushNotifications.addListener('pushNotificationReceived', async (notification) => {
       const title = typeof notification?.title === 'string' && notification.title.trim()
         ? notification.title.trim()
-        : 'BLW Kenya Zone';
+        : 'Emet';
       const body = typeof notification?.body === 'string' && notification.body.trim()
         ? notification.body.trim()
         : 'You have a new ministry update.';
@@ -257,8 +257,8 @@ async function setUpPushNotificationsInternal() {
       try {
         await PushNotifications.createChannel({
           id: 'blw_default',
-          name: 'BLW Kenya Zone',
-          description: 'BLW Kenya Zone announcements and ministry updates',
+          name: 'Emet',
+          description: 'Emet announcements and community updates',
           importance: 4,
           visibility: 1,
           sound: 'default',

@@ -2,7 +2,7 @@ import { query } from '../db/index.js';
 import { hashPassword } from '../utils/crypto.js';
 
 const createMembershipId = () => `M-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-const createBadge = () => `BLW-2026-${Math.floor(100 + Math.random() * 900)}`;
+const createBadge = () => `Emet-2026-${Math.floor(100 + Math.random() * 900)}`;
 
 export const findUserByEmailOrPhone = async (email, phone) => {
   return query(

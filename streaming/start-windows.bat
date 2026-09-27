@@ -2,7 +2,7 @@
 setlocal
 cd /d "%~dp0"
 
-echo BLW Kenya Zone - MediaMTX local livestream
+echo Emet - MediaMTX local livestream
 
 echo.
 

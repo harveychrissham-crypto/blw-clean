@@ -37,7 +37,7 @@ async function sha256Hex(value) {
 
 function safeTitle(value, email) {
   const title = String(value || '').trim().replace(/[\u0000-\u001f\u007f]/g, ' ').slice(0, 180);
-  return title || `BLW Feed Video — ${email}`;
+  return title || `Emet video — ${email}`;
 }
 
 export async function handleStream(request, env, url) {

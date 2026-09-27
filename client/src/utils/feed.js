@@ -30,7 +30,7 @@ function normalizePost(row = {}) {
     ...row,
     id: String(row.id ?? ''),
     title: row.title || '',
-    author: row.author || row.author_name || 'BLW Kenya Zone',
+    author: row.author || row.author_name || 'Emet',
     body: row.body || '',
     type: row.type || 'post',
     sourceType: row.source_type || row.sourceType || '',

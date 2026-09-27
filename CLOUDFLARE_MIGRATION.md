@@ -1,4 +1,4 @@
-# BLW Kenya Zone — Render → Cloudflare Workers migration
+# Emet — Render → Cloudflare Workers migration
 
 This project has migrated its production API from the legacy Render/Node/Express path to Cloudflare Workers while keeping the existing PostgreSQL/Supabase database.
 

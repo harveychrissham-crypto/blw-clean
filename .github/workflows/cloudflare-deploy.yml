@@ -1,4 +1,4 @@
-name: Build and Deploy BLW Kenya Zone
+name: Build and Deploy Emet
 
 on:
   push:

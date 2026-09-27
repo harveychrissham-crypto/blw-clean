@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
 
-Write-Host 'BLW Kenya Zone - MediaMTX local livestream'
+Write-Host 'Emet - MediaMTX local livestream'
 
 if (-not (Test-Path '.\mediamtx.exe')) {
   Write-Host ''

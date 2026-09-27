@@ -1,18 +1,16 @@
-import { motion } from 'framer-motion';
-import { Card, Eyebrow } from '../components/ui/Card';
-
 export default function About() {
   return (
     <section className="mx-auto max-w-6xl px-5 py-16">
-      <Card as={motion.div} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} variant="raised" className="p-8">
-        <Eyebrow className="mb-3">About Us</Eyebrow>
-        <h2 className="text-2xl font-extrabold text-white sm:text-3xl" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-          A Christ-centered ministry rooted in the Word and shaped by purpose.
-        </h2>
-        <p className="mt-4 text-sm text-white/55 leading-relaxed">
-          Believers' LoveWorld Campus Ministry Kenya Zone is committed to advancing the Gospel of Jesus Christ, equipping leaders, serving the vision of Pastor Chris Oyakhilome, prayer, the teaching of the Word, soul-winning, leadership development, and global evangelism.
+      <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 shadow-xl">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-cyan-300">About Emet</p>
+        <h1 className="text-2xl font-extrabold text-white sm:text-3xl">
+          Real people. Meaningful connections.
+        </h1>
+        <p className="mt-4 max-w-3xl text-sm leading-relaxed text-white/65">
+          Emet brings people together through conversations, shared interests, and communities.
+          Discover people, join discussions, and build connections that matter.
         </p>
-      </Card>
+      </div>
     </section>
   );
 }

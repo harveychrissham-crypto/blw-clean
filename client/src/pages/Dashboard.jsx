@@ -182,9 +182,9 @@ export default function Dashboard() {
     { label: 'Display name', value: displayName, icon: FiShield },
     { label: 'Email', value: email, icon: FiMail },
     { label: 'Phone', value: user?.phone || notSet, icon: FiPhone },
-    { label: 'Service church', value: user?.church || "Believers' LoveWorld CM Kenya Zone", icon: FiGlobe },
-    { label: 'Fellowship / PCF', value: user?.chapter || notSet, icon: FiMapPin },
-    { label: 'Campus zone', value: user?.campusZone || notSet, icon: FiMapPin },
+    { label: 'Organization', value: user?.church || "Emet", icon: FiGlobe },
+    { label: 'Community', value: user?.chapter || notSet, icon: FiMapPin },
+    { label: 'Location', value: user?.campusZone || notSet, icon: FiMapPin },
     { label: 'Gender', value: user?.gender || notSet, icon: FiStar },
     { label: 'Country', value: user?.country || notSet, icon: FiGlobe },
     { label: 'Marital status', value: user?.maritalStatus || notSet, icon: FiHeart },
@@ -230,7 +230,7 @@ export default function Dashboard() {
       birthday: user?.birthday || '',
       gender: user?.gender || 'Male',
       maritalStatus: user?.maritalStatus || 'Single',
-      church: user?.church || "Believers' LoveWorld CM Kenya Zone",
+      church: user?.church || "Emet",
       chapter: user?.chapter || '',
       campusZone: user?.campusZone || '',
       residence: user?.residence || '',
@@ -638,7 +638,7 @@ export default function Dashboard() {
                   />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-semibold text-slate-300">Campus zone</span>
+                  <span className="text-sm font-semibold text-slate-300">Location</span>
                   <select
                     value={editForm.campusZone}
                     onChange={handleEditChange('campusZone')}
@@ -686,16 +686,16 @@ export default function Dashboard() {
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/50">Ministry</p>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2">
-                  <span className="text-sm font-semibold text-slate-300">Service church</span>
+                  <span className="text-sm font-semibold text-slate-300">Organization</span>
                   <input
                     value={editForm.church}
                     onChange={handleEditChange('church')}
-                    placeholder="Believers' LoveWorld CM Kenya Zone"
+                    placeholder="Emet"
                     className="w-full rounded-3xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm text-white outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20"
                   />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-semibold text-slate-300">Fellowship / PCF</span>
+                  <span className="text-sm font-semibold text-slate-300">Community</span>
                   <input
                     value={editForm.chapter}
                     onChange={handleEditChange('chapter')}

@@ -1,8 +1,8 @@
-# BLW Kenya Zone self-hosted livestream
+# Emet self-hosted livestream
 
 This directory provides a self-host-ready livestream path:
 
-`LiveKit Egress -> RTMP -> MediaMTX -> HLS -> BLW Live page`
+`LiveKit Egress -> RTMP -> MediaMTX -> HLS -> Emet Live page`
 
 ## Local MediaMTX
 
@@ -51,7 +51,7 @@ LIVEKIT_RTMP_URL=rtmp://stream.example.org:1935/live
 LIVEKIT_PUBLIC_PLAYBACK_URL=https://live.example.org/live/index.m3u8
 ```
 
-`LIVEKIT_PUBLIC_PLAYBACK_URL` is returned by the broadcast-start endpoint and consumed by the BLW Live page.
+`LIVEKIT_PUBLIC_PLAYBACK_URL` is returned by the broadcast-start endpoint and consumed by the Emet Live page.
 
 ## Security
 

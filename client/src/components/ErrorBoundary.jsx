@@ -31,7 +31,7 @@ export default class ErrorBoundary extends Component {
     return (
       <div className="grid min-h-screen place-items-center bg-ink-900 px-6 text-center">
         <div className="max-w-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-500">BLW Kenya Zone</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-500">Emet</p>
           <h1 className="mt-3 text-2xl font-bold text-white">Something went wrong</h1>
           <p className="mt-2 text-sm text-white/55">This page hit an unexpected error. Reloading usually fixes it — if it keeps happening, let us know what you were doing.</p>
           <Button variant="primary" size="none" onClick={this.handleReload} className="mt-6 rounded-full px-6 py-3">Reload</Button>

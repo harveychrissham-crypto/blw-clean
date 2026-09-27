@@ -74,8 +74,8 @@ async function registerPushToken(request, env, headers) {
 
 function base64url(value) { return Buffer.from(value).toString('base64url'); }
 function firebaseConfig(env) {
-  const projectId = typeof env.FIREBASE_PROJECT_ID === 'string' && env.FIREBASE_PROJECT_ID.trim() ? env.FIREBASE_PROJECT_ID.trim() : 'blw-campus-ministry-kenya-zone';
-  const clientEmail = typeof env.FIREBASE_CLIENT_EMAIL === 'string' && env.FIREBASE_CLIENT_EMAIL.trim() ? env.FIREBASE_CLIENT_EMAIL.trim() : 'firebase-adminsdk-fbsvc@blw-campus-ministry-kenya-zone.iam.gserviceaccount.com';
+  const projectId = typeof env.FIREBASE_PROJECT_ID === 'string' && env.FIREBASE_PROJECT_ID.trim() ? env.FIREBASE_PROJECT_ID.trim() : 'emet-kenya-zone';
+  const clientEmail = typeof env.FIREBASE_CLIENT_EMAIL === 'string' && env.FIREBASE_CLIENT_EMAIL.trim() ? env.FIREBASE_CLIENT_EMAIL.trim() : 'firebase-adminsdk-fbsvc@emet-kenya-zone.iam.gserviceaccount.com';
   const privateKey = typeof env.FIREBASE_PRIVATE_KEY === 'string' ? env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n').trim() : '';
   if (!privateKey) throw new Error('Firebase service-account configuration is incomplete. Missing: FIREBASE_PRIVATE_KEY');
   return { projectId, clientEmail, privateKey };
@@ -94,7 +94,7 @@ async function sendSelfPushTest(request, env, headers) {
   let payload; try { payload = jwt.verify(bearer, getJwtSecret(env)); } catch { return json({ error: 'Invalid authentication token.' }, 401, headers); }
   const email = typeof payload?.user?.email === 'string' ? payload.user.email.trim().toLowerCase() : ''; if (!email) return json({ error: 'Invalid authentication token.' }, 401, headers);
   const requestBody = await request.clone().json().catch(() => ({}));
-  const title = typeof requestBody?.title === 'string' && requestBody.title.trim() ? requestBody.title.trim().slice(0, 120) : 'BLW Kenya Zone';
+  const title = typeof requestBody?.title === 'string' && requestBody.title.trim() ? requestBody.title.trim().slice(0, 120) : 'Emet';
   const bodyText = typeof requestBody?.body === 'string' && requestBody.body.trim() ? requestBody.body.trim().slice(0, 500) : 'You have a new ministry update.';
   const incomingData = requestBody?.data && typeof requestBody.data === 'object' && !Array.isArray(requestBody.data) ? requestBody.data : {};
   const allowedTypes = new Set(['event', 'sermon', 'outreach', 'venue', 'announcement', 'notification']);

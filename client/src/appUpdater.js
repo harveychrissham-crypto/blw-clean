@@ -4,7 +4,7 @@ export const UPDATE_AVAILABLE_EVENT = 'emet:update-available';
 
 const REPO = 'harveychrissham-crypto/blw-clean';
 const RELEASE_TAG = 'latest-android';
-const FALLBACK_APK_URL = `https://github.com/${REPO}/releases/download/${RELEASE_TAG}/blw-campus-ministry.apk`;
+const FALLBACK_APK_URL = `https://github.com/${REPO}/releases/download/${RELEASE_TAG}/emet.apk`;
 const CHECK_INTERVAL_MS = 5 * 60 * 1000;
 const DISMISSED_UPDATE_KEY = 'emet:dismissed-update-version';
 
@@ -93,7 +93,7 @@ export async function checkForAppUpdate({ force = false } = {}) {
       }
 
       const asset = Array.isArray(release?.assets)
-        ? release.assets.find((item) => item?.name === 'blw-campus-ministry.apk')
+        ? release.assets.find((item) => item?.name === 'emet.apk')
         : null;
       const updateUrl = String(asset?.browser_download_url || FALLBACK_APK_URL).trim();
 

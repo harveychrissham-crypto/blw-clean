@@ -5,7 +5,7 @@ SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=replace-me
 SUPABASE_STORAGE_BUCKET=outreach-photos
 RESEND_API_KEY=replace-me
-EMAIL_FROM=BLW Kenya Zone <notifications@example.org>
+EMAIL_FROM=Emet <notifications@example.org>
 # LiveKit realtime video credentials. Keep the API secret server-side only.
 LIVEKIT_URL=https://YOUR_PROJECT.livekit.cloud
 LIVEKIT_API_KEY=replace-me

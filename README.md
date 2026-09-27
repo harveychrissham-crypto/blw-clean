@@ -1,6 +1,6 @@
-# BLW Campus Ministry Kenya Zone
+# Emet Kenya Zone
 
-A premium, production-oriented ministry platform built with React, Vite, Tailwind, Framer Motion, and a Node/Express backend foundation.
+A premium, production-oriented social platform built with React, Vite, Tailwind, Framer Motion, and a Node/Express backend foundation.
 
 ## Structure
 

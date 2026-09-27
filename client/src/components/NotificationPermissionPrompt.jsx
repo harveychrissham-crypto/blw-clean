@@ -65,17 +65,17 @@ export default function NotificationPermissionPrompt() {
 
         <p className="mt-6 text-xs font-bold uppercase tracking-[0.25em] text-gold-500">Stay updated</p>
         <h2 id="notification-permission-title" className="mt-2 text-2xl font-extrabold text-white">
-          Stay updated with BLW
+          Stay connected with Emet
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-white/55">
-          Allow notifications to receive ministry announcements, fellowship updates, and important updates from BLW Kenya Zone.
+          Allow notifications to receive new posts, messages, and community updates in Emet.
         </p>
 
         {denied ? (
           <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
             <p className="text-sm font-semibold text-white">Notifications are currently off.</p>
             <p className="mt-1 text-xs leading-relaxed text-white/45">
-              Android has blocked the permission request. Open your phone's Settings, find BLW Kenya Zone, then enable Notifications.
+              Android has blocked the permission request. Open your phone's Settings, find Emet, then enable Notifications.
             </p>
           </div>
         ) : null}
