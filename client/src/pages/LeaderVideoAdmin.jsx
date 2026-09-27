@@ -9,7 +9,7 @@ export default function LeaderVideoAdmin() {
   const { user } = useAuth();
   const [rooms, setRooms] = useState([]);
   const [broadcast, setBroadcast] = useState(null);
-  const [title, setTitle] = useState('BLW Main Service');
+  const [title, setTitle] = useState('Emet Live');
   const [busy, setBusy] = useState('');
   const [message, setMessage] = useState('');
 
@@ -24,8 +24,8 @@ export default function LeaderVideoAdmin() {
         const liveData = await liveRes.json();
         const live = liveData.live;
         if (live?.isLive && live?.liveKitRoom && live?.liveKitEgressId) {
-          setBroadcast({ room: live.liveKitRoom, egress_id: live.liveKitEgressId, playback_url: live.hlsPlaybackUrl || '', title: live.title || 'BLW Main Service' });
-          setTitle(live.title || 'BLW Main Service');
+          setBroadcast({ room: live.liveKitRoom, egress_id: live.liveKitEgressId, playback_url: live.hlsPlaybackUrl || '', title: live.title || 'Emet Live' });
+          setTitle(live.title || 'Emet Live');
         } else {
           setBroadcast(null);
         }
@@ -38,7 +38,7 @@ export default function LeaderVideoAdmin() {
   const start = async () => {
     setBusy('start'); setMessage('');
     try {
-      const res = await apiFetch('/api/video/broadcast/start', { method: 'POST', body: JSON.stringify({ name: `main-service-${Date.now().toString(36)}`, title: title.trim() || 'BLW Main Service' }) });
+      const res = await apiFetch('/api/video/broadcast/start', { method: 'POST', body: JSON.stringify({ name: `main-service-${Date.now().toString(36)}`, title: title.trim() || 'Emet Live' }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Unable to start broadcast.');
       setBroadcast(data);

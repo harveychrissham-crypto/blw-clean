@@ -45,7 +45,7 @@ public class ApkInstallerPlugin extends Plugin {
                 settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 getContext().startActivity(settingsIntent);
             } catch (Exception error) {
-                call.reject("Open Android settings and allow BLW Kenya Zone to install apps from this source.");
+                call.reject("Open Android settings and allow Emet to install apps from this source.");
                 return;
             }
 

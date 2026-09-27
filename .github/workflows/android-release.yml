@@ -93,7 +93,7 @@ jobs:
         run: |
           mkdir -p dist-apk
           cp client/android/app/build/outputs/apk/release/app-release.apk \
-             dist-apk/blw-campus-ministry.apk
+             dist-apk/emet.apk
 
       - name: Publish to the "latest-android" release
         uses: ncipollo/release-action@v1
@@ -104,9 +104,9 @@ jobs:
             Version: 1.0.${{ github.run_number }}
             Automatically built from commit ${{ github.sha }}.
             Download link is stable — always points at the newest build:
-            https://github.com/${{ github.repository }}/releases/download/latest-android/blw-campus-ministry.apk
+            https://github.com/${{ github.repository }}/releases/download/latest-android/emet.apk
           allowUpdates: true
           replacesArtifacts: true
           removeArtifacts: true
-          artifacts: dist-apk/blw-campus-ministry.apk
+          artifacts: dist-apk/emet.apk
           token: ${{ secrets.GITHUB_TOKEN }}

@@ -5,16 +5,14 @@ import { Card } from './ui/Card';
 import { IconButton } from './ui/Button';
 
 const content = [
-  { title: 'Explore Feed', path: '/explore', description: 'Search community posts, photos, and videos in a visual grid.' },
-  { title: 'Home', path: '/', description: 'Welcome to Believers\' LoveWorld Campus Ministry Kenya Zone Region and our vision for fellowship.' },
-  { title: 'Outreaches', path: '/outreaches', description: 'See upcoming opportunities to serve and participate.' },
-  { title: 'Events', path: '/events', description: 'Explore the calendar of services, outreaches, and ministry events.' },
-  { title: 'Live', path: '/live', description: 'Watch the current live service transmission, or see the upcoming stream schedule.' },
-  { title: 'Check-In', path: '/checkin', description: 'Find your member profile and QR badge for quick attendance check-in.' },
-  { title: 'Give', path: '/give', description: 'Support the ministry with secure giving options.' },
-  { title: 'Salvation', path: '/salvation', description: 'Discover the gospel and connect with support.' },
-  { title: 'Connect', path: '/connect', description: 'Contact the team, send prayer requests, or find a campus group.' },
-  { title: 'Member Dashboard', path: '/dashboard', description: 'Access member tools, events, and prayer support.' }
+  { title: 'Home', path: '/', description: 'Your Emet feed and latest updates.' },
+  { title: 'Explore', path: '/explore', description: 'Discover posts, people, and new communities.' },
+  { title: 'Communities', path: '/communities', description: 'Find and join communities that interest you.' },
+  { title: 'Messages', path: '/messages', description: 'Continue conversations with people on Emet.' },
+  { title: 'Notifications', path: '/notifications', description: 'See your latest Emet activity.' },
+  { title: 'Bookmarks', path: '/bookmarks', description: 'Return to posts you saved.' },
+  { title: 'Profile', path: '/profile', description: 'Manage your profile and connections.' },
+  { title: 'Topics', path: '/topics', description: 'Browse conversations by topic.' },
 ];
 
 export default function SearchPanel({ open, onClose }) {
@@ -37,7 +35,7 @@ export default function SearchPanel({ open, onClose }) {
         </div>
         <Card variant="subtle" className="mt-4 flex items-center gap-2 px-4 py-3">
           <FiSearch className="text-slate-400" />
-          <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} className="flex-1 bg-transparent text-sm text-white outline-none" placeholder="Search ministry pages, events, and resources" />
+          <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} className="flex-1 bg-transparent text-sm text-white outline-none" placeholder="Search Emet" />
         </Card>
         <div className="mt-5 space-y-3">
           {results.length === 0 ? (

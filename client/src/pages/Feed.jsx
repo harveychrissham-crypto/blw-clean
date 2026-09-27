@@ -14,7 +14,7 @@ import EmptyState from '../components/ui/EmptyState';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import Messages from './Messages';
 const PAGE_SIZE = 20; // placeholder no-op edit to ensure apply_patch formatting
-const tabs = ['All','Following','Ministry','Reels'];
+const tabs = ['All','Following','Reels'];
 const REEL_MUTE_STORAGE_KEY = 'blw_reel_mute_preference_v1';
 const readReelMutePreference = () => { try { const value = localStorage.getItem(REEL_MUTE_STORAGE_KEY); return value === null ? true : value === 'true'; } catch { return true; } };
 const persistReelMutePreference = (muted) => { try { localStorage.setItem(REEL_MUTE_STORAGE_KEY, String(Boolean(muted))); window.dispatchEvent(new CustomEvent('blw-reel-mute-changed', { detail: Boolean(muted) })); } catch {} };
