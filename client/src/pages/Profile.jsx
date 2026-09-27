@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FiArrowRight, FiCamera, FiCalendar, FiCheck, FiEdit3, FiGrid, FiHeart, FiImage, FiLink, FiMapPin, FiMessageCircle, FiMoreHorizontal, FiPlus, FiUsers, FiVideo } from 'react-icons/fi';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -56,10 +56,7 @@ export default function Profile() {
 
   const name = profile?.name || user?.name || targetEmail.split('@')[0] || 'Emet member';
   const username = profile?.username || targetEmail.split('@')[0].replace(/[^A-Za-z0-9_]/g, '_').slice(0, 30);
-  const mediaPosts = posts.filter((p) => p.mediaUrl || p.videoId);
-  const likedPosts = posts.filter((p) => p.liked);
-  const replyPosts = posts.filter((p) => Number(p.commentCount || 0) > 0);
-  const visiblePosts = tab === 'Media' ? mediaPosts : tab === 'Likes' ? likedPosts : posts;
+  const visiblePosts = posts;
 
   const saveProfile = async () => {
     setSaving(true); setError('');
