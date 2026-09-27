@@ -30,6 +30,7 @@ export default function Bookmarks() {
   const [newCollectionOpen, setNewCollectionOpen] = useState(false);
   const [collectionName, setCollectionName] = useState('');
   const [assigningPost, setAssigningPost] = useState('');
+  const [showMobileCollections, setShowMobileCollections] = useState(false);
   const storageKey = `emet-bookmark-collections:${String(user?.email || 'guest').toLowerCase()}`;
   const migrationKey = `emet-bookmark-collections-migrated:${String(user?.email || 'guest').toLowerCase()}`;
 
@@ -143,6 +144,17 @@ export default function Bookmarks() {
           <nav className="mb-4 flex gap-2 overflow-x-auto pb-1">
             {FILTERS.map((item) => <button key={item} onClick={() => { setFilter(item); setActiveCollection(''); }} className={`shrink-0 rounded-full border px-4 py-2 text-xs font-semibold transition ${filter === item && !activeCollection ? 'border-transparent bg-gradient-to-r from-cyan-400 to-fuchsia-500 text-white shadow-[0_4px_16px_rgba(108,77,255,.25)]' : 'border-[#1d3d73] bg-[#04132b]/80 text-white/70 hover:border-cyan-400/60 hover:text-white'}`}>{item}{item === 'All' ? '' : <span className="ml-1.5 text-[10px] opacity-65">{categories[item]}</span>}</button>)}
           </nav>
+
+          <section className="mb-4 rounded-2xl border border-[#17386f]/70 bg-[#031126]/95 p-3 lg:hidden">
+            <div className="flex items-center justify-between"><button onClick={() => setShowMobileCollections((open) => !open)} className="flex items-center gap-2 text-sm font-bold"><FiFolder className="text-cyan-300" />Collections <span className="text-[10px] font-normal text-white/40">{collectionData.collections.length}</span></button><button onClick={() => setNewCollectionOpen(true)} className="inline-flex items-center gap-1 rounded-full border border-[#31589b] px-2.5 py-1.5 text-[10px] font-semibold text-cyan-200"><FiPlus />New</button></div>
+            {showMobileCollections && <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+              {collectionData.collections.map((collection) => {
+                const selected = activeCollection === collection.id;
+                return <button key={collection.id} onClick={() => { setActiveCollection(selected ? '' : collection.id); setFilter('All'); }} className={`flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-left ${selected ? 'border-cyan-300 bg-cyan-400/10' : 'border-[#1d3d73] bg-[#071a35]'}`}><span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-cyan-400 to-fuchsia-500"><FiFolder /></span><span><span className="block text-[11px] font-semibold">{collection.name}</span><span className="block text-[9px] text-white/45">{savedCount(collection.id)} saved</span></span></button>;
+              })}
+              {!collectionData.collections.length && <p className="py-2 text-xs text-white/45">Create a collection to organize saved posts.</p>}
+            </div>}
+          </section>
 
           {error && <div className="mb-4 rounded-xl border border-red-400/25 bg-red-400/10 p-3 text-sm text-red-200">{error}</div>}
           {loading ? <div className="space-y-3">{[1,2,3].map((i) => <div key={i} className="h-48 animate-pulse rounded-2xl border border-[#17386f]/60 bg-[#041126]/80" />)}</div> : visiblePosts.length ? <div className="space-y-3">
