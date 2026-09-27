@@ -2,10 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   FiArrowRight,
+  FiBarChart2,
   FiBell,
   FiBookmark,
   FiCamera,
+  FiChevronDown,
   FiChevronRight,
+  FiFileText,
   FiHeart,
   FiImage,
   FiMessageCircle,
@@ -84,7 +87,7 @@ function PostCard({ post, user, onUpdate }) {
   });
 
   return (
-    <article className="mx-2 my-2 overflow-hidden rounded-xl border border-[#17366f]/60 bg-[#04132b]/70 px-4 py-4 transition hover:border-[#2852a0]/70 hover:bg-[#061a39] sm:px-5">
+    <article className="mx-2 my-2 overflow-hidden rounded-xl border border-[#232329]/60 bg-[#0c0c12]/70 px-4 py-4 transition hover:border-[#2a2a31]/70 hover:bg-[#151519] sm:px-5">
       <div className="flex gap-3.5">
         <Avatar src={post.avatarUrl} name={author} size="h-11 w-11" />
         <div className="min-w-0 flex-1">
@@ -132,18 +135,32 @@ function PostCard({ post, user, onUpdate }) {
 
 function Compose({ user }) {
   const name = user?.name || 'Member';
+  const composeItems = [
+    { label: 'Photo', icon: FiImage },
+    { label: 'Video', icon: FiVideo },
+    { label: 'Article', icon: FiFileText },
+    { label: 'Poll', icon: FiBarChart2 },
+  ];
   return (
-    <div className="rounded-xl border border-[#17305e]/65 bg-[#041126] p-3">
+    <div className="rounded-xl border border-[#232329]/65 bg-[#0c0c12] p-3 sm:p-4">
       <div className="flex items-center gap-3">
         <Avatar src={user?.avatarUrl || user?.avatar_url} name={name} size="h-10 w-10" />
-        <Link to={user ? '/create' : '/auth'} title={user ? undefined : 'Sign in to share'} className="min-w-0 flex-1 rounded-xl px-1 py-2 text-[14px] text-white/55 hover:text-white/75">
+        <Link to={user ? '/create' : '/auth'} title={user ? undefined : 'Sign in to share'} className="min-w-0 flex-1 truncate rounded-xl px-1 py-2 text-[14px] text-white/55 hover:text-white/75">
           What's on your mind?
         </Link>
-        <div className="hidden items-center gap-1 sm:flex">
-          <Link to="/create" aria-label="Add image" className="grid h-9 w-9 place-items-center rounded-lg text-white/60 hover:bg-white/[.06] hover:text-white"><FiImage /></Link>
-          <Link to="/create" aria-label="Add video" className="grid h-9 w-9 place-items-center rounded-lg text-white/60 hover:bg-white/[.06] hover:text-white"><FiVideo /></Link>
-          <Link to="/create" aria-label="Create post" className="grid h-9 w-9 place-items-center rounded-full border border-white/20 text-white hover:border-white/40"><FiPlus /></Link>
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/[.06] pt-3">
+        <div className="flex min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none] sm:gap-2">
+          {composeItems.map(({ label, icon: Icon }) => (
+            <Link key={label} to="/create" className="flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white/55 hover:bg-white/[.06] hover:text-white sm:px-3 sm:text-[13px]">
+              <Icon className="h-4 w-4" />
+              <span className="hidden xs:inline sm:inline">{label}</span>
+            </Link>
+          ))}
         </div>
+        <Link to={user ? '/create' : '/auth'} className="shrink-0 rounded-full bg-gradient-to-r from-cyan-400 to-fuchsia-500 px-5 py-1.5 text-xs font-bold text-white shadow-[0_0_18px_rgba(91,76,255,.35)] transition hover:brightness-110 sm:text-sm">
+          Post
+        </Link>
       </div>
     </div>
   );
@@ -152,10 +169,10 @@ function Compose({ user }) {
 function CommunityRail({ communities, onJoin, busyId }) {
   const list = communities.slice(0, 5);
   return (
-    <section className="overflow-hidden rounded-xl border border-[#17305e]/55 bg-[#041126]">
+    <section className="overflow-hidden rounded-xl border border-[#232329]/55 bg-[#0c0c12]">
       <div className="flex items-center justify-between px-4 py-4">
         <h2 className="whitespace-nowrap text-sm font-extrabold">Trending Communities</h2>
-        <Link to="/communities" className="shrink-0 whitespace-nowrap text-xs font-semibold text-[#4E91FF]">See all</Link>
+        <Link to="/communities" className="shrink-0 whitespace-nowrap text-xs font-semibold text-[#5B9CFF]">See all</Link>
       </div>
       <div>
         {list.map((community, index) => (
@@ -166,14 +183,14 @@ function CommunityRail({ communities, onJoin, busyId }) {
               <p className="truncate text-xs font-bold text-white">{community.name}</p>
               <p className="mt-0.5 text-[10px] text-white/35">{Number(community.member_count || 0).toLocaleString()} members</p>
             </Link>
-            <button type="button" onClick={() => onJoin(community)} disabled={busyId === String(community.id)} className={`rounded-full px-3 py-1.5 text-[10px] font-bold ${community.joined ? 'border border-white/10 text-white/55' : 'bg-[#0B2D75] text-white hover:bg-[#12419D]'}`}>
+            <button type="button" onClick={() => onJoin(community)} disabled={busyId === String(community.id)} className={`rounded-full px-3 py-1.5 text-[10px] font-bold ${community.joined ? 'border border-white/10 text-white/55' : 'bg-[#1a1a1f] text-white hover:bg-[#232329]'}`}>
               {busyId === String(community.id) ? '…' : community.joined ? 'Joined' : 'Join'}
             </button>
           </div>
         ))}
-        {!list.length && <div className="mx-3 mb-3 rounded-lg border border-[#17305e]/45 bg-[#06152b]/65 px-3 py-3">
+        {!list.length && <div className="mx-3 mb-3 rounded-lg border border-[#232329]/45 bg-[#131317]/65 px-3 py-3">
           <p className="text-xs text-white/50">Find a community to share what matters to you.</p>
-          <Link to="/communities" className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-[#77aaff] hover:text-white">Explore communities <FiArrowRight className="h-3 w-3" /></Link>
+          <Link to="/communities" className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-[#5B9CFF] hover:text-white">Explore communities <FiArrowRight className="h-3 w-3" /></Link>
         </div>}
       </div>
     </section>
@@ -187,10 +204,10 @@ function SuggestedPeople({ posts }) {
   }, [posts]);
 
   return (
-    <section className="overflow-hidden rounded-xl border border-[#17305e]/55 bg-[#041126]">
+    <section className="overflow-hidden rounded-xl border border-[#232329]/55 bg-[#0c0c12]">
       <div className="flex items-center justify-between px-4 py-4">
         <h2 className="whitespace-nowrap text-sm font-extrabold">Suggested People</h2>
-        <Link to="/connect" className="shrink-0 whitespace-nowrap text-xs font-semibold text-[#4E91FF]">See all</Link>
+        <Link to="/connect" className="shrink-0 whitespace-nowrap text-xs font-semibold text-[#5B9CFF]">See all</Link>
       </div>
       {people.map((person, index) => (
         <div key={person.author} className="flex items-center gap-3 px-4 py-3">
@@ -199,7 +216,7 @@ function SuggestedPeople({ posts }) {
             <p className="truncate text-xs font-bold text-white">{person.author}</p>
             <p className="text-[10px] text-white/35">{index + 1} mutual {index === 0 ? 'friend' : 'friends'}</p>
           </div>
-          <Link to="/connect" className="rounded-full bg-[#0B2D75] px-3 py-1.5 text-[10px] font-bold text-white hover:bg-[#12419D]">Follow</Link>
+          <Link to="/connect" className="rounded-full bg-[#1a1a1f] px-3 py-1.5 text-[10px] font-bold text-white hover:bg-[#232329]">Follow</Link>
         </div>
       ))}
     </section>
@@ -208,12 +225,15 @@ function SuggestedPeople({ posts }) {
 
 function PromoCard() {
   return (
-    <Link to="/communities" className="relative block min-h-[150px] overflow-hidden rounded-2xl border border-[#2557D9]/50 bg-gradient-to-br from-[#071D47] via-[#152F83] to-[#4D0C8A] p-5">
+    <Link to="/communities" className="relative block min-h-[170px] overflow-hidden rounded-2xl border border-[#2a2a35] bg-gradient-to-br from-[#0a0f2b] via-[#161033] to-[#2e0e4d] p-5">
       <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-fuchsia-500/20 blur-3xl" />
-      <div className="relative">
+      <div className="relative flex h-full flex-col">
         <img src="/emet-mark.svg" alt="" className="h-11 w-11" />
-        <p className="mt-4 max-w-none whitespace-nowrap text-sm font-extrabold leading-tight xl:text-base">More than a platform.<br /><span className="text-[#A989FF]">A movement.</span></p>
-        <span className="absolute bottom-0 right-0 grid h-9 w-9 place-items-center rounded-full bg-white/15 text-white"><FiArrowRight /></span>
+        <p className="mt-4 text-lg font-extrabold leading-tight">Stronger together.</p>
+        <p className="mt-1 text-sm text-white/65">Communities. Conversations.<br />Real impact.</p>
+        <span className="mt-4 inline-flex w-fit items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-fuchsia-500 px-4 py-2 text-xs font-bold text-white shadow-[0_0_18px_rgba(91,76,255,.35)]">
+          Explore <FiArrowRight className="h-3.5 w-3.5" />
+        </span>
       </div>
     </Link>
   );
@@ -314,15 +334,18 @@ export default function Home() {
   return (
     <main className="min-h-screen w-full min-w-0 bg-transparent pb-24 text-white">
       <div className="mx-auto w-full min-w-0 max-w-[1320px] px-3 py-3 sm:px-5 sm:py-5">
-        <div className="mb-2 hidden h-[60px] items-center gap-3 border-b border-[#17305e]/50 px-4 lg:flex">
-          <div className="flex h-[34px] w-[54%] max-w-[440px] min-w-0 shrink-0 items-center gap-3 rounded-lg bg-[#0a1c3b] px-3">
+        <div className="mb-2 hidden h-[60px] items-center gap-3 border-b border-[#232329]/50 px-4 lg:flex">
+          <div className="flex h-[34px] w-[54%] max-w-[440px] min-w-0 shrink-0 items-center gap-3 rounded-lg bg-[#151519] px-3">
             <FiSearch className="h-4 w-4 shrink-0 text-white/55" />
             <Link to="/explore" className="min-w-0 flex-1 truncate text-xs text-white/35">Search Emet...</Link>
           </div>
           <div className="ml-auto hidden items-center gap-2 sm:flex">
-            <Link to="/notifications" aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : 'Notifications'} className="relative rounded-lg p-2 text-white/65 hover:bg-white/[.05]"><FiBell />{unreadCount > 0 && <span className="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full border border-[#07132d] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>}</Link>
-            <Link to="/messages" aria-label={unreadMessages ? `Messages, ${unreadMessages} unread` : 'Messages'} className="relative rounded-lg p-2 text-white/65 hover:bg-white/[.05]"><FiMessageCircle />{unreadMessages > 0 && <span className="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full border border-[#07132d] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadMessages > 9 ? '9+' : unreadMessages}</span>}</Link>
-            <Link to="/profile" className={user?.avatarUrl ? 'rounded-full' : ''}><Avatar src={user?.avatarUrl} name={user?.name} size="h-8 w-8" /></Link>
+            <Link to="/notifications" aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : 'Notifications'} className="relative rounded-lg p-2 text-white/65 hover:bg-white/[.05]"><FiBell />{unreadCount > 0 && <span className="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full border border-[#0c0c12] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>}</Link>
+            <Link to="/messages" aria-label={unreadMessages ? `Messages, ${unreadMessages} unread` : 'Messages'} className="relative rounded-lg p-2 text-white/65 hover:bg-white/[.05]"><FiMessageCircle />{unreadMessages > 0 && <span className="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full border border-[#0c0c12] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadMessages > 9 ? '9+' : unreadMessages}</span>}</Link>
+            <Link to="/profile" className="flex items-center gap-1">
+              <Avatar src={user?.avatarUrl} name={user?.name} size="h-8 w-8" />
+              <FiChevronDown className="h-3.5 w-3.5 text-white/45" />
+            </Link>
           </div>
         </div>
         <div className="grid min-w-0 justify-center gap-3 lg:grid-cols-[minmax(0,420px)_225px] xl:grid-cols-[minmax(0,520px)_280px]">
@@ -333,8 +356,8 @@ export default function Home() {
               </Link>
               <div className="flex items-center gap-1">
                 <Link to="/explore" aria-label="Search Emet" className="grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiSearch className="h-[19px] w-[19px]" /></Link>
-                <Link to="/notifications" aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : 'Notifications'} className="relative grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiBell className="h-[19px] w-[19px]" />{unreadCount > 0 && <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full border border-[#07132d] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>}</Link>
-                <Link to="/messages" aria-label={unreadMessages ? `Messages, ${unreadMessages} unread` : 'Messages'} className="relative grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiMessageCircle className="h-[19px] w-[19px]" />{unreadMessages > 0 && <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full border border-[#07132d] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadMessages > 9 ? '9+' : unreadMessages}</span>}</Link>
+                <Link to="/notifications" aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : 'Notifications'} className="relative grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiBell className="h-[19px] w-[19px]" />{unreadCount > 0 && <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full border border-[#0c0c12] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>}</Link>
+                <Link to="/messages" aria-label={unreadMessages ? `Messages, ${unreadMessages} unread` : 'Messages'} className="relative grid h-10 w-10 place-items-center rounded-full text-white/75 hover:bg-white/[.06]"><FiMessageCircle className="h-[19px] w-[19px]" />{unreadMessages > 0 && <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full border border-[#0c0c12] bg-[#d72dd9] px-1 text-[9px] font-bold leading-none text-white">{unreadMessages > 9 ? '9+' : unreadMessages}</span>}</Link>
                 <Link to={user ? '/profile' : '/auth'} aria-label={user ? 'Profile' : 'Sign in'} className={user?.avatarUrl ? 'rounded-full ring-1 ring-white/15' : ''}><Avatar src={user?.avatarUrl} name={user?.name} size="h-8 w-8" /></Link>
               </div>
             </div>
@@ -342,7 +365,7 @@ export default function Home() {
             <div className="lg:hidden"><StoriesRow /></div>
             <Compose user={user} />
             <div className="hidden lg:block"><StoriesRow /></div>
-            <div className="hidden overflow-hidden rounded-xl border border-[#17305e]/55 bg-[#041126] lg:block">
+            <div className="hidden overflow-hidden rounded-xl border border-[#232329]/55 bg-[#0c0c12] lg:block">
               <div className="grid grid-cols-3">
                 {tabs.map((item) => (
                   <button key={item} type="button" onClick={() => setTab(item)} className={`relative py-3.5 text-xs font-bold ${tab === item ? 'text-white' : 'text-white/35 hover:text-white/70'}`}>
@@ -353,7 +376,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-xl border border-[#17305e]/55 bg-[#041126]">
+            <div className="overflow-hidden rounded-xl border border-[#232329]/55 bg-[#0c0c12]">
               {error && visiblePosts.length > 0 && <div role="status" className="mx-3 mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300/20 bg-amber-300/[.07] px-4 py-3 text-sm text-amber-100/90 sm:mx-4"><span>{error}</span><button type="button" onClick={() => load(true)} className="rounded-full border border-amber-100/20 px-3 py-1.5 text-xs font-bold text-white hover:bg-white/10">Retry</button></div>}
               {loading && !posts.length ? (
                 <div className="space-y-2 p-2">{[1, 2, 3].map((n) => <Skeleton key={n} className="h-40 w-full rounded-2xl" />)}</div>
