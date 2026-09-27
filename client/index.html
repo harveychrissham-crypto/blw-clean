@@ -90,31 +90,8 @@
       #boot-splash .splash-wave { animation: splash-wave-drift 7s ease-in-out infinite alternate; will-change: transform; }
       #boot-splash .splash-wave path:first-child { opacity: .9; }
       #boot-splash .splash-wave path:last-child { opacity: .38; }
-      #boot-splash .splash-loading {
-        position: absolute;
-        z-index: 2;
-        bottom: max(6%, calc(env(safe-area-inset-bottom) + 3%));
-        left: 50%;
-        display: flex;
-        transform: translateX(-50%);
-        flex-direction: column;
-        align-items: center;
-        gap: 16px;
-        color: rgba(225, 234, 255, .86);
-        font: 500 14px/1 Inter, system-ui, sans-serif;
-        letter-spacing: .24em;
-        white-space: nowrap;
-      }
-      #boot-splash .splash-spinner {
-        width: 66px;
-        height: 66px;
-        border: 5px solid rgba(71, 97, 255, .35);
-        border-top-color: #15d9f0;
-        border-right-color: #b22cff;
-        border-radius: 50%;
-        animation: splash-spin 1.05s linear infinite;
-      }
-      @keyframes splash-spin { to { transform: rotate(360deg); } }
+
+
       @keyframes splash-gradient-drift {
         0% { background-position: 0% 50%; filter: hue-rotate(-12deg) saturate(1); }
         50% { background-position: 100% 0%; filter: hue-rotate(14deg) saturate(1.16); }
@@ -133,11 +110,8 @@
         #boot-splash .splash-mark { width: clamp(110px, 17vh, 150px); height: clamp(110px, 17vh, 150px); }
         #boot-splash .splash-wordmark { margin-top: 10px; }
         #boot-splash .splash-tagline { margin-top: 14px; }
-        #boot-splash .splash-loading { bottom: max(4%, calc(env(safe-area-inset-bottom) + 2%)); gap: 10px; }
-        #boot-splash .splash-spinner { width: 52px; height: 52px; }
       }
       @media (prefers-reduced-motion: reduce) {
-        #boot-splash .splash-spinner { animation: none; }
         #boot-splash .splash-wave { animation: none; }
       }
       #boot-splash.boot-splash-hidden { opacity: 0; pointer-events: none; }
@@ -155,7 +129,6 @@
         <img class="splash-wordmark" src="/emet-wordmark-geometric-white.svg" width="390" height="84" alt="EMET" />
         <p class="splash-tagline">Real People. Meaningful Connections.</p>
       </div>
-      <div class="splash-loading"><span class="splash-spinner"></span><span>LOADING...</span></div>
     </div>
     <div id="root"></div>
     <script>
