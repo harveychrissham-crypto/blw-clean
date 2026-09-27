@@ -269,7 +269,11 @@ export default function Auth() {
                   {error && <p className="text-xs text-red-300">{error}</p>}
                   <button disabled={status === 'submitting'} className="flex h-[44px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-fuchsia-500 text-[13px] font-bold text-white shadow-[0_8px_28px_rgba(40,190,248,.18)] transition hover:brightness-110 disabled:opacity-50">{status === 'submitting' ? 'Creating…' : 'Create Account'} <FiArrowRight className="h-4 w-4" /></button>
                   <p className="text-center text-[10px] leading-4 text-[#a9c3ec]">By creating an account, you agree to use Emet respectfully.</p>
-                </form>nter text-sm text-[#adc8f3] sm:text-left">
+                </form>
+              </>
+            )}
+
+            <p className="mt-5 text-center text-sm text-[#adc8f3] sm:text-left">
               {mode === 'login' ? "Don’t have an account? " : 'Already have an account? '}
               <button type="button" className="font-semibold text-[#159eff] hover:text-cyan-300" onClick={() => setModeAndReset(mode === 'login' ? 'details' : 'login')}>{mode === 'login' ? 'Create one' : 'Sign in'}</button>
             </p>
