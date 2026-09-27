@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FiArrowLeft, FiBookmark, FiCheck, FiFolder, FiHeart, FiMessageCircle, FiPlus, FiSend, FiTrash2 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
-import { addComment, deleteComment, fetchComments, fetchPost, toggleLike, toggleSave } from '../utils/feed';
+import { addComment, deleteComment, fetchBookmarkCollections, fetchComments, fetchPost, setBookmarkCollectionItem, toggleLike, toggleSave } from '../utils/feed';
 import { shareContent } from '../utils/share';
 
 function timeLabel(value) {
@@ -23,13 +23,10 @@ export default function PostDetail() {
   const [sending,setSending]=useState(false);
   const [error,setError]=useState('');
   const [collectionData,setCollectionData]=useState({collections:[],memberships:{}});
-  const [loadedStorageKey,setLoadedStorageKey]=useState('');
   const [showCollections,setShowCollections]=useState(false);
-  const collectionStorageKey=`emet-bookmark-collections:${String(user?.email||'guest').toLowerCase()}`;
-  useEffect(()=>{try{const saved=JSON.parse(localStorage.getItem(collectionStorageKey)||'{}');setCollectionData({collections:Array.isArray(saved.collections)?saved.collections:[],memberships:saved.memberships&&typeof saved.memberships==='object'?saved.memberships:{}});}catch{setCollectionData({collections:[],memberships:{}});}setLoadedStorageKey(collectionStorageKey);},[collectionStorageKey]);
-  useEffect(()=>{if(loadedStorageKey!==collectionStorageKey)return;try{localStorage.setItem(collectionStorageKey,JSON.stringify(collectionData));}catch{}},[collectionData,collectionStorageKey,loadedStorageKey]);
-  const toggleCollection=(collectionId)=>setCollectionData(current=>{const key=String(id);const ids=current.memberships[key]||[];const next=ids.includes(collectionId)?ids.filter(item=>item!==collectionId):[...ids,collectionId];return{...current,memberships:{...current.memberships,[key]:next}};});
+  useEffect(()=>{let active=true;fetchBookmarkCollections().then(data=>{if(active)setCollectionData(data);}).catch(()=>{});return()=>{active=false;};},[user?.email]);
   const postCollections=collectionData.memberships[String(id)]||[];
+  const toggleCollection=async(collectionId)=>{try{await setBookmarkCollectionItem(collectionId,id,!postCollections.includes(collectionId));setCollectionData(await fetchBookmarkCollections());}catch(e){setError(e?.message||'Unable to update this collection.');}};
 
   const load=async()=>{
     setLoading(true); setError('');
