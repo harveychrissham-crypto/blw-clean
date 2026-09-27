@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiArrowRight, FiCalendar, FiEye, FiEyeOff, FiLock, FiMail, FiPhone, FiUser } from 'react-icons/fi';
+import { FiArrowLeft, FiArrowRight, FiCalendar, FiChevronDown, FiEye, FiEyeOff, FiLock, FiMail, FiPhone, FiUser, FiUsers } from 'react-icons/fi';
 import { FaApple, FaGoogle } from 'react-icons/fa';
 import QRCode from 'qrcode';
 import { useAuth } from '../context/AuthContext';
@@ -249,9 +249,17 @@ export default function Auth() {
                         </span>
                       </label>
                       <label className="block text-[11px] font-medium text-[#c7d7f4]">Gender <span className="text-fuchsia-300">*</span>
-                        <select required value={form.gender} onChange={(e) => update('gender', e.target.value)} className="mt-0.5 h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-2 text-[11px] focus:!border-cyan-400">
-                          <option value="">Select your gender</option><option value="MALE">Male</option><option value="FEMALE">Female</option>
-                        </select>
+                        <span className="relative mt-0.5 block">
+                          <FiUsers className="pointer-events-none absolute left-2.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[#a9c3ec]" />
+                          {!form.gender && <span className="pointer-events-none absolute left-9 top-1/2 z-10 -translate-y-1/2 text-[11px] text-[#9fb5db]/75">Select your gender</span>}
+                          <FiChevronDown className="pointer-events-none absolute right-2.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[#c7d7f4]" />
+                          <select required aria-label="Gender" value={form.gender} onChange={(e) => update('gender', e.target.value)} style={{ colorScheme: 'light' }} className="h-[37px] w-full appearance-none !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 pl-9 pr-8 text-[11px] !text-transparent [color-scheme:light] focus:!border-cyan-400">
+                            <option value="" style={{ backgroundColor: '#061735', color: '#c7d7f4' }}>Select your gender</option>
+                            <option value="MALE" style={{ backgroundColor: '#061735', color: '#ffffff' }}>Male</option>
+                            <option value="FEMALE" style={{ backgroundColor: '#061735', color: '#ffffff' }}>Female</option>
+                          </select>
+                          {form.gender && <span className="pointer-events-none absolute left-9 top-1/2 z-10 -translate-y-1/2 text-[11px] text-[#dbeafe]">{form.gender === 'MALE' ? 'Male' : 'Female'}</span>}
+                        </span>
                       </label>
                     </div>
                   </section>
