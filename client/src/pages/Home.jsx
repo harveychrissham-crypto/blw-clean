@@ -351,7 +351,7 @@ export default function Home() {
           </div>
         </div>
         <div className="grid min-w-0 justify-center gap-3 lg:grid-cols-[minmax(0,420px)_225px] xl:grid-cols-[minmax(0,520px)_280px]">
-          <section className="min-w-0 space-y-2.5">
+          <section className="min-w-0 flex flex-col gap-2.5">
             <div className="flex items-center justify-between gap-3 px-1 pb-1 sm:px-2 lg:hidden">
               <Link to="/" aria-label="Emet home" className="flex items-center gap-2.5">
                 <img src="/emet-mark.svg" alt="" className="h-8 w-8" />
