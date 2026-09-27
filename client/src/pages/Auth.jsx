@@ -103,7 +103,10 @@ export default function Auth() {
           body = {};
         }
         if (!response.ok) {
-          const message = body.error || body.message || `Emet sign-in returned HTTP ${response.status}.`;
+          const responseType = response.headers.get('content-type') || 'unknown response type';
+          const requestId = response.headers.get('cf-ray');
+          const diagnostic = ` (${responseType}${requestId ? `; Cloudflare request ${requestId}` : ''})`;
+          const message = body.error || body.message || `Emet sign-in returned HTTP ${response.status}${diagnostic}.`;
           setError(message); setStatus('error'); setToast({ type: 'error', message }); return;
         }
         if (!body.user || !body.token) {
