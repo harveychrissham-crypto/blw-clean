@@ -47,7 +47,7 @@ export default function StoriesRow() {
 
   if (!user) {
     return (
-      <div className="w-full px-4 pt-2 sm:px-5" aria-label="Stories">
+      <div className="w-full pt-2" aria-label="Stories">
         <div className="flex min-h-[76px] items-center gap-3 rounded-xl border border-[#17305e]/55 bg-[#041126] px-3 py-3 sm:px-4">
           <Link to="/auth" aria-label="Sign in to add a story" className="grid h-12 w-12 shrink-0 place-items-center rounded-full border-2 border-dashed border-white/20 bg-white/[.04] text-white/70 transition hover:border-cyan-300/70 hover:text-white">
             <FiPlus className="h-5 w-5" />
