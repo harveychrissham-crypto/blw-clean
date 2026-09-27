@@ -1,4 +1,5 @@
 import { getToken } from '../utils/authToken';
+import { Capacitor, CapacitorHttp } from '@capacitor/core';
 
 /**
  * The mobile app is bundled locally, so relative /api/... URLs do not reach
@@ -63,7 +64,37 @@ export async function apiFetch(path, options = {}) {
   }
 
   try {
-    return await fetch(apiUrl(path), {
+    const requestUrl = apiUrl(path);
+    const isNativeLogin = Capacitor.isNativePlatform()
+      && new URL(requestUrl).pathname === '/api/auth/login';
+
+    if (isNativeLogin) {
+      // Android's bundled WebView and the Worker are different origins.
+      // Use Capacitor's native HTTP transport for login so WebView CORS
+      // preflight behavior cannot prevent the request from reaching Emet.
+      const nativeResponse = await CapacitorHttp.request({
+        url: requestUrl,
+        method: fetchOptions.method || 'GET',
+        headers,
+        data: fetchOptions.body,
+        connectTimeout: timeoutMs,
+        readTimeout: timeoutMs,
+        responseType: 'json',
+      });
+      const responseHeaders = new Headers(nativeResponse.headers || {});
+      if (!responseHeaders.has('content-type')) {
+        responseHeaders.set('content-type', 'application/json; charset=utf-8');
+      }
+      const responseBody = typeof nativeResponse.data === 'string'
+        ? nativeResponse.data
+        : JSON.stringify(nativeResponse.data ?? null);
+      return new Response(responseBody, {
+        status: nativeResponse.status,
+        headers: responseHeaders,
+      });
+    }
+
+    return await fetch(requestUrl, {
       ...fetchOptions,
       headers,
       signal: controller.signal,
