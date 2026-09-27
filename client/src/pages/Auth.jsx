@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiArrowRight, FiCalendar, FiEye, FiEyeOff, FiLock, FiPhone, FiUser } from 'react-icons/fi';
+import { FiArrowLeft, FiArrowRight, FiCalendar, FiEye, FiEyeOff, FiLock, FiMail, FiPhone, FiUser } from 'react-icons/fi';
 import { FaApple, FaGoogle } from 'react-icons/fa';
 import QRCode from 'qrcode';
 import { useAuth } from '../context/AuthContext';
@@ -137,7 +137,7 @@ export default function Auth() {
       const response = await apiFetch(AUTH_REGISTER_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ username: form.username, email: form.email, password: form.password, birthday: form.birthday, gender: form.gender }),
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -210,11 +210,18 @@ export default function Auth() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="block text-[11px] font-medium text-[#c7d7f4]">Full name <span className="text-fuchsia-300">*</span>
-                        <input required autoComplete="name" value={form.fullName} onChange={(e) => update('fullName', e.target.value)} placeholder="Enter your full name" className="mt-0.5 h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-3 text-[12px] placeholder:text-[#9fb5db]/65 focus:!border-cyan-400" />
+                      <label className="block text-[11px] font-medium text-[#c7d7f4]">Username <span className="text-fuchsia-300">*</span>
+                        <span className="mt-0.5 flex h-[37px] items-center gap-2 rounded-[10px] border border-[#173a78] bg-[#061735]/75 px-3 focus-within:border-cyan-400">
+                          <FiUser className="h-4 w-4 shrink-0 text-[#a9c3ec]" />
+                          <input required autoComplete="username" maxLength={30} value={form.username} onChange={(e) => update('username', e.target.value)} placeholder="Choose a username" className="!m-0 h-full min-w-0 flex-1 !border-0 !bg-transparent !p-0 text-[12px] !shadow-none placeholder:text-[#9fb5db]/65" />
+                          <span className="shrink-0 text-[9px] text-[#9fb5db]/70">{form.username.length}/30</span>
+                        </span>
                       </label>
                       <label className="block text-[11px] font-medium text-[#c7d7f4]">Email address <span className="text-fuchsia-300">*</span>
-                        <input required type="email" autoComplete="email" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="you@example.com" className="mt-0.5 h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-3 text-[12px] placeholder:text-[#9fb5db]/65 focus:!border-cyan-400" />
+                        <span className="mt-0.5 flex h-[37px] items-center gap-2 rounded-[10px] border border-[#173a78] bg-[#061735]/75 px-3 focus-within:border-cyan-400">
+                          <FiMail className="h-4 w-4 shrink-0 text-[#a9c3ec]" />
+                          <input required type="email" autoComplete="email" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="you@example.com" className="!m-0 h-full min-w-0 flex-1 !border-0 !bg-transparent !p-0 text-[12px] !shadow-none placeholder:text-[#9fb5db]/65" />
+                        </span>
                       </label>
                       <label className="block text-[11px] font-medium text-[#c7d7f4]">Password <span className="text-fuchsia-300">*</span>
                         <span className="mt-0.5 flex h-[37px] items-center gap-2 rounded-[10px] border border-[#173a78] bg-[#061735]/75 px-3 focus-within:border-cyan-400">
@@ -249,15 +256,15 @@ export default function Auth() {
 
                   {error && <p className="text-xs text-red-300">{error}</p>}
                   <button disabled={status === 'submitting'} className="flex h-[44px] w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-fuchsia-500 text-[13px] font-bold text-white shadow-[0_8px_28px_rgba(40,190,248,.18)] transition hover:brightness-110 disabled:opacity-50">{status === 'submitting' ? 'Creating…' : 'Create Account'} <FiArrowRight className="h-4 w-4" /></button>
-                  <p className="text-center text-[10px] leading-4 text-[#a9c3ec]">By creating an account, you agree to use Emet respectfully.</p>
+                  <p className="text-center text-[10px] leading-4 text-[#a9c3ec]">By creating an account, you agree to our<br /><span className="text-fuchsia-300">Terms of Service&nbsp; · &nbsp;Privacy Policy</span></p>
                 </form>
               </>
             )}
 
-            <p className="mt-5 text-center text-sm text-[#adc8f3] sm:text-left">
-              {mode === 'login' ? "Don’t have an account? " : 'Already have an account? '}
-              <button type="button" className="font-semibold text-[#159eff] hover:text-cyan-300" onClick={() => setModeAndReset(mode === 'login' ? 'details' : 'login')}>{mode === 'login' ? 'Create one' : 'Sign in'}</button>
-            </p>
+            {mode !== 'details' && <p className="mt-5 text-center text-sm text-[#adc8f3] sm:text-left">
+              Don’t have an account? <button type="button" className="font-semibold text-[#159eff] hover:text-cyan-300" onClick={() => setModeAndReset('details')}>Create one</button>
+            </p>}
+            {mode === 'details' && <p className="mt-3 text-center text-xs text-[#adc8f3]">Already have an account? <button type="button" className="font-semibold text-[#159eff] hover:text-cyan-300" onClick={() => setModeAndReset('login')}>Sign in</button></p>}
           </div>
         </section>
 
