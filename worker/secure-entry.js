@@ -4,6 +4,7 @@ import { corsHeaders, rateLimit } from './security.js';
 import { handlePasswordReset } from './password-reset-api.js';
 import { handleSermons } from './sermon-api.js';
 import { handleFeed } from './feed-api.js';
+import { handleBookmarkCollections } from './bookmark-collections-api.js';
 import { handleLive } from './live-api.js';
 import { handleOutreach } from './outreach-api.js';
 import { handleUpload } from './upload-api.js';
@@ -160,6 +161,10 @@ export default {
     }
     if (url.pathname.startsWith('/api/sermons')) {
       const response = await handleSermons(request, env, url);
+      if (response) return response;
+    }
+    if (url.pathname.startsWith('/api/feed/collections')) {
+      const response = await handleBookmarkCollections(request, env, url);
       if (response) return response;
     }
     if (url.pathname.startsWith('/api/feed')) {
