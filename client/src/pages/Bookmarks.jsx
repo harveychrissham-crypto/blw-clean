@@ -27,7 +27,7 @@ export default function Bookmarks() {
   const [filter, setFilter] = useState('All');
   const [activeCollection, setActiveCollection] = useState('');
   const [collectionData, setCollectionData] = useState({ collections: [], memberships: {} });
-  const [storageLoaded, setStorageLoaded] = useState(false);
+  const [loadedStorageKey, setLoadedStorageKey] = useState('');
   const [newCollectionOpen, setNewCollectionOpen] = useState(false);
   const [collectionName, setCollectionName] = useState('');
   const [assigningPost, setAssigningPost] = useState('');
@@ -48,12 +48,12 @@ export default function Bookmarks() {
         memberships: saved.memberships && typeof saved.memberships === 'object' ? saved.memberships : {},
       });
     } catch { setCollectionData({ collections: [], memberships: {} }); }
-    setStorageLoaded(true);
+    setLoadedStorageKey(storageKey);
   }, [storageKey]);
   useEffect(() => {
-    if (!storageLoaded) return;
+    if (loadedStorageKey !== storageKey) return;
     try { localStorage.setItem(storageKey, JSON.stringify(collectionData)); } catch {}
-  }, [collectionData, storageKey, storageLoaded]);
+  }, [collectionData, storageKey, loadedStorageKey]);
 
   const categories = useMemo(() => ({
     All: posts.length,
