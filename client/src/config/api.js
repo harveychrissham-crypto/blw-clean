@@ -7,7 +7,7 @@ import { getToken } from '../utils/authToken';
  */
 export const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
-  'https://emet.harveychrissham.workers.dev'
+  'https://blw-kenya-zone.harveychrissham.workers.dev'
 ).replace(/\/$/, '');
 
 export function apiUrl(path) {
