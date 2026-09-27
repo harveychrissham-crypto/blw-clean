@@ -242,7 +242,11 @@ export default function Auth() {
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <label className="block text-[11px] font-medium text-[#c7d7f4]">Date of birth <span className="text-fuchsia-300">*</span>
-                        <input required type="date" min={earliestBirthday} max={today} value={form.birthday} onChange={(e) => update('birthday', e.target.value)} className="mt-0.5 h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-2 text-[11px] focus:!border-cyan-400" />
+                        <span className="relative mt-0.5 block">
+                          <FiCalendar className="pointer-events-none absolute left-2.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[#a9c3ec]" />
+                          {!form.birthday && <span className="pointer-events-none absolute left-9 top-1/2 z-10 -translate-y-1/2 text-[11px] text-[#9fb5db]/75">DD / MM / YYYY</span>}
+                          <input required type="date" min={earliestBirthday} max={today} value={form.birthday} onChange={(e) => update('birthday', e.target.value)} style={{ colorScheme: 'light' }} className="h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 pl-9 pr-2 text-[11px] text-[#dbeafe] [color-scheme:light] focus:!border-cyan-400" />
+                        </span>
                       </label>
                       <label className="block text-[11px] font-medium text-[#c7d7f4]">Gender <span className="text-fuchsia-300">*</span>
                         <select required value={form.gender} onChange={(e) => update('gender', e.target.value)} className="mt-0.5 h-[37px] w-full !rounded-[10px] !border-[#173a78] !bg-[#061735]/75 px-2 text-[11px] focus:!border-cyan-400">
