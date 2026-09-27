@@ -28,6 +28,7 @@ export default function Messages() {
   const [messages, setMessages] = useState([]);
   const [selected, setSelected] = useState(null);
   const [query, setQuery] = useState('');
+  const [inboxTab, setInboxTab] = useState('All');
   const [people, setPeople] = useState([]);
   const [composer, setComposer] = useState('');
   const [loading, setLoading] = useState(true);
@@ -96,9 +97,13 @@ export default function Messages() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q || people.length) return conversations;
-    return conversations.filter((item) => `${item.other?.name} ${item.lastMessage}`.toLowerCase().includes(q));
-  }, [conversations, people.length, query]);
+    let items = conversations;
+    if (inboxTab === 'Unread') items = items.filter((item) => Number(item.unreadCount) > 0);
+    if (inboxTab === 'Groups') items = items.filter((item) => item.isGroup || item.type === 'group' || item.other?.isGroup);
+    if (inboxTab === 'Requests') items = items.filter((item) => item.isRequest || item.status === 'pending');
+    if (q && !people.length) items = items.filter((item) => `${item.other?.name} ${item.lastMessage}`.toLowerCase().includes(q));
+    return items;
+  }, [conversations, inboxTab, people.length, query]);
 
   const openConversation = (conversation) => {
     setSelected(conversation);
@@ -142,11 +147,11 @@ export default function Messages() {
   }
 
   return <section className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-none flex-col px-2 pb-24 pt-2 sm:px-3 sm:pt-3 lg:px-4">
-    <div className="mb-3 flex items-center justify-between px-1 sm:px-0"><div><p className="text-[10px] font-bold uppercase tracking-[.22em] text-white/30">Emet · Messages</p><h1 className="text-xl font-bold text-white">Messages</h1></div><Link to="/feed" className="rounded-xl border border-white/12 bg-[#11161D] px-3.5 py-2.5 text-xs font-semibold text-white/70 hover:border-[#1D9BF0]/40 hover:bg-white/[0.08] hover:text-white">Back to Feed</Link></div>
     <div className="flex min-h-[calc(100vh-5rem)] flex-1 overflow-hidden rounded-2xl border border-[#17386f]/75 bg-[#020b1d]/90 shadow-2xl shadow-black/20">
       <aside className={`w-full shrink-0 border-white/[0.07] sm:w-[320px] sm:border-r lg:w-[280px] xl:w-[320px] ${selected ? 'hidden sm:block' : 'block'}`}>
         <div className="border-b border-white/[0.07] px-4 pb-3 pt-4">
-          <div className="flex items-center gap-3"><Link to="/feed" aria-label="Back to feed" className="grid h-9 w-9 place-items-center rounded-xl text-white/60 hover:bg-[#10234a]/90 hover:text-white"><FiArrowLeft /></Link><div><h2 className="text-sm font-bold text-white">Inbox</h2><p className="text-[10px] text-white/30">Your conversations</p></div></div>
+          <div className="flex items-center justify-between"><div><p className="text-[9px] font-bold uppercase tracking-[.2em] text-cyan-200/65">Emet · Messages</p><h1 className="mt-1 text-xl font-extrabold text-white">Messages</h1></div><button aria-label="New message" onClick={() => { setSelected(null); setQuery(""); setParams({ messages: "1" }); }} className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 text-xl text-white/75 hover:border-cyan-300/50 hover:bg-white/[.05]">＋</button></div>
+          <div className="mt-4 flex gap-1 overflow-x-auto border-b border-white/[0.07] pb-2">{['All', 'Unread', 'Groups', 'Requests'].map((tab) => <button key={tab} onClick={() => setInboxTab(tab)} className={`shrink-0 rounded-full px-3 py-1.5 text-[10px] font-semibold ${inboxTab === tab ? 'bg-gradient-to-r from-cyan-400 to-fuchsia-500 text-white' : 'text-white/50 hover:bg-white/[.05] hover:text-white'}`}>{tab}{tab === 'Unread' && conversations.some((item) => item.unreadCount) && <span className="ml-1 rounded-full bg-fuchsia-500 px-1.5 py-0.5">{conversations.reduce((n, item) => n + Number(item.unreadCount || 0), 0)}</span>}</button>)}</div>
           <div className="mt-3 flex items-center gap-2 rounded-xl border border-[#17386f]/75 bg-[#06152c]/90 px-3 py-2.5"><FiSearch className="h-4 w-4 text-white/35" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search members or conversations" className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/30" />{query && <button onClick={() => setQuery('')} className="text-white/35 hover:text-white" aria-label="Clear search"><FiX /></button>}</div>
         </div>
 
